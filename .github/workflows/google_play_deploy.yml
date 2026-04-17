@@ -78,12 +78,14 @@ jobs:
       # PHASE 4: VERSIONING
       #########################
 
-      - name: Read version from pubspec.yaml
+      - name: Calculate version
         id: version
         run: |
-          VERSION_LINE=$(grep '^version:' pubspec.yaml)
-          VERSION_NAME=$(echo "$VERSION_LINE" | sed 's/version: //' | cut -d'+' -f1)
-          BUILD_NUMBER=$(echo "$VERSION_LINE" | sed 's/version: //' | cut -d'+' -f2)
+          VERSION_NAME=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+
+          # Auto-increment: offset ensures we continue from the last Play Store version code (19)
+          # Formula: 19 (offset) + github.run_number (starts at 1) = 20, 21, 22, ...
+          BUILD_NUMBER=$(( 19 + ${{ github.run_number }} ))
 
           echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
