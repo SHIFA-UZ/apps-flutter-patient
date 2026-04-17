@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Markdown files (only CLAUDE.md and README.md are tracked)
+*.md
+!CLAUDE.md
+!README.md
