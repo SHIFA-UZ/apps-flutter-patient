@@ -1,0 +1,16 @@
+{
+  "appName": "Shifa Patient",
+  "appInitializationError": "Ошибка инициализации приложения",
+  "pleaseRestartApp": "Пожалуйста, перезапустите приложение",
+  "notificationChannelName": "Уведомления Shifa Patient",
+  "notificationChannelDescription": "Уведомления о сообщениях, приёмах и задачах",
+  "notificationChannelAppointmentsName": "Уведомления о приёмах",
+  "notificationChannelAppointmentsDescription": "Уведомления об изменениях приёмов",
+  "errorUnknownError": "Неизвестная ошибка",
+  "navigationError": "Ошибка навигации",
+  "checkUp": "Осмотр",
+  "doctor": "Врач",
+  "confirm": "Подтвердить",
+  "reasonForVisit": "Причина визита",
+  "videoConsultation": "Видеоконсультация"
+}

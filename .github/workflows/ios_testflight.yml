@@ -1,0 +1,303 @@
+name: iOS TestFlight Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip Flutter tests'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.35.5'
+  COCOAPODS_VERSION: '1.16.2'
+
+jobs:
+  build-and-deploy-ios:
+    name: Build and Deploy iOS to TestFlight
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      #########################
+      # PHASE 1: CHECKOUT & SETUP
+      #########################
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.0'
+
+      - name: Check available iOS SDKs
+        id: check_sdks
+        run: |
+          echo "Available iOS SDKs:"
+          xcodebuild -showsdks | grep -i ios
+
+          if xcodebuild -showsdks | grep -q "iphoneos18"; then
+            echo "iOS 18 SDK is available"
+            echo "ios_sdk_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "iOS 18 SDK not found, will install"
+            echo "ios_sdk_available=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install iOS SDK if missing
+        if: steps.check_sdks.outputs.ios_sdk_available == 'false'
+        run: |
+          sudo xcodebuild -runFirstLaunch
+          xcodebuild -showsdks
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter doctor
+        run: |
+          flutter --version
+          flutter doctor -v
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      #########################
+      # PHASE 3: FIREBASE CONFIGURATION
+      #########################
+
+      - name: Decode Firebase iOS config
+        env:
+          FIREBASE_IOS_CONFIG_BASE64: ${{ secrets.FIREBASE_IOS_CONFIG_BASE64 }}
+        run: |
+          if [ -z "$FIREBASE_IOS_CONFIG_BASE64" ]; then
+            echo "FIREBASE_IOS_CONFIG_BASE64 secret not found!"
+            exit 1
+          fi
+          echo "$FIREBASE_IOS_CONFIG_BASE64" | base64 --decode > ios/Runner/GoogleService-Info.plist
+          plutil -lint ios/Runner/GoogleService-Info.plist
+
+      #########################
+      # PHASE 4: COCOAPODS
+      #########################
+
+      - name: Setup Ruby for CocoaPods
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods -v ${{ env.COCOAPODS_VERSION }}
+          pod --version
+
+      - name: Clean CocoaPods cache
+        working-directory: ios
+        run: |
+          rm -rf Pods
+          rm -f Podfile.lock
+
+      - name: Install iOS dependencies
+        working-directory: ios
+        run: |
+          pod install --verbose
+          echo ""
+          echo "Installed pods:"
+          pod list | head -20
+
+      #########################
+      # PHASE 5: VERSIONING
+      #########################
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION_NAME=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          BUILD_NUMBER=${{ github.run_number }}
+
+          CHANGELOG="Bug fixes and improvements"
+
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+          echo "TESTFLIGHT_CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          echo "Version: $VERSION_NAME+$BUILD_NUMBER"
+
+      #########################
+      # PHASE 6: CODE SIGNING SETUP
+      #########################
+
+      - name: Import iOS Distribution Certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -z "$CERTIFICATE_P12" ]; then
+            echo "IOS_CERTIFICATE_P12_BASE64 secret not found!"
+            exit 1
+          fi
+
+          CERT_DIR=$(mktemp -d)
+          CERT_PATH="$CERT_DIR/certificate.p12"
+
+          KEYCHAIN_NAME="ci-build.keychain-db"
+          KEYCHAIN_PATH="$HOME/Library/Keychains/$KEYCHAIN_NAME"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          echo "Decoding certificate..."
+          echo "$CERTIFICATE_P12" | base64 --decode > "$CERT_PATH"
+
+          echo "Creating temporary keychain..."
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "Configuring keychain..."
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "Adding keychain to search list..."
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+          echo "Importing certificate into keychain..."
+          security import "$CERT_PATH" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+
+          echo "Setting partition list..."
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_PATH"
+
+          echo "Verifying certificate..."
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+          rm -rf "$CERT_DIR"
+
+      #########################
+      # PHASE 7: BUILD iOS (no codesign)
+      #########################
+
+      - name: Build iOS release (no codesign)
+        run: |
+          flutter build ios \
+            --release \
+            --no-codesign \
+            --dart-define=FLAVOR=production \
+            --build-name=${{ steps.version.outputs.version_name }} \
+            --build-number=${{ steps.version.outputs.build_number }}
+
+      #########################
+      # PHASE 8: FASTLANE - SIGN, ARCHIVE & UPLOAD
+      #########################
+
+      - name: Install Fastlane
+        run: |
+          sudo gem install fastlane -v 2.228.0
+          fastlane --version
+
+      - name: Setup App Store Connect API key
+        env:
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/private_keys
+          echo "$API_KEY_CONTENT" > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+          chmod 600 ~/private_keys/AuthKey_${API_KEY_ID}.p8
+          echo "API key first line:"
+          head -1 ~/private_keys/AuthKey_${API_KEY_ID}.p8
+
+      - name: Build, Sign and Upload to TestFlight with Fastlane
+        working-directory: ios
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          VERSION_NUMBER: ${{ steps.version.outputs.version_name }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: |
+          echo "Running Fastlane beta lane..."
+          echo "Version: $VERSION_NUMBER ($BUILD_NUMBER)"
+
+          fastlane beta
+
+          echo "============================================="
+          echo "  Fastlane completed successfully!"
+          echo "  Version: $VERSION_NUMBER ($BUILD_NUMBER)"
+          echo "  Apple processing: ~10-20 minutes"
+          echo "============================================="
+
+      #########################
+      # PHASE 9: ARTIFACTS & CLEANUP
+      #########################
+
+      - name: Upload build logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ steps.version.outputs.build_number }}
+          path: |
+            ios/build/logs/**/*
+            ~/Library/Logs/gym/**/*
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f ios/Runner/GoogleService-Info.plist
+          rm -rf ~/private_keys
+
+      #########################
+      # PHASE 9: SUMMARY
+      #########################
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "============================================="
+          echo "  iOS TestFlight Deployment Successful"
+          echo "============================================="
+          echo ""
+          echo "  App: Shifa Patient"
+          echo "  Bundle ID: uz.shifa.patient"
+          echo "  Version: ${{ steps.version.outputs.version_name }}"
+          echo "  Build: ${{ steps.version.outputs.build_number }}"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Triggered by: ${{ github.actor }}"
+          echo "  Commit: ${{ github.sha }}"
+          echo ""
+          echo "  Apple processing: ~10-20 minutes"
+          echo "  https://appstoreconnect.apple.com"
+          echo "============================================="
+
+      - name: Failure Summary
+        if: failure()
+        run: |
+          echo "============================================="
+          echo "  iOS TestFlight Deployment FAILED"
+          echo "============================================="
+          echo ""
+          echo "  Check the logs above for error details"
+          echo "  Common issues:"
+          echo "    - Missing or invalid secrets"
+          echo "    - Code signing problems"
+          echo "    - Xcode build errors"
+          echo "============================================="

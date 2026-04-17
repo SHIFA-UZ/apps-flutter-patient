@@ -1,0 +1,51 @@
+# Shifa Patient App — PR / push quality gates
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+concurrency:
+  group: flutter-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Scope to test + integration_test until `dart format lib` is applied repo-wide.
+      - name: Dart format (tests)
+        run: dart format --set-exit-if-changed test integration_test
+
+      # Only analyzer *errors* fail the job (project has legacy warnings/infos).
+      - name: Flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Unit & widget tests + coverage
+        run: flutter test --coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+
+  # Full golden-path E2E belongs in a separate job with emulator + backend + secrets.
+  # See integration_test/README.md

@@ -1,0 +1,16 @@
+{
+  "appName": "Shifa Patient",
+  "appInitializationError": "App Initialization Error",
+  "pleaseRestartApp": "Please restart the app",
+  "notificationChannelName": "Shifa Patient Notifications",
+  "notificationChannelDescription": "Notifications for messages, appointments, and tasks",
+  "notificationChannelAppointmentsName": "Appointment Notifications",
+  "notificationChannelAppointmentsDescription": "Notifications for appointment updates",
+  "errorUnknownError": "Unknown error",
+  "navigationError": "Navigation Error",
+  "checkUp": "Check Up",
+  "doctor": "Doctor",
+  "confirm": "Confirm",
+  "reasonForVisit": "Reason for visit",
+  "videoConsultation": "Video consultation"
+}

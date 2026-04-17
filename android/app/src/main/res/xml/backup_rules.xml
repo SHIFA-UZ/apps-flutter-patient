@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Exclude auth-related prefs from backup so sessions are not restored onto new devices -->
+<full-backup-content>
+    <!-- App lock PIN/biometric settings -->
+    <exclude domain="sharedpref" path="shifa_app_lock_prefs.xml"/>
+    <!-- Auth tokens (FlutterSecureStorage) and any auth-related SharedPreferences -->
+    <exclude domain="sharedpref" path="shifa_auth_secure.xml"/>
+</full-backup-content>

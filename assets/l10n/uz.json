@@ -1,0 +1,16 @@
+{
+  "appName": "Shifa Patient",
+  "appInitializationError": "Ilova ishga tushirishda xato",
+  "pleaseRestartApp": "Iltimos, ilovani qayta ishga tushiring",
+  "notificationChannelName": "Shifa Patient bildirishnomalari",
+  "notificationChannelDescription": "Xabarlar, uchrashuvlar va vazifalar haqida bildirishnomalar",
+  "notificationChannelAppointmentsName": "Uchrashuv bildirishnomalari",
+  "notificationChannelAppointmentsDescription": "Uchrashuv yangilanishlari haqida bildirishnomalar",
+  "errorUnknownError": "Noma'lum xato",
+  "navigationError": "Navigatsiya xatosi",
+  "checkUp": "Ko'rik",
+  "doctor": "Shifokor",
+  "confirm": "Tasdiqlash",
+  "reasonForVisit": "Tashrif sababi",
+  "videoConsultation": "Video maslahat"
+}

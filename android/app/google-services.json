@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55173524197",
+    "project_id": "shifa-doctor-staging",
+    "storage_bucket": "shifa-doctor-staging.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55173524197:android:ddadc878f20da52792420c",
+        "android_client_info": {
+          "package_name": "com.shifa.patientapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAONE8lrUzgurI9h0zpw9TqersE-1V5J-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
