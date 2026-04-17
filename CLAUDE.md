@@ -394,6 +394,64 @@ See `FIREBASE.md` for complete troubleshooting guide (covers "blocked requests",
 - Test coverage is minimal
 - Error handling could be more comprehensive
 
+## Git Branching Rule
+
+**NEVER commit and push directly to `main`.** Before committing and pushing changes, check the current branch. If on `main`:
+
+1. Create a new branch named after the feature/fix being developed (e.g., `feature/add-appointment-reminders`, `fix/login-401-handling`, `refactor/chat-providers`).
+2. Stage and commit the changes on the new branch.
+3. Push the new branch to the remote with `-u` to set upstream tracking.
+
+This applies to all changes — features, bug fixes, refactors, docs, etc. The `main` branch should only receive changes via merged pull requests.
+
+## Commit Message Convention
+
+Follow the **Conventional Commits** format:
+
+```
+<type>(<scope>): <short summary>
+
+<optional body — explain WHY, not WHAT>
+```
+
+### Types
+
+| Type | When to use |
+|------|-------------|
+| `feat` | New feature or capability |
+| `fix` | Bug fix |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `style` | Formatting, missing semicolons, etc. (no logic change) |
+| `docs` | Documentation only |
+| `test` | Adding or updating tests |
+| `chore` | Build, config, dependencies, CI changes |
+| `perf` | Performance improvement |
+
+### Scope
+
+Use the feature module or area affected: `auth`, `bookings`, `chat`, `doctors`, `documents`, `home`, `notifications`, `profile`, `settings`, `tasks`, `core`, `router`, `l10n`, `theme`.
+
+### Rules
+
+1. **Summary line**: imperative mood, lowercase, no period, max 72 characters (e.g., `feat(bookings): add appointment reminder notifications`).
+2. **Body** (optional): explain the motivation or context behind the change. Wrap at 72 characters.
+3. **Breaking changes**: add `!` after type/scope (e.g., `feat(auth)!: switch to OAuth2 flow`) and explain in the body.
+4. **Multiple scopes**: if a change spans many areas, use the most relevant scope or omit it (e.g., `refactor: migrate providers to AsyncNotifier`).
+
+### Examples
+
+```
+feat(doctors): add search by specialty filter
+
+fix(auth): handle expired refresh token without logout loop
+
+refactor(bookings): extract time slot selection into separate widget
+
+docs: update CLAUDE.md with commit message convention
+
+chore: bump flutter_riverpod to 2.6.0
+```
+
 ## When Making Changes
 
 1. **Follow the existing architecture**: Place code in the appropriate feature module and layer (data/presentation/providers).

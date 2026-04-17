@@ -40,12 +40,12 @@ jobs:
       - name: Unit & widget tests + coverage
         run: flutter test --coverage
 
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: lcov
-          path: coverage/lcov.info
-          if-no-files-found: ignore
+#      - name: Upload coverage artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: lcov
+#          path: coverage/lcov.info
+#          if-no-files-found: ignore
 
   # Full golden-path E2E belongs in a separate job with emulator + backend + secrets.
   # See integration_test/README.md
