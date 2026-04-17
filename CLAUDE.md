@@ -4,21 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **Shifa Patient App**, a Flutter mobile application for patients to interact with the Shifa healthcare platform. It uses **Clean Architecture** with a feature-based structure, **Riverpod** for state management, and **GoRouter** for navigation.
+**Shifa Patient App** — a Flutter mobile application for patients to interact with the Shifa healthcare platform. Uses a modified Clean Architecture (data/providers/presentation — no domain/usecase layer), Riverpod for state management, and GoRouter for navigation.
 
 ## Tech Stack
 
 - **Flutter/Dart** (SDK: ^3.9.2)
-- **State Management**: Riverpod (`flutter_riverpod`)
-- **Navigation**: GoRouter with StatefulShellRoute for persistent bottom navigation
-- **HTTP Client**: Dio with JWT authentication interceptor
-- **Backend Communication**: REST API (Railway production, localhost dev)
-- **Firebase**: Authentication (Phone OTP), Cloud Messaging (push notifications)
-- **Video Calls**: Daily Flutter (`daily_flutter`)
-- **Maps**: Flutter Map with geocoding
-- **Localization**: 4 languages (English, Uzbek, German, Russian)
-- **Local Storage**: SharedPreferences for preferences, FlutterSecureStorage for tokens
-- **Biometrics**: local_auth for app lock
+- **State Management**: Riverpod (`flutter_riverpod: ^2.5.1`) — `StateNotifier` for complex state, `FutureProvider`/`StreamProvider` for async data
+- **Navigation**: GoRouter (`go_router: ^14.0.0`) with `StatefulShellRoute.indexedStack` for persistent bottom nav
+- **HTTP Client**: Dio (`dio: ^5.4.0`) with JWT auth interceptor, 30s timeout
+- **Backend**: Spring Boot REST API (Railway production)
+- **Firebase**: Auth (`firebase_auth: ^5.3.3`), FCM (`firebase_messaging: ^15.1.3`), Crashlytics (`firebase_crashlytics: ^4.3.10`)
+- **Video Calls**: Daily Flutter (`daily_flutter: ^0.37.0`)
+- **Maps**: Flutter Map (`flutter_map: ^7.0.2`) + geocoding
+- **Localization**: 4 languages (en, uz, de, ru) via custom `AppLocalizations` delegate
+- **Storage**: `SharedPreferences` for preferences, `FlutterSecureStorage` for tokens (Keychain/Keystore)
+- **Biometrics**: `local_auth` for app lock (PIN + biometric)
+- **Media**: `record: ^6.1.2` (audio recording), `audioplayers: ^6.0.0` (playback), `flutter_image_compress: ^2.1.0`
+- **Documents**: `pdfx: ^2.9.2` (PDF viewer), `file_picker: ^8.0.0`
 
 ## Architecture
 
@@ -26,373 +28,172 @@ This is **Shifa Patient App**, a Flutter mobile application for patients to inte
 
 ```
 lib/
-├── app/                    # App initialization, router, shell
-├── core/                   # Shared code across features
-│   ├── config/            # App configuration (API URLs, environment)
-│   ├── constants/         # App-wide constants
-│   ├── localization/      # Multi-language translations
-│   ├── models/            # Shared data models
-│   ├── network/           # ApiClient (Dio wrapper with auth)
-│   ├── providers/         # Global Riverpod providers
-│   ├── services/          # Core services (notifications, etc.)
-│   ├── theme/             # App theme configuration
-│   ├── utils/             # Utility functions
-│   └── widgets/           # Reusable widgets
-└── features/              # Feature modules (Clean Architecture)
-    ├── auth/
-    ├── bookings/
-    ├── chat/
-    ├── doctors/
-    ├── documents/
-    ├── home/
-    ├── notifications/
-    ├── profile/
-    ├── settings/
-    └── tasks/
+├── main.dart                   # Entry point, Firebase init, first-launch keychain clear
+├── app/
+│   ├── app.dart               # MaterialApp, lifecycle observer, auth callbacks
+│   ├── router.dart            # GoRouter config (549 lines), auth guards
+│   ├── main_shell.dart        # Shell routing wrapper
+│   └── persistent_bottom_bar.dart
+├── core/
+│   ├── config/                # AppConfig (env URLs, build flags)
+│   ├── constants/             # Assets paths only
+│   ├── localization/          # AppLocalizations (custom delegate, 4 locales)
+│   ├── models/                # 13 shared models (Equatable, fromJson/toJson)
+│   ├── network/               # ApiClient (Dio wrapper), api_providers.dart
+│   ├── providers/             # language_provider, connectivity_provider
+│   ├── services/              # 10 services (push, local notif, daily video, app lock, geocoding)
+│   ├── theme/                 # AppTheme + AppDesignSystem (Material 3, teal primary #00BBB0)
+│   ├── utils/                 # 9 utilities (logger, storage, password validation, date)
+│   └── widgets/               # 18 reusable widgets (buttons, cards, avatars, app lock)
+└── features/
+    ├── auth/                  # 2 repos, 4 providers, 13 screens
+    ├── bookings/              # 2 repos, 2 providers, 10 screens (incl. video call, waiting room)
+    ├── chat/                  # 1 repo, domain models, 2 screens, 6 message widgets, 2 services
+    ├── doctors/               # 2 repos, 2 providers, 2 screens
+    ├── documents/             # 1 repo, 1 provider, 3 screens (incl. PDF viewer)
+    ├── home/                  # presentation only (1 screen, no data/providers)
+    ├── notifications/         # 1 repo, 1 provider, 1 service, notification localization
+    ├── profile/               # 2 repos, 1 provider, 3 screens, location picker
+    ├── settings/              # presentation only (app lock settings screen)
+    └── tasks/                 # 1 repo, 1 provider, 2 screens
 ```
 
 ### Feature Structure Pattern
 
-Each feature follows Clean Architecture:
+Each feature follows this pattern (no domain/usecase layer):
+
 ```
 feature/
-├── data/              # Repositories (API calls, data sources)
-├── presentation/      # UI screens and widgets
-└── providers/         # Riverpod state providers
+├── data/              # Repositories (API calls via ApiClient)
+├── providers/         # Riverpod providers (StateNotifier, FutureProvider)
+└── presentation/      # Screens and feature-specific widgets
 ```
 
-**Note**: This app does NOT have a `domain/` layer with use cases. Business logic is in providers and repositories.
+**Exceptions**: `home/` and `settings/` have presentation only. `chat/` uniquely has a `domain/` folder with `chat_models.dart`.
 
-### Key Architectural Decisions
+### Riverpod Patterns Actually Used
 
-1. **State Management**: Riverpod providers are in `feature/providers/`. Use `StateNotifier` or `AsyncNotifier` for complex state.
+| Pattern | Usage | Example |
+|---------|-------|---------|
+| `StateNotifierProvider` | Complex state with loading/error | `authStateProvider`, `bookingsProvider` |
+| `FutureProvider` | One-shot async data | `conversationsProvider` |
+| `FutureProvider.family` | Parameterized async | `conversationProvider(id)` |
+| `StreamProvider` | Continuous data (polling) | `unreadCountProvider` (10s poll) |
+| `Provider` | Singletons, repositories | `apiClientProvider`, all `*RepositoryProvider` |
+| `StateProvider` | Simple mutable state | `optimisticMessagesProvider` |
 
-2. **Navigation**: GoRouter configuration in `lib/app/router.dart`. Uses `StatefulShellRoute.indexedStack` to preserve tab state for bottom navigation (Home, Bookings, Documents, Doctors). Other tabs (Account, Chat, Notifications, Tasks) use `ShellRoute` to show persistent bottom bar.
+**Important**: This codebase uses `StateNotifier` exclusively — NOT `AsyncNotifier` or `Notifier`. All async state (loading, error, data) is managed manually in state classes with `copyWith`.
 
-3. **API Client**: Centralized in `lib/core/network/api_client.dart`. Automatically adds JWT token to requests. On 401 (unauthorized), triggers logout. On 403 (forbidden), does NOT logout (wrong role).
-
-4. **Backend Configuration**:
-   - **Production**: `https://shifa-doc-backend-mvp-production.up.railway.app/api` (used in release builds)
-   - **Debug**: `http://localhost:8080/api` (iOS) or `http://10.0.2.2:8080/api` (Android emulator)
-   - **QA**: `http://localhost:9090/api` (iOS) or `http://10.0.2.2:9090/api` (Android emulator)
-   - Configuration is in `lib/core/config/app_config.dart` and works for both iOS and Android
-   - Set flavor via: `--dart-define=FLAVOR=production|debug|qa`
-   - Override URL via: `--dart-define=API_BASE_URL=https://your-backend.com`
-
-5. **Localization**: All translations in `lib/core/localization/app_localizations.dart`. See `HOW_TO_ADD_TRANSLATIONS.md` for how to add translations.
-
-6. **Firebase**: Used for Phone OTP (registration/verification) and FCM (push notifications). Configuration in `lib/firebase_options.dart`. See `FIREBASE.md` for setup details.
-
-## Build Flavors
-
-The app supports three build flavors that automatically configure the API base URL:
-
-| Flavor | API URL | Use Case | Command |
-|--------|---------|----------|---------|
-| **production** | `https://shifa-doc-backend-mvp-production.up.railway.app/api` | Production/Release builds | `--dart-define=FLAVOR=production` |
-| **debug** | `http://localhost:8080/api` | Local development | Default (no flag needed) |
-| **qa** | `http://localhost:9090/api` | QA testing | `--dart-define=FLAVOR=qa` |
-
-**How it works:**
-- All configuration is in `lib/core/config/app_config.dart` (single source of truth)
-- Works for both iOS and Android without platform-specific setup
-- Android emulator automatically converts `localhost` to `10.0.2.2`
-- Release builds default to production flavor if not specified
-- You can override with `--dart-define=API_BASE_URL=https://custom-url.com`
-
-## Common Commands
-
-### Development
-
-```bash
-# Install dependencies
-flutter pub get
-
-# Run with debug flavor (default, uses localhost:8080)
-flutter run -d ios
-
-# Run with production flavor
-flutter run --dart-define=FLAVOR=production
-
-# Run with QA flavor (uses localhost:9090)
-flutter run --dart-define=FLAVOR=qa
-
-# Run with custom backend URL (overrides flavor)
-flutter run --dart-define=API_BASE_URL=https://staging.yourdomain.com
-
-# Run tests
-flutter test
-
-# Run specific test
-flutter test test/widget_test.dart
-
-# Lint/analyze code
-flutter analyze
-
-# Clean build artifacts
-flutter clean
-```
-
-### Building
-
-```bash
-# Build Android APK with debug flavor
-flutter build apk --dart-define=FLAVOR=debug
-
-# Build Android APK with production flavor (default for release builds)
-flutter build apk --release --dart-define=FLAVOR=production
-
-# Build Android App Bundle for Play Store (uses production by default in release mode)
-flutter build appbundle --release
-
-# Build with QA flavor
-flutter build apk --dart-define=FLAVOR=qa
-
-# Build iOS (requires Xcode)
-flutter build ios --dart-define=FLAVOR=production
-
-# Build with custom backend URL (overrides flavor)
-flutter build apk --release --dart-define=API_BASE_URL=https://your-backend.com
-```
-
-See `BUILD_IOS.md` for iOS build details and `PLAY_STORE_PUBLISH.md` for Android publishing.
-
-### Firebase
-
-```bash
-# Configure Firebase (regenerate firebase_options.dart)
-dart run flutterfire configure
-
-# Get Android SHA-1/SHA-256 for Firebase Console
-cd android && ./gradlew signingReport
-```
-
-See `FIREBASE.md` for complete Firebase setup (Phone Auth, FCM, SHA certificates).
-
-## Key Files and Their Purposes
-
-### Configuration
-- `lib/core/config/app_config.dart` - Environment configuration (API URLs, build-time flags)
-- `lib/firebase_options.dart` - Firebase SDK configuration (auto-generated by FlutterFire)
-- `pubspec.yaml` - Dependencies and app metadata
-- `analysis_options.yaml` - Dart linter rules
-
-### Core Infrastructure
-- `lib/main.dart` - App entry point, Firebase initialization
-- `lib/app/app.dart` - Root widget, MaterialApp setup
-- `lib/app/router.dart` - GoRouter navigation configuration
-- `lib/core/network/api_client.dart` - HTTP client with authentication
-- `lib/core/localization/app_localizations.dart` - Multi-language translations
-- `lib/core/theme/app_theme.dart` - App theme (teal primary: #26C6DA)
-
-### Authentication
-- `lib/features/auth/data/auth_repository.dart` - Login, registration, password reset
-- `lib/features/auth/data/phone_auth_repository.dart` - Firebase Phone OTP
-- `lib/features/auth/providers/auth_provider.dart` - Global auth state (manages JWT token)
-
-## Backend Integration
-
-The app communicates with a Spring Boot backend. See `BACKEND_INTEGRATION.md` for detailed endpoint documentation.
-
-### Test User Credentials
-
-A test patient user exists in the backend:
-- **Phone**: `+998901234567`
-- **Email**: `patient@test.com`
-- **Password**: `patient123`
-
-### Key Backend Endpoints
-
-**Authentication:**
-- `POST /auth/login` - Login (phone/email + password) → JWT token
-- `POST /auth/register-patient` - Register new patient
-- `POST /auth/forgot-password` - Request password reset
-- `POST /auth/reset-password` - Complete password reset
-
-**Patient:**
-- `GET /patients/me/profile` - Get current patient profile
-- `PATCH /patients/me/profile` - Update patient profile
-- `GET /patients/me/appointments` - List patient's appointments
-- `POST /patients/me/appointments` - Book new appointment
-- `GET /patients/me/appointments/{id}` - Get appointment details
-- `DELETE /patients/me/appointments/{id}` - Cancel appointment
-
-**Documents:**
-- `GET /patients/me/documents` - List patient documents
-- `POST /patients/me/documents` - Upload document
-- `DELETE /patients/me/documents/{id}` - Delete document
-
-**Doctors:**
-- `GET /api/doctors` - List all doctors (public)
-- `GET /api/doctors/{id}` - Get doctor profile (public)
-
-## Important Patterns and Conventions
-
-### State Management with Riverpod
+### State Class Pattern
 
 ```dart
-// Define provider in feature/providers/
-final myDataProvider = StateNotifierProvider<MyNotifier, MyState>((ref) {
-  final apiClient = ref.read(apiClientProvider);
-  return MyNotifier(apiClient);
-});
+class FeatureState {
+  final List<Model> items;
+  final bool isLoading;
+  final String? error;
+  // copyWith pattern
+}
 
-// Use in widgets
-class MyWidget extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(myDataProvider);
-    // ... use state
+class FeatureNotifier extends StateNotifier<FeatureState> {
+  Future<void> loadData() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final data = await _repository.getData();
+      state = state.copyWith(items: data, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+    }
   }
 }
 ```
 
-### API Calls
-
-Always use `ApiClient` from `lib/core/network/api_client.dart`:
+### Repository Injection Pattern
 
 ```dart
-final apiClient = ref.read(apiClientProvider);
-
-// GET request
-final response = await apiClient.get('/patients/me/profile');
-
-// POST request with body
-final response = await apiClient.post('/auth/login', data: {
-  'username': phone,
-  'password': password,
+final featureRepositoryProvider = Provider<FeatureRepository>((ref) {
+  return FeatureRepository(ref.watch(apiClientProvider));
 });
 
-// File upload
-final response = await apiClient.uploadFile(
-  '/patients/me/documents',
-  filePath,
-  fieldName: 'file',
-);
+final featureProvider = StateNotifierProvider<FeatureNotifier, FeatureState>((ref) {
+  return FeatureNotifier(ref.watch(featureRepositoryProvider));
+});
 ```
 
-The `ApiClient` automatically:
-- Adds `Authorization: Bearer <token>` header if logged in
-- Handles 401 (unauthorized) by logging out the user
-- Does NOT logout on 403 (forbidden) - that's for wrong role errors
+### Navigation Architecture
 
-### Navigation
+- **Router**: `lib/app/router.dart` — GoRouter with auth redirect guard
+- **Persistent tabs** (StatefulShellRoute.indexedStack, preserves state): Home, Bookings, Documents, Doctors
+- **Non-persistent tabs** (ShellRoute): Account, Chat, Notifications, Tasks
+- **Auth guard**: redirects unauthenticated users to login, handles force-password-reset, swallows Firebase reCAPTCHA callbacks
+- **Complex objects between routes**: use `state.extra` (not path/query params)
 
-```dart
-// Navigate to route
-context.go('/bookings');
+### API Client Behavior
 
-// Navigate with path parameters
-context.go('/doctors/$doctorId');
+- Adds `Authorization: Bearer <token>` header automatically
+- **401**: clears token, triggers logout (but NOT on `/public/*` or `/auth/*` endpoints)
+- **403**: does NOT logout (valid token, wrong role)
+- **Grace period**: 10 seconds after token save before 401 triggers logout
+- **Rate limit**: max 1 logout per 5 seconds
+- **Timeout**: 30 seconds (connect + receive)
 
-// Book an appointment (path includes doctor id; optional ?rescheduleId= for reschedule)
-context.push('/bookings/flow/$doctorId');
+### Model Pattern
 
-// Go back
-context.pop();
+Most models in `core/models/` use:
+- `Equatable` for value equality (except `ProfessionModel` and task models)
+- `factory Model.fromJson(Map<String, dynamic>)`
+- `Map<String, dynamic> toJson()`
+- `@override List<Object?> get props`
+- Null-safe field defaults
+
+## Build Flavors
+
+| Flavor | API URL | Command |
+|--------|---------|---------|
+| **production** | `https://shifa-doc-backend-mvp-production.up.railway.app/api` | `--dart-define=FLAVOR=production` |
+| **debug** | `http://localhost:8080/api` | Default (no flag) |
+| **qa** | `http://localhost:9090/api` | `--dart-define=FLAVOR=qa` |
+
+Config in `lib/core/config/app_config.dart`. Android emulator auto-converts `localhost` → `10.0.2.2`. Override with `--dart-define=API_BASE_URL=https://custom.com`.
+
+## Common Commands
+
+```bash
+flutter pub get                                    # Install dependencies
+flutter run -d ios                                 # Run (debug flavor, localhost:8080)
+flutter run --dart-define=FLAVOR=production         # Run with production backend
+flutter test                                       # Run all tests
+flutter test test/specific_test.dart               # Run specific test
+flutter analyze                                    # Lint/analyze
+flutter clean                                      # Clean build artifacts
+flutter build apk --release --dart-define=FLAVOR=production  # Build Android APK
+flutter build ios --dart-define=FLAVOR=production   # Build iOS
 ```
 
-**Important**: When passing complex objects between routes, use `state.extra` (not path/query params) to avoid serialization issues.
+## CI/CD
 
-### Localization
-
-```dart
-// Get localization instance
-final l10n = AppLocalizations.of(context)!;
-
-// Use translations
-Text(l10n.hello)  // "Hello" in English, "Salom" in Uzbek, etc.
-```
-
-To add missing translations, see `HOW_TO_ADD_TRANSLATIONS.md`.
-
-### Theme Usage
-
-```dart
-// Access theme colors
-final theme = Theme.of(context);
-final primaryColor = theme.colorScheme.primary;  // Teal #26C6DA
-
-// Pre-defined text styles
-Text('Title', style: theme.textTheme.headlineMedium)
-```
+- **flutter_ci.yml**: Runs on push/PR to main — format check (test/ only), `flutter analyze` (errors only), `flutter test --coverage`
+- **ios_testflight.yml**: Manual dispatch — builds and deploys to TestFlight (Xcode 26.0, Flutter 3.35.5)
 
 ## Testing
 
-Tests are in `test/` directory. Run with:
-
-```bash
-flutter test
-flutter test test/specific_test.dart
-```
-
-**Note**: Currently limited test coverage. When writing tests:
+9 test files in `test/` using `flutter_test` + `mocktail`. Coverage is minimal. When writing tests:
 - Widget tests for critical UI flows
 - Unit tests for providers and repositories
-- Mock `ApiClient` for repository tests
-
-## Firebase Setup
-
-Firebase is used for:
-1. **Phone Authentication (OTP)** - During registration and phone verification
-2. **Cloud Messaging (FCM)** - Push notifications
-
-### Quick Setup Checklist
-
-1. **Enable Phone Authentication** in Firebase Console
-2. **Add Android SHA-1 and SHA-256** fingerprints to Firebase Console (get via `cd android && ./gradlew signingReport`)
-3. **Add test phone numbers** in Firebase Console to avoid SMS throttling during development
-4. **Re-download** `google-services.json` after adding SHA fingerprints
-
-See `FIREBASE.md` for complete troubleshooting guide (covers "blocked requests", "app not authorized", etc.).
+- Mock `ApiClient` and repositories with `mocktail`
+- Integration tests go in `integration_test/`
 
 ## Common Gotchas
 
-1. **Android emulator can't reach localhost**: Use `10.0.2.2` instead of `localhost` for backend URL. This is handled automatically by `ApiClient.apiBaseUrl`.
+1. **Android emulator localhost**: Use `10.0.2.2` — handled automatically by `ApiClient.apiBaseUrl`
+2. **401 vs 403**: ApiClient logs out on 401 (invalid token) but NOT on 403 (wrong role)
+3. **Tab state preservation**: Only Home, Bookings, Documents, Doctors preserve state (indexedStack). Other tabs rebuild on navigation
+4. **Translations**: Every key MUST exist in all 4 language maps (en, uz, de, ru) or you get null errors
+5. **Firebase Phone Auth**: Emulators may fail — use test phone numbers or physical device
+6. **JWT grace period**: 10-second window after login before 401 can trigger logout (prevents race conditions)
+7. **First launch keychain clear**: `StorageService` clears auth tokens on first launch after reinstall (iOS Keychain persists across reinstalls)
+8. **Router Firebase callbacks**: Router swallows `/link` and `/__/auth` paths (iOS Safari reCAPTCHA)
 
-2. **401 vs 403 errors**: The ApiClient logs out on 401 (token invalid/expired) but NOT on 403 (valid token, wrong permissions). This prevents patients from being logged out when accessing doctor-only endpoints.
-
-3. **State preservation in tabs**: Home, Bookings, Documents, Doctors use `StatefulShellRoute.indexedStack` which preserves their state. Account, Chat, Notifications, Tasks use regular `ShellRoute` and do NOT preserve state.
-
-4. **Translation keys must exist in all languages**: When adding translations, add the key to all language sections (en, uz, de, ru) to avoid null errors.
-
-5. **Firebase Phone Auth requires real device for Play Integrity**: Emulators may fail phone verification. Use test phone numbers or test on physical device.
-
-6. **Backend must be running**: The app requires the backend to be running. If backend is down, you'll see connection errors. Check `BACKEND_INTEGRATION.md` for backend setup.
-
-7. **JWT token grace period**: After login, there's a 10-second grace period before 401 triggers logout. This prevents race conditions where a request is made immediately after login but before token is fully saved.
-
-## Additional Documentation
-
-- `README.md` - Project overview, features, and basic setup
-- `BACKEND_INTEGRATION.md` - Backend endpoints and integration status
-- `FIREBASE.md` - Firebase setup and troubleshooting (Phone Auth, FCM)
-- `BUILD_IOS.md` - iOS build and distribution
-- `PLAY_STORE_PUBLISH.md` - Android Play Store publishing
-- `HOW_TO_ADD_TRANSLATIONS.md` - Guide for adding new translations
-- `CREATE_TEST_USER.md` - Guide for creating test users in backend
-
-## Current Status and Known Issues
-
-### Completed Features
-- ✅ Authentication (login, registration with phone OTP, password reset)
-- ✅ Home screen with upcoming appointments
-- ✅ Appointment booking flow (select doctor, date, time, confirm)
-- ✅ Doctor listings and profiles
-- ✅ Document management (list, upload, download, view PDF)
-- ✅ Profile management (view, edit)
-- ✅ Multi-language support (en, uz, de, ru)
-- ✅ Firebase integration (Phone Auth, FCM)
-- ✅ App lock with biometrics
-- ✅ Chat functionality
-- ✅ Tasks management
-- ✅ Notifications
-
-### Areas Needing Work
-- Video calling UI is implemented but may need integration testing with Daily.co
-- Some mock data still used for doctors/appointments (backend integration in progress)
-- Test coverage is minimal
-- Error handling could be more comprehensive
+---
 
 ## Git Branching Rule
 
@@ -452,16 +253,121 @@ docs: update CLAUDE.md with commit message convention
 chore: bump flutter_riverpod to 2.6.0
 ```
 
-## When Making Changes
+---
 
-1. **Follow the existing architecture**: Place code in the appropriate feature module and layer (data/presentation/providers).
+## Best Practices
 
-2. **Use existing patterns**: Look at similar features before implementing new ones. For example, if adding a new API call, check how `auth_repository.dart` or `bookings_repository.dart` does it.
+These rules apply every time code is written or modified in this project.
 
-3. **Update translations**: If adding new UI text, add translations for all languages in `app_localizations.dart`.
+### Dart & Flutter
 
-4. **Test on both iOS and Android**: Platform-specific behavior differs, especially for Firebase and biometrics.
+1. **Use `const` constructors** wherever possible — widgets, default values, static instances. Dart's `const` enables compile-time constants and widget tree optimization.
+2. **Prefer `final`** for all local variables and fields that are assigned once. Never use `var` when `final` works.
+3. **Use named parameters** for functions with more than 2 parameters. Always mark required params with `required`.
+4. **Avoid `dynamic`**. Always specify types explicitly. If a type is truly unknown, prefer `Object?` over `dynamic`.
+5. **Null safety**: never use `!` (bang operator) without verifying the value is non-null. Prefer null-aware operators (`?.`, `??`, `?..`) and early returns.
+6. **String interpolation**: use `'$variable'` and `'${expression}'` instead of concatenation.
+7. **Collections**: use collection literals (`[]`, `{}`, `<Type>[]`) instead of constructors. Use `...` spread and `if`/`for` inside collection literals.
+8. **Imports**: use **package imports** everywhere in `lib/` (e.g., `import 'package:shifa_patient_app_v1/core/models/user_model.dart'`). Do NOT use relative imports — the entire codebase uses package imports consistently.
+9. **File naming**: `snake_case.dart` for all files. One public class per file. File name matches the primary class.
+10. **No code generation**: this project does NOT use `build_runner`, `freezed`, `json_serializable`, or `@riverpod` annotations. Do not introduce `.g.dart` or `.freezed.dart` files.
 
-5. **Consider backend integration**: If feature requires backend changes, document them in `BACKEND_INTEGRATION.md`.
+### Riverpod (Project-Specific)
 
-6. **Maintain backward compatibility**: Don't break existing API contracts without coordinating with backend team.
+1. **Follow existing pattern**: use `StateNotifier` + `StateNotifierProvider` for complex state with loading/error. Do NOT introduce `AsyncNotifier`, `Notifier`, or code-gen (`@riverpod`) — the codebase doesn't use them.
+2. **No `autoDispose`**: this codebase does not use `autoDispose` on any providers. Do not introduce it without explicit request.
+3. **Provider location**: feature-specific providers go in `features/<feature>/providers/`. Global providers go in `core/providers/`.
+4. **Repository injection**: always inject repositories via `Provider`, then pass to notifiers via `ref.watch(repositoryProvider)`.
+5. **Use `ref.watch`** in `build()` methods to reactively rebuild. Use `ref.read` in callbacks and event handlers (never `ref.watch` outside `build`).
+6. **Use `ref.listen`** for side effects (showing snackbars, navigation) — never trigger side effects in `build()`.
+7. **FutureProvider.family** for parameterized one-shot async data (e.g., fetching a single entity by ID).
+8. **StreamProvider** for continuous data (polling, real-time updates). Use manual `while(true)` + `yield` + `Future.delayed` for polling.
+9. **State classes** must have `copyWith` method. Include `isLoading`, `error`, and the data fields. Initialize with `isLoading: false, error: null`.
+10. **Cleanup**: use traditional `dispose()` in `ConsumerStatefulWidget` for cancelling timers, disposing controllers, and closing streams. The codebase does NOT use `ref.onDispose` — all cleanup is in widget `dispose()` methods.
+
+### GoRouter Navigation
+
+1. **Route paths**: lowercase, hyphen-separated (e.g., `/create-account`, `/forgot-password-otp`). Use path params for IDs (`/doctors/:id`, `/bookings/:id`).
+2. **`context.go`** for replacing the current route (tab navigation). **`context.push`** for stacking routes (detail screens, flows).
+3. **Complex objects**: pass via `state.extra`, never serialize to query params.
+4. **Auth guard**: all new routes must be added to the allowed routes list in `router.dart`'s `redirect` function, or they will redirect to home/login.
+5. **Shell routes**: if the new screen needs the bottom nav bar, nest it under the appropriate shell route in `router.dart`.
+6. **Router from providers**: use `ref.read(routerProvider)` to access the router from providers (not `GoRouter.of(context)`).
+
+### API & Networking
+
+1. **Always use `ApiClient`** from `core/network/api_client.dart`. Never create raw Dio instances.
+2. **Repository pattern**: all API calls live in `features/<feature>/data/<feature>_repository.dart`. Never call `ApiClient` directly from widgets or providers.
+3. **Error handling in repositories**: catch generic `Exception`, check if it's `DioException` to extract `e.response?.data?['message']`, then re-throw `Exception` with a user-friendly message. Let the provider's `copyWith(error: e.toString())` handle state updates.
+4. **Response parsing**: always check response type before casting. Use `response.data is List` or `response.data is Map` guards.
+5. **File uploads**: use `apiClient.uploadFile()` method — handles multipart form data.
+6. **Endpoint paths**: start with `/` but do NOT include `/api` prefix (ApiClient adds it). E.g., use `/patients/me/profile`, not `/api/patients/me/profile`.
+
+### UI & Widgets
+
+1. **Use `AppDesignSystem`** for all colors, spacing, and radii. Never hardcode color values — reference `AppDesignSystem.primary` (#00BBB0), `AppDesignSystem.destructiveRed`, `AppDesignSystem.textPrimary`, etc. Use `AppDesignSystem.h1`, `AppDesignSystem.body1` for typography tokens.
+2. **Use `AppDesignSystem` layout constants**: `screenPaddingH` (16), `cardRadius` (16), `cardPadding` (16), `cardSpacing` (12), `sectionToSectionSpacing` (24), `headerHeight` (140), `bottomNavHeight` (80). Never hardcode these values.
+3. **`Theme.of(context)`** only for Material-level overrides (e.g., `appBarTheme.titleTextStyle`). For everything else, use `AppDesignSystem` directly.
+4. **Reuse `core/widgets/`**: check existing widgets before creating new ones — `ShifaPrimaryButton`, `ShifaSecondaryButton`, `BaseCard`, `EmptyState`, `SectionTitle`, `UserAvatar`, `PhoneInputField`, `SegmentedControl`, `NotificationIconButton`, `ChatIconButton`, `LanguageMiniToggle`, `AppHeader`.
+5. **ConsumerWidget** for widgets that read providers. **ConsumerStatefulWidget** only when lifecycle methods (`initState`, `dispose`) are needed.
+6. **Responsive design**: use `MediaQuery.of(context).size` and `LayoutBuilder` instead of hardcoded dimensions. Use `Expanded` and `Flexible` in `Row`/`Column`.
+7. **Loading states**: show loading indicator while `state.isLoading` is true. Show error with retry button when `state.error` is non-null. Show `EmptyState` widget when data list is empty.
+8. **Scrolling**: use `ListView.builder` or `ListView.separated` for lists (lazy loading), not `Column` with `SingleChildScrollView` for dynamic lists.
+9. **Images**: use `CachedNetworkImage` for network images (currently used in chat). Provide `placeholder` and `errorWidget` parameters.
+
+### Localization
+
+1. **All user-facing strings** must go through `AppLocalizations`. Never hardcode text in widgets.
+2. **Add translations to ALL 4 languages** (en, uz, de, ru) when adding new keys. Missing keys cause null errors at runtime.
+3. **Access pattern**: `final l10n = AppLocalizations.of(context)!;` then `l10n.keyName`.
+4. **Key naming**: camelCase, descriptive (e.g., `appointmentCancelled`, `noUpcomingBookings`). See `HOW_TO_ADD_TRANSLATIONS.md`.
+
+### Models
+
+1. **Extend `Equatable`** for value equality. Override `props` with all fields. (Note: `ProfessionModel` and task models currently don't — new models should.)
+2. **Implement `fromJson` factory** and `toJson` method for serialization. No code generation — write these manually.
+3. **Null-safe defaults**: provide default values for optional fields in `fromJson` (e.g., `json['name'] ?? ''`).
+4. **Shared models** go in `core/models/`. Feature-specific models that aren't shared can live in the feature's `data/` or `domain/` folder (e.g., `chat/domain/chat_models.dart`).
+
+### Security
+
+1. **Never log tokens, passwords, or PII**. Use `AppLogger` for structured logging — it auto-redacts fields containing: `token`, `password`, `secret`, `authorization`, `cookie`, `apiKey`, `phone`, `email`, `name`, `address`.
+2. **Secure storage**: auth tokens go in `FlutterSecureStorage` (via `StorageService`), never `SharedPreferences`. StorageService keys: `auth_token`, `auth_token_saved_at`, `user_id`.
+3. **SharedPreferences** is only for non-sensitive data: `has_launched_before`, `app_language`, `shown_notification_ids`, `login_failed_attempts`, `login_lockout_until_epoch_ms`.
+4. **Input validation**: validate all user inputs before sending to API. Use `password_validation.dart` for password rules (min 8 chars, max 128, requires uppercase + lowercase + digit + special char).
+5. **Sanitize error messages**: use `auth_error_sanitizer.dart` to convert backend errors to user-friendly messages. It filters SQL keywords, stack traces, Java class names, and raw JSON. Never show raw backend errors to users.
+
+### Testing
+
+1. **Mock with `mocktail`**: create mock classes for repositories and ApiClient. Don't mock StateNotifier directly — test through the provider.
+2. **Widget tests**: use `ProviderScope(overrides: [...])` to inject mock providers.
+3. **Naming**: test files mirror source files — `lib/features/auth/providers/auth_provider.dart` → `test/auth_provider_test.dart`.
+4. **Test structure**: `group()` by method/behavior, `test()` with descriptive names starting with a verb (e.g., `'loads appointments on init'`).
+5. **Run `flutter analyze` before committing** — CI fails on analyzer errors.
+
+### Performance
+
+1. **`const` widgets**: mark widget constructors `const` when all fields are final/compile-time constants. This skips rebuild.
+2. **Selective rebuilds**: watch only the specific provider/state you need. Avoid watching a parent provider when you only need one field — use `ref.watch(provider.select((s) => s.field))`.
+3. **`ListView.builder`** or **`ListView.separated`** for dynamic lists. Never use `Column` + `map()` for scrollable lists.
+4. **Image compression**: use `ImageCompressionService` before uploading images in chat/documents.
+5. **Dispose resources**: cancel timers, close streams, dispose controllers in `dispose()`. All cleanup in this codebase uses traditional `StatefulWidget.dispose()`, not `ref.onDispose`.
+
+### When Making Changes
+
+1. **Follow existing architecture**: place code in the appropriate feature module and layer (data/presentation/providers).
+2. **Look at similar features first**: before implementing, check how existing features do it (e.g., check `bookings_repository.dart` before writing a new repository).
+3. **Update translations**: any new UI text needs entries in all 4 languages in `app_localizations.dart`.
+4. **Test on both platforms**: platform-specific behavior differs, especially Firebase and biometrics.
+5. **Backend coordination**: if feature requires backend changes, document them in `BACKEND_INTEGRATION.md`.
+6. **No breaking API contracts**: don't change request/response shapes without coordinating with backend team.
+7. **Run checks**: `flutter analyze` and `flutter test` must pass before committing.
+
+## Additional Documentation
+
+- `BACKEND_INTEGRATION.md` — Backend endpoints and integration status
+- `FIREBASE.md` — Firebase setup and troubleshooting (Phone Auth, FCM)
+- `BUILD_IOS.md` — iOS build and distribution
+- `PLAY_STORE_PUBLISH.md` — Android Play Store publishing
+- `HOW_TO_ADD_TRANSLATIONS.md` — Guide for adding new translations
+- `CREATE_TEST_USER.md` — Guide for creating test users in backend
