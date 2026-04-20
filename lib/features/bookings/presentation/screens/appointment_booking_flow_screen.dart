@@ -8,6 +8,7 @@ import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
 import 'package:shifa_patient_app_v1/core/models/appointment_model.dart';
 import 'package:shifa_patient_app_v1/core/utils/image_utils.dart';
 import 'package:shifa_patient_app_v1/features/doctors/providers/doctors_provider.dart';
+import 'package:shifa_patient_app_v1/features/doctors/data/doctor_locations_repository.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/schedule_provider.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
 import 'package:shifa_patient_app_v1/features/bookings/data/schedule_repository.dart';
@@ -40,16 +41,47 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
   bool _isLoadingDoctor = true;
   bool _isBooking = false;
 
+  // Multi-location support
+  List<PublicDoctorLocation> _locations = const [];
+  int? _selectedLocationId;
+
   @override
   void initState() {
     super.initState();
     _loadDoctor();
-    // Find next available date with slots and load them (saves patient from searching)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _findAndLoadNextAvailableDate();
-      }
+    // Load the doctor's practice locations in parallel so we can show the picker
+    // before slots when the doctor works at more than one clinic.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _loadLocationsThenSlots();
     });
+  }
+
+  Future<void> _loadLocationsThenSlots() async {
+    try {
+      final locs = await ref
+          .read(doctorLocationsRepositoryProvider)
+          .getLocations(widget.doctorId);
+      if (!mounted) return;
+      // Default to primary location (or the first) so single-location doctors
+      // behave exactly as before.
+      PublicDoctorLocation? preselected;
+      if (locs.isNotEmpty) {
+        preselected = locs.firstWhere(
+          (l) => l.isPrimary,
+          orElse: () => locs.first,
+        );
+      }
+      setState(() {
+        _locations = locs;
+        _selectedLocationId = preselected?.id;
+      });
+    } catch (_) {
+      // Ignore: booking flow proceeds without a location filter (backend will
+      // fall back to the single/primary location for single-location doctors).
+    }
+    if (!mounted) return;
+    await _findAndLoadNextAvailableDate();
   }
 
   @override
@@ -83,6 +115,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
     await ref.read(scheduleProvider.notifier).loadAvailableSlots(
       doctorId: widget.doctorId,
       day: dateStr,
+      locationId: _isVideoConsultation ? null : _selectedLocationId,
     );
   }
 
@@ -98,6 +131,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       final slots = await notifier.loadAvailableSlots(
         doctorId: widget.doctorId,
         day: dateStr,
+        locationId: _isVideoConsultation ? null : _selectedLocationId,
       );
       if (!mounted) return;
 
@@ -267,6 +301,24 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // Location picker (only when the doctor has multiple in-person locations
+                  // AND the user isn't booking a video consultation). Shown BEFORE the
+                  // time slots so the patient picks the clinic first.
+                  if (!_isVideoConsultation && _locations.length > 1) ...[
+                    _LocationPicker(
+                      locations: _locations,
+                      selectedId: _selectedLocationId,
+                      onChanged: (id) {
+                        if (id == _selectedLocationId) return;
+                        setState(() {
+                          _selectedLocationId = id;
+                          _selectedTime = null;
+                        });
+                        _loadAvailableSlots();
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   // Time slots
                   Card(
                     child: Padding(
@@ -321,7 +373,9 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Video consultation toggle
+                  // Video consultation toggle. When switching between video and in-person,
+                  // slots must be re-fetched because video ignores locationId whereas
+                  // in-person requires a specific practice location.
                   Card(
                     child: SwitchListTile(
                       title: Text(AppLocalizations.of(context)!.translate('videoConsultation')),
@@ -330,7 +384,9 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       onChanged: (value) {
                         setState(() {
                           _isVideoConsultation = value;
+                          _selectedTime = null;
                         });
+                        _loadAvailableSlots();
                       },
                     ),
                   ),
@@ -462,13 +518,22 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
         throw Exception('You already have an appointment scheduled at this date and time. Please choose a different time slot.');
       }
 
-      AppLogger.debug('Booking params - startAt: $startAtUtc, slotMinutes: ${selectedSlot.slotMinutes}, doctorId: ${widget.doctorId}');
+      // Prefer the locationId that came back on the slot itself (authoritative for
+      // this exact slot). Fall back to the patient's selection, which the backend
+      // will validate.
+      final bookingLocationId = _isVideoConsultation
+          ? null
+          : (selectedSlot.locationId ?? _selectedLocationId);
+
+      AppLogger.debug(
+          'Booking params - startAt: $startAtUtc, slotMinutes: ${selectedSlot.slotMinutes}, doctorId: ${widget.doctorId}, locationId: $bookingLocationId');
       await ref.read(bookingsProvider.notifier).bookAppointment(
         doctorId: widget.doctorId,
         startAt: startAtUtc,
         slotMinutes: selectedSlot.slotMinutes,
         reason: _reasonController.text.isEmpty ? null : _reasonController.text,
         isVideo: _isVideoConsultation,
+        locationId: bookingLocationId,
       );
 
       AppLogger.debug('Appointment booked successfully!');
@@ -549,6 +614,113 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       labelStyle: TextStyle(
         color: isSelected ? Colors.white : Colors.black,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+}
+
+/// Presents the doctor's practice locations as a single-select list so the
+/// patient must pick one before the time slots are filtered to that clinic.
+class _LocationPicker extends StatelessWidget {
+  const _LocationPicker({
+    required this.locations,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  final List<PublicDoctorLocation> locations;
+  final int? selectedId;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.place_outlined),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.translate('selectLocation'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...locations.map((loc) {
+              final isSelected = loc.id == selectedId;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => onChanged(loc.id),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppDesignSystem.primary.withOpacity(0.08)
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: isSelected
+                            ? AppDesignSystem.primary
+                            : Colors.grey.shade300,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Radio<int?>(
+                          value: loc.id,
+                          groupValue: selectedId,
+                          onChanged: onChanged,
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                loc.label +
+                                    (loc.isPrimary
+                                        ? ' · ${l10n.translate('primary')}'
+                                        : ''),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (loc.displaySubtitle.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    loc.displaySubtitle,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

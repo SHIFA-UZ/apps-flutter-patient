@@ -31,15 +31,18 @@ class ScheduleNotifier extends StateNotifier<ScheduleState> {
   ScheduleNotifier(this._repository) : super(ScheduleState());
 
   /// Loads available slots for a day and returns the list (for finding next available date).
+  /// When [locationId] is provided, filters to that practice location.
   Future<List<AvailableSlot>> loadAvailableSlots({
     required String doctorId,
     required String day, // yyyy-MM-dd
+    int? locationId,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final slots = await _repository.getAvailableSlots(
         doctorId: doctorId,
         day: day,
+        locationId: locationId,
       );
       state = state.copyWith(availableSlots: slots, isLoading: false);
       return slots;

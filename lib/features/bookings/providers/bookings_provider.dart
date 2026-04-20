@@ -73,6 +73,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
     int slotMinutes = 30,
     String? reason,
     bool isVideo = false,
+    int? locationId,
   }) async {
     try {
       final appointment = await _repository.bookAppointment(
@@ -81,6 +82,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
         slotMinutes: slotMinutes,
         reason: reason,
         isVideo: isVideo,
+        locationId: locationId,
       );
       // Reload appointments after booking
       await loadAppointments();

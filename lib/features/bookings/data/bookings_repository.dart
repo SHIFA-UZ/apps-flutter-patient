@@ -48,12 +48,15 @@ class BookingsRepository {
   }
 
   /// Book a new appointment (Shifa Global Time Architecture v2: startAt is ISO 8601 UTC).
+  /// [locationId] is required when the chosen doctor has multiple practice
+  /// locations and the booking isn't a video consultation.
   Future<AppointmentModel> bookAppointment({
     required String doctorId,
     required String startAt, // ISO 8601 UTC e.g. 2026-02-12T13:00:00Z
     int slotMinutes = 30,
     String? reason,
     bool isVideo = false,
+    int? locationId,
   }) async {
     try {
       final requestData = {
@@ -62,6 +65,7 @@ class BookingsRepository {
         'slotMinutes': slotMinutes,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         'isVideo': isVideo,
+        if (locationId != null) 'locationId': locationId,
       };
       
       AppLogger.debug('Booking request data: $requestData');

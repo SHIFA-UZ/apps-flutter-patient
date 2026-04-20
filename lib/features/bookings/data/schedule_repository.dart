@@ -6,11 +6,15 @@ class AvailableSlot {
   final String startAt;
   final String endAt;
   final int slotMinutes;
+  final int? locationId;
+  final String? locationLabel;
 
   AvailableSlot({
     required this.startAt,
     required this.endAt,
     required this.slotMinutes,
+    this.locationId,
+    this.locationLabel,
   });
 
   factory AvailableSlot.fromJson(Map<String, dynamic> json) {
@@ -18,6 +22,8 @@ class AvailableSlot {
       startAt: json['startAt'] as String,
       endAt: json['endAt'] as String,
       slotMinutes: json['slotMinutes'] as int,
+      locationId: (json['locationId'] as num?)?.toInt(),
+      locationLabel: json['locationLabel'] as String?,
     );
   }
 }
@@ -27,16 +33,19 @@ class ScheduleRepository {
 
   ScheduleRepository(this._apiClient);
 
-  /// Get available time slots for a doctor on a specific day
+  /// Get available time slots for a doctor on a specific day. When [locationId]
+  /// is provided, only slots tied to that practice location are returned.
   Future<List<AvailableSlot>> getAvailableSlots({
     required String doctorId,
     required String day, // yyyy-MM-dd
+    int? locationId,
   }) async {
     try {
       final response = await _apiClient.get(
         '/patients/me/schedule/doctors/$doctorId/available',
         queryParameters: {
           'day': day,
+          if (locationId != null) 'locationId': locationId,
         },
       );
 
