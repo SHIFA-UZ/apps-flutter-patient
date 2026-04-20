@@ -233,4 +233,52 @@ class CopilotApi {
         .map((e) => DoctorModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  /// Chat-history driven, LLM-routed doctor suggestions ranked by rating, next slot, and distance.
+  /// Returns null in [doctors] and a [clarifyingQuestion] when the server needs more info from the patient.
+  Future<CopilotSuggestFromChatResult> suggestDoctorsFromChat({
+    required List<Map<String, String>> messages,
+    required String language,
+  }) async {
+    final uri = Uri.parse('${ApiClient.apiBaseUrl}/patients/me/copilot/suggest-doctors-chat');
+    final response = await http.post(
+      uri,
+      headers: await _authHeaders(),
+      body: jsonEncode({'messages': messages, 'language': language}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        _extractErrorMessage(response, 'Suggest doctors failed: HTTP ${response.statusCode}'),
+      );
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final rawDoctors = (body['doctors'] as List<dynamic>? ?? []);
+    final doctors = rawDoctors
+        .map((e) => DoctorModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final rawSpecialties = (body['specialties'] as List<dynamic>? ?? []);
+    return CopilotSuggestFromChatResult(
+      needsMoreInfo: body['needsMoreInfo'] == true,
+      clarifyingQuestion:
+          (body['clarifyingQuestion'] as String?)?.trim().isNotEmpty == true
+              ? (body['clarifyingQuestion'] as String).trim()
+              : null,
+      specialties: rawSpecialties.map((e) => e.toString()).toList(),
+      doctors: doctors,
+    );
+  }
+}
+
+class CopilotSuggestFromChatResult {
+  final bool needsMoreInfo;
+  final String? clarifyingQuestion;
+  final List<String> specialties;
+  final List<DoctorModel> doctors;
+
+  const CopilotSuggestFromChatResult({
+    required this.needsMoreInfo,
+    required this.clarifyingQuestion,
+    required this.specialties,
+    required this.doctors,
+  });
 }

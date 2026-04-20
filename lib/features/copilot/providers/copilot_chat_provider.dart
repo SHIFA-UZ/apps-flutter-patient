@@ -207,6 +207,49 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
       return const [];
     }
   }
+
+  /// Smart suggestion that sends the entire chat history. When the server says we lack enough info,
+  /// returns an empty doctor list and surfaces the clarifying question as an assistant chat bubble so the
+  /// copilot asks one concrete follow-up instead of showing irrelevant doctors.
+  Future<List<DoctorModel>> autoSuggestDoctorsFromChat(String language) async {
+    if (state.messages.where((m) => m.role == 'user').isEmpty) return const [];
+    try {
+      final payload = state.messages
+          .map((m) => {'role': m.role, 'content': m.content})
+          .toList();
+      final res = await _api.suggestDoctorsFromChat(
+        messages: payload,
+        language: language,
+      );
+      if (res.needsMoreInfo) {
+        state = state.copyWith(
+          lastSuggestedDoctorIds: const [],
+        );
+        final q = res.clarifyingQuestion;
+        if (q != null && q.isNotEmpty) {
+          final alreadyAsked = state.messages.isNotEmpty &&
+              state.messages.last.role == 'assistant' &&
+              state.messages.last.content.trim() == q;
+          if (!alreadyAsked) {
+            state = state.copyWith(
+              messages: [
+                ...state.messages,
+                CopilotMessage(role: 'assistant', content: q),
+              ],
+            );
+          }
+        }
+        return const [];
+      }
+      state = state.copyWith(
+        lastSuggestedDoctorIds: res.doctors.map((d) => d.id).toList(),
+      );
+      return res.doctors;
+    } catch (e) {
+      state = state.copyWith(lastError: e.toString());
+      return const [];
+    }
+  }
 }
 
 final copilotChatProvider =

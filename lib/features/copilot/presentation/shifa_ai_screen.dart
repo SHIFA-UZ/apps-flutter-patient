@@ -48,7 +48,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
     final l10n = AppLocalizations.of(context)!;
     final lang = copilotBackendLanguage(ref.read(profileProvider).profile?.language);
     final preview = await ref.read(copilotChatProvider.notifier).sendUserMessage(userText, lang);
-    final suggested = await ref.read(copilotChatProvider.notifier).autoSuggestDoctorsFromChatText(userText);
+    final suggested = await ref.read(copilotChatProvider.notifier).autoSuggestDoctorsFromChat(lang);
     if (!mounted) return;
     setState(() => _suggestedDoctors = suggested);
     _scrollToBottom();
@@ -101,9 +101,8 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
   Future<void> _onSuggestDoctors() async {
     final l10n = AppLocalizations.of(context)!;
     final chat = ref.read(copilotChatProvider);
-    final lastUser = chat.messages.where((m) => m.role == 'user').toList();
-    final symptoms = lastUser.isNotEmpty ? lastUser.last.content : _textController.text.trim();
-    if (symptoms.isEmpty) {
+    if (chat.messages.where((m) => m.role == 'user').isEmpty &&
+        _textController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.translate('copilotInputHint'))),
       );
@@ -112,16 +111,31 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
 
     setState(() => _loadingSuggestions = true);
     try {
-      final list = await ref.read(copilotChatProvider.notifier).fetchSuggestedDoctors(symptoms);
+      final lang = copilotBackendLanguage(ref.read(profileProvider).profile?.language);
+      final list = await ref
+          .read(copilotChatProvider.notifier)
+          .autoSuggestDoctorsFromChat(lang);
+      if (!mounted) return;
       setState(() {
         _suggestedDoctors = list;
         _loadingSuggestions = false;
       });
       if (list.isEmpty && mounted) {
-        ref.read(copilotChatProvider.notifier).appendAssistantMessage(
-              l10n.translate('copilotNoProviderOnPlatform'),
-            );
+        // The provider already injects the clarifying question as an assistant turn when the server
+        // needs more info; only show the "no provider on platform" message if the specialty was
+        // inferred but no matching doctor was found.
+        final chatAfter = ref.read(copilotChatProvider);
+        final lastIds = chatAfter.lastSuggestedDoctorIds;
+        final lastMsg = chatAfter.messages.isNotEmpty ? chatAfter.messages.last : null;
+        final lastWasAssistantQuestion = lastMsg?.role == 'assistant' &&
+            (lastMsg?.content.trim().endsWith('?') ?? false);
+        if (lastIds != null && lastIds.isEmpty && !lastWasAssistantQuestion) {
+          ref.read(copilotChatProvider.notifier).appendAssistantMessage(
+                l10n.translate('copilotNoProviderOnPlatform'),
+              );
+        }
       }
+      _scrollToBottom();
     } catch (e) {
       setState(() => _loadingSuggestions = false);
       if (mounted) {
