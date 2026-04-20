@@ -137,6 +137,39 @@ class AppLocalizations {
       'latitude': 'Latitude',
       'longitude': 'Longitude',
 
+      // Shifa AI (co-pilot)
+      'shifaAiTitle': 'Shifa AI',
+      'shifaAiCardSubtitle':
+          'Your co-pilot — ask questions, describe symptoms, find doctors',
+      'shifaAiDisclaimer':
+          'Shifa AI provides general information only. It is not a substitute for professional medical advice, diagnosis, or treatment.',
+      'copilotInputHint': 'Type a message…',
+      'copilotSuggestDoctors': 'Suggest doctors',
+      'copilotSuggestedDoctors': 'Suggested doctors',
+      'copilotNoSuggestedDoctors':
+          'No matching doctors found. Try the Doctors tab to search.',
+      'copilotBookWithDoctor': 'Book',
+      'copilotViewProfile': 'Profile',
+      'copilotTranscribeError': 'Could not transcribe audio',
+      'copilotContinueToBooking':
+          'You will choose date and time on the next screen. Continue?',
+      'copilotBookingTitle': 'Book appointment',
+      'copilotBookManual': 'Choose slot',
+      'copilotAutoBook': 'Auto-book',
+      'copilotAutoBookExplainer':
+          'Shifa will book the nearest available slot to your preferred date and time. You must confirm consent below.',
+      'copilotPreferredDate': 'Preferred date',
+      'copilotPreferredTime': 'Preferred time',
+      'copilotConsentAutoBook': 'I allow Shifa to book this appointment on my behalf',
+      'copilotAutoBookSubmit': 'Confirm auto-booking',
+      'copilotBookedSuccess': 'Appointment booked. Check Bookings for details.',
+      'copilotBookedViaAiReason': 'Booked via Shifa AI',
+      'copilotConfirmBookFromChatTitle': 'Confirm booking from chat',
+      'copilotConfirmBookFromChatExplainer':
+          'Shifa will book the nearest available slot to the time you discussed. This uses your earlier agreement in this conversation.',
+      'copilotNoProviderOnPlatform':
+          'Shifa does not list a doctor on the platform who matches these symptoms yet. You can browse all doctors in the Doctors tab or try again later as more providers join. If you feel very unwell, seek urgent in-person care or emergency services.',
+
       // Bookings
       'bookings': 'Bookings',
       'upcoming': 'Upcoming',
@@ -174,7 +207,7 @@ class AppLocalizations {
       'permissionRationaleCamera':
           'Shifa needs camera access to take profile photos and photos for documents or chat.',
       'permissionRationaleMicrophone':
-          'Shifa needs microphone access for voice messages in chat and for video calls with your doctor.',
+          'Shifa needs microphone access for voice messages in chat, for Shifa AI voice input, and for video calls with your doctor.',
       'permissionRationaleLocation':
           'Shifa needs location access so you can select your address on the map when filling your profile.',
       'permissionRationaleNotifications':
@@ -788,6 +821,40 @@ class AppLocalizations {
       'noDoctorsInCloseDistance': 'Keine Ärzte in der Nähe',
       'viewTasks': 'Aufgaben anzeigen',
       'useMyLocation': 'Meinen Standort verwenden',
+
+      // Shifa AI (co-pilot)
+      'shifaAiTitle': 'Shifa AI',
+      'shifaAiCardSubtitle':
+          'Ihr Co-Pilot — Fragen, Symptome, Ärzte finden',
+      'shifaAiDisclaimer':
+          'Shifa AI bietet nur allgemeine Informationen. Es ersetzt keine professionelle medizinische Beratung, Diagnose oder Behandlung.',
+      'copilotInputHint': 'Nachricht eingeben…',
+      'copilotSuggestDoctors': 'Ärzte vorschlagen',
+      'copilotSuggestedDoctors': 'Vorgeschlagene Ärzte',
+      'copilotNoSuggestedDoctors':
+          'Keine passenden Ärzte gefunden. Nutzen Sie die Arztsuche.',
+      'copilotBookWithDoctor': 'Buchen',
+      'copilotViewProfile': 'Profil',
+      'copilotTranscribeError': 'Sprache konnte nicht transkribiert werden',
+      'copilotContinueToBooking':
+          'Auf der nächsten Seite wählen Sie Datum und Uhrzeit. Fortfahren?',
+      'copilotBookingTitle': 'Termin buchen',
+      'copilotBookManual': 'Slot wählen',
+      'copilotAutoBook': 'Auto buchen',
+      'copilotAutoBookExplainer':
+          'Shifa bucht den nächstgelegenen freien Termin zu Ihrem Wunschdatum und Ihrer Wunschzeit. Bitte stimmen Sie unten zu.',
+      'copilotPreferredDate': 'Wunschdatum',
+      'copilotPreferredTime': 'Wunschzeit',
+      'copilotConsentAutoBook': 'Ich erlaube Shifa, diesen Termin in meinem Namen zu buchen',
+      'copilotAutoBookSubmit': 'Auto-Buchung bestätigen',
+      'copilotBookedSuccess': 'Termin gebucht. Details unter Termine.',
+      'copilotBookedViaAiReason': 'Gebucht über Shifa AI',
+      'copilotConfirmBookFromChatTitle': 'Buchung aus dem Chat bestätigen',
+      'copilotConfirmBookFromChatExplainer':
+          'Shifa bucht den nächstgelegenen freien Termin zu der besprochenen Zeit. Dies nutzt Ihre vorherige Zustimmung in diesem Gespräch.',
+      'copilotNoProviderOnPlatform':
+          'Shifa listet derzeit keinen Arzt auf der Plattform, der zu diesen Symptomen passt. Nutzen Sie die Arztsuche oder versuchen Sie es später erneut. Bei starker Verschlechterung suchen Sie bitte ärztliche Notfallversorgung auf.',
+
       'locationPermissionDenied': 'Standortberechtigung verweigert.',
       'locationPermissionDeniedForever':
           'Standortberechtigung dauerhaft verweigert. Bitte in den Einstellungen aktivieren.',
@@ -1173,6 +1240,39 @@ class AppLocalizations {
       'getCurrentLocation': 'Joriy joylashuvni olish',
       'latitude': 'Kenglik',
       'longitude': 'Uzunlik',
+
+      // Shifa AI (co-pilot)
+      'shifaAiTitle': 'Shifa AI',
+      'shifaAiCardSubtitle':
+          'Yordamchingiz — savollar, simptomlar, shifokorlarni topish',
+      'shifaAiDisclaimer':
+          'Shifa AI faqat umumiy ma\'lumot beradi. U professional tibbiy maslahat, tashxis yoki davolarning o\'rnini bosmaydi.',
+      'copilotInputHint': 'Xabar yozing…',
+      'copilotSuggestDoctors': 'Shifokorlarni tavsiya qilish',
+      'copilotSuggestedDoctors': 'Tavsiya etilgan shifokorlar',
+      'copilotNoSuggestedDoctors':
+          'Mos shifokorlar topilmadi. Shifokorlar bo\'limidan qidiring.',
+      'copilotBookWithDoctor': 'Bron qilish',
+      'copilotViewProfile': 'Profil',
+      'copilotTranscribeError': 'Ovozni matnga aylantirib bo\'lmadi',
+      'copilotContinueToBooking':
+          'Keyingi sahifada sana va vaqtni tanlaysiz. Davom etasizmi?',
+      'copilotBookingTitle': 'Uchrashuv bron qilish',
+      'copilotBookManual': 'Vaqt tanlash',
+      'copilotAutoBook': 'Avto-bron',
+      'copilotAutoBookExplainer':
+          'Shifa siz tanlagan sana va vaqtga eng yaqin bo\'sh slotni bron qiladi. Pastdagi rozilikni belgilang.',
+      'copilotPreferredDate': 'Afzal qilingan sana',
+      'copilotPreferredTime': 'Afzal qilingan vaqt',
+      'copilotConsentAutoBook': 'Shifaning mening nomimdan bron qilishiga ruxsat beraman',
+      'copilotAutoBookSubmit': 'Avto-bronni tasdiqlash',
+      'copilotBookedSuccess': 'Uchrashuv bronlandi. Tafsilotlar «Qabullar»da.',
+      'copilotBookedViaAiReason': 'Shifa AI orqali bron qilindi',
+      'copilotConfirmBookFromChatTitle': 'Chatdan bronni tasdiqlash',
+      'copilotConfirmBookFromChatExplainer':
+          'Shifa suhbatda kelishilgan vaqtga eng yaqin bo\'sh slotni bron qiladi. Bu suhbatdagi oldingi roziligingiz asosida amalga oshiriladi.',
+      'copilotNoProviderOnPlatform':
+          'Hozircha Shifa platformasida ushbu simptomlarga mos shifokor profili yo\'q. Barcha shifokorlarni «Shifokorlar» bo\'limidan ko\'rishingiz yoki keyinroq qayta urinishingiz mumkin. Ahvol og\'irlashsa, tez tibbiy yordam yoki favqulodda xizmatga murojaat qiling.',
 
       // Bookings
       'bookings': 'Qabullar',
@@ -1845,6 +1945,40 @@ class AppLocalizations {
       'noDoctorsInCloseDistance': 'Нет врачей поблизости',
       'viewTasks': 'Просмотр задач',
       'useMyLocation': 'Использовать моё местоположение',
+
+      // Shifa AI (co-pilot)
+      'shifaAiTitle': 'Shifa AI',
+      'shifaAiCardSubtitle':
+          'Ваш помощник — вопросы, симптомы, поиск врачей',
+      'shifaAiDisclaimer':
+          'Shifa AI даёт только общую информацию. Это не замена профессиональной медицинской консультации, диагностики или лечения.',
+      'copilotInputHint': 'Введите сообщение…',
+      'copilotSuggestDoctors': 'Подобрать врачей',
+      'copilotSuggestedDoctors': 'Рекомендованные врачи',
+      'copilotNoSuggestedDoctors':
+          'Подходящих врачей не найдено. Попробуйте поиск во вкладке Врачи.',
+      'copilotBookWithDoctor': 'Запись',
+      'copilotViewProfile': 'Профиль',
+      'copilotTranscribeError': 'Не удалось распознать речь',
+      'copilotContinueToBooking':
+          'На следующем экране вы выберете дату и время. Продолжить?',
+      'copilotBookingTitle': 'Записаться на приём',
+      'copilotBookManual': 'Выбрать время',
+      'copilotAutoBook': 'Авто-запись',
+      'copilotAutoBookExplainer':
+          'Shifa запишет на ближайший свободный слот к выбранной дате и времени. Подтвердите согласие ниже.',
+      'copilotPreferredDate': 'Желаемая дата',
+      'copilotPreferredTime': 'Желаемое время',
+      'copilotConsentAutoBook': 'Разрешаю Shifa записать меня от моего имени',
+      'copilotAutoBookSubmit': 'Подтвердить авто-запись',
+      'copilotBookedSuccess': 'Запись создана. Подробности в разделе Записи.',
+      'copilotBookedViaAiReason': 'Запись через Shifa AI',
+      'copilotConfirmBookFromChatTitle': 'Подтвердить запись из чата',
+      'copilotConfirmBookFromChatExplainer':
+          'Shifa запишет на ближайший свободный слот к обсуждённому времени. Это использует ваше согласие из этого разговора.',
+      'copilotNoProviderOnPlatform':
+          'На платформе Shifa пока нет врача, подходящего под эти симптомы. Загляните во вкладку «Врачи» или попробуйте позже. При ухудшении состояния обратитесь за срочной помощью или в скорую.',
+
       'locationPermissionDenied': 'Доступ к местоположению запрещён.',
       'locationPermissionDeniedForever':
           'Доступ к местоположению постоянно запрещён. Включите в настройках.',

@@ -4,7 +4,7 @@ class AppDesignSystem {
   AppDesignSystem._();
 
   /// Bottom padding for scroll content when a bottom nav bar is shown.
-  /// Use this so content and FAB don't sit under the nav bar or system gesture area.
+  /// Matches [PersistentBottomBar]: bar row + center FAB overlap + system inset.
   static double safeBottomWithNavBar(BuildContext context) {
     final padding = MediaQuery.of(context).viewPadding;
     return AppDesignSystem.bottomNavHeight + padding.bottom;
@@ -15,6 +15,8 @@ class AppDesignSystem {
   static const Color primaryLight = Color(0xFF59C2BC);
   static const Color secondaryLight = Color(0xFFCCF1EF);
   static const Color primaryDark = Color(0xFF129B8A);
+  /// Reference teal for Shifa AI / co-pilot emphasis (e.g. nav FAB); pair with [primary] / [primaryLight] in gradients.
+  static const Color primaryAi = Color(0xFF26BAA4);
   static const Color destructiveRed = Color(0xFFDC2F2F);
   static const Color destructiveLight = Color(0xFFEB5454);
   static const Color destructiveSecondaryLight = Color(0xFFF5C1C1);
@@ -29,7 +31,7 @@ class AppDesignSystem {
   static const Color backgroundTertiary = Color(0xFFF3F4F6);
 
   static List<BoxShadow> get cardShadow => [
-        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
       ];
 
   static const double h1Size = 24;
@@ -53,7 +55,7 @@ class AppDesignSystem {
   static const double headerHeight = 140;
   static const double headerRadius = 24;
   static const double headerPadding = 16;
-  /// Height for bottom nav bar (icon + label). 80 avoids overflow on typical densities.
-  static const double bottomNavHeight = 80;
-  static const double fabSafeBottom = 80;
+  /// Height reserved for bottom nav (56px row + 37px center FAB overlap). See [PersistentBottomBar].
+  static const double bottomNavHeight = 93;
+  static const double fabSafeBottom = 93;
 }

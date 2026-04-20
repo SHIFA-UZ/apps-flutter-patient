@@ -36,6 +36,7 @@ import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/wait
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/sign_appointment_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/visit_summary_screen.dart';
 import 'package:shifa_patient_app_v1/features/chat/presentation/chat_screen.dart';
+import 'package:shifa_patient_app_v1/features/copilot/presentation/shifa_ai_screen.dart';
 import 'package:shifa_patient_app_v1/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:shifa_patient_app_v1/features/tasks/presentation/screens/tasks_screen.dart';
 import 'package:shifa_patient_app_v1/features/tasks/presentation/screens/task_check_in_screen.dart';
@@ -105,6 +106,7 @@ const _allowedRoutePrefixes = [
   '/chat',
   '/notifications',
   '/tasks',
+  '/shifa-ai',
 ];
 
 bool _isAllowedRoute(String location) {
@@ -142,6 +144,7 @@ class AppRoutes {
   static const doctors = '/doctors';
   static const account = '/account';
   static const chat = '/chat';
+  static const shifaAi = '/shifa-ai';
   static const notifications = '/notifications';
   static const tasks = '/tasks';
   static const taskCheckIn = '/tasks/:id/check-in';
@@ -497,6 +500,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.chat,
             builder: (context, state) => const ChatScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.shifaAi,
+            builder: (context, state) => const ShifaAiScreen(),
           ),
           GoRoute(
             path: AppRoutes.notifications,
