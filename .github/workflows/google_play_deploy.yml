@@ -1,0 +1,217 @@
+name: Deploy to Google Play Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip Flutter tests'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.35.5'
+  JAVA_VERSION: '17'
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to Play Store (Open Testing)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      #########################
+      # PHASE 1: CHECKOUT & SETUP
+      #########################
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      #########################
+      # PHASE 2: TESTS
+      #########################
+
+      - name: Run tests
+        if: ${{ !inputs.skip_tests }}
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter test
+
+      #########################
+      # PHASE 3: FIREBASE CONFIGURATION
+      #########################
+
+      - name: Decode Firebase Android config
+        env:
+          FIREBASE_ANDROID_CONFIG_BASE64: ${{ secrets.FIREBASE_ANDROID_CONFIG_BASE64 }}
+        run: |
+          if [ -z "$FIREBASE_ANDROID_CONFIG_BASE64" ]; then
+            echo "::error::FIREBASE_ANDROID_CONFIG_BASE64 secret not found!"
+            exit 1
+          fi
+          echo "$FIREBASE_ANDROID_CONFIG_BASE64" | base64 --decode > android/app/google-services.json
+
+      #########################
+      # PHASE 4: VERSIONING
+      #########################
+
+      - name: Calculate version
+        id: version
+        run: |
+          VERSION_NAME=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+
+          # Auto-increment: offset ensures we continue from the last Play Store version code (19)
+          # Formula: 19 (offset) + github.run_number (starts at 1) = 20, 21, 22, ...
+          BUILD_NUMBER=$(( 19 + ${{ github.run_number }} ))
+
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION_NAME+$BUILD_NUMBER"
+
+      #########################
+      # PHASE 5: SIGNING
+      #########################
+
+      - name: Decode Android keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret not found!"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storeFile=upload-keystore.jks
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      #########################
+      # PHASE 6: BUILD AAB
+      #########################
+
+      - name: Build Android App Bundle
+        run: |
+          flutter build appbundle \
+            --release \
+            --dart-define=FLAVOR=production \
+            --build-name=${{ steps.version.outputs.version_name }} \
+            --build-number=${{ steps.version.outputs.build_number }}
+
+      - name: Verify AAB file
+        run: |
+          AAB_PATH="build/app/outputs/bundle/release/app-release.aab"
+          if [ ! -f "$AAB_PATH" ]; then
+            echo "::error::AAB file not found at $AAB_PATH"
+            exit 1
+          fi
+          AAB_SIZE=$(du -h "$AAB_PATH" | cut -f1)
+          echo "AAB built successfully: $AAB_SIZE"
+
+      #########################
+      # PHASE 7: UPLOAD TO GOOGLE PLAY
+      #########################
+
+      - name: Decode Google Play service account key
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_BASE64: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_BASE64" ]; then
+            echo "::error::GOOGLE_PLAY_SERVICE_ACCOUNT_BASE64 secret not found!"
+            exit 1
+          fi
+          echo "$GOOGLE_PLAY_SERVICE_ACCOUNT_BASE64" | base64 --decode > google-play-service-account.json
+
+      - name: Upload to Google Play (Open Testing)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: google-play-service-account.json
+          packageName: com.shifa.patientapp
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: beta
+          status: completed
+
+      #########################
+      # PHASE 8: ARTIFACTS & CLEANUP
+      #########################
+
+      - name: Upload AAB artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ steps.version.outputs.version_name }}-${{ steps.version.outputs.build_number }}
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f android/app/google-services.json
+          rm -f android/app/upload-keystore.jks
+          rm -f android/key.properties
+          rm -f google-play-service-account.json
+
+      #########################
+      # PHASE 9: SUMMARY
+      #########################
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "==========================================="
+          echo "  Google Play Store Deployment Successful"
+          echo "==========================================="
+          echo ""
+          echo "  App: Shifa Patient"
+          echo "  Package: com.shifa.patientapp"
+          echo "  Version: ${{ steps.version.outputs.version_name }}+${{ steps.version.outputs.build_number }}"
+          echo "  Track: Open Testing (beta)"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Triggered by: ${{ github.actor }}"
+          echo ""
+          echo "  Google Play Console:"
+          echo "  https://play.google.com/console"
+          echo "==========================================="
+
+      - name: Failure Summary
+        if: failure()
+        run: |
+          echo "==========================================="
+          echo "  Google Play Deployment FAILED"
+          echo "==========================================="
+          echo ""
+          echo "  Check the logs above for error details"
+          echo "  Common issues:"
+          echo "    - Missing or invalid secrets"
+          echo "    - Keystore signing problems"
+          echo "    - Version code already used (bump in pubspec.yaml)"
+          echo "    - Service account missing permissions"
+          echo "==========================================="

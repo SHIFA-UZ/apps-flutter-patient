@@ -44,6 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android signing
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+google-play-service-account.json
+
 # Markdown files (only CLAUDE.md and README.md are tracked)
 *.md
 !CLAUDE.md
