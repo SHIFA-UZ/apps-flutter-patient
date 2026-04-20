@@ -53,6 +53,53 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
 
   CopilotApi get _api => _ref.read(copilotApiProvider);
 
+  void _appendAssistantIfNew(String content) {
+    final t = content.trim();
+    if (t.isEmpty) return;
+    final last = state.messages.isNotEmpty ? state.messages.last : null;
+    if (last != null && last.role == 'assistant' && last.content.trim() == t) return;
+    state = state.copyWith(
+      messages: [...state.messages, CopilotMessage(role: 'assistant', content: t)],
+    );
+  }
+
+  String _clarifyingQuestionForReason(String reasonCode, String language) {
+    final ru = language.toUpperCase() == 'RU';
+    final uz = language.toUpperCase() == 'UZ';
+    switch (reasonCode) {
+      case 'DOCTOR_MISSING':
+      case 'DOCTOR_NOT_IN_SUGGESTED_LIST':
+      case 'DOCTOR_NOT_FOUND':
+      case 'NO_SUGGESTED_DOCTORS':
+        if (ru) return 'Уточните, пожалуйста, какого врача из списка вы выбираете?';
+        if (uz) return "Iltimos, ro'yxatdan qaysi shifokorni tanlayotganingizni aniqlashtiring.";
+        return 'Please confirm which doctor from the suggested list you want to book with.';
+      case 'TIME_MISSING':
+      case 'INVALID_PREFERRED_TIME':
+      case 'PREFERRED_TIME_IN_PAST':
+        if (ru) return 'Укажите, пожалуйста, удобные будущие дату и время для записи.';
+        if (uz) return 'Iltimos, qabul uchun kelajakdagi sana va vaqtni ayting.';
+        return 'Please share a future preferred date and time for the appointment.';
+      case 'VISIT_TYPE_MISSING':
+        if (ru) return 'Вы предпочитаете видео-консультацию или очный визит в клинику?';
+        if (uz) return "Video qabulni xohlaysizmi yoki klinikaga borib ko'rinishni?";
+        return 'Do you prefer a video consultation or an in-person clinic visit?';
+      default:
+        if (ru) return 'Чтобы продолжить запись, уточните врача, дату/время и формат визита.';
+        if (uz) return 'Band qilishni davom ettirish uchun shifokor, sana/vaqt va qabul turini aniqlashtiring.';
+        return 'To continue booking, please confirm doctor, preferred date/time, and visit type.';
+    }
+  }
+
+  void _handleResolveFailure(Map<String, dynamic> res, String language) {
+    final code = (res['reasonCode'] as String?)?.trim() ?? '';
+    final backendMessage = (res['message'] as String?)?.trim();
+    if (backendMessage != null && backendMessage.isNotEmpty) {
+      state = state.copyWith(lastError: backendMessage);
+    }
+    _appendAssistantIfNew(_clarifyingQuestionForReason(code, language));
+  }
+
   /// Resolves [lastSuggestedDoctorIds] for the booking API: omit when never loaded; pass empty list when search had no hits.
   List<int>? _allowedDoctorIdsPayload() {
     final raw = state.lastSuggestedDoctorIds;
@@ -96,7 +143,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         clearStreaming: true,
         isSending: false,
       );
-      return await _peekResolveBookingFromChat(language);
+      return null;
     } on CopilotStreamException catch (e) {
       state = state.copyWith(
         isSending: false,
@@ -119,11 +166,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
   }
 
   void appendAssistantMessage(String content) {
-    final t = content.trim();
-    if (t.isEmpty) return;
-    state = state.copyWith(
-      messages: [...state.messages, CopilotMessage(role: 'assistant', content: t)],
-    );
+    _appendAssistantIfNew(content);
   }
 
   /// Second step after the user confirms the booking preview in the UI.
@@ -150,10 +193,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         }
         return;
       }
-      final failure = (res['message'] as String?)?.trim();
-      if (failure != null && failure.isNotEmpty) {
-        state = state.copyWith(lastError: failure);
-      }
+      _handleResolveFailure(res, language);
     } catch (e) {
       state = state.copyWith(lastError: e.toString());
     }
@@ -179,8 +219,16 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         final preview = (res['previewMessage'] as String?)?.trim() ?? '';
         if (preview.isNotEmpty) return preview;
       }
+      if (res['booked'] != true) {
+        _handleResolveFailure(res, language);
+      }
     } catch (_) {}
     return null;
+  }
+
+  /// Public preview resolver; call this after doctor suggestions are refreshed so allowed doctor IDs are current.
+  Future<String?> resolveBookingPreviewFromChat(String language) {
+    return _peekResolveBookingFromChat(language);
   }
 
   Future<List<DoctorModel>> fetchSuggestedDoctors(String symptomsText) async {

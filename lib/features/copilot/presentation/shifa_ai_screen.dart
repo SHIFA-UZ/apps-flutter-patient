@@ -47,8 +47,9 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
     _textController.clear();
     final l10n = AppLocalizations.of(context)!;
     final lang = copilotBackendLanguage(ref.read(profileProvider).profile?.language);
-    final preview = await ref.read(copilotChatProvider.notifier).sendUserMessage(userText, lang);
+    await ref.read(copilotChatProvider.notifier).sendUserMessage(userText, lang);
     final suggested = await ref.read(copilotChatProvider.notifier).autoSuggestDoctorsFromChat(lang);
+    final preview = await ref.read(copilotChatProvider.notifier).resolveBookingPreviewFromChat(lang);
     if (!mounted) return;
     setState(() => _suggestedDoctors = suggested);
     _scrollToBottom();
