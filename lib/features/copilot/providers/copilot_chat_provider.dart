@@ -190,6 +190,23 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
     );
     return list;
   }
+
+  /// Best-effort suggestion from free-text chat input.
+  /// Keeps chat responsive and only surfaces errors in [lastError] when request fails.
+  Future<List<DoctorModel>> autoSuggestDoctorsFromChatText(String text) async {
+    final query = text.trim();
+    if (query.isEmpty) return const [];
+    try {
+      final list = await _api.suggestDoctors(query);
+      state = state.copyWith(
+        lastSuggestedDoctorIds: list.map((d) => d.id).toList(),
+      );
+      return list;
+    } catch (e) {
+      state = state.copyWith(lastError: e.toString());
+      return const [];
+    }
+  }
 }
 
 final copilotChatProvider =

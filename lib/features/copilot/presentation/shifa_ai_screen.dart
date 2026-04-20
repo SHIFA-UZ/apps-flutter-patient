@@ -43,11 +43,14 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
   Future<void> _onSend() async {
     final text = _textController.text;
     if (text.trim().isEmpty) return;
+    final userText = text.trim();
     _textController.clear();
     final l10n = AppLocalizations.of(context)!;
     final lang = copilotBackendLanguage(ref.read(profileProvider).profile?.language);
-    final preview = await ref.read(copilotChatProvider.notifier).sendUserMessage(text, lang);
+    final preview = await ref.read(copilotChatProvider.notifier).sendUserMessage(userText, lang);
+    final suggested = await ref.read(copilotChatProvider.notifier).autoSuggestDoctorsFromChatText(userText);
     if (!mounted) return;
+    setState(() => _suggestedDoctors = suggested);
     _scrollToBottom();
     if (preview != null && preview.isNotEmpty) {
       final ok = await showDialog<bool>(
@@ -422,7 +425,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
               ),
             ),
             SizedBox(
-              height: 168,
+              height: 188,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.screenPaddingH, vertical: 8),
