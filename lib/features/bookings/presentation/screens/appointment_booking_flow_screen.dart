@@ -44,6 +44,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
   // Multi-location support
   List<PublicDoctorLocation> _locations = const [];
   int? _selectedLocationId;
+  bool _locationStepCompleted = false;
 
   @override
   void initState() {
@@ -63,10 +64,11 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
           .read(doctorLocationsRepositoryProvider)
           .getLocations(widget.doctorId);
       if (!mounted) return;
-      // Default to primary location (or the first) so single-location doctors
-      // behave exactly as before.
+      final requiresLocationStep = !_isVideoConsultation && locs.length > 1;
+      // For multi-location in-person flow, force an explicit location choice first.
+      // For single-location (or video), preserve direct booking behavior.
       PublicDoctorLocation? preselected;
-      if (locs.isNotEmpty) {
+      if (!requiresLocationStep && locs.isNotEmpty) {
         preselected = locs.firstWhere(
           (l) => l.isPrimary,
           orElse: () => locs.first,
@@ -75,12 +77,19 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       setState(() {
         _locations = locs;
         _selectedLocationId = preselected?.id;
+        _locationStepCompleted = !requiresLocationStep;
       });
     } catch (_) {
       // Ignore: booking flow proceeds without a location filter (backend will
       // fall back to the single/primary location for single-location doctors).
+      if (mounted) {
+        setState(() {
+          _locationStepCompleted = true;
+        });
+      }
     }
     if (!mounted) return;
+    if (!_locationStepCompleted) return;
     await _findAndLoadNextAvailableDate();
   }
 
@@ -268,7 +277,42 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       ),
                     ),
                   const SizedBox(height: 16),
+                  // Video consultation toggle. When switching between video and in-person,
+                  // slots must be re-fetched because video ignores locationId whereas
+                  // in-person requires a specific practice location.
+                  Card(
+                    child: SwitchListTile(
+                      title: Text(AppLocalizations.of(context)!.translate('videoConsultation')),
+                      subtitle: Text(AppLocalizations.of(context)!.translate('haveYourAppointment')),
+                      value: _isVideoConsultation,
+                      onChanged: (value) {
+                        final requiresLocationStep = !value && _locations.length > 1;
+                        setState(() {
+                          _isVideoConsultation = value;
+                          _selectedTime = null;
+                          if (requiresLocationStep) {
+                            _locationStepCompleted = false;
+                            _selectedLocationId = null;
+                          } else {
+                            _locationStepCompleted = true;
+                            if (_selectedLocationId == null && _locations.isNotEmpty) {
+                              final primary = _locations.firstWhere(
+                                (l) => l.isPrimary,
+                                orElse: () => _locations.first,
+                              );
+                              _selectedLocationId = primary.id;
+                            }
+                          }
+                        });
+                        if (_locationStepCompleted) {
+                          _loadAvailableSlots();
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   // Date selector
+                  if (_locationStepCompleted)
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -300,7 +344,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  if (_locationStepCompleted) const SizedBox(height: 16),
                   // Location picker (only when the doctor has multiple in-person locations
                   // AND the user isn't booking a video consultation). Shown BEFORE the
                   // time slots so the patient picks the clinic first.
@@ -314,12 +358,29 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                           _selectedLocationId = id;
                           _selectedTime = null;
                         });
-                        _loadAvailableSlots();
+                        if (_locationStepCompleted) {
+                          _loadAvailableSlots();
+                        }
                       },
                     ),
                     const SizedBox(height: 16),
+                    if (!_locationStepCompleted)
+                      ShifaPrimaryButton(
+                        label: l10n.next,
+                        onPressed: _selectedLocationId == null
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _locationStepCompleted = true;
+                                  _selectedTime = null;
+                                });
+                                await _findAndLoadNextAvailableDate();
+                              },
+                      ),
+                    if (!_locationStepCompleted) const SizedBox(height: 16),
                   ],
                   // Time slots
+                  if (_locationStepCompleted)
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -372,26 +433,9 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Video consultation toggle. When switching between video and in-person,
-                  // slots must be re-fetched because video ignores locationId whereas
-                  // in-person requires a specific practice location.
-                  Card(
-                    child: SwitchListTile(
-                      title: Text(AppLocalizations.of(context)!.translate('videoConsultation')),
-                      subtitle: Text(AppLocalizations.of(context)!.translate('haveYourAppointment')),
-                      value: _isVideoConsultation,
-                      onChanged: (value) {
-                        setState(() {
-                          _isVideoConsultation = value;
-                          _selectedTime = null;
-                        });
-                        _loadAvailableSlots();
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  if (_locationStepCompleted) const SizedBox(height: 16),
                   // Reason for visit
+                  if (_locationStepCompleted)
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -417,8 +461,9 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  if (_locationStepCompleted) const SizedBox(height: 24),
                   // Confirm button
+                  if (_locationStepCompleted)
                   ShifaPrimaryButton(
                     label: l10n.translate('confirm'),
                     onPressed: (_selectedTime == null || _isBooking)
