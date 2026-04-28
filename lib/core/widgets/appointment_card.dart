@@ -14,11 +14,13 @@ final _timeFormat = DateFormat('HH:mm');
 class AppointmentCard extends StatelessWidget {
   final dynamic appointment;
   final VoidCallback? onTap;
+  final VoidCallback? onPayNow;
 
   const AppointmentCard({
     super.key,
     required this.appointment,
     this.onTap,
+    this.onPayNow,
   });
 
   IconData _statusIcon(AppointmentStatus status) {
@@ -59,6 +61,7 @@ class AppointmentCard extends StatelessWidget {
       status = AppointmentStatus.pending;
     }
     final isCancelled = status == AppointmentStatus.cancelled;
+    final paymentPending = (appointment.paymentStatus?.toString().toUpperCase() == 'PENDING');
     final doctor = appointment.doctor;
     DateTime startDate;
     try {
@@ -126,6 +129,32 @@ class AppointmentCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (paymentPending) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'PAYMENT PENDING',
+                          style: AppDesignSystem.caption.copyWith(
+                            color: Colors.orange.shade800,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: onPayNow,
+                        child: const Text('Pay now'),
+                      ),
+                    ],
+                  ),
+                ],
                 if (doctor?.profession != null && doctor!.profession!.isNotEmpty)
                   Text(
                     l10n.translateProfession(doctor.profession!) +

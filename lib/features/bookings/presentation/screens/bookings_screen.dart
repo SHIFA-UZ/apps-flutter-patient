@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,8 +14,10 @@ import 'package:shifa_patient_app_v1/core/widgets/appointment_card.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/core/widgets/empty_state.dart';
 import 'package:shifa_patient_app_v1/core/widgets/segmented_control.dart';
+import 'package:shifa_patient_app_v1/features/bookings/data/bookings_repository.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
 import 'package:shifa_patient_app_v1/features/profile/providers/profile_provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   const BookingsScreen({super.key});
@@ -24,6 +28,7 @@ class BookingsScreen extends ConsumerStatefulWidget {
 
 class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   int _selectedTab = 0; // 0 = Upcoming, 1 = Past
+  String? _payingAppointmentId;
 
   @override
   void initState() {
@@ -49,6 +54,50 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       // Past appointments - fetch all appointments (no status filter) and filter by date client-side
       // This ensures we get all past appointments regardless of status (CONFIRMED, COMPLETED, etc.)
       ref.read(bookingsProvider.notifier).loadAppointments();
+    }
+  }
+
+  Future<void> _handlePayNow(String appointmentId) async {
+    if (_payingAppointmentId != null) return;
+    setState(() => _payingAppointmentId = appointmentId);
+    try {
+      final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
+        appointmentId: appointmentId,
+        gateway: 'STRIPE',
+      );
+      final paymentId = checkout['paymentId']?.toString();
+      final checkoutUrl = checkout['checkoutUrl']?.toString();
+      if (!mounted) return;
+      if (paymentId == null || checkoutUrl == null || checkoutUrl.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not start payment. Please try again.')),
+        );
+        return;
+      }
+      final paid = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => _BookingsPaymentCheckoutScreen(
+            paymentId: paymentId,
+            checkoutUrl: checkoutUrl,
+          ),
+        ),
+      );
+      if (paid == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment completed. Appointment is confirmed.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _loadAppointments();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment could not be started: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _payingAppointmentId = null);
     }
   }
 
@@ -182,6 +231,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       child: AppointmentCard(
                         appointment: appointment,
                         onTap: () => context.push('${AppRoutes.bookings}/${appointment.id}'),
+                        onPayNow: appointment.paymentStatus.toString().toUpperCase() == 'PENDING'
+                            ? () => _handlePayNow(appointment.id)
+                            : null,
                       ),
                     );
                   },
@@ -203,6 +255,82 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         heroTag: 'bookings_fab',
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
+
+class _BookingsPaymentCheckoutScreen extends ConsumerStatefulWidget {
+  const _BookingsPaymentCheckoutScreen({
+    required this.paymentId,
+    required this.checkoutUrl,
+  });
+
+  final String paymentId;
+  final String checkoutUrl;
+
+  @override
+  ConsumerState<_BookingsPaymentCheckoutScreen> createState() => _BookingsPaymentCheckoutScreenState();
+}
+
+class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPaymentCheckoutScreen> {
+  late final WebViewController _controller;
+  Timer? _pollingTimer;
+  bool _checkingStatus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (request) {
+            final url = request.url;
+            if (url.contains('/api/payments/checkout/success')) {
+              _checkPaymentStatus(forceCloseOnPaid: true);
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.checkoutUrl));
+
+    _pollingTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _checkPaymentStatus(forceCloseOnPaid: true),
+    );
+  }
+
+  Future<void> _checkPaymentStatus({bool forceCloseOnPaid = false}) async {
+    if (_checkingStatus || !mounted) return;
+    _checkingStatus = true;
+    try {
+      final status = await ref.read(bookingsRepositoryProvider).getPaymentStatus(widget.paymentId);
+      final paymentStatus = (status['status']?.toString() ?? '').toUpperCase();
+      if (paymentStatus == 'PAID' && mounted && forceCloseOnPaid) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (_) {
+      // Ignore transient polling errors.
+    } finally {
+      _checkingStatus = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Complete payment'),
+      ),
+      body: WebViewWidget(controller: _controller),
     );
   }
 }
