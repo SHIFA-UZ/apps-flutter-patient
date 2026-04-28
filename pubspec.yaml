@@ -59,6 +59,7 @@ dependencies:
   equatable: ^2.0.5
   flutter_svg: ^2.0.9
   url_launcher: ^6.2.5
+  webview_flutter: ^4.10.0
   
   # Localization
   flutter_localizations:

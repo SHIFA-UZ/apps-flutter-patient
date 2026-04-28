@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shifa_patient_app_v1/core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +20,7 @@ import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart'
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
 import 'package:shifa_patient_app_v1/core/utils/date_utils.dart' show parseAppointmentDateTime;
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class AppointmentBookingFlowScreen extends ConsumerStatefulWidget {
   final String doctorId;
@@ -622,25 +624,26 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
 
       AppLogger.debug('Appointment booked successfully!');
 
+      var paymentCompleted = bookedAppointment.paymentStatus.toUpperCase() != 'PENDING';
+      String? createdPaymentId;
+      String? createdCheckoutUrl;
       if (bookedAppointment.paymentStatus.toUpperCase() == 'PENDING') {
         final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
           appointmentId: bookedAppointment.id,
           gateway: 'STRIPE',
         );
-        final checkoutUrl = checkout['checkoutUrl']?.toString();
-        if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
-          final opened = await launchUrl(
-            Uri.parse(checkoutUrl),
-            mode: LaunchMode.externalApplication,
-          );
-          if (!opened && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Payment checkout could not open automatically.'),
-                backgroundColor: Colors.orange,
+        createdPaymentId = checkout['paymentId']?.toString();
+        createdCheckoutUrl = checkout['checkoutUrl']?.toString();
+        if (createdCheckoutUrl != null && createdCheckoutUrl.isNotEmpty && createdPaymentId != null) {
+          final paid = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(
+              builder: (_) => _PaymentCheckoutScreen(
+                checkoutUrl: createdCheckoutUrl!,
+                paymentId: createdPaymentId!,
               ),
-            );
-          }
+            ),
+          );
+          paymentCompleted = paid == true;
         }
       }
 
@@ -666,25 +669,66 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
         }
       }
 
-      // Show success message
+      // Show success message only once payment is completed.
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.rescheduleId != null
-                ? l10n.appointmentRescheduledSuccessfully
-                : (l10n.appointmentSlotBooked ?? l10n.translate('appointmentSlotBooked'))),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Navigate to bookings page after a short delay
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            context.go(AppRoutes.bookings);
+        if (paymentCompleted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.rescheduleId != null
+                  ? l10n.appointmentRescheduledSuccessfully
+                  : (l10n.appointmentSlotBooked ?? l10n.translate('appointmentSlotBooked'))),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              context.go(AppRoutes.bookings);
+            }
+          });
+        } else {
+          if (createdPaymentId != null) {
+            final paidFromPending = await Navigator.of(context).push<bool>(
+              MaterialPageRoute(
+                builder: (_) => _PaymentPendingScreen(
+                  paymentId: createdPaymentId!,
+                  checkoutUrl: createdCheckoutUrl,
+                ),
+              ),
+            );
+            paymentCompleted = paidFromPending == true;
           }
-        });
+
+          if (paymentCompleted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(widget.rescheduleId != null
+                    ? l10n.appointmentRescheduledSuccessfully
+                    : (l10n.appointmentSlotBooked ?? l10n.translate('appointmentSlotBooked'))),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                context.go(AppRoutes.bookings);
+              }
+            });
+            return;
+          }
+
+          setState(() {
+            _isBooking = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment is still pending. Complete payment to confirm this booking.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       }
     } catch (e, stackTrace) {
       AppLogger.error('Booking error:', e, stackTrace);
@@ -720,6 +764,184 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       labelStyle: TextStyle(
         color: isSelected ? Colors.white : Colors.black,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+}
+
+class _PaymentCheckoutScreen extends ConsumerStatefulWidget {
+  const _PaymentCheckoutScreen({
+    required this.checkoutUrl,
+    required this.paymentId,
+  });
+
+  final String checkoutUrl;
+  final String paymentId;
+
+  @override
+  ConsumerState<_PaymentCheckoutScreen> createState() => _PaymentCheckoutScreenState();
+}
+
+class _PaymentCheckoutScreenState extends ConsumerState<_PaymentCheckoutScreen> {
+  late final WebViewController _controller;
+  Timer? _pollingTimer;
+  bool _checkingStatus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (request) {
+            final url = request.url;
+            if (url.contains('/api/payments/checkout/success')) {
+              _checkPaymentStatus(forceCloseOnPaid: true);
+              return NavigationDecision.prevent;
+            }
+            if (url.contains('/api/payments/checkout/cancel')) {
+              if (mounted) Navigator.of(context).pop(false);
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.checkoutUrl));
+
+    _pollingTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _checkPaymentStatus(forceCloseOnPaid: true),
+    );
+  }
+
+  Future<void> _checkPaymentStatus({bool forceCloseOnPaid = false}) async {
+    if (_checkingStatus || !mounted) return;
+    _checkingStatus = true;
+    try {
+      final status = await ref.read(bookingsRepositoryProvider).getPaymentStatus(widget.paymentId);
+      final paymentStatus = (status['status']?.toString() ?? '').toUpperCase();
+      if (paymentStatus == 'PAID' && mounted && forceCloseOnPaid) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (_) {
+      // Ignore transient network issues while polling.
+    } finally {
+      _checkingStatus = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Complete payment'),
+      ),
+      body: WebViewWidget(controller: _controller),
+    );
+  }
+}
+
+class _PaymentPendingScreen extends ConsumerStatefulWidget {
+  const _PaymentPendingScreen({
+    required this.paymentId,
+    this.checkoutUrl,
+  });
+
+  final String paymentId;
+  final String? checkoutUrl;
+
+  @override
+  ConsumerState<_PaymentPendingScreen> createState() => _PaymentPendingScreenState();
+}
+
+class _PaymentPendingScreenState extends ConsumerState<_PaymentPendingScreen> {
+  bool _checking = false;
+  String _status = 'PENDING';
+
+  Future<void> _checkStatus() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    try {
+      final status = await ref.read(bookingsRepositoryProvider).getPaymentStatus(widget.paymentId);
+      final paymentStatus = (status['status']?.toString() ?? '').toUpperCase();
+      setState(() => _status = paymentStatus);
+      if (paymentStatus == 'PAID' && mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not refresh payment status. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  Future<void> _continuePayment() async {
+    final url = widget.checkoutUrl;
+    if (url == null || url.isEmpty) return;
+    final paid = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => _PaymentCheckoutScreen(
+          checkoutUrl: url,
+          paymentId: widget.paymentId,
+        ),
+      ),
+    );
+    if (paid == true && mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Payment pending')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Your appointment is created and waiting for payment confirmation.',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Text('Current payment status: $_status'),
+            const SizedBox(height: 24),
+            ShifaPrimaryButton(
+              label: _checking ? 'Checking...' : 'Check payment status',
+              onPressed: _checking ? null : _checkStatus,
+              isLoading: _checking,
+            ),
+            const SizedBox(height: 12),
+            ShifaPrimaryButton(
+              label: 'Continue payment',
+              onPressed: (widget.checkoutUrl == null || widget.checkoutUrl!.isEmpty) ? null : _continuePayment,
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Back to bookings'),
+            ),
+          ],
+        ),
       ),
     );
   }
