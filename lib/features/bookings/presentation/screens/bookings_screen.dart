@@ -59,6 +59,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Future<void> _handlePayNow(String appointmentId) async {
+    final l10n = AppLocalizations.of(context)!;
     if (_payingAppointmentId != null) return;
     setState(() => _payingAppointmentId = appointmentId);
     try {
@@ -71,7 +72,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       if (!mounted) return;
       if (paymentId == null || checkoutUrl == null || checkoutUrl.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not start payment. Please try again.')),
+          SnackBar(content: Text(l10n.translate('paymentCouldNotStart'))),
         );
         return;
       }
@@ -85,8 +86,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       );
       if (paid == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment completed. Appointment is confirmed.'),
+          SnackBar(
+            content: Text(l10n.translate('paymentCompletedAppointmentConfirmed')),
             backgroundColor: Colors.green,
           ),
         );
@@ -95,7 +96,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment could not be started: $e')),
+        SnackBar(
+          content: Text(
+            l10n.translate('paymentCouldNotStartWithError').replaceAll('{{error}}', '$e'),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _payingAppointmentId = null);
@@ -327,9 +332,10 @@ class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPayment
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complete payment'),
+        title: Text(l10n.translate('completePayment')),
       ),
       body: WebViewWidget(controller: _controller),
     );

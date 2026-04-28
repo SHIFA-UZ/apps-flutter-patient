@@ -140,7 +140,7 @@ class AppointmentCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          'PAYMENT PENDING',
+                          l10n.translate('paymentPendingBadge'),
                           style: AppDesignSystem.caption.copyWith(
                             color: Colors.orange.shade800,
                             fontWeight: FontWeight.w700,
@@ -150,7 +150,7 @@ class AppointmentCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       TextButton(
                         onPressed: onPayNow,
-                        child: const Text('Pay now'),
+                        child: Text(l10n.translate('payNow')),
                       ),
                     ],
                   ),

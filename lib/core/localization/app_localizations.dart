@@ -235,6 +235,25 @@ class AppLocalizations {
       'appointmentSlotBooked': 'Appointment slot booked',
       'appointmentRescheduledSuccessfully':
           'Appointment rescheduled successfully',
+      'payNow': 'Pay now',
+      'paymentPendingBadge': 'PAYMENT PENDING',
+      'paymentCouldNotStart': 'Could not start payment. Please try again.',
+      'paymentCouldNotStartWithError': 'Payment could not be started: {{error}}',
+      'paymentCompletedAppointmentConfirmed':
+          'Payment completed. Appointment is confirmed.',
+      'completePayment': 'Complete payment',
+      'paymentPendingTitle': 'Payment pending',
+      'paymentPendingMessage':
+          'Your appointment is created and waiting for payment confirmation.',
+      'currentPaymentStatus': 'Current payment status: {{status}}',
+      'checking': 'Checking...',
+      'checkPaymentStatus': 'Check payment status',
+      'continuePayment': 'Continue payment',
+      'backToBookings': 'Back to bookings',
+      'couldNotRefreshPaymentStatus':
+          'Could not refresh payment status. Please try again.',
+      'paymentStillPendingConfirmBooking':
+          'Payment is still pending. Complete payment to confirm this booking.',
       'joinVideoCall': 'Join Video Call',
       'viewVisitSummary': 'View Visit Summary',
       'leaveReview': 'Leave a Review',
@@ -896,6 +915,27 @@ class AppLocalizations {
           'Sind Sie sicher, dass Sie diesen Termin stornieren möchten?',
       'appointmentCancelledSuccessfully': 'Termin erfolgreich storniert',
       'appointmentRescheduledSuccessfully': 'Termin erfolgreich verschoben',
+      'payNow': 'Jetzt bezahlen',
+      'paymentPendingBadge': 'ZAHLUNG AUSSTEHEND',
+      'paymentCouldNotStart':
+          'Zahlung konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+      'paymentCouldNotStartWithError':
+          'Zahlung konnte nicht gestartet werden: {{error}}',
+      'paymentCompletedAppointmentConfirmed':
+          'Zahlung abgeschlossen. Termin ist bestätigt.',
+      'completePayment': 'Zahlung abschließen',
+      'paymentPendingTitle': 'Zahlung ausstehend',
+      'paymentPendingMessage':
+          'Ihr Termin wurde erstellt und wartet auf Zahlungsbestätigung.',
+      'currentPaymentStatus': 'Aktueller Zahlungsstatus: {{status}}',
+      'checking': 'Prüfe...',
+      'checkPaymentStatus': 'Zahlungsstatus prüfen',
+      'continuePayment': 'Zahlung fortsetzen',
+      'backToBookings': 'Zurück zu Terminen',
+      'couldNotRefreshPaymentStatus':
+          'Zahlungsstatus konnte nicht aktualisiert werden. Bitte erneut versuchen.',
+      'paymentStillPendingConfirmBooking':
+          'Die Zahlung ist noch ausstehend. Schließen Sie die Zahlung ab, um diese Buchung zu bestätigen.',
       'errorCancellingAppointment': 'Fehler beim Stornieren des Termins',
       'contactDoctor': 'Arzt kontaktieren',
       'callDoctor': 'Arzt anrufen',
@@ -1347,6 +1387,27 @@ class AppLocalizations {
       'appointmentSlotBooked': 'Qabul vaqti band qilindi',
       'appointmentRescheduledSuccessfully':
           'Qabul muvaffaqiyatli qayta rejalashtirildi',
+      'payNow': 'Hozir to\'lash',
+      'paymentPendingBadge': 'TO\'LOV KUTILMOQDA',
+      'paymentCouldNotStart':
+          'To\'lovni boshlab bo\'lmadi. Iltimos, qayta urinib ko\'ring.',
+      'paymentCouldNotStartWithError':
+          'To\'lovni boshlab bo\'lmadi: {{error}}',
+      'paymentCompletedAppointmentConfirmed':
+          'To\'lov yakunlandi. Uchrashuv tasdiqlandi.',
+      'completePayment': 'To\'lovni yakunlash',
+      'paymentPendingTitle': 'To\'lov kutilmoqda',
+      'paymentPendingMessage':
+          'Uchrashuv yaratildi va to\'lov tasdiqlanishini kutmoqda.',
+      'currentPaymentStatus': 'Joriy to\'lov holati: {{status}}',
+      'checking': 'Tekshirilmoqda...',
+      'checkPaymentStatus': 'To\'lov holatini tekshirish',
+      'continuePayment': 'To\'lovni davom ettirish',
+      'backToBookings': 'Qabullarga qaytish',
+      'couldNotRefreshPaymentStatus':
+          'To\'lov holatini yangilab bo\'lmadi. Iltimos, qayta urinib ko\'ring.',
+      'paymentStillPendingConfirmBooking':
+          'To\'lov hali kutilmoqda. Ushbu bronni tasdiqlash uchun to\'lovni yakunlang.',
       'joinVideoCall': 'Video qo\'ng\'iroqqa qo\'shilish',
       'viewVisitSummary': 'Qabul xulosasini ko\'rish',
       'leaveReview': 'Sharh qoldirish',
@@ -2028,6 +2089,27 @@ class AppLocalizations {
       'areYouSureCancel': 'Вы уверены, что хотите отменить эту запись?',
       'appointmentCancelledSuccessfully': 'Запись успешно отменена',
       'appointmentRescheduledSuccessfully': 'Запись успешно перенесена',
+      'payNow': 'Оплатить сейчас',
+      'paymentPendingBadge': 'ОЖИДАЕТ ОПЛАТЫ',
+      'paymentCouldNotStart':
+          'Не удалось начать оплату. Пожалуйста, попробуйте снова.',
+      'paymentCouldNotStartWithError':
+          'Не удалось начать оплату: {{error}}',
+      'paymentCompletedAppointmentConfirmed':
+          'Оплата завершена. Запись подтверждена.',
+      'completePayment': 'Завершить оплату',
+      'paymentPendingTitle': 'Ожидание оплаты',
+      'paymentPendingMessage':
+          'Ваша запись создана и ожидает подтверждения оплаты.',
+      'currentPaymentStatus': 'Текущий статус оплаты: {{status}}',
+      'checking': 'Проверка...',
+      'checkPaymentStatus': 'Проверить статус оплаты',
+      'continuePayment': 'Продолжить оплату',
+      'backToBookings': 'Назад к записям',
+      'couldNotRefreshPaymentStatus':
+          'Не удалось обновить статус оплаты. Пожалуйста, попробуйте снова.',
+      'paymentStillPendingConfirmBooking':
+          'Оплата всё ещё в ожидании. Завершите оплату, чтобы подтвердить эту запись.',
       'errorCancellingAppointment': 'Ошибка при отмене записи',
       'contactDoctor': 'Связаться с врачом',
       'callDoctor': 'Позвонить врачу',

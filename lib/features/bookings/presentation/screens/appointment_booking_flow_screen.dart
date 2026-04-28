@@ -722,8 +722,8 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
             _isBooking = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment is still pending. Complete payment to confirm this booking.'),
+            SnackBar(
+              content: Text(l10n.translate('paymentStillPendingConfirmBooking')),
               backgroundColor: Colors.orange,
               duration: Duration(seconds: 4),
             ),
@@ -840,9 +840,10 @@ class _PaymentCheckoutScreenState extends ConsumerState<_PaymentCheckoutScreen> 
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complete payment'),
+        title: Text(l10n.translate('completePayment')),
       ),
       body: WebViewWidget(controller: _controller),
     );
@@ -878,8 +879,9 @@ class _PaymentPendingScreenState extends ConsumerState<_PaymentPendingScreen> {
       }
     } catch (_) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not refresh payment status. Please try again.')),
+          SnackBar(content: Text(l10n.translate('couldNotRefreshPaymentStatus'))),
         );
       }
     } finally {
@@ -911,34 +913,41 @@ class _PaymentPendingScreenState extends ConsumerState<_PaymentPendingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment pending')),
+      appBar: AppBar(title: Text(l10n.translate('paymentPendingTitle'))),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Your appointment is created and waiting for payment confirmation.',
+            Text(
+              l10n.translate('paymentPendingMessage'),
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
-            Text('Current payment status: $_status'),
+            Text(
+              l10n
+                  .translate('currentPaymentStatus')
+                  .replaceAll('{{status}}', _status),
+            ),
             const SizedBox(height: 24),
             ShifaPrimaryButton(
-              label: _checking ? 'Checking...' : 'Check payment status',
+              label: _checking
+                  ? l10n.translate('checking')
+                  : l10n.translate('checkPaymentStatus'),
               onPressed: _checking ? null : _checkStatus,
               isLoading: _checking,
             ),
             const SizedBox(height: 12),
             ShifaPrimaryButton(
-              label: 'Continue payment',
+              label: l10n.translate('continuePayment'),
               onPressed: (widget.checkoutUrl == null || widget.checkoutUrl!.isEmpty) ? null : _continuePayment,
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Back to bookings'),
+              child: Text(l10n.translate('backToBookings')),
             ),
           ],
         ),
