@@ -13,6 +13,9 @@ class AppointmentModel extends Equatable {
   final String? reason;
   final AppointmentStatus status;
   final bool isVideo;
+  final String paymentStatus;
+  final int? paymentAmountMinor;
+  final String? paymentCurrency;
   final bool signatureRequested;
   final bool alreadySigned;
 
@@ -27,6 +30,9 @@ class AppointmentModel extends Equatable {
     this.reason,
     required this.status,
     this.isVideo = false,
+    this.paymentStatus = 'NOT_REQUIRED',
+    this.paymentAmountMinor,
+    this.paymentCurrency,
     this.signatureRequested = false,
     this.alreadySigned = false,
   });
@@ -63,6 +69,9 @@ class AppointmentModel extends Equatable {
       reason: json['reason'] as String?,
       status: AppointmentStatus.fromString(json['status'] as String? ?? 'CONFIRMED'),
       isVideo: json['location'] == 'Video Consultation' || (json['isVideo'] as bool? ?? false),
+      paymentStatus: (json['paymentStatus'] as String?) ?? 'NOT_REQUIRED',
+      paymentAmountMinor: (json['paymentAmountMinor'] as num?)?.toInt(),
+      paymentCurrency: json['paymentCurrency'] as String?,
       signatureRequested: json['signatureRequested'] as bool? ?? false,
       alreadySigned: json['alreadySigned'] as bool? ?? false,
     );
@@ -79,6 +88,9 @@ class AppointmentModel extends Equatable {
       'reason': reason,
       'status': status.name,
       'isVideo': isVideo,
+      'paymentStatus': paymentStatus,
+      'paymentAmountMinor': paymentAmountMinor,
+      'paymentCurrency': paymentCurrency,
     };
   }
 
@@ -94,6 +106,9 @@ class AppointmentModel extends Equatable {
         reason,
         status,
         isVideo,
+        paymentStatus,
+        paymentAmountMinor,
+        paymentCurrency,
         signatureRequested,
         alreadySigned,
       ];

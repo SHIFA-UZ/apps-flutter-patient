@@ -11,12 +11,14 @@ import 'package:shifa_patient_app_v1/features/doctors/providers/doctors_provider
 import 'package:shifa_patient_app_v1/features/doctors/data/doctor_locations_repository.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/schedule_provider.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
+import 'package:shifa_patient_app_v1/features/bookings/data/bookings_repository.dart';
 import 'package:shifa_patient_app_v1/features/bookings/data/schedule_repository.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
 import 'package:shifa_patient_app_v1/core/utils/date_utils.dart' show parseAppointmentDateTime;
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AppointmentBookingFlowScreen extends ConsumerStatefulWidget {
   final String doctorId;
@@ -40,6 +42,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
   DoctorModel? _doctor;
   bool _isLoadingDoctor = true;
   bool _isBooking = false;
+  int? _selectedServiceId;
 
   // Multi-location support
   List<PublicDoctorLocation> _locations = const [];
@@ -310,6 +313,38 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       },
                     ),
                   ),
+                  if (_isVideoConsultation && (_doctor?.serviceItems?.isNotEmpty ?? false)) ...[
+                    const SizedBox(height: 12),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Select Service',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<int>(
+                              value: _selectedServiceId,
+                              items: (_doctor!.serviceItems ?? const [])
+                                  .map((s) => DropdownMenuItem<int>(
+                                        value: int.tryParse(s.id),
+                                        child: Text(s.title),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) => setState(() => _selectedServiceId = v),
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Choose service for video consultation',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   // Date selector
                   if (_locationStepCompleted)
@@ -562,6 +597,9 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       if (hasConflict) {
         throw Exception('You already have an appointment scheduled at this date and time. Please choose a different time slot.');
       }
+      if (_isVideoConsultation && (_doctor?.serviceItems?.isNotEmpty ?? false) && _selectedServiceId == null) {
+        throw Exception('Please select a service for video consultation.');
+      }
 
       // Prefer the locationId that came back on the slot itself (authoritative for
       // this exact slot). Fall back to the patient's selection, which the backend
@@ -572,16 +610,39 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
 
       AppLogger.debug(
           'Booking params - startAt: $startAtUtc, slotMinutes: ${selectedSlot.slotMinutes}, doctorId: ${widget.doctorId}, locationId: $bookingLocationId');
-      await ref.read(bookingsProvider.notifier).bookAppointment(
+      final bookedAppointment = await ref.read(bookingsProvider.notifier).bookAppointment(
         doctorId: widget.doctorId,
         startAt: startAtUtc,
         slotMinutes: selectedSlot.slotMinutes,
         reason: _reasonController.text.isEmpty ? null : _reasonController.text,
         isVideo: _isVideoConsultation,
+        serviceId: _isVideoConsultation ? _selectedServiceId : null,
         locationId: bookingLocationId,
       );
 
       AppLogger.debug('Appointment booked successfully!');
+
+      if (bookedAppointment.paymentStatus.toUpperCase() == 'PENDING') {
+        final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
+          appointmentId: bookedAppointment.id,
+          gateway: 'STRIPE',
+        );
+        final checkoutUrl = checkout['checkoutUrl']?.toString();
+        if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+          final opened = await launchUrl(
+            Uri.parse(checkoutUrl),
+            mode: LaunchMode.externalApplication,
+          );
+          if (!opened && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Payment checkout could not open automatically.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+      }
 
       // If this is a reschedule, cancel the old appointment
       if (widget.rescheduleId != null && widget.rescheduleId!.isNotEmpty) {

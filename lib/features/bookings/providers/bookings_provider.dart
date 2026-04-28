@@ -73,6 +73,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
     int slotMinutes = 30,
     String? reason,
     bool isVideo = false,
+    int? serviceId,
     int? locationId,
   }) async {
     try {
@@ -82,6 +83,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
         slotMinutes: slotMinutes,
         reason: reason,
         isVideo: isVideo,
+        serviceId: serviceId,
         locationId: locationId,
       );
       // Reload appointments after booking

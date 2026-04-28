@@ -23,6 +23,7 @@ class DoctorModel extends Equatable {
   final String? furtherInformation;
   final String? biography;
   final List<String>? services;
+  final List<DoctorServiceItem>? serviceItems;
   final List<String>? certificates;
   final String? telegram;
   final String? instagram;
@@ -49,6 +50,7 @@ class DoctorModel extends Equatable {
     this.furtherInformation,
     this.biography,
     this.services,
+    this.serviceItems,
     this.certificates,
     this.telegram,
     this.instagram,
@@ -81,6 +83,11 @@ class DoctorModel extends Equatable {
       services: json['services'] != null
           ? List<String>.from(json['services'])
           : null,
+      serviceItems: json['serviceItems'] != null
+          ? (json['serviceItems'] as List)
+              .map((e) => DoctorServiceItem.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
       certificates: json['certificates'] != null
           ? List<String>.from(json['certificates'])
           : null,
@@ -112,6 +119,7 @@ class DoctorModel extends Equatable {
       'furtherInformation': furtherInformation,
       'biography': biography,
       'services': services,
+      'serviceItems': serviceItems?.map((e) => e.toJson()).toList(),
       'certificates': certificates,
       'telegram': telegram,
       'instagram': instagram,
@@ -141,8 +149,69 @@ class DoctorModel extends Equatable {
         furtherInformation,
         biography,
         services,
+        serviceItems,
         certificates,
         telegram,
         instagram,
       ];
+}
+
+class DoctorServiceItem extends Equatable {
+  final String id;
+  final String title;
+  final String? description;
+  final List<DoctorServicePriceItem> prices;
+
+  const DoctorServiceItem({
+    required this.id,
+    required this.title,
+    this.description,
+    this.prices = const [],
+  });
+
+  factory DoctorServiceItem.fromJson(Map<String, dynamic> json) {
+    return DoctorServiceItem(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description'] as String?,
+      prices: (json['prices'] as List? ?? const [])
+          .map((e) => DoctorServicePriceItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'prices': prices.map((e) => e.toJson()).toList(),
+      };
+
+  @override
+  List<Object?> get props => [id, title, description, prices];
+}
+
+class DoctorServicePriceItem extends Equatable {
+  final int amountMinor;
+  final String currency;
+
+  const DoctorServicePriceItem({
+    required this.amountMinor,
+    required this.currency,
+  });
+
+  factory DoctorServicePriceItem.fromJson(Map<String, dynamic> json) {
+    return DoctorServicePriceItem(
+      amountMinor: (json['amountMinor'] as num?)?.toInt() ?? 0,
+      currency: json['currency']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'amountMinor': amountMinor,
+        'currency': currency,
+      };
+
+  @override
+  List<Object?> get props => [amountMinor, currency];
 }

@@ -56,6 +56,7 @@ class BookingsRepository {
     int slotMinutes = 30,
     String? reason,
     bool isVideo = false,
+    int? serviceId,
     int? locationId,
   }) async {
     try {
@@ -65,6 +66,7 @@ class BookingsRepository {
         'slotMinutes': slotMinutes,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         'isVideo': isVideo,
+        if (serviceId != null) 'serviceId': serviceId,
         if (locationId != null) 'locationId': locationId,
       };
       
@@ -121,6 +123,25 @@ class BookingsRepository {
     } catch (e) {
       throw Exception('Failed to submit signature: $e');
     }
+  }
+
+  Future<Map<String, dynamic>> createConsultationCheckout({
+    required String appointmentId,
+    String gateway = 'STRIPE',
+  }) async {
+    final response = await _apiClient.post(
+      '/payments/consultation/checkout',
+      data: {
+        'appointmentId': int.parse(appointmentId),
+        'gateway': gateway,
+      },
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getPaymentStatus(String paymentId) async {
+    final response = await _apiClient.get('/payments/$paymentId');
+    return response.data as Map<String, dynamic>;
   }
 
   /// Get the current patient's review for an appointment, if any. Returns null when 404.

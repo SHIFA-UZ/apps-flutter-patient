@@ -376,6 +376,70 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
   }
 
   Widget _buildServicesTab() {
+    final serviceItems = _doctor!.serviceItems ?? const [];
+    if (serviceItems.isNotEmpty) {
+      return GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.25,
+        ),
+        itemCount: serviceItems.length,
+        itemBuilder: (context, index) {
+          final s = serviceItems[index];
+          final firstPrice = s.prices.isNotEmpty ? s.prices.first : null;
+          final priceLabel = firstPrice == null
+              ? AppLocalizations.of(context)!.translate('priceNotSet')
+              : '${(firstPrice.amountMinor / 100).toStringAsFixed(2)} ${firstPrice.currency}';
+          return InkWell(
+            onTap: () {
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(s.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      if ((s.description ?? '').trim().isNotEmpty)
+                        Text(s.description!),
+                      const SizedBox(height: 12),
+                      ...s.prices.map((p) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text('${(p.amountMinor / 100).toStringAsFixed(2)} ${p.currency}'),
+                          )),
+                    ],
+                  ),
+                ),
+              );
+            },
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.medical_services, color: Color(0xFF17C3B2), size: 22),
+                    const SizedBox(height: 8),
+                    Text(s.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text(priceLabel, style: const TextStyle(color: Color(0xFF17C3B2), fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     if (_doctor!.services == null || _doctor!.services!.isEmpty) {
       return Center(
         child: Padding(
