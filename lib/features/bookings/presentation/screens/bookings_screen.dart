@@ -45,9 +45,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     final startDate = DateFormat('yyyy-MM-dd').format(now);
     
     if (_selectedTab == 0) {
-      // Upcoming appointments - fetch CONFIRMED appointments from today onwards
+      // Upcoming appointments - fetch all statuses from today onwards.
+      // Some valid bookings may still be in REQUESTED/PENDING status right after creation.
+      // Restricting to CONFIRMED caused appointments to disappear after refresh.
       ref.read(bookingsProvider.notifier).loadAppointments(
-        status: 'CONFIRMED',
         startDate: startDate,
       );
     } else {
