@@ -169,6 +169,11 @@ class AppLocalizations {
           'Shifa will book the nearest available slot to the time you discussed. This uses your earlier agreement in this conversation.',
       'copilotNoProviderOnPlatform':
           'Shifa does not list a doctor on the platform who matches these symptoms yet. You can browse all doctors in the Doctors tab or try again later as more providers join. If you feel very unwell, seek urgent in-person care or emergency services.',
+      'copilotNextSlot': 'Next slot:',
+      'copilotConfidence': 'Confidence:',
+      'copilotConfidenceHigh': 'High',
+      'copilotConfidenceMedium': 'Medium',
+      'copilotConfidenceLow': 'Low',
 
       // Bookings
       'bookings': 'Bookings',
@@ -875,6 +880,11 @@ class AppLocalizations {
           'Shifa bucht den nächstgelegenen freien Termin zu der besprochenen Zeit. Dies nutzt Ihre vorherige Zustimmung in diesem Gespräch.',
       'copilotNoProviderOnPlatform':
           'Shifa listet derzeit keinen Arzt auf der Plattform, der zu diesen Symptomen passt. Nutzen Sie die Arztsuche oder versuchen Sie es später erneut. Bei starker Verschlechterung suchen Sie bitte ärztliche Notfallversorgung auf.',
+      'copilotNextSlot': 'Nächster Termin:',
+      'copilotConfidence': 'Vertrauen:',
+      'copilotConfidenceHigh': 'Hoch',
+      'copilotConfidenceMedium': 'Mittel',
+      'copilotConfidenceLow': 'Niedrig',
 
       'locationPermissionDenied': 'Standortberechtigung verweigert.',
       'locationPermissionDeniedForever':
@@ -1315,6 +1325,11 @@ class AppLocalizations {
           'Shifa suhbatda kelishilgan vaqtga eng yaqin bo\'sh slotni bron qiladi. Bu suhbatdagi oldingi roziligingiz asosida amalga oshiriladi.',
       'copilotNoProviderOnPlatform':
           'Hozircha Shifa platformasida ushbu simptomlarga mos shifokor profili yo\'q. Barcha shifokorlarni «Shifokorlar» bo\'limidan ko\'rishingiz yoki keyinroq qayta urinishingiz mumkin. Ahvol og\'irlashsa, tez tibbiy yordam yoki favqulodda xizmatga murojaat qiling.',
+      'copilotNextSlot': 'Keyingi slot:',
+      'copilotConfidence': 'Ishonch:',
+      'copilotConfidenceHigh': 'Yuqori',
+      'copilotConfidenceMedium': 'O\'rtacha',
+      'copilotConfidenceLow': 'Past',
 
       // Bookings
       'bookings': 'Qabullar',
@@ -2043,6 +2058,11 @@ class AppLocalizations {
           'Shifa запишет на ближайший свободный слот к обсуждённому времени. Это использует ваше согласие из этого разговора.',
       'copilotNoProviderOnPlatform':
           'На платформе Shifa пока нет врача, подходящего под эти симптомы. Загляните во вкладку «Врачи» или попробуйте позже. При ухудшении состояния обратитесь за срочной помощью или в скорую.',
+      'copilotNextSlot': 'Ближайшее время:',
+      'copilotConfidence': 'Уверенность:',
+      'copilotConfidenceHigh': 'Высокая',
+      'copilotConfidenceMedium': 'Средняя',
+      'copilotConfidenceLow': 'Низкая',
 
       'locationPermissionDenied': 'Доступ к местоположению запрещён.',
       'locationPermissionDeniedForever':
@@ -2400,8 +2420,9 @@ class AppLocalizations {
   /// Translates doctor profession/specialty using ProfessionModel (same method as doctor app).
   /// Backend stores profession as English (e.g. "Dentist"), we find the ProfessionModel and return Uzbek if language is 'uz'.
   String translateProfession(String? profession) {
-    if (profession == null || profession.trim().isEmpty)
+    if (profession == null || profession.trim().isEmpty) {
       return profession ?? '';
+    }
 
     // Find profession model by English name (backend stores English)
     final professionModel = ProfessionData.findByEnglish(profession.trim());

@@ -265,6 +265,11 @@ class CopilotApi {
               : null,
       specialties: rawSpecialties.map((e) => e.toString()).toList(),
       doctors: doctors,
+      confidenceScore: (body['confidenceScore'] as num?)?.toDouble(),
+      uncertaintyMessage: body['uncertaintyMessage'] as String?,
+      diagnostics: body['diagnostics'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(body['diagnostics'] as Map<String, dynamic>)
+          : const <String, dynamic>{},
     );
   }
 }
@@ -274,11 +279,17 @@ class CopilotSuggestFromChatResult {
   final String? clarifyingQuestion;
   final List<String> specialties;
   final List<DoctorModel> doctors;
+  final double? confidenceScore;
+  final String? uncertaintyMessage;
+  final Map<String, dynamic> diagnostics;
 
   const CopilotSuggestFromChatResult({
     required this.needsMoreInfo,
     required this.clarifyingQuestion,
     required this.specialties,
     required this.doctors,
+    required this.confidenceScore,
+    required this.uncertaintyMessage,
+    required this.diagnostics,
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
 import 'package:shifa_patient_app_v1/features/copilot/data/copilot_api.dart';
+import 'package:shifa_patient_app_v1/features/copilot/data/copilot_memory_store.dart';
 import 'package:shifa_patient_app_v1/features/copilot/providers/copilot_api_provider.dart';
 
 class CopilotMessage {
@@ -15,7 +16,14 @@ class CopilotChatState {
   final List<CopilotMessage> messages;
   final String? streamingText;
   final bool isSending;
+  final bool isThinking;
+  final bool isAnalyzingSymptoms;
+  final bool isFindingDoctors;
   final String? lastError;
+  final String contextSummary;
+  final List<String> memorySymptoms;
+  final List<String> memorySuspectedConditions;
+  final List<String> memoryBookingDecisions;
   /// `null` = doctor suggestions not loaded for this session; non-empty = suggested ids; empty = search returned no doctors.
   final List<String>? lastSuggestedDoctorIds;
 
@@ -23,7 +31,14 @@ class CopilotChatState {
     this.messages = const [],
     this.streamingText,
     this.isSending = false,
+    this.isThinking = false,
+    this.isAnalyzingSymptoms = false,
+    this.isFindingDoctors = false,
     this.lastError,
+    this.contextSummary = '',
+    this.memorySymptoms = const [],
+    this.memorySuspectedConditions = const [],
+    this.memoryBookingDecisions = const [],
     this.lastSuggestedDoctorIds,
   });
 
@@ -31,7 +46,14 @@ class CopilotChatState {
     List<CopilotMessage>? messages,
     String? streamingText,
     bool? isSending,
+    bool? isThinking,
+    bool? isAnalyzingSymptoms,
+    bool? isFindingDoctors,
     String? lastError,
+    String? contextSummary,
+    List<String>? memorySymptoms,
+    List<String>? memorySuspectedConditions,
+    List<String>? memoryBookingDecisions,
     List<String>? lastSuggestedDoctorIds,
     bool clearStreaming = false,
     bool clearError = false,
@@ -40,18 +62,77 @@ class CopilotChatState {
       messages: messages ?? this.messages,
       streamingText: clearStreaming ? null : (streamingText ?? this.streamingText),
       isSending: isSending ?? this.isSending,
+      isThinking: isThinking ?? this.isThinking,
+      isAnalyzingSymptoms: isAnalyzingSymptoms ?? this.isAnalyzingSymptoms,
+      isFindingDoctors: isFindingDoctors ?? this.isFindingDoctors,
       lastError: clearError ? null : (lastError ?? this.lastError),
+      contextSummary: contextSummary ?? this.contextSummary,
+      memorySymptoms: memorySymptoms ?? this.memorySymptoms,
+      memorySuspectedConditions: memorySuspectedConditions ?? this.memorySuspectedConditions,
+      memoryBookingDecisions: memoryBookingDecisions ?? this.memoryBookingDecisions,
       lastSuggestedDoctorIds: lastSuggestedDoctorIds ?? this.lastSuggestedDoctorIds,
     );
   }
 }
 
 class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
-  CopilotChatNotifier(this._ref) : super(CopilotChatState());
+  CopilotChatNotifier(this._ref) : super(CopilotChatState()) {
+    _hydrateMemory();
+  }
 
   final Ref _ref;
+  final CopilotMemoryStore _memory = CopilotMemoryStore();
 
   CopilotApi get _api => _ref.read(copilotApiProvider);
+
+  Future<void> _hydrateMemory() async {
+    final loaded = await _memory.load();
+    if (loaded.messages.isEmpty && loaded.structuredState.isEmpty) return;
+    final hydrated = loaded.messages
+        .map((m) => CopilotMessage(role: m['role'] ?? 'assistant', content: m['content'] ?? ''))
+        .toList();
+    state = state.copyWith(
+      messages: hydrated,
+      contextSummary: loaded.summary,
+      memorySymptoms: (loaded.structuredState['symptoms'] as List<dynamic>? ?? const []).map((e) => e.toString()).toList(),
+      memorySuspectedConditions:
+          (loaded.structuredState['suspectedConditions'] as List<dynamic>? ?? const []).map((e) => e.toString()).toList(),
+      memoryBookingDecisions:
+          (loaded.structuredState['bookingDecisions'] as List<dynamic>? ?? const []).map((e) => e.toString()).toList(),
+    );
+  }
+
+  Future<void> _persistMemory() async {
+    final compact = state.messages
+        .take(state.messages.length > 60 ? 60 : state.messages.length)
+        .map((m) => {'role': m.role, 'content': m.content})
+        .toList();
+    await _memory.save(
+      messages: compact,
+      summary: state.contextSummary,
+      structuredState: {
+        'symptoms': state.memorySymptoms,
+        'suspectedConditions': state.memorySuspectedConditions,
+        'bookingDecisions': state.memoryBookingDecisions,
+      },
+    );
+  }
+
+  String _rebuildSummary(List<CopilotMessage> msgs) {
+    final users = msgs.where((m) => m.role == 'user').map((m) => m.content.trim()).where((t) => t.isNotEmpty).toList();
+    final recent = users.length > 6 ? users.sublist(users.length - 6) : users;
+    if (recent.isEmpty) return state.contextSummary;
+    return recent.join(' | ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  List<String> _extractSymptomsFromText(String text) {
+    final t = text.toLowerCase();
+    final lex = <String>[
+      'chest pain', 'headache', 'fever', 'cough', 'nausea', 'vomit', 'rash', 'fatigue', 'dizziness',
+      'back pain', 'stomach pain', 'shortness of breath'
+    ];
+    return lex.where((s) => t.contains(s)).toList();
+  }
 
   void _appendAssistantIfNew(String content) {
     final t = content.trim();
@@ -98,6 +179,10 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
       state = state.copyWith(lastError: backendMessage);
     }
     _appendAssistantIfNew(_clarifyingQuestionForReason(code, language));
+    state = state.copyWith(
+      memoryBookingDecisions: [...state.memoryBookingDecisions, 'booking_failed:$code'],
+    );
+    _persistMemory();
   }
 
   /// Resolves [lastSuggestedDoctorIds] for the booking API: omit when never loaded; pass empty list when search had no hits.
@@ -119,6 +204,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
       clearStreaming: true,
       clearError: true,
       isSending: true,
+      isThinking: true,
     );
 
     final payload = state.messages
@@ -142,11 +228,22 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         ],
         clearStreaming: true,
         isSending: false,
+        isThinking: false,
+        contextSummary: _rebuildSummary([
+          ...state.messages,
+          CopilotMessage(role: 'assistant', content: assistantBuffer.trim()),
+        ]),
+        memorySymptoms: {
+          ...state.memorySymptoms,
+          ..._extractSymptomsFromText(trimmed),
+        }.toList(),
       );
+      await _persistMemory();
       return null;
     } on CopilotStreamException catch (e) {
       state = state.copyWith(
         isSending: false,
+        isThinking: false,
         clearStreaming: true,
         lastError: e.message,
       );
@@ -154,6 +251,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
     } catch (e) {
       state = state.copyWith(
         isSending: false,
+        isThinking: false,
         clearStreaming: true,
         lastError: e.toString(),
       );
@@ -167,6 +265,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
 
   void appendAssistantMessage(String content) {
     _appendAssistantIfNew(content);
+    _persistMemory();
   }
 
   /// Second step after the user confirms the booking preview in the UI.
@@ -189,7 +288,9 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         if (msg.isNotEmpty) {
           state = state.copyWith(
             messages: [...state.messages, CopilotMessage(role: 'assistant', content: msg)],
+            memoryBookingDecisions: [...state.memoryBookingDecisions, 'booked'],
           );
+          await _persistMemory();
         }
         return;
       }
@@ -261,6 +362,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
   /// copilot asks one concrete follow-up instead of showing irrelevant doctors.
   Future<List<DoctorModel>> autoSuggestDoctorsFromChat(String language) async {
     if (state.messages.where((m) => m.role == 'user').isEmpty) return const [];
+    state = state.copyWith(isAnalyzingSymptoms: true, isFindingDoctors: true);
     try {
       final payload = state.messages
           .map((m) => {'role': m.role, 'content': m.content})
@@ -269,6 +371,9 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         messages: payload,
         language: language,
       );
+      if ((res.uncertaintyMessage ?? '').trim().isNotEmpty) {
+        _appendAssistantIfNew(res.uncertaintyMessage!.trim());
+      }
       if (res.needsMoreInfo) {
         state = state.copyWith(
           lastSuggestedDoctorIds: const [],
@@ -287,14 +392,27 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
             );
           }
         }
+        state = state.copyWith(isAnalyzingSymptoms: false, isFindingDoctors: false);
+        await _persistMemory();
         return const [];
       }
       state = state.copyWith(
         lastSuggestedDoctorIds: res.doctors.map((d) => d.id).toList(),
+        memorySuspectedConditions: {
+          ...state.memorySuspectedConditions,
+          ...res.specialties,
+        }.toList(),
+        isAnalyzingSymptoms: false,
+        isFindingDoctors: false,
       );
+      await _persistMemory();
       return res.doctors;
     } catch (e) {
-      state = state.copyWith(lastError: e.toString());
+      state = state.copyWith(
+        lastError: e.toString(),
+        isAnalyzingSymptoms: false,
+        isFindingDoctors: false,
+      );
       return const [];
     }
   }

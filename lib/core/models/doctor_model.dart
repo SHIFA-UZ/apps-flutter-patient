@@ -27,6 +27,9 @@ class DoctorModel extends Equatable {
   final List<String>? certificates;
   final String? telegram;
   final String? instagram;
+  final String? nextAvailableStartAt;
+  final String? recommendationReason;
+  final List<String>? triggeredBySymptoms;
 
   const DoctorModel({
     required this.id,
@@ -54,6 +57,9 @@ class DoctorModel extends Equatable {
     this.certificates,
     this.telegram,
     this.instagram,
+    this.nextAvailableStartAt,
+    this.recommendationReason,
+    this.triggeredBySymptoms,
   });
 
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
@@ -93,6 +99,11 @@ class DoctorModel extends Equatable {
           : null,
       telegram: json['telegram'] as String?,
       instagram: json['instagram'] as String?,
+      nextAvailableStartAt: json['nextAvailableStartAt'] as String?,
+      recommendationReason: json['recommendationReason'] as String?,
+      triggeredBySymptoms: json['triggeredBySymptoms'] != null
+          ? List<String>.from(json['triggeredBySymptoms'])
+          : null,
     );
   }
 
@@ -123,6 +134,9 @@ class DoctorModel extends Equatable {
       'certificates': certificates,
       'telegram': telegram,
       'instagram': instagram,
+      'nextAvailableStartAt': nextAvailableStartAt,
+      'recommendationReason': recommendationReason,
+      'triggeredBySymptoms': triggeredBySymptoms,
     };
   }
 
@@ -153,6 +167,9 @@ class DoctorModel extends Equatable {
         certificates,
         telegram,
         instagram,
+        nextAvailableStartAt,
+        recommendationReason,
+        triggeredBySymptoms,
       ];
 }
 
