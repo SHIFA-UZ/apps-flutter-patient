@@ -135,8 +135,8 @@ class CopilotApi {
     }
   }
 
-  /// Multipart field name: [file]
-  Future<String> transcribeAudio(String filePath) async {
+  /// Multipart field name: [file]; optional ISO language hint forwarded to Whisper.
+  Future<String> transcribeAudio(String filePath, {String? languageHint}) async {
     final uri = Uri.parse('${ApiClient.apiBaseUrl}/patients/me/copilot/transcribe');
     final token = await StorageService().getAuthToken();
     final request = http.MultipartRequest('POST', uri);
@@ -144,6 +144,10 @@ class CopilotApi {
       request.headers['Authorization'] = 'Bearer $token';
     }
     request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    final hint = languageHint?.trim();
+    if (hint != null && hint.isNotEmpty) {
+      request.fields['languageHint'] = hint;
+    }
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode != 200) {

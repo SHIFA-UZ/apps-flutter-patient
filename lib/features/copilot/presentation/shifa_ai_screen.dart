@@ -147,20 +147,57 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
     }
   }
 
-  Widget _planRow(String label, bool active, bool done) {
-    final color = done ? Colors.green : (active ? AppDesignSystem.primary : Colors.grey.shade500);
-    return Row(
-      children: [
-        Icon(done ? Icons.check_circle : Icons.radio_button_checked, size: 16, color: color),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: AppDesignSystem.caption.copyWith(
-            color: color,
-            fontWeight: active || done ? FontWeight.w600 : FontWeight.w400,
-          ),
+  Widget _buildDoctorSuggestionsBubble(BuildContext context, AppLocalizations l10n) {
+    final btnStyle = TextButton.styleFrom(
+      minimumSize: Size.zero,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      visualDensity: VisualDensity.compact,
+    );
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.92),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
         ),
-      ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.translate('copilotSuggestedDoctors'),
+              style: AppDesignSystem.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppDesignSystem.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final d in _suggestedDoctors) ...[
+              _DoctorSuggestionCard(
+                doctor: d,
+                photoUrl: withCacheBuster(d.photoUrl, null),
+                btnStyle: btnStyle,
+                onProfile: () => context.push('${AppRoutes.doctors}/${d.id}'),
+                onManualBook: () => _openManualBooking(d),
+                onAutoBook: () => _showAutoBookSheet(d),
+                nextSlotLabel: l10n.translate('copilotNextSlot'),
+                confidenceLabel: l10n.translate('copilotConfidence'),
+                confidenceHigh: l10n.translate('copilotConfidenceHigh'),
+                confidenceMedium: l10n.translate('copilotConfidenceMedium'),
+                confidenceLow: l10n.translate('copilotConfidenceLow'),
+                profileLabel: l10n.translate('copilotViewProfile'),
+                bookManualLabel: l10n.translate('copilotBookManual'),
+                autoBookLabel: l10n.translate('copilotAutoBook'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -183,7 +220,13 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
         onRecordingComplete: (filePath, _) async {
           Navigator.of(ctx).pop();
           try {
-            final text = await ref.read(copilotApiProvider).transcribeAudio(filePath);
+            final lang = (ref.read(profileProvider).profile?.language ?? 'en').toLowerCase();
+            final hint = lang.startsWith('uz')
+                ? 'uz'
+                : lang.startsWith('ru')
+                    ? 'ru'
+                    : 'en';
+            final text = await ref.read(copilotApiProvider).transcribeAudio(filePath, languageHint: hint);
             if (mounted) {
               setState(() {
                 _textController.text = text;
@@ -432,29 +475,28 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                       ),
                     ),
                   ),
+                if (_suggestedDoctors.isNotEmpty) _buildDoctorSuggestionsBubble(context, l10n),
               ],
             ),
           ),
           if (chatState.isThinking || chatState.isAnalyzingSymptoms || chatState.isFindingDoctors)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.blueGrey.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('AI plan', style: AppDesignSystem.caption.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 6),
-                    _planRow('Step 1: understood symptoms', chatState.isThinking, chatState.memorySymptoms.isNotEmpty),
-                    const SizedBox(height: 4),
-                    _planRow('Step 2: searching doctors', chatState.isAnalyzingSymptoms || chatState.isFindingDoctors, _suggestedDoctors.isNotEmpty),
-                    const SizedBox(height: 4),
-                    _planRow('Step 3: recommendations', false, _suggestedDoctors.isNotEmpty),
+                    SizedBox(
+                      height: 12,
+                      width: 12,
+                      child: CircularProgressIndicator(strokeWidth: 1.5, color: AppDesignSystem.primary),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.translate('copilotThinking'),
+                      style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textSecondary),
+                    ),
                   ],
                 ),
               ),
@@ -479,163 +521,6 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                 ),
               ),
             ),
-          if (_suggestedDoctors.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.screenPaddingH),
-                child: Text(
-                  l10n.translate('copilotSuggestedDoctors'),
-                  style: AppDesignSystem.h2.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-            SizedBox(
-              height: (MediaQuery.of(context).size.height * 0.32).clamp(240.0, 320.0),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.screenPaddingH, vertical: 8),
-                itemCount: _suggestedDoctors.length,
-                itemBuilder: (context, i) {
-                  final d = _suggestedDoctors[i];
-                  final photo = withCacheBuster(d.photoUrl, null);
-                  final btnStyle = TextButton.styleFrom(
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    visualDensity: VisualDensity.compact,
-                  );
-                  return LayoutBuilder(
-                    builder: (context, cardConstraints) {
-                      final cardH = cardConstraints.maxHeight.isFinite ? cardConstraints.maxHeight : 260.0;
-                      return SizedBox(
-                        width: 220,
-                        height: cardH,
-                        child: Card(
-                          margin: const EdgeInsets.only(right: 10),
-                          clipBehavior: Clip.antiAlias,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: SingleChildScrollView(
-                              physics: const ClampingScrollPhysics(),
-                              clipBehavior: Clip.hardEdge,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 18,
-                                        backgroundImage: photo != null && photo.isNotEmpty
-                                            ? NetworkImage(photo)
-                                            : null,
-                                        child: photo == null || photo.isEmpty
-                                            ? const Icon(Icons.person, size: 20)
-                                            : null,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          d.fullName,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style:
-                                              AppDesignSystem.caption.copyWith(fontWeight: FontWeight.w600),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (d.profession != null) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      d.profession!,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textSecondary),
-                                    ),
-                                  ],
-                                  if (d.recommendationReason != null &&
-                                      d.recommendationReason!.trim().isNotEmpty) ...[
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      d.recommendationReason!,
-                                      maxLines: 8,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppDesignSystem.caption.copyWith(
-                                        color: AppDesignSystem.textSecondary,
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                  ],
-                                  if (d.nextAvailableStartAt != null &&
-                                      d.nextAvailableStartAt!.isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${l10n.translate('copilotNextSlot')} ${d.nextAvailableStartAt}',
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppDesignSystem.caption.copyWith(
-                                        color: AppDesignSystem.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (d.rating != null) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${l10n.translate('copilotConfidence')} '
-                                      '${d.rating! >= 4.5 ? l10n.translate('copilotConfidenceHigh') : (d.rating! >= 3.8 ? l10n.translate('copilotConfidenceMedium') : l10n.translate('copilotConfidenceLow'))}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppDesignSystem.caption.copyWith(
-                                        color: AppDesignSystem.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  const Divider(height: 16),
-                                  Wrap(
-                                    spacing: 4,
-                                    runSpacing: 2,
-                                    children: [
-                                      TextButton(
-                                        style: btnStyle,
-                                        onPressed: () => context.push('${AppRoutes.doctors}/${d.id}'),
-                                        child: Text(
-                                          l10n.translate('copilotViewProfile'),
-                                          style: const TextStyle(fontSize: 12),
-                                        ),
-                                      ),
-                                      TextButton(
-                                        style: btnStyle,
-                                        onPressed: () => _openManualBooking(d),
-                                        child: Text(
-                                          l10n.translate('copilotBookManual'),
-                                          style: const TextStyle(fontSize: 12),
-                                        ),
-                                      ),
-                                      TextButton(
-                                        style: btnStyle,
-                                        onPressed: () => _showAutoBookSheet(d),
-                                        child: Text(
-                                          l10n.translate('copilotAutoBook'),
-                                          style: const TextStyle(fontSize: 12),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
             child: Text(
@@ -741,6 +626,174 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DoctorSuggestionCard extends StatelessWidget {
+  const _DoctorSuggestionCard({
+    required this.doctor,
+    required this.photoUrl,
+    required this.btnStyle,
+    required this.onProfile,
+    required this.onManualBook,
+    required this.onAutoBook,
+    required this.nextSlotLabel,
+    required this.confidenceLabel,
+    required this.confidenceHigh,
+    required this.confidenceMedium,
+    required this.confidenceLow,
+    required this.profileLabel,
+    required this.bookManualLabel,
+    required this.autoBookLabel,
+  });
+
+  final DoctorModel doctor;
+  final String? photoUrl;
+  final ButtonStyle btnStyle;
+  final VoidCallback onProfile;
+  final VoidCallback onManualBook;
+  final VoidCallback onAutoBook;
+  final String nextSlotLabel;
+  final String confidenceLabel;
+  final String confidenceHigh;
+  final String confidenceMedium;
+  final String confidenceLow;
+  final String profileLabel;
+  final String bookManualLabel;
+  final String autoBookLabel;
+
+  String _formatNextSlot(String iso) {
+    final dt = DateTime.tryParse(iso)?.toLocal();
+    if (dt == null) return iso;
+    return DateFormat('EEE, d MMM, HH:mm').format(dt);
+  }
+
+  String _confidenceLabelFor(double rating) {
+    if (rating >= 4.5) return confidenceHigh;
+    if (rating >= 3.8) return confidenceMedium;
+    return confidenceLow;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reason = doctor.recommendationReason?.trim();
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: photoUrl != null && photoUrl!.isNotEmpty ? NetworkImage(photoUrl!) : null,
+                child: photoUrl == null || photoUrl!.isEmpty ? const Icon(Icons.person, size: 22) : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      doctor.fullName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppDesignSystem.body1.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    if (doctor.profession != null && doctor.profession!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        doctor.profession!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textSecondary),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (doctor.rating != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star, size: 14, color: Colors.amber),
+                      const SizedBox(width: 2),
+                      Text(
+                        doctor.rating!.toStringAsFixed(1),
+                        style: AppDesignSystem.caption.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          if (reason != null && reason.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              reason,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textSecondary, height: 1.3),
+            ),
+          ],
+          if (doctor.nextAvailableStartAt != null && doctor.nextAvailableStartAt!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.event_available, size: 14, color: Colors.black54),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    '$nextSlotLabel ${_formatNextSlot(doctor.nextAvailableStartAt!)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (doctor.rating != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              '$confidenceLabel ${_confidenceLabelFor(doctor.rating!)}',
+              style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textSecondary),
+            ),
+          ],
+          const Divider(height: 14),
+          Wrap(
+            spacing: 4,
+            runSpacing: 2,
+            children: [
+              TextButton(
+                style: btnStyle,
+                onPressed: onProfile,
+                child: Text(profileLabel, style: const TextStyle(fontSize: 12)),
+              ),
+              TextButton(
+                style: btnStyle,
+                onPressed: onManualBook,
+                child: Text(bookManualLabel, style: const TextStyle(fontSize: 12)),
+              ),
+              TextButton(
+                style: btnStyle,
+                onPressed: onAutoBook,
+                child: Text(autoBookLabel, style: const TextStyle(fontSize: 12)),
+              ),
+            ],
           ),
         ],
       ),

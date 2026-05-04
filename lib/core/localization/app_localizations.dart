@@ -174,6 +174,7 @@ class AppLocalizations {
       'copilotConfidenceHigh': 'High',
       'copilotConfidenceMedium': 'Medium',
       'copilotConfidenceLow': 'Low',
+      'copilotThinking': 'Thinking…',
 
       // Bookings
       'bookings': 'Bookings',
@@ -885,6 +886,7 @@ class AppLocalizations {
       'copilotConfidenceHigh': 'Hoch',
       'copilotConfidenceMedium': 'Mittel',
       'copilotConfidenceLow': 'Niedrig',
+      'copilotThinking': 'Denke nach…',
 
       'locationPermissionDenied': 'Standortberechtigung verweigert.',
       'locationPermissionDeniedForever':
@@ -1330,6 +1332,7 @@ class AppLocalizations {
       'copilotConfidenceHigh': 'Yuqori',
       'copilotConfidenceMedium': 'O\'rtacha',
       'copilotConfidenceLow': 'Past',
+      'copilotThinking': 'O\'ylayapman…',
 
       // Bookings
       'bookings': 'Qabullar',
@@ -2063,6 +2066,7 @@ class AppLocalizations {
       'copilotConfidenceHigh': 'Высокая',
       'copilotConfidenceMedium': 'Средняя',
       'copilotConfidenceLow': 'Низкая',
+      'copilotThinking': 'Думаю…',
 
       'locationPermissionDenied': 'Доступ к местоположению запрещён.',
       'locationPermissionDeniedForever':
