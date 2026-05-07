@@ -241,16 +241,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     List<NotificationModel> items,
     AppLocalizations l10n,
   ) {
+    // Sort newest first so both section order and items within a section
+    // are in descending chronological order (Today → Yesterday → older).
+    final sorted = [...items]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final map = <String, List<NotificationModel>>{};
-    for (final n in items) {
+    final orderedLabels = <String>[];
+    for (final n in sorted) {
       final label = dateSectionLabel(n.createdAt, l10n);
-      map.putIfAbsent(label, () => []).add(n);
+      if (!map.containsKey(label)) {
+        orderedLabels.add(label);
+        map[label] = [];
+      }
+      map[label]!.add(n);
     }
-    final todayLabel = l10n.translate('today');
-    final yesterdayLabel = l10n.translate('yesterday');
-    final order = [todayLabel, yesterdayLabel];
-    final rest = map.keys.where((k) => !order.contains(k)).toList()..sort();
-    final orderedLabels = [...order.where((l) => map.containsKey(l)), ...rest];
     return orderedLabels.map((label) => (label: label, items: map[label]!)).toList();
   }
 }
