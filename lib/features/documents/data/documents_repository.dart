@@ -40,10 +40,10 @@ class DocumentsRepository {
       return data.map((e) => DocumentModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
       if (e is DioException) {
-        final errorMessage = e.response?.data?['message'] ??
-            e.response?.data?['error'] ??
-            e.message ??
-            'Failed to load documents';
+        final errorMessage = _extractDioErrorMessage(
+          e,
+          fallback: 'Failed to load documents',
+        );
         throw Exception(errorMessage);
       }
       throw Exception('Failed to load documents: $e');
@@ -77,10 +77,10 @@ class DocumentsRepository {
       return DocumentModel.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
       if (e is DioException) {
-        final errorMessage = e.response?.data?['message'] ??
-            e.response?.data?['error'] ??
-            e.message ??
-            'Failed to upload document';
+        final errorMessage = _extractDioErrorMessage(
+          e,
+          fallback: 'Failed to upload document',
+        );
         throw Exception(errorMessage);
       }
       throw Exception('Failed to upload document: $e');
@@ -93,14 +93,26 @@ class DocumentsRepository {
       await _apiClient.delete('/patients/me/documents/$documentId');
     } catch (e) {
       if (e is DioException) {
-        final errorMessage = e.response?.data?['message'] ??
-            e.response?.data?['error'] ??
-            e.message ??
-            'Failed to delete document';
+        final errorMessage = _extractDioErrorMessage(
+          e,
+          fallback: 'Failed to delete document',
+        );
         throw Exception(errorMessage);
       }
       throw Exception('Failed to delete document: $e');
     }
+  }
+
+  String _extractDioErrorMessage(DioException e, {required String fallback}) {
+    final data = e.response?.data;
+    if (data is Map<String, dynamic>) {
+      final msg = data['message']?.toString();
+      if (msg != null && msg.trim().isNotEmpty) return msg;
+      final err = data['error']?.toString();
+      if (err != null && err.trim().isNotEmpty) return err;
+    }
+    if (data is String && data.trim().isNotEmpty) return data;
+    return e.message ?? fallback;
   }
 }
 
