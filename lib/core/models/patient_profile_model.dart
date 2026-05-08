@@ -22,6 +22,13 @@ class PatientProfileModel extends Equatable {
   final String? locationStreetAddress;
   final String? timeZone;
 
+  /// Admin-managed subscription tier ("PRO" or "PREMIUM" for patients).
+  /// Drives feature gating in the patient app (e.g. Shifa AI).
+  final String? subscriptionTier;
+
+  /// Features granted by the current tier (mirrors `SubscriptionFeature` names).
+  final List<String> features;
+
   const PatientProfileModel({
     this.id,
     required this.fullName,
@@ -40,6 +47,8 @@ class PatientProfileModel extends Equatable {
     this.locationPostalCode,
     this.locationStreetAddress,
     this.timeZone,
+    this.subscriptionTier,
+    this.features = const [],
   });
 
   factory PatientProfileModel.fromJson(Map<String, dynamic> json) {
@@ -61,6 +70,11 @@ class PatientProfileModel extends Equatable {
       locationPostalCode: json['locationPostalCode'] as String?,
       locationStreetAddress: json['locationStreetAddress'] as String?,
       timeZone: json['timeZone'] as String?,
+      subscriptionTier: json['subscriptionTier'] as String?,
+      features: (json['features'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 
@@ -83,6 +97,8 @@ class PatientProfileModel extends Equatable {
       'locationPostalCode': locationPostalCode,
       'locationStreetAddress': locationStreetAddress,
       'timeZone': timeZone,
+      'subscriptionTier': subscriptionTier,
+      'features': features,
     };
   }
 
@@ -104,6 +120,8 @@ class PatientProfileModel extends Equatable {
     String? locationPostalCode,
     String? locationStreetAddress,
     String? timeZone,
+    String? subscriptionTier,
+    List<String>? features,
   }) {
     return PatientProfileModel(
       id: id ?? this.id,
@@ -123,6 +141,8 @@ class PatientProfileModel extends Equatable {
       locationPostalCode: locationPostalCode ?? this.locationPostalCode,
       locationStreetAddress: locationStreetAddress ?? this.locationStreetAddress,
       timeZone: timeZone ?? this.timeZone,
+      subscriptionTier: subscriptionTier ?? this.subscriptionTier,
+      features: features ?? this.features,
     );
   }
 
@@ -145,5 +165,7 @@ class PatientProfileModel extends Equatable {
         locationPostalCode,
         locationStreetAddress,
         timeZone,
+        subscriptionTier,
+        features,
       ];
 }

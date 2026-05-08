@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/app/shifa_ai_nav_fab.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
+import 'package:shifa_patient_app_v1/core/subscription/patient_subscription.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
+import 'package:shifa_patient_app_v1/state/subscription/patient_subscription_provider.dart';
 
 /// Bottom navigation: Home + Bookings | **center Shifa AI (round logo)** | Documents + Doctors.
-class PersistentBottomBar extends StatelessWidget {
+///
+/// The Shifa AI FAB is gated by [PatientFeature.shifaAi]. For PRO patients
+/// the center FAB and its layout gap are removed, so the four side nav items
+/// expand to fill the bar evenly.
+class PersistentBottomBar extends ConsumerWidget {
   final int? currentIndex;
   final StatefulNavigationShell? navigationShell;
 
@@ -97,13 +104,16 @@ class PersistentBottomBar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final path = GoRouterState.of(context).uri.path;
     final index = currentIndex ?? _indexFromPath(path);
     final effectiveIndex = index >= 0 && index <= 3 ? index : null;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
-    final stackHeight = _barHeight + (_fabSize / 2) + bottomInset;
+    final canUseShifaAi = ref.watch(patientFeatureProvider(PatientFeature.shifaAi));
+    // PRO patients: collapse the center FAB and its layout gap so the bar uses
+    // the standard Material 4-tab height (no raised center disc).
+    final stackHeight = _barHeight + (canUseShifaAi ? (_fabSize / 2) : 0) + bottomInset;
     final onCopilot = _isCopilotPath(path);
 
     return Column(
@@ -142,7 +152,7 @@ class PersistentBottomBar extends StatelessWidget {
                             iconData: Icons.calendar_today_rounded,
                             label: l10n.bookings,
                           ),
-                          const SizedBox(width: _fabSize),
+                          if (canUseShifaAi) const SizedBox(width: _fabSize),
                           _navItem(
                             context,
                             index: 2,
@@ -163,18 +173,19 @@ class PersistentBottomBar extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: bottomInset + _barHeight - (_fabSize / 2),
-                child: Center(
-                  child: ShifaAiNavFab(
-                    size: _fabSize,
-                    active: onCopilot,
-                    onPressed: () => context.push(AppRoutes.shifaAi),
+              if (canUseShifaAi)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: bottomInset + _barHeight - (_fabSize / 2),
+                  child: Center(
+                    child: ShifaAiNavFab(
+                      size: _fabSize,
+                      active: onCopilot,
+                      onPressed: () => context.push(AppRoutes.shifaAi),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

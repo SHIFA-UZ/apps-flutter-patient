@@ -43,7 +43,9 @@ import 'package:shifa_patient_app_v1/features/tasks/presentation/screens/task_ch
 import 'package:shifa_patient_app_v1/features/auth/providers/auth_provider.dart';
 import 'package:shifa_patient_app_v1/app/main_shell.dart';
 import 'package:shifa_patient_app_v1/app/persistent_bottom_bar.dart';
+import 'package:shifa_patient_app_v1/core/subscription/patient_subscription.dart';
 import 'package:shifa_patient_app_v1/core/widgets/app_lock_wrapper.dart';
+import 'package:shifa_patient_app_v1/features/profile/providers/profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Helper class to make AuthState listenable for GoRouter
@@ -252,6 +254,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         // Whitelist: redirect unknown routes to home
         if (!_isAllowedRoute(state.matchedLocation)) {
           return isAuthenticated ? AppRoutes.home : AppRoutes.login;
+        }
+
+        // Subscription gate: PRO patients cannot reach Shifa AI.
+        if (isAuthenticated &&
+            (state.matchedLocation == AppRoutes.shifaAi ||
+                state.matchedLocation.startsWith('${AppRoutes.shifaAi}/'))) {
+          final profile = refreshNotifier.ref.read(profileProvider).profile;
+          // No profile loaded yet → let the screen mount; the screen itself will
+          // redirect if the tier turns out to be PRO. This avoids bouncing the
+          // user away on a cold start before the profile fetch resolves.
+          if (profile != null) {
+            final tier = parsePatientTier(profile.subscriptionTier);
+            if (!tierAllows(tier, PatientFeature.shifaAi)) {
+              return AppRoutes.home;
+            }
+          }
         }
 
         return null;

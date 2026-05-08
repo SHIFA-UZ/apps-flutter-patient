@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
+import 'package:shifa_patient_app_v1/core/subscription/patient_subscription.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
 import 'package:shifa_patient_app_v1/core/utils/image_utils.dart';
+import 'package:shifa_patient_app_v1/state/subscription/patient_subscription_provider.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
 import 'package:shifa_patient_app_v1/features/chat/presentation/widgets/voice_recording_dialog.dart';
 import 'package:shifa_patient_app_v1/features/copilot/providers/copilot_api_provider.dart';
@@ -409,6 +411,16 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final canUseShifaAi = ref.watch(patientFeatureProvider(PatientFeature.shifaAi));
+    // Defensive guard for direct navigation (deep link, refresh, etc.). The
+    // bottom-bar FAB and router redirect both already gate this, but if a PRO
+    // patient lands here anyway we bounce back to home on the next frame.
+    if (!canUseShifaAi) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go(AppRoutes.home);
+      });
+      return const Scaffold(body: SizedBox.shrink());
+    }
     final chatState = ref.watch(copilotChatProvider);
     ref.listen<CopilotChatState>(copilotChatProvider, (prev, next) {
       if (next.messages.length != (prev?.messages.length ?? 0) ||
