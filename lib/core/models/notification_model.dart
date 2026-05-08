@@ -8,6 +8,9 @@ class NotificationModel extends Equatable {
   final int? appointmentId;
   /// Present when type is DOCUMENT_ACCESS_REQUEST; use for approve/reject and deep linking.
   final int? documentAccessRequestId;
+  /// Server-side status for DOCUMENT_ACCESS_REQUEST: "pending" | "approved" | "rejected".
+  /// Used to hide approve/reject buttons once the request is resolved.
+  final String? documentAccessRequestStatus;
   /// Present for TASK_ASSIGNED, TASK_CANCELLED, TASK_REMINDER; use for navigation to tasks.
   final int? taskId;
   /// Optional payload from backend (e.g. data.documentId, data.chatId, data.doctorName).
@@ -24,6 +27,7 @@ class NotificationModel extends Equatable {
     required this.type,
     this.appointmentId,
     this.documentAccessRequestId,
+    this.documentAccessRequestStatus,
     this.taskId,
     this.documentId,
     this.chatId,
@@ -37,6 +41,15 @@ class NotificationModel extends Equatable {
   bool get isDocumentAccessRequest =>
       type == 'DOCUMENT_ACCESS_REQUEST' && documentAccessRequestId != null;
 
+  /// True when this is a document-access notification AND the underlying
+  /// request is still awaiting the patient's decision. False once the
+  /// request has been approved or rejected (so the UI can hide the
+  /// approve/reject buttons).
+  bool get isDocumentAccessRequestPending =>
+      isDocumentAccessRequest &&
+      (documentAccessRequestStatus == null ||
+          documentAccessRequestStatus!.toLowerCase() == 'pending');
+
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : null;
     return NotificationModel(
@@ -48,6 +61,8 @@ class NotificationModel extends Equatable {
           _optionalInt(json['appointment_id']) ??
           (data != null ? _optionalInt(data['appointmentId']) ?? _optionalInt(data['appointment_id']) : null),
       documentAccessRequestId: _optionalInt(json['documentAccessRequestId']) ?? _optionalInt(json['document_access_request_id']),
+      documentAccessRequestStatus: (json['documentAccessRequestStatus'] as String?)
+          ?? (json['document_access_request_status'] as String?),
       taskId: _optionalInt(json['taskId']) ?? _optionalInt(json['task_id']) ??
           (data != null ? _optionalInt(data['taskId']) ?? _optionalInt(data['task_id']) : null),
       documentId: json['documentId']?.toString() ??
@@ -130,6 +145,7 @@ class NotificationModel extends Equatable {
       'type': type,
       'appointmentId': appointmentId,
       'documentAccessRequestId': documentAccessRequestId,
+      'documentAccessRequestStatus': documentAccessRequestStatus,
       'taskId': taskId,
       'documentId': documentId,
       'chatId': chatId,
@@ -140,6 +156,19 @@ class NotificationModel extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, title, message, type, appointmentId, documentAccessRequestId, taskId, documentId, chatId, doctorName, createdAt, readAt];
+  List<Object?> get props => [
+        id,
+        title,
+        message,
+        type,
+        appointmentId,
+        documentAccessRequestId,
+        documentAccessRequestStatus,
+        taskId,
+        documentId,
+        chatId,
+        doctorName,
+        createdAt,
+        readAt,
+      ];
 }

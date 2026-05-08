@@ -320,6 +320,28 @@ class _NotificationCard extends StatelessWidget {
     final timeStr = formatNotificationTime(notification.createdAt, l10n);
     final isDocumentAccessRequest = notification.isDocumentAccessRequest;
     final requestId = notification.documentAccessRequestId;
+    // The approve/reject buttons should appear only while the request is
+    // still pending. We combine three signals so the buttons disappear as
+    // soon as ANY of them indicates the decision has been made:
+    //   1. server-side status (source of truth across devices/sessions),
+    //   2. session-local actedRequestIds (optimistic hide before refresh),
+    //   3. notification was marked read (most resolutions also mark read).
+    // Falling back to "pending" treats older notifications without a status
+    // field as actionable, preserving backward compat.
+    final requestStatus = notification.documentAccessRequestStatus?.toLowerCase();
+    final isStillPending = requestStatus == null || requestStatus == 'pending';
+    final showAccessButtons = isDocumentAccessRequest &&
+        requestId != null &&
+        isStillPending &&
+        !actedRequestIds.contains(requestId);
+    // The badge is rendered only when the server confirms the resolution
+    // (approved / rejected). Between the user's tap and the next refetch we
+    // hide the buttons via [actedRequestIds] but skip the badge to avoid
+    // mislabelling approve as reject (or vice versa) using the stale cache.
+    final showResolvedBadge = isDocumentAccessRequest &&
+        requestId != null &&
+        (requestStatus == 'approved' || requestStatus == 'rejected');
+    final isApprovedBadge = requestStatus == 'approved';
 
     return Material(
       color: Colors.transparent,
@@ -394,9 +416,7 @@ class _NotificationCard extends StatelessWidget {
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (isDocumentAccessRequest &&
-                            requestId != null &&
-                            !actedRequestIds.contains(requestId)) ...[
+                        if (showAccessButtons) ...[
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
@@ -405,7 +425,7 @@ class _NotificationCard extends StatelessWidget {
                                 onPressed: () async {
                                   try {
                                     await controller.rejectDocumentAccessRequest(
-                                      requestId,
+                                      requestId!,
                                       notification.id,
                                     );
                                     if (context.mounted) {
@@ -436,7 +456,7 @@ class _NotificationCard extends StatelessWidget {
                                 onPressed: () async {
                                   try {
                                     await controller.approveDocumentAccessRequest(
-                                      requestId,
+                                      requestId!,
                                       notification.id,
                                     );
                                     if (context.mounted) {
@@ -463,6 +483,54 @@ class _NotificationCard extends StatelessWidget {
                                 label: Text(l10n.translate('approve')),
                               ),
                             ],
+                          ),
+                        ],
+                        if (showResolvedBadge) ...[
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (isApprovedBadge
+                                        ? Colors.green
+                                        : Colors.red.shade400)
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isApprovedBadge
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    size: 16,
+                                    color: isApprovedBadge
+                                        ? Colors.green.shade700
+                                        : Colors.red.shade700,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isApprovedBadge
+                                        ? l10n.translate('documentAccessApproved')
+                                        : l10n.translate('documentAccessRejected'),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: isApprovedBadge
+                                              ? Colors.green.shade800
+                                              : Colors.red.shade800,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ],
