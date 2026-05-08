@@ -3,6 +3,7 @@ import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/document_model.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
 import 'package:shifa_patient_app_v1/core/widgets/base_card.dart';
+import 'package:shifa_patient_app_v1/features/documents/domain/document_category.dart';
 
 /// Document card: file-type icon, formatted name, date and uploader hierarchy, View button.
 /// When [onDelete] is non-null, a delete icon is shown (for patient-uploaded docs only).
@@ -63,16 +64,55 @@ class DocumentCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  formattedDate,
-                  style: AppDesignSystem.caption,
+                Wrap(
+                  spacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      formattedDate,
+                      style: AppDesignSystem.caption,
+                    ),
+                    if (findPatientCategory(document.category) != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppDesignSystem.primary.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              findPatientCategory(document.category)!.icon,
+                              size: 10,
+                              color: AppDesignSystem.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              findPatientCategory(document.category)!
+                                  .label(l10n),
+                              style: AppDesignSystem.caption.copyWith(
+                                color: AppDesignSystem.primary,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
                 if (uploaderLabel.isNotEmpty)
-                  Text(
-                    uploaderLabel,
-                    style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textTertiary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      uploaderLabel,
+                      style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textTertiary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
             ),

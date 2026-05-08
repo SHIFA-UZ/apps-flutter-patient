@@ -12,6 +12,14 @@ class DocumentModel extends Equatable {
   /// Who created/uploaded: "Doctor", "Patient", or "Unknown". Patients see all their docs.
   final String? creatorLabel;
 
+  /// Optional uploader-chosen category code (e.g. "MRI", "BLOOD_TEST"). Null
+  /// when uploaded before categories existed or when not tagged.
+  final String? category;
+
+  /// True when the backend marks the document as visible to every doctor of
+  /// the patient (patient uploads, or doctor uploads of medical results).
+  final bool isSharedWithTeam;
+
   const DocumentModel({
     required this.id,
     required this.patientId,
@@ -22,6 +30,8 @@ class DocumentModel extends Equatable {
     this.doctorId,
     this.doctorName,
     this.creatorLabel,
+    this.category,
+    this.isSharedWithTeam = false,
   });
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +45,8 @@ class DocumentModel extends Equatable {
       doctorId: json['doctorId']?.toString(),
       doctorName: json['doctorName'] as String?,
       creatorLabel: json['creatorLabel'] as String?,
+      category: json['category'] as String?,
+      isSharedWithTeam: json['isSharedWithTeam'] as bool? ?? false,
     );
   }
 
@@ -49,6 +61,8 @@ class DocumentModel extends Equatable {
       'doctorId': doctorId,
       'doctorName': doctorName,
       'creatorLabel': creatorLabel,
+      'category': category,
+      'isSharedWithTeam': isSharedWithTeam,
     };
   }
 
@@ -66,5 +80,7 @@ class DocumentModel extends Equatable {
         doctorId,
         doctorName,
         creatorLabel,
+        category,
+        isSharedWithTeam,
       ];
 }

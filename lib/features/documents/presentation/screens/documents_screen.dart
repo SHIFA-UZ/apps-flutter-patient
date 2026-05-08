@@ -17,6 +17,7 @@ import 'package:shifa_patient_app_v1/core/widgets/app_header.dart';
 import 'package:shifa_patient_app_v1/core/widgets/document_card.dart';
 import 'package:shifa_patient_app_v1/core/widgets/empty_state.dart';
 import 'package:shifa_patient_app_v1/core/services/app_lock_provider.dart';
+import 'package:shifa_patient_app_v1/features/documents/domain/document_category.dart';
 import 'package:shifa_patient_app_v1/features/documents/providers/documents_provider.dart';
 import 'package:shifa_patient_app_v1/features/profile/providers/profile_provider.dart';
 
@@ -333,11 +334,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       final file = File(image.path);
       final bytes = await file.readAsBytes();
 
-      final title = await _askForTitle('photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      if (title == null || title.isEmpty) {
+      final form = await _askForTitleAndCategory(
+        'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+      final title = (form?['title'] ?? '').toString();
+      if (form == null || title.isEmpty) {
         ref.read(appLockTemporaryDisableProvider.notifier).enable();
         return;
       }
+      final category = form['category'];
 
       final selectedDate = await _askForDate();
       final dateString = selectedDate == null
@@ -349,6 +354,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             fileName: '${title}.jpg',
             title: title,
             date: dateString,
+            category: category,
           );
       
       
@@ -394,11 +400,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       final file = File(image.path);
       final bytes = await file.readAsBytes();
 
-      final title = await _askForTitle('photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      if (title == null || title.isEmpty) {
+      final form = await _askForTitleAndCategory(
+        'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+      final title = (form?['title'] ?? '').toString();
+      if (form == null || title.isEmpty) {
         ref.read(appLockTemporaryDisableProvider.notifier).enable();
         return;
       }
+      final category = form['category'];
 
       final selectedDate = await _askForDate();
       final dateString = selectedDate == null
@@ -410,6 +420,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             fileName: '${title}.jpg',
             title: title,
             date: dateString,
+            category: category,
           );
       
       
@@ -463,11 +474,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       return;
     }
 
-    final title = await _askForTitle(file.name);
-    if (title == null || title.isEmpty) {
+    final form = await _askForTitleAndCategory(file.name);
+    final title = (form?['title'] ?? '').toString();
+    if (form == null || title.isEmpty) {
       ref.read(appLockTemporaryDisableProvider.notifier).enable();
       return;
     }
+    final category = form['category'];
 
     final selectedDate = await _askForDate();
     final dateString = selectedDate == null
@@ -480,6 +493,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             fileName: file.name,
             title: title,
             date: dateString,
+            category: category,
           );
       
       
@@ -503,31 +517,101 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     }
   }
 
-  Future<String?> _askForTitle(String fileName) async {
+  /// Ask the patient for a title and an optional category tag. Returns null
+  /// if the patient cancels. The map has keys {title, category}.
+  Future<Map<String, String?>?> _askForTitleAndCategory(String fileName) async {
     final controller = TextEditingController(
-      text: fileName.replaceAll(RegExp(r'\.pdf$', caseSensitive: false), ''),
+      text: fileName
+          .replaceAll(RegExp(r'\.pdf$', caseSensitive: false), '')
+          .replaceAll(RegExp(r'\.(jpg|jpeg|png|gif|webp)$', caseSensitive: false), ''),
     );
+    DocumentCategory? selected;
 
-    return showDialog<String>(
+    return showDialog<Map<String, String?>>(
       context: context,
       builder: (dialogContext) {
         final dialogL10n = AppLocalizations.of(dialogContext)!;
-        return AlertDialog(
-          title: Text(dialogL10n.documentTitle),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(hintText: dialogL10n.enterDocumentTitle),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(dialogL10n.cancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()),
-              child: Text(dialogL10n.save),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: Text(dialogL10n.documentTitle),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        hintText: dialogL10n.enterDocumentTitle,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      dialogL10n.translate('documentCategoryLabel') ??
+                          'Document type',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dialogL10n.translate('documentCategoryHint') ??
+                          'Optional. Tagging helps your doctors quickly understand what kind of document this is.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<DocumentCategory>(
+                      value: selected,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      hint: Text(
+                        dialogL10n.translate('documentCategorySelect') ??
+                            'Select a type (optional)',
+                      ),
+                      items: kPatientDocumentCategories
+                          .map(
+                            (c) => DropdownMenuItem<DocumentCategory>(
+                              value: c,
+                              child: Row(
+                                children: [
+                                  Icon(c.icon, size: 16, color: Colors.teal),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      c.label(dialogL10n),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) => setDialogState(() => selected = v),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(dialogL10n.cancel),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop({
+                    'title': controller.text.trim(),
+                    'category': selected?.code,
+                  }),
+                  child: Text(dialogL10n.save),
+                ),
+              ],
+            );
+          },
         );
       },
     );

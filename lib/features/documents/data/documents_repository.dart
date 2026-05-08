@@ -51,12 +51,17 @@ class DocumentsRepository {
   }
 
   /// Uploads a document for the current patient (POST /patients/me/documents).
+  ///
+  /// [category] is optional and used purely as a tag (e.g. "MRI",
+  /// "BLOOD_TEST"); patient uploads are always visible to the patient's
+  /// doctors regardless of category.
   Future<DocumentModel> uploadDocument({
     required List<int> fileBytes,
     required String fileName,
     required String title,
     String? date,
     bool isChatAttachment = false,
+    String? category,
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -67,6 +72,7 @@ class DocumentsRepository {
         'title': title,
         if (date != null) 'date': date,
         'isChatAttachment': isChatAttachment.toString(),
+        if (category != null && category.isNotEmpty) 'category': category,
       });
 
       final response = await _apiClient.dio.post(

@@ -46,6 +46,7 @@ class DocumentsNotifier extends StateNotifier<DocumentsState> {
     required String fileName,
     required String title,
     String? date,
+    String? category,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -54,6 +55,7 @@ class DocumentsNotifier extends StateNotifier<DocumentsState> {
         fileName: fileName,
         title: title,
         date: date,
+        category: category,
       );
       state = state.copyWith(
         documents: [doc, ...state.documents],
