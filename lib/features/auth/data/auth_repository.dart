@@ -86,17 +86,22 @@ class AuthRepository {
   }
 
   /// Patient app create-account: check if phone/email is already a doctor, patient, or neither.
-  /// Backend: POST /auth/check-identifier with { phone, email? }; returns { type, firstName?, lastName? }.
+  /// Backend: POST /auth/check-identifier with { phone?, email? } (at least one required); returns { type, firstName?, lastName? }.
   Future<CheckIdentifierResult> checkIdentifier({
-    required String phone,
+    String? phone,
     String? email,
   }) async {
+    final p = phone?.trim();
+    final e = email?.trim();
+    if ((p == null || p.isEmpty) && (e == null || e.isEmpty)) {
+      throw ArgumentError('checkIdentifier requires phone and/or email');
+    }
     try {
       final response = await _apiClient.post(
         '/auth/check-identifier',
         data: {
-          'phone': phone.trim(),
-          if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+          if (p != null && p.isNotEmpty) 'phone': p,
+          if (e != null && e.isNotEmpty) 'email': e,
         },
       );
       final data = response.data as Map<String, dynamic>?;
@@ -113,17 +118,22 @@ class AuthRepository {
   }
 
   /// Check if phone/email belongs to an existing doctor. Returns doctor info if found, null otherwise.
-  /// Backend: POST /auth/check-existing-doctor with { phone, email? }; returns 200 { firstName, lastName } or 404.
+  /// Backend: POST /auth/check-existing-doctor with { phone?, email? } (at least one required); returns 200 { firstName, lastName } or 404.
   Future<ExistingDoctorInfo?> checkExistingDoctor({
-    required String phone,
+    String? phone,
     String? email,
   }) async {
+    final p = phone?.trim();
+    final e = email?.trim();
+    if ((p == null || p.isEmpty) && (e == null || e.isEmpty)) {
+      throw ArgumentError('checkExistingDoctor requires phone and/or email');
+    }
     try {
       final response = await _apiClient.post(
         '/auth/check-existing-doctor',
         data: {
-          'phone': phone.trim(),
-          if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+          if (p != null && p.isNotEmpty) 'phone': p,
+          if (e != null && e.isNotEmpty) 'email': e,
         },
       );
       final data = response.data as Map<String, dynamic>?;
@@ -151,7 +161,7 @@ class AuthRepository {
 
   /// Create a patient account for an existing doctor. When email is provided, emailOtp must be set (from sendEmailOtp + user entry).
   Future<String> createPatientForDoctor({
-    required String phone,
+    String? phone,
     String? email,
     String? emailOtp,
   }) async {
@@ -159,7 +169,7 @@ class AuthRepository {
       final response = await _apiClient.post(
         '/auth/create-patient-for-doctor',
         data: {
-          'phone': phone.trim(),
+          if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
           if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
           if (emailOtp != null && emailOtp.trim().isNotEmpty) 'emailOtp': emailOtp.trim(),
         },
@@ -181,8 +191,8 @@ class AuthRepository {
   Future<String> register({
     required String firstName,
     required String lastName,
-    required String phone,
-    String? email,
+    String? phone,
+    required String email,
     required String password,
     String? birthDate,
     String? gender,
@@ -195,14 +205,16 @@ class AuthRepository {
       final data = <String, dynamic>{
         'firstName': firstName,
         'lastName': lastName,
-        'phone': phone,
-        'email': email,
+        'phone': null,
+        'email': email.trim(),
         'password': password,
         'birthDate': birthDate,
         'gender': gender,
         'address': address,
         'language': language,
       };
+      final pt = phone?.trim();
+      if (pt != null && pt.isNotEmpty) data['phone'] = pt;
       if (emailOtp != null && emailOtp.trim().isNotEmpty) data['emailOtp'] = emailOtp.trim();
       if (phoneVerificationIdToken != null && phoneVerificationIdToken.isNotEmpty) {
         data['phoneVerificationIdToken'] = phoneVerificationIdToken;

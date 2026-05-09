@@ -72,7 +72,7 @@ class _DoctorOtpVerifyScreenState extends ConsumerState<DoctorOtpVerifyScreen> {
     setState(() => _isLoading = true);
     try {
       await ref.read(authStateProvider.notifier).registerPatientForDoctor(
-            phone: state.phone,
+            phone: state.phone.trim().isEmpty ? null : state.phone.trim(),
             email: state.email,
             emailOtp: emailCode,
           );

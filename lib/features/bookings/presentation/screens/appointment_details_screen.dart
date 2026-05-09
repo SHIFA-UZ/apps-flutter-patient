@@ -23,6 +23,30 @@ class AppointmentDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _AppointmentDetailsScreenState extends ConsumerState<AppointmentDetailsScreen> {
+  bool _openingPayment = false;
+
+  bool _needsPayment(dynamic appointment) {
+    if (appointment.status == AppointmentStatus.cancelled ||
+        appointment.status == AppointmentStatus.completed) {
+      return false;
+    }
+    return appointment.paymentStatus.toString().toUpperCase() == 'PENDING';
+  }
+
+  Future<void> _openPaymentCheckout(String appointmentId) async {
+    if (_openingPayment) return;
+    setState(() => _openingPayment = true);
+    try {
+      await context.push<bool>('${AppRoutes.bookings}/$appointmentId/pay');
+      if (mounted) {
+        await ref.read(bookingsProvider.notifier).getAppointmentById(widget.appointmentId);
+        setState(() {});
+      }
+    } finally {
+      if (mounted) setState(() => _openingPayment = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -220,6 +244,47 @@ class _AppointmentDetailsScreenState extends ConsumerState<AppointmentDetailsScr
             if (appointment.reason != null && appointment.reason!.isNotEmpty) ...[
               const SizedBox(height: 16),
               _buildInfoCard(l10n.reasonForVisit, _localizedReason(appointment.reason!, l10n)),
+            ],
+            if (_needsPayment(appointment)) ...[
+              const SizedBox(height: 16),
+              Card(
+                color: Colors.amber.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.payments_outlined, color: Colors.amber.shade900),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.translate('paymentPendingTitle'),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.translate('paymentPendingMessage'),
+                        style: TextStyle(color: Colors.amber.shade900, fontSize: 14),
+                      ),
+                      const SizedBox(height: 16),
+                      ShifaPrimaryButton(
+                        label: l10n.translate('payNow'),
+                        icon: Icons.payment,
+                        isLoading: _openingPayment,
+                        onPressed: _openingPayment ? null : () => _openPaymentCheckout(appointment.id),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
             if (hasAppointmentEnded) ...[
               const SizedBox(height: 16),

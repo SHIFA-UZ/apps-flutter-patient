@@ -76,8 +76,8 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
       await ref.read(authStateProvider.notifier).register(
             firstName: reg.firstName!,
             lastName: reg.lastName!,
-            phone: reg.phone!,
-            email: reg.email,
+            email: reg.email!.trim(),
+            phone: reg.phone,
             password: reg.password!,
             birthDate: reg.birthDate,
             gender: reg.gender,

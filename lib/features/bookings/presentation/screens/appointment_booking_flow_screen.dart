@@ -45,11 +45,15 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
   bool _isLoadingDoctor = true;
   bool _isBooking = false;
   int? _selectedServiceId;
+  final GlobalKey _serviceSectionKey = GlobalKey();
+  bool _highlightServiceSection = false;
 
   // Multi-location support
   List<PublicDoctorLocation> _locations = const [];
   int? _selectedLocationId;
   bool _locationStepCompleted = false;
+
+  bool get _hasVideoServiceCatalog => _doctor?.serviceItems?.isNotEmpty ?? false;
 
   @override
   void initState() {
@@ -295,6 +299,10 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                         setState(() {
                           _isVideoConsultation = value;
                           _selectedTime = null;
+                          _highlightServiceSection = false;
+                          if (!value) {
+                            _selectedServiceId = null;
+                          }
                           if (requiresLocationStep) {
                             _locationStepCompleted = false;
                             _selectedLocationId = null;
@@ -315,37 +323,83 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       },
                     ),
                   ),
-                  if (_isVideoConsultation && (_doctor?.serviceItems?.isNotEmpty ?? false)) ...[
+                  if (_isVideoConsultation && _doctor != null) ...[
                     const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Select Service',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<int>(
-                              value: _selectedServiceId,
-                              items: (_doctor!.serviceItems ?? const [])
-                                  .map((s) => DropdownMenuItem<int>(
-                                        value: int.tryParse(s.id),
-                                        child: Text(s.title),
-                                      ))
-                                  .toList(),
-                              onChanged: (v) => setState(() => _selectedServiceId = v),
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Choose service for video consultation',
+                    if (!_hasVideoServiceCatalog) ...[
+                      Card(
+                        color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.35),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Theme.of(context).colorScheme.onErrorContainer,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  l10n.translate('bookingVideoNoServicesOffered'),
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onErrorContainer,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ] else ...[
+                      Card(
+                        key: _serviceSectionKey,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: _highlightServiceSection
+                                ? Colors.orange
+                                : Theme.of(context).dividerColor.withValues(alpha: 0.25),
+                            width: _highlightServiceSection ? 2.5 : 1,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.translate('videoConsultationServiceLabel'),
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<int>(
+                                value: _selectedServiceId,
+                                items: (_doctor!.serviceItems ?? const [])
+                                    .map((s) => DropdownMenuItem<int>(
+                                          value: int.tryParse(s.id),
+                                          child: Text(
+                                            s.isFreeConsultation
+                                                ? '${s.title} — ${l10n.translate('consultationServiceFreeBadge')}'
+                                                : s.title,
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) => setState(() {
+                                  _selectedServiceId = v;
+                                  _highlightServiceSection = false;
+                                }),
+                                decoration: InputDecoration(
+                                  border: const OutlineInputBorder(),
+                                  hintText: l10n
+                                      .translate('videoConsultationServiceHint'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 16),
                   // Date selector
@@ -561,8 +615,61 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
     }
   }
 
+  void _scrollServiceSectionIntoView() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _serviceSectionKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          alignment: 0.12,
+        );
+      }
+    });
+  }
+
+  /// Video consultations require [serviceId] on the server. Validates before API call
+  /// and guides the user to the service picker.
+  bool _validateVideoConsultationService(AppLocalizations l10n) {
+    if (!_isVideoConsultation || _doctor == null) return true;
+    if (!mounted) return false;
+
+    if (!_hasVideoServiceCatalog) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.translate('bookingVideoNoServicesOffered')),
+          backgroundColor: Colors.orange.shade800,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      return false;
+    }
+
+    if (_selectedServiceId == null) {
+      setState(() => _highlightServiceSection = true);
+      _scrollServiceSectionIntoView();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.translate('bookingSelectServiceForVideo')),
+          backgroundColor: Colors.orange.shade800,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return false;
+    }
+
+    return true;
+  }
+
   Future<void> _confirmBooking() async {
     if (_selectedTime == null) return;
+
+    final l10n = AppLocalizations.of(context)!;
+    if (!_validateVideoConsultationService(l10n)) {
+      return;
+    }
 
     setState(() {
       _isBooking = true;
@@ -598,9 +705,6 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       });
       if (hasConflict) {
         throw Exception('You already have an appointment scheduled at this date and time. Please choose a different time slot.');
-      }
-      if (_isVideoConsultation && (_doctor?.serviceItems?.isNotEmpty ?? false) && _selectedServiceId == null) {
-        throw Exception('Please select a service for video consultation.');
       }
 
       // Prefer the locationId that came back on the slot itself (authoritative for
@@ -739,10 +843,18 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
+        final friendly = userFriendlyError(l10n, e, logContext: 'Booking flow');
+        final selectServiceMsg = l10n.translate('bookingSelectServiceForVideo');
+        final isSelectServiceCase = friendly == selectServiceMsg ||
+            e.toString().contains('serviceId is required for video consultation');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${l10n.translate('failedToBookAppointment')}: ${userFriendlyError(l10n, e, logContext: 'Booking flow')}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              isSelectServiceCase
+                  ? friendly
+                  : '${l10n.translate('failedToBookAppointment')}: $friendly',
+            ),
+            backgroundColor: isSelectServiceCase ? Colors.orange.shade800 : Colors.red,
             duration: const Duration(seconds: 4),
           ),
         );

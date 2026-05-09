@@ -35,6 +35,7 @@ import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/vide
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/waiting_room_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/sign_appointment_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/visit_summary_screen.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/consultation_payment_screen.dart';
 import 'package:shifa_patient_app_v1/features/chat/presentation/chat_screen.dart';
 import 'package:shifa_patient_app_v1/features/copilot/presentation/shifa_ai_screen.dart';
 import 'package:shifa_patient_app_v1/features/notifications/presentation/screens/notifications_screen.dart';
@@ -167,6 +168,8 @@ class AppRoutes {
   static const waitingRoom = '/bookings/:id/waiting';
   static const signAppointment = '/bookings/:id/sign';
   static const visitSummary = '/bookings/:id/visit-summary';
+  /// Doctor-requested payment deep link / notification target.
+  static const consultationPay = '/bookings/:id/pay';
 }
 
 // Router provider - will be created in app.dart
@@ -307,7 +310,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           final extra = state.extra as Map<String, dynamic>?;
           if (extra == null) return const CreateAccountScreen();
           return ConfirmDoctorToPatientScreen(
-            phone: extra['phone'] as String,
+            phone: extra['phone'] as String?,
             email: extra['email'] as String?,
             doctorFirstName: extra['firstName'] as String,
             doctorLastName: extra['lastName'] as String,
@@ -421,6 +424,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                         builder: (context, state) {
                           final id = state.pathParameters['id']!;
                           return VisitSummaryScreen(appointmentId: id);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'pay',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id']!;
+                          return ConsultationPaymentScreen(appointmentId: id);
                         },
                       ),
                     ],

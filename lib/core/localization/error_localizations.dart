@@ -69,6 +69,9 @@ const Map<String, String> _errorMessageToKey = {
   'Unknown error': 'errorUnknownError',
   'Something went wrong': 'errorSomethingWentWrong',
   'Session expired. Please start again.': 'errorSessionExpiredPleaseStartAgain',
+  // Bookings (patient app video consultation)
+  'serviceId is required for video consultation': 'bookingSelectServiceForVideo',
+  'Please select a service for video consultation.': 'bookingSelectServiceForVideo',
 };
 
 /// Prefixes for messages that contain a dynamic part (e.g. "Appointment not found: 12345").
@@ -104,7 +107,18 @@ bool _isTechnicalMessage(String msg) {
 String translateError(AppLocalizations l10n, String rawMessage) {
   if (rawMessage.isEmpty) return l10n.translate('errorSomethingWentWrong');
 
-  final trimmed = rawMessage.replaceFirst('Exception: ', '').trim();
+  var trimmed = rawMessage.trim();
+  // Unwrap nested wrappers from repository (e.g. "Failed to book appointment: Exception: ...")
+  for (var depth = 0; depth < 8; depth++) {
+    var next = trimmed.startsWith('Exception:')
+        ? trimmed.substring('Exception:'.length).trim()
+        : trimmed;
+    if (next.startsWith('Failed to book appointment:')) {
+      next = next.substring('Failed to book appointment:'.length).trim();
+    }
+    if (next == trimmed) break;
+    trimmed = next;
+  }
 
   // Safety net: never show technical content
   if (_isTechnicalMessage(trimmed)) return l10n.translate('errorSomethingWentWrong');

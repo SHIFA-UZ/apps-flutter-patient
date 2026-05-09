@@ -235,6 +235,13 @@ class AppLocalizations {
       'reasonForVisitOptional': 'Reason for Visit (Optional)',
       'videoConsultation': 'Video consultation',
       'haveYourAppointment': 'Have your appointment via video call',
+      'videoConsultationServiceLabel': 'Service (required for video)',
+      'videoConsultationServiceHint': 'Choose a service for this video consultation',
+      'bookingSelectServiceForVideo':
+          'Please choose a service for your video consultation. It is required to continue.',
+      'bookingVideoNoServicesOffered':
+          'This doctor has not listed any billable services yet, so video consultations cannot be booked in the app. Please contact the clinic or choose an in-person visit.',
+      'consultationServiceFreeBadge': 'Free',
       'optional': 'Optional',
       'describeYourReason': 'Describe your reason for the visit',
       'confirm': 'Confirm',
@@ -472,6 +479,15 @@ class AppLocalizations {
           '{doctorName} is requesting your signature for the appointment summary.',
       'visitSummaryReadyTitle': 'Visit summary is ready',
       'visitSummaryReadyMessage': 'Your after-visit summary is now available.',
+      'consultationPaymentReminderTitle': 'Complete your payment',
+      'consultationPaymentReminderMessage':
+          'Your doctor is waiting — please pay now to confirm your video consultation.',
+      'consultationPaymentDue24hMessage':
+          'Your video consultation is in 24 hours. Please complete payment to confirm your booking.',
+      'consultationPaymentDue6hMessage':
+          'Your video consultation is in 6 hours. Please complete payment to confirm your booking.',
+      'consultationPaymentDue1hMessage':
+          'Your video consultation is in 1 hour. Please complete payment to confirm your booking.',
       'chatNewMessageTitle': 'New message',
       'taskReminderTitle': 'Task reminder',
       'taskAssignedTitle': 'Task assigned',
@@ -1114,6 +1130,15 @@ class AppLocalizations {
       'visitSummaryReadyTitle': 'Besuchszusammenfassung ist bereit',
       'visitSummaryReadyMessage':
           'Ihre Nachbesuchs-Zusammenfassung ist jetzt verfügbar.',
+      'consultationPaymentReminderTitle': 'Zahlung abschließen',
+      'consultationPaymentReminderMessage':
+          'Ihr Arzt wartet — bitte bezahlen Sie jetzt, um die Videosprechstunde zu bestätigen.',
+      'consultationPaymentDue24hMessage':
+          'Ihre Videosprechstunde ist in 24 Stunden. Bitte schließen Sie die Zahlung ab, um die Buchung zu bestätigen.',
+      'consultationPaymentDue6hMessage':
+          'Ihre Videosprechstunde ist in 6 Stunden. Bitte schließen Sie die Zahlung ab, um die Buchung zu bestätigen.',
+      'consultationPaymentDue1hMessage':
+          'Ihre Videosprechstunde ist in 1 Stunde. Bitte schließen Sie die Zahlung ab, um die Buchung zu bestätigen.',
       'taskReminderTitle': 'Aufgaben-Erinnerung',
       'taskAssignedTitle': 'Aufgabe zugewiesen',
       'taskCancelledTitle': 'Aufgabe storniert',
@@ -1415,6 +1440,13 @@ class AppLocalizations {
       'errorLoadingSlots': 'Vaqt bo\'shliqlarini yuklashda xatolik',
       'reasonForVisitOptional': 'Tashrif sababi (ixtiyoriy)',
       'videoConsultation': 'Video qabul',
+      'videoConsultationServiceLabel': 'Xizmat (video uchun majburiy)',
+      'videoConsultationServiceHint': 'Video qabul uchun xizmatni tanlang',
+      'bookingSelectServiceForVideo':
+          'Video qabul uchun xizmatni tanlang — davom etish uchun bu majburiy.',
+      'bookingVideoNoServicesOffered':
+          'Bu shifokor hali video qabul uchun xizmatlarni ko\'rsatmagani uchun ilova orqali bron qilish mumkin emas. Klinika bilan bog\'laning yoki klinikaga borishni tanlang.',
+      'consultationServiceFreeBadge': 'Bepul',
       'view': 'Ko\'rish',
       'clinicAddress': 'Klinika manzili',
       'documentAccessRequestTitle': 'Hujjatga kirish so\'rovi',
@@ -1703,6 +1735,15 @@ class AppLocalizations {
       'chatNewMessageTitle': 'Yangi xabar',
       'visitSummaryReadyTitle': 'Qabul xulosasi tayyor',
       'visitSummaryReadyMessage': 'Qabuldan keyingi xulosangiz tayyor.',
+      'consultationPaymentReminderTitle': 'To\'lovni yakunlang',
+      'consultationPaymentReminderMessage':
+          'Shifokoringiz kutmoqda — video maslahatni tasdiqlash uchun hozir to\'lang.',
+      'consultationPaymentDue24hMessage':
+          'Video maslahatingiz 24 soatdan keyin. Bronni tasdiqlash uchun to\'lovni yakunlang.',
+      'consultationPaymentDue6hMessage':
+          'Video maslahatingiz 6 soatdan keyin. Bronni tasdiqlash uchun to\'lovni yakunlang.',
+      'consultationPaymentDue1hMessage':
+          'Video maslahatingiz 1 soatdan keyin. Bronni tasdiqlash uchun to\'lovni yakunlang.',
       'today': 'Bugun',
       'timeYesterday': 'Kecha {time}',
       'notificationFilterAll': 'Barchasi',
@@ -2150,6 +2191,16 @@ class AppLocalizations {
       'selectedLocation': 'Выбранное местоположение',
       'reasonForVisit': 'Причина визита',
       'selectDate': 'Выберите дату',
+      'videoConsultation': 'Видеоконсультация',
+      'haveYourAppointment': 'Проведите приём по видеосвязи',
+      'videoConsultationServiceLabel': 'Услуга (обязательно для видео)',
+      'videoConsultationServiceHint': 'Выберите услугу для видеоконсультации',
+      'bookingSelectServiceForVideo':
+          'Выберите услугу для видеоконсультации — это обязательно для продолжения.',
+      'bookingVideoNoServicesOffered':
+          'У врача ещё нет доступных для записи услуг в приложении, поэтому видеоконсультацию забронировать нельзя. Свяжитесь с клиникой или выберите очный визит.',
+      'consultationServiceFreeBadge': 'Бесплатно',
+      'failedToBookAppointment': 'Не удалось записаться',
       'availableTimes': 'Доступное время',
       'selectLocation': 'Выберите локацию',
       'primary': 'Основная',
@@ -2327,6 +2378,15 @@ class AppLocalizations {
           '{doctorName} запрашивает вашу подпись к итогу приёма.',
       'visitSummaryReadyTitle': 'Итог визита готов',
       'visitSummaryReadyMessage': 'Ваш итог после визита уже доступен.',
+      'consultationPaymentReminderTitle': 'Завершите оплату',
+      'consultationPaymentReminderMessage':
+          'Врач ждёт — оплатите сейчас, чтобы подтвердить видеоконсультацию.',
+      'consultationPaymentDue24hMessage':
+          'Видеоконсультация через 24 часа. Завершите оплату, чтобы подтвердить запись.',
+      'consultationPaymentDue6hMessage':
+          'Видеоконсультация через 6 часов. Завершите оплату, чтобы подтвердить запись.',
+      'consultationPaymentDue1hMessage':
+          'Видеоконсультация через 1 час. Завершите оплату, чтобы подтвердить запись.',
       'chatNewMessageTitle': 'Новое сообщение',
       'appointmentReminderTitle': 'Напоминание о приёме',
       'appointmentCancelledTitle': 'Приём отменён',

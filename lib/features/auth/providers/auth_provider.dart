@@ -90,8 +90,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> register({
     required String firstName,
     required String lastName,
-    required String phone,
-    String? email,
+    required String email,
+    String? phone,
     required String password,
     String? birthDate,
     String? gender,
@@ -142,7 +142,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Create patient account for an existing doctor after OTP verification. They use their doctor password to log in.
   Future<void> registerPatientForDoctor({
-    required String phone,
+    String? phone,
     String? email,
     String? emailOtp,
   }) async {

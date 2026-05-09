@@ -177,12 +177,15 @@ class DoctorServiceItem extends Equatable {
   final String id;
   final String title;
   final String? description;
+  /// When true, video bookings skip payment for this service.
+  final bool isFreeConsultation;
   final List<DoctorServicePriceItem> prices;
 
   const DoctorServiceItem({
     required this.id,
     required this.title,
     this.description,
+    this.isFreeConsultation = false,
     this.prices = const [],
   });
 
@@ -191,6 +194,7 @@ class DoctorServiceItem extends Equatable {
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       description: json['description'] as String?,
+      isFreeConsultation: json['isFreeConsultation'] == true,
       prices: (json['prices'] as List? ?? const [])
           .map((e) => DoctorServicePriceItem.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -201,11 +205,12 @@ class DoctorServiceItem extends Equatable {
         'id': id,
         'title': title,
         'description': description,
+        'isFreeConsultation': isFreeConsultation,
         'prices': prices.map((e) => e.toJson()).toList(),
       };
 
   @override
-  List<Object?> get props => [id, title, description, prices];
+  List<Object?> get props => [id, title, description, isFreeConsultation, prices];
 }
 
 class DoctorServicePriceItem extends Equatable {

@@ -52,6 +52,13 @@ class NotificationTapHandler {
         if (id != null && id.isNotEmpty) return '${AppRoutes.bookings}/$id';
         if (appointmentId != null) return '${AppRoutes.bookings}/$appointmentId';
         break;
+      case 'consultation_payment_reminder':
+      case 'consultation_payment_due_24h':
+      case 'consultation_payment_due_6h':
+      case 'consultation_payment_due_1h':
+        if (id != null && id.isNotEmpty) return '${AppRoutes.bookings}/$id/pay';
+        if (appointmentId != null) return '${AppRoutes.bookings}/$appointmentId/pay';
+        break;
       case 'new_document':
       case 'document':
         if (id != null && id.isNotEmpty) return '${AppRoutes.documents}/$id';
@@ -70,6 +77,10 @@ class NotificationTapHandler {
 
     if ((type == 'AI_VISIT_SUMMARY_READY') && (appointmentId != null || (id != null && id.isNotEmpty))) {
       return '${AppRoutes.bookings}/${appointmentId ?? id}/visit-summary';
+    }
+    if (_isConsultationPaymentPaywallType(type) &&
+        (appointmentId != null || (id != null && id.isNotEmpty))) {
+      return '${AppRoutes.bookings}/${appointmentId ?? id}/pay';
     }
     if (_isAppointmentType(type) && (appointmentId != null || (id != null && id.isNotEmpty))) {
       return '${AppRoutes.bookings}/${appointmentId ?? id}';
@@ -99,6 +110,13 @@ class NotificationTapHandler {
     if (v is num) return v.toInt();
     if (v is String) return int.tryParse(v);
     return null;
+  }
+
+  static bool _isConsultationPaymentPaywallType(String type) {
+    return type == 'CONSULTATION_PAYMENT_REMINDER' ||
+        type == 'CONSULTATION_PAYMENT_DUE_24H' ||
+        type == 'CONSULTATION_PAYMENT_DUE_6H' ||
+        type == 'CONSULTATION_PAYMENT_DUE_1H';
   }
 
   static bool _isAppointmentType(String type) {
@@ -138,6 +156,20 @@ class NotificationTapHandler {
     }
 
     if (!context.mounted) return;
+    final path = getTargetPathFromPayload(data);
+    if (path != null && path.isNotEmpty) {
+      if (path == AppRoutes.chat) {
+        final chatId = data['chatId']?.toString() ?? data['chat_id']?.toString();
+        if (chatId != null && chatId.isNotEmpty) {
+          context.go(path, extra: {'chatId': chatId});
+        } else {
+          context.go(path);
+        }
+      } else {
+        context.go(path);
+      }
+      return;
+    }
     context.go(AppRoutes.notifications);
   }
 
@@ -156,6 +188,9 @@ class NotificationTapHandler {
     }
     if ((type == 'AI_SCRIBE_READY' || type == 'AI_VISIT_SUMMARY_READY') && appointmentId != null) {
       return '${AppRoutes.bookings}/$appointmentId/visit-summary';
+    }
+    if (_isConsultationPaymentPaywallType(type) && appointmentId != null) {
+      return '${AppRoutes.bookings}/$appointmentId/pay';
     }
     if (type == 'SIGNATURE_REQUESTED' || notification.title.toLowerCase().contains('signature')) {
       return appointmentId != null ? '${AppRoutes.bookings}/$appointmentId' : null;

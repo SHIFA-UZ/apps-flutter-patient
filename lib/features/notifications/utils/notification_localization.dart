@@ -36,6 +36,11 @@ class NotificationLocalization {
         return l10n.translate('newAppointmentScheduledTitle');
       case 'SIGNATURE_REQUESTED':
         return l10n.translate('signatureRequestedTitle');
+      case 'CONSULTATION_PAYMENT_REMINDER':
+      case 'CONSULTATION_PAYMENT_DUE_24H':
+      case 'CONSULTATION_PAYMENT_DUE_6H':
+      case 'CONSULTATION_PAYMENT_DUE_1H':
+        return l10n.translate('consultationPaymentReminderTitle');
       case 'DOCUMENT_ACCESS_REQUEST':
         return l10n.translate('documentAccessRequestTitle');
       default:
@@ -64,6 +69,14 @@ class NotificationLocalization {
         return l10n.translate('notificationMessageScheduled');
       case 'SIGNATURE_REQUESTED':
         return l10n.translate('signatureRequestedMessage').replaceAll('{doctorName}', doctorName);
+      case 'CONSULTATION_PAYMENT_REMINDER':
+        return l10n.translate('consultationPaymentReminderMessage');
+      case 'CONSULTATION_PAYMENT_DUE_24H':
+        return l10n.translate('consultationPaymentDue24hMessage');
+      case 'CONSULTATION_PAYMENT_DUE_6H':
+        return l10n.translate('consultationPaymentDue6hMessage');
+      case 'CONSULTATION_PAYMENT_DUE_1H':
+        return l10n.translate('consultationPaymentDue1hMessage');
       case 'DOCUMENT_ACCESS_REQUEST':
         return _localizedDocumentAccessMessage(notification, l10n);
       case 'AI_VISIT_SUMMARY_READY':

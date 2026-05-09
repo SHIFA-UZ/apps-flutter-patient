@@ -52,8 +52,8 @@ class RegistrationData {
       firstName!.isNotEmpty &&
       lastName != null &&
       lastName!.isNotEmpty &&
-      phone != null &&
-      phone!.isNotEmpty &&
+      email != null &&
+      email!.trim().isNotEmpty &&
       password != null &&
       password!.isNotEmpty;
 
@@ -69,16 +69,22 @@ class RegistrationNotifier extends StateNotifier<RegistrationData> {
   void updateStep1({
     required String firstName,
     required String lastName,
-    required String phone,
-    String? email,
+    String? phone,
+    required String email,
     required String password,
   }) {
-    state = state.copyWith(
+    final trimmedPhone = phone?.trim();
+    final newPhone = (trimmedPhone == null || trimmedPhone.isEmpty) ? null : trimmedPhone;
+    state = RegistrationData(
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      phone: phone.trim(),
-      email: email?.trim(),
+      phone: newPhone,
+      email: email.trim(),
       password: password,
+      birthDate: state.birthDate,
+      gender: state.gender,
+      address: state.address,
+      language: state.language,
     );
   }
 

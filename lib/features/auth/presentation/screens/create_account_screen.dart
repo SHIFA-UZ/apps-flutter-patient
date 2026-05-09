@@ -59,6 +59,14 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
+  /// Returns a phone string suitable for the API when the user entered a full number; otherwise null.
+  String? _effectivePhone() {
+    final digits = _phoneValue.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 10) return null;
+    final trimmed = _phoneValue.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -95,7 +103,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: l10n.translate('emailOptional'),
+                  labelText: l10n.email,
                   hintText: 'example@email.com',
                   prefixIcon: const Icon(Icons.email),
                 ),
@@ -111,12 +119,10 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               ),
               const SizedBox(height: 16),
               PhoneInputField(
-                labelText: l10n.phoneNumber,
+                labelText: '${l10n.phoneNumber} (${l10n.optional})',
                 onChanged: (fullPhone) => setState(() => _phoneValue = fullPhone),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return l10n.translate('phoneNumberRequired');
-                  }
+                  if (value == null || value.isEmpty) return null;
                   final digits = value.replaceAll(RegExp(r'\D'), '');
                   if (digits.length < 10) {
                     return l10n.translate('invalidPhone');
@@ -222,11 +228,10 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                         setState(() => _isCheckingDoctor = true);
                         try {
                           final repo = ref.read(authRepositoryProvider);
+                          final emailTrimmed = _emailController.text.trim();
                           final result = await repo.checkIdentifier(
-                            phone: _phoneValue,
-                            email: _emailController.text.trim().isEmpty
-                                ? null
-                                : _emailController.text.trim(),
+                            phone: _effectivePhone(),
+                            email: emailTrimmed,
                           );
                           if (!mounted) return;
                           if (result.isPatient) {
@@ -268,10 +273,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             );
                             if (yes == true && mounted) {
                               context.push(AppRoutes.confirmDoctorToPatient, extra: {
-                                'phone': _phoneValue,
-                                'email': _emailController.text.trim().isEmpty
-                                    ? null
-                                    : _emailController.text.trim(),
+                                'phone': _effectivePhone(),
+                                'email': emailTrimmed,
                                 'firstName': result.firstName ?? '',
                                 'lastName': result.lastName ?? '',
                               });
@@ -281,10 +284,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           ref.read(registrationProvider.notifier).updateStep1(
                             firstName: _nameController.text,
                             lastName: _surnameController.text,
-                            phone: _phoneValue,
-                            email: _emailController.text.trim().isEmpty
-                                ? null
-                                : _emailController.text.trim(),
+                            phone: _effectivePhone(),
+                            email: emailTrimmed,
                             password: _passwordController.text,
                           );
                           if (mounted) context.push(AppRoutes.accountInfo);

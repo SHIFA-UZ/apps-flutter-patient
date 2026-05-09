@@ -9,14 +9,14 @@ import 'package:shifa_patient_app_v1/features/auth/data/auth_repository.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/otp_verification_provider.dart';
 
 class ConfirmDoctorToPatientScreen extends ConsumerStatefulWidget {
-  final String phone;
+  final String? phone;
   final String? email;
   final String doctorFirstName;
   final String doctorLastName;
 
   const ConfirmDoctorToPatientScreen({
     super.key,
-    required this.phone,
+    this.phone,
     this.email,
     required this.doctorFirstName,
     required this.doctorLastName,
@@ -44,7 +44,7 @@ class _ConfirmDoctorToPatientScreenState extends ConsumerState<ConfirmDoctorToPa
       await authRepo.sendEmailOtp(email);
       if (!mounted) return;
       ref.read(doctorOtpVerificationProvider.notifier).state = DoctorOtpVerificationState(
-        phone: widget.phone,
+        phone: widget.phone?.trim() ?? '',
         email: email,
         verificationId: '',
         doctorFirstName: widget.doctorFirstName,
