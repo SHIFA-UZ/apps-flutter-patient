@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 // Conditional import: daily_flutter only works on native platforms, not web
 import 'package:daily_flutter/daily_flutter.dart' if (dart.library.html) 'package:shifa_patient_app_v1/core/services/daily_flutter_stub.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -12,6 +13,16 @@ import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart'
 import 'package:shifa_patient_app_v1/core/network/api_providers.dart';
 import 'package:shifa_patient_app_v1/core/services/app_lock_provider.dart';
 import 'package:shifa_patient_app_v1/core/services/daily_video_service.dart';
+
+String _unwrapVideoErrorMessage(Object e) {
+  var s = e.toString().trim();
+  for (var i = 0; i < 8; i++) {
+    final next = s.replaceFirst(RegExp(r'^Exception:\s*'), '').trim();
+    if (next == s) break;
+    s = next;
+  }
+  return s;
+}
 
 class VideoCallScreen extends ConsumerStatefulWidget {
   final String appointmentId;
@@ -30,7 +41,8 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
   bool _isVideoLoading = true;
   bool _isMuted = false;
   bool _isVideoOff = false;
-  String? _videoError;
+  /// Raw server/client message; localized in [build] via [translateError].
+  String? _videoErrorRaw;
   StreamSubscription? _eventSubscription;
   String? _roomUrl; // For web
   String? _token; // For web
@@ -78,13 +90,47 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
         (s.contains('join failed') || s.contains('future not completed'));
   }
 
-  /// User-friendly message for video call errors (timeout vs generic).
-  String _userFriendlyError(Object e, AppLocalizations l10n) {
-    if (_isJoinTimeout(e)) {
-      return l10n.translate('videoCallConnectionTimeout') ??
-          'Connection timed out. Please check your internet and try again.';
+  /// Requests OS camera + microphone access before [CallClient.join] so iOS can grant
+  /// permissions before Daily initializes WebRTC (avoids a null local video track).
+  Future<bool> _ensureCallMediaPermissions() async {
+    if (kIsWeb) return true;
+    var cam = await Permission.camera.status;
+    if (!cam.isGranted) cam = await Permission.camera.request();
+    var mic = await Permission.microphone.status;
+    if (!mic.isGranted) mic = await Permission.microphone.request();
+    return cam.isGranted && mic.isGranted;
+  }
+
+  void _syncMediaToggleStateFromClient() {
+    if (_isWebPlatform || _callClient == null || !mounted) return;
+    final inputs = (_callClient as CallClient).inputs;
+    setState(() {
+      _isVideoOff = !inputs.camera.isEnabled;
+      _isMuted = !inputs.microphone.isEnabled;
+    });
+  }
+
+  /// If the local camera track is still missing shortly after join (iOS timing), nudge inputs once.
+  Future<void> _retryCameraIfNeededAfterJoin() async {
+    if (_isWebPlatform || _callClient == null) return;
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted || _callClient == null) return;
+    final local = (_callClient as CallClient).participants.local;
+    final media = local.media;
+    final track = media?.camera.track;
+    if (track != null) return;
+    try {
+      await (_callClient as CallClient).updateInputs(
+        inputs: InputSettingsUpdate.set(
+          camera: CameraInputSettingsUpdate.set(
+            isEnabled: BoolUpdate.set(true),
+          ),
+        ),
+      );
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Video call: camera retry after join failed: $e');
     }
-    return userFriendlyError(l10n, e, logContext: 'Video call');
   }
 
   Future<void> _initializeVideoCall() async {
@@ -93,7 +139,7 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
     try {
       setState(() {
         _isVideoLoading = true;
-        _videoError = null;
+        _videoErrorRaw = null;
       });
 
       final apiClient = ref.read(apiClientProvider);
@@ -118,6 +164,14 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
           _isVideoLoading = false;
         });
       } else {
+        final permitted = await _ensureCallMediaPermissions();
+        if (!permitted) {
+          throw Exception(
+            'Camera and microphone access are required for video consultations. '
+            'You can enable them in your device Settings.',
+          );
+        }
+
         _callClient = await CallClient.create();
         _eventSubscription = (_callClient as CallClient).events.listen((event) {
           _handleCallEvent(event);
@@ -126,6 +180,24 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
         await (_callClient as CallClient).join(
           url: Uri.parse(tokenData.roomUrl),
           token: tokenData.token,
+          clientSettings: ClientSettingsUpdate.set(
+            inputs: InputSettingsUpdate.set(
+              camera: CameraInputSettingsUpdate.set(
+                isEnabled: BoolUpdate.set(true),
+              ),
+              microphone: MicrophoneInputSettingsUpdate.set(
+                isEnabled: BoolUpdate.set(true),
+              ),
+            ),
+            publishing: PublishingSettingsUpdate.set(
+              camera: CameraPublishingSettingsUpdate.set(
+                isPublishing: BoolUpdate.set(true),
+              ),
+              microphone: MicrophonePublishingSettingsUpdate.set(
+                isPublishing: BoolUpdate.set(true),
+              ),
+            ),
+          ),
         );
 
         setState(() {
@@ -133,6 +205,8 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
           _isVideoLoading = false;
           _joinRetryCount = 0;
         });
+        _syncMediaToggleStateFromClient();
+        unawaited(_retryCameraIfNeededAfterJoin());
 
         // Route audio to speaker (loudspeaker) so voice is not only in earpiece
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -142,7 +216,6 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
     } catch (e) {
       debugPrint('Failed to initialize video call: $e');
 
-      final l10n = AppLocalizations.of(context)!;
       final isTimeout = _isJoinTimeout(e);
       final shouldRetry = isTimeout && _joinRetryCount < 1;
 
@@ -150,23 +223,29 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
         _joinRetryCount++;
         setState(() {
           _isVideoLoading = true;
-          _videoError = null;
+          _videoErrorRaw = null;
         });
         await Future<void>.delayed(const Duration(seconds: 2));
         if (mounted) _initializeVideoCall();
         return;
       }
 
+      if (!mounted) return;
+      final raw = _unwrapVideoErrorMessage(e);
       setState(() {
-        _videoError = _userFriendlyError(e, l10n);
+        _videoErrorRaw = raw;
         _isVideoLoading = false;
         _isVideoInitialized = false;
       });
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        final friendly = translateError(l10n, raw);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${l10n.translate('failedToStartVideoCall')}: ${_userFriendlyError(e, l10n)}'),
+            content: Text(
+              '${l10n.translate('failedToStartVideoCall') ?? 'Failed to start video call'}: $friendly',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -210,6 +289,14 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
       availableDevicesUpdated: (availableDevices) {
         _selectSpeakerOutput();
       },
+      inputsUpdated: (inputs) {
+        if (mounted) {
+          setState(() {
+            _isVideoOff = !inputs.camera.isEnabled;
+            _isMuted = !inputs.microphone.isEnabled;
+          });
+        }
+      },
       callStateUpdated: (stateData) {
         stateData.whenOrNull?.call(
           left: () {
@@ -225,7 +312,7 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
           error: (error) {
             if (mounted) {
               setState(() {
-                _videoError = 'Call error occurred: $error';
+                _videoErrorRaw = 'Call error occurred';
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -337,20 +424,7 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
       final participantsObj = (_callClient as CallClient).participants;
       final localParticipant = participantsObj.local;
       final remoteParticipants = participantsObj.remote.values.toList();
-      
-      if (remoteParticipants.isEmpty && localParticipant == null) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)!.translate('waitingForParticipants'), style: const TextStyle(color: Colors.white)),
-            ],
-          ),
-        );
-      }
-      
+
       return Container(
         color: Colors.black,
         child: remoteParticipants.isEmpty
@@ -511,7 +585,7 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
       ),
       body: _isVideoLoading
           ? const Center(child: CircularProgressIndicator())
-          : _videoError != null
+          : _videoErrorRaw != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -521,7 +595,7 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Text(
-                          _videoError ?? '',
+                          translateError(l10n, _videoErrorRaw!),
                           style: const TextStyle(color: Colors.white70, fontSize: 14),
                           textAlign: TextAlign.center,
                         ),
@@ -556,15 +630,16 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
                           ),
                       ],
                     )
-                  : const Center(
+                  : Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.videocam_off, size: 64, color: Colors.white54),
-                          SizedBox(height: 16),
+                          const Icon(Icons.videocam_off, size: 64, color: Colors.white54),
+                          const SizedBox(height: 16),
                           Text(
-                            'Video call not available',
-                            style: TextStyle(color: Colors.white70, fontSize: 18),
+                            l10n.translate('videoCallNotAvailableShort') ??
+                                'Video call not available',
+                            style: const TextStyle(color: Colors.white70, fontSize: 18),
                           ),
                         ],
                       ),

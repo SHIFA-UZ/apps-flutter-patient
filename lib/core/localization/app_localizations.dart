@@ -628,6 +628,7 @@ class AppLocalizations {
       'videoCallConnectionTimeout':
           'Connection timed out. Please check your internet and try again.',
       'videoCallEnded': 'Video call ended',
+      'videoCallNotAvailableShort': 'Video call not available',
       'callErrorOccurred': 'Call error occurred',
       'waitingForParticipants': 'Waiting for participants...',
       'failedToLoadDoctor': 'Failed to load doctor',
@@ -760,6 +761,10 @@ class AppLocalizations {
           'Video call is not yet available. You can join 5 minutes before the appointment start.',
       'errorVideoCallHasEnded':
           'Video call has ended. The join window closes 15 minutes after the appointment end.',
+      'errorVideoCallPaymentRequired':
+          'Payment is required before you can join this video consultation.',
+      'errorVideoCallMediaPermissionRequired':
+          'Camera and microphone access is required for video consultations. You can enable them in Settings.',
       'errorAppointmentDoesNotBelongToDoctor':
           'Appointment does not belong to this doctor',
       'errorAppointmentDoesNotHavePatientAssigned':
@@ -1847,6 +1852,7 @@ class AppLocalizations {
       'videoCallConnectionTimeout':
           'Ulanish vaqti tugadi. Internetingizni tekshirib, qayta urinib ko\'ring.',
       'videoCallEnded': 'Video qo\'ng\'iroq tugadi',
+      'videoCallNotAvailableShort': 'Video qo\'ng\'iroq mavjud emas',
       'callErrorOccurred': 'Qo\'ng\'iroqda xatolik',
       'waitingForParticipants': 'Ishtirokchilar kutilmoqda...',
       'failedToLoadDoctor': 'Shifokor ma\'lumotlarini yuklashda xatolik',
@@ -1989,6 +1995,10 @@ class AppLocalizations {
           'Video qo\'ng\'iroq hali mavjud emas. Uchrashuv boshlanishidan 5 daqiqa oldin qo\'shilish mumkin.',
       'errorVideoCallHasEnded':
           'Video qo\'ng\'iroq tugagan. Uchrashuv tugaganidan 15 daqiqa o\'tib kirish yopiladi.',
+      'errorVideoCallPaymentRequired':
+          'Ushbu video konsultatsiyaga qo\'shilishdan oldin to\'lov talab qilinadi.',
+      'errorVideoCallMediaPermissionRequired':
+          'Video konsultatsiya uchun kamera va mikrofon ruxsati kerak. Sozlamalar orqali ularni yoqing.',
       'errorAppointmentDoesNotBelongToDoctor':
           'Bu qabul ushbu shifokorga tegishli emas',
       'errorAppointmentDoesNotHavePatientAssigned':
@@ -2337,6 +2347,7 @@ class AppLocalizations {
 
       // Video Call
       'videoCall': 'Видеозвонок',
+      'videoCallNotAvailableShort': 'Видеозвонок недоступен',
       'videoCallYouCanJoinNow':
           'Теперь вы можете присоединиться к видеозвонку.',
       'callDuration': 'Длительность звонка',
@@ -2506,6 +2517,10 @@ class AppLocalizations {
           'Видеозвонок пока недоступен. Можно подключиться за 5 минут до начала.',
       'errorVideoCallHasEnded':
           'Видеозвонок завершён. Подключение возможно в течение 15 минут после окончания.',
+      'errorVideoCallPaymentRequired':
+          'Чтобы присоединиться к видеоконсультации, необходима оплата.',
+      'errorVideoCallMediaPermissionRequired':
+          'Для видеоконсультации нужен доступ к камере и микрофону. Включите их в настройках устройства.',
       'errorAppointmentDoesNotBelongToDoctor':
           'Этот приём не относится к данному врачу',
       'errorAppointmentDoesNotHavePatientAssigned':

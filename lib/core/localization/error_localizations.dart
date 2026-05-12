@@ -49,6 +49,10 @@ const Map<String, String> _errorMessageToKey = {
   'Authentication required': 'errorAuthenticationRequired',
   'Video call is not yet available. You can join 5 minutes before the appointment start.': 'errorVideoCallNotYetAvailable',
   'Video call has ended. The join window closes 15 minutes after the appointment end.': 'errorVideoCallHasEnded',
+  'Payment is required before joining this video consultation.': 'errorVideoCallPaymentRequired',
+  'Camera and microphone access are required for video consultations. You can enable them in your device Settings.':
+      'errorVideoCallMediaPermissionRequired',
+  'Video call is not available. It may have ended, or the join window has closed (usually 15 minutes after the appointment end).': 'errorVideoCallHasEnded',
   'Appointment does not belong to this doctor': 'errorAppointmentDoesNotBelongToDoctor',
   'Appointment does not have a patient assigned. Please ensure the appointment is linked to your profile.': 'errorAppointmentDoesNotHavePatientAssigned',
   'Appointment does not belong to this patient': 'errorAppointmentDoesNotBelongToPatient',
@@ -135,6 +139,32 @@ String translateError(AppLocalizations l10n, String rawMessage) {
   if (exactKey != null) {
     final translated = l10n.translate(exactKey);
     if (translated != exactKey) return translated;
+  }
+
+  // Video token / join-window errors (API may vary slightly)
+  final lower = trimmed.toLowerCase();
+  if (lower.contains('timeoutexception') &&
+      (lower.contains('join failed') || lower.contains('future not completed'))) {
+    final t = l10n.translate('videoCallConnectionTimeout');
+    if (t != 'videoCallConnectionTimeout') return t;
+  }
+  if (lower.contains('payment is required') &&
+      (lower.contains('video') || lower.contains('consultation'))) {
+    final t = l10n.translate('errorVideoCallPaymentRequired');
+    if (t != 'errorVideoCallPaymentRequired') return t;
+  }
+  if (lower.contains('not yet available') && lower.contains('5 minutes before')) {
+    final t = l10n.translate('errorVideoCallNotYetAvailable');
+    if (t != 'errorVideoCallNotYetAvailable') return t;
+  }
+  if (lower.contains('video call has ended') ||
+      (lower.contains('join window') && lower.contains('15'))) {
+    final t = l10n.translate('errorVideoCallHasEnded');
+    if (t != 'errorVideoCallHasEnded') return t;
+  }
+  if (lower.contains('call error occurred')) {
+    final t = l10n.translate('callErrorOccurred');
+    if (t != 'callErrorOccurred') return t;
   }
 
   // Access denied: This app requires ROLE role
