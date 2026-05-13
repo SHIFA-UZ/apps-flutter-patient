@@ -389,10 +389,11 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
         itemCount: serviceItems.length,
         itemBuilder: (context, index) {
           final s = serviceItems[index];
-          final firstPrice = s.prices.isNotEmpty ? s.prices.first : null;
-          final priceLabel = firstPrice == null
-              ? AppLocalizations.of(context)!.translate('priceNotSet')
-              : '${(firstPrice.amountMinor / 100).toStringAsFixed(2)} ${firstPrice.currency}';
+          final priceLabel = s.isFreeConsultation
+              ? AppLocalizations.of(context)!.translate('consultationServiceFreeBadge')
+              : s.teaserPriceLabel(
+                  priceNotSetLabel: AppLocalizations.of(context)!.translate('priceNotSet'),
+                );
           return InkWell(
             onTap: () {
               showModalBottomSheet<void>(
@@ -404,14 +405,27 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(s.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      if ((s.groupName ?? '').trim().isNotEmpty) ...[
+                        Text(
+                          s.groupName!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
                       const SizedBox(height: 8),
                       if ((s.description ?? '').trim().isNotEmpty)
                         Text(s.description!),
                       const SizedBox(height: 12),
                       ...s.prices.map((p) => Padding(
                             padding: const EdgeInsets.only(bottom: 6),
-                            child: Text('${(p.amountMinor / 100).toStringAsFixed(2)} ${p.currency}'),
+                            child: Text(
+                              '${(p.amountMinor / 100).toStringAsFixed(2)} ${p.currency}'
+                              '${p.locationId == null ? '' : ' · Location #${p.locationId}'}',
+                            ),
                           )),
                     ],
                   ),
