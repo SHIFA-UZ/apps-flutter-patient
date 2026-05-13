@@ -180,9 +180,6 @@ class DoctorServiceItem extends Equatable {
   /// When true, video bookings skip payment for this service.
   final bool isFreeConsultation;
   final List<DoctorServicePriceItem> prices;
-  final String? groupId;
-  final String? groupName;
-  final int? groupSortOrder;
 
   const DoctorServiceItem({
     required this.id,
@@ -190,9 +187,6 @@ class DoctorServiceItem extends Equatable {
     this.description,
     this.isFreeConsultation = false,
     this.prices = const [],
-    this.groupId,
-    this.groupName,
-    this.groupSortOrder,
   });
 
   factory DoctorServiceItem.fromJson(Map<String, dynamic> json) {
@@ -204,9 +198,6 @@ class DoctorServiceItem extends Equatable {
       prices: (json['prices'] as List? ?? const [])
           .map((e) => DoctorServicePriceItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      groupId: json['groupId']?.toString(),
-      groupName: json['groupName'] as String?,
-      groupSortOrder: (json['groupSortOrder'] as num?)?.toInt(),
     );
   }
 
@@ -216,61 +207,33 @@ class DoctorServiceItem extends Equatable {
         'description': description,
         'isFreeConsultation': isFreeConsultation,
         'prices': prices.map((e) => e.toJson()).toList(),
-        if (groupId != null) 'groupId': groupId,
-        if (groupName != null) 'groupName': groupName,
-        if (groupSortOrder != null) 'groupSortOrder': groupSortOrder,
       };
 
-  /// Card teaser: prefers default (all-locations) price; falls back to any configured row.
-  String teaserPriceLabel({required String priceNotSetLabel}) {
-    if (isFreeConsultation) return '';
-    final globals = prices.where((p) => p.locationId == null).toList();
-    final lineSrc = globals.isNotEmpty ? globals : prices;
-    if (lineSrc.isEmpty) return priceNotSetLabel;
-    final sorted = [...lineSrc]..sort((a, b) => a.currency.compareTo(b.currency));
-    final p = sorted.first;
-    return '${(p.amountMinor / 100).toStringAsFixed(2)} ${p.currency}';
-  }
-
   @override
-  List<Object?> get props => [
-        id,
-        title,
-        description,
-        isFreeConsultation,
-        prices,
-        groupId,
-        groupName,
-        groupSortOrder,
-      ];
+  List<Object?> get props => [id, title, description, isFreeConsultation, prices];
 }
 
 class DoctorServicePriceItem extends Equatable {
   final int amountMinor;
   final String currency;
-  /// When null, this row is the default for all locations (unless a location-specific row exists).
-  final int? locationId;
 
   const DoctorServicePriceItem({
     required this.amountMinor,
     required this.currency,
-    this.locationId,
   });
 
   factory DoctorServicePriceItem.fromJson(Map<String, dynamic> json) {
     return DoctorServicePriceItem(
       amountMinor: (json['amountMinor'] as num?)?.toInt() ?? 0,
       currency: json['currency']?.toString() ?? '',
-      locationId: (json['locationId'] as num?)?.toInt(),
     );
   }
 
   Map<String, dynamic> toJson() => {
         'amountMinor': amountMinor,
         'currency': currency,
-        if (locationId != null) 'locationId': locationId,
       };
 
   @override
-  List<Object?> get props => [amountMinor, currency, locationId];
+  List<Object?> get props => [amountMinor, currency];
 }
