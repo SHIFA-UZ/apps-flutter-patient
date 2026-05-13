@@ -312,11 +312,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       return;
     }
 
-    final proceed = await showPermissionRationale(
+    await showPermissionRationale(
       context: context,
       rationaleKey: 'permissionRationaleCamera',
     );
-    if (!mounted || !proceed) return;
+    if (!mounted) return;
 
     ref.read(appLockTemporaryDisableProvider.notifier).disable();
     try {

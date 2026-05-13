@@ -25,6 +25,7 @@ class AppLocalizations {
       'retry': 'Retry',
       'cancel': 'Cancel',
       'ok': 'OK',
+      'continueButton': 'Continue',
       'skip': 'Skip',
       'save': 'Save',
       'delete': 'Delete',
@@ -812,6 +813,7 @@ class AppLocalizations {
       'error': 'Fehler',
       'retry': 'Wiederholen',
       'cancel': 'Abbrechen',
+      'continueButton': 'Weiter',
       'save': 'Speichern',
       'delete': 'Löschen',
       'deleteDocumentConfirmation':
@@ -1234,6 +1236,7 @@ class AppLocalizations {
       'error': 'Xato',
       'retry': 'Qayta urinish',
       'cancel': 'Bekor qilish',
+      'continueButton': 'Davom etish',
       'save': 'Saqlash',
       'delete': 'O\'chirish',
       'deleteDocumentConfirmation': 'Ushbu hujjatni o\'chirmoqchimisiz?',
@@ -2045,6 +2048,7 @@ class AppLocalizations {
       'error': 'Ошибка',
       'retry': 'Повторить',
       'cancel': 'Отмена',
+      'continueButton': 'Продолжить',
       'save': 'Сохранить',
       'delete': 'Удалить',
       'deleteDocumentConfirmation':

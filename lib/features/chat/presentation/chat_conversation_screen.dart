@@ -161,11 +161,11 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
     if (source == null) return;
 
     if (source == ImageSource.camera) {
-      final proceed = await showPermissionRationale(
+      await showPermissionRationale(
         context: context,
         rationaleKey: 'permissionRationaleCamera',
       );
-      if (!mounted || !proceed) return;
+      if (!mounted) return;
     }
 
     ref.read(appLockTemporaryDisableProvider.notifier).disable();
@@ -236,11 +236,11 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
   }
 
   Future<void> _showVoiceRecordingDialog() async {
-    final proceed = await showPermissionRationale(
+    await showPermissionRationale(
       context: context,
       rationaleKey: 'permissionRationaleMicrophone',
     );
-    if (!mounted || !proceed) return;
+    if (!mounted) return;
     await showDialog(
       context: context,
       barrierDismissible: false,
