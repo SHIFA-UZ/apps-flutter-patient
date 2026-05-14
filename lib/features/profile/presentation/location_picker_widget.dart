@@ -448,11 +448,11 @@ class _MapPickerScreenState extends State<_MapPickerScreen> {
       // Check location permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
-        final proceed = await showPermissionRationale(
+        await showPermissionRationale(
           context: context,
           rationaleKey: 'permissionRationaleLocation',
         );
-        if (!mounted || !proceed) {
+        if (!mounted) {
           setState(() => _isGettingCurrentLocation = false);
           return;
         }

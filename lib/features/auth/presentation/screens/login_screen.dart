@@ -287,14 +287,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   isLoading: authState.isLoading,
                 ),
                 const SizedBox(height: 16),
-                // Continue with Google button
-                ShifaSecondaryButton(
-                  label: l10n.continueWithGoogle,
-                  onPressed: () {
-                    // TODO: Implement Google Sign-In
-                  },
-                ),
-                const SizedBox(height: 16),
                 // Create Account link
                 TextButton(
                   onPressed: () {
