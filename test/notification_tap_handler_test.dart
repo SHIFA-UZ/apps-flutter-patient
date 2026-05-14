@@ -5,25 +5,40 @@ import 'package:shifa_patient_app_v1/features/notifications/services/notificatio
 
 void main() {
   group('NotificationTapHandler.getTargetLocation', () {
+    test('SIGNATURE_REQUESTED with patientFormId returns form signing route', () {
+      final n = NotificationModel(
+        id: 1,
+        title: 'Signature Requested',
+        message: 'Please sign form',
+        type: 'SIGNATURE_REQUESTED',
+        patientFormId: 99,
+        createdAt: DateTime.now(),
+      );
+      expect(
+        NotificationTapHandler.getTargetLocation(n),
+        '${AppRoutes.bookings}/sign-form/99',
+      );
+    });
+
     test(
       'SIGNATURE_REQUESTED with appointmentId returns appointment details route',
       () {
-        final n = NotificationModel(
-          id: 1,
-          title: 'Signature Requested',
-          message: 'Please sign',
-          type: 'SIGNATURE_REQUESTED',
-          appointmentId: 42,
-          createdAt: DateTime.now(),
-        );
-        expect(
-          NotificationTapHandler.getTargetLocation(n),
-          '${AppRoutes.bookings}/42',
-        );
-      },
+      final n = NotificationModel(
+        id: 1,
+        title: 'Signature Requested',
+        message: 'Please sign',
+        type: 'SIGNATURE_REQUESTED',
+        appointmentId: 42,
+        createdAt: DateTime.now(),
+      );
+      expect(
+        NotificationTapHandler.getTargetLocation(n),
+        '${AppRoutes.bookings}/42',
+      );
+    },
     );
 
-    test('SIGNATURE_REQUESTED without appointmentId returns null', () {
+    test('SIGNATURE_REQUESTED without appointmentId or patientFormId returns null', () {
       final n = NotificationModel(
         id: 1,
         title: 'Signature Requested',

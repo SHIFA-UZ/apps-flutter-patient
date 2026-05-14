@@ -14,9 +14,21 @@ import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart'
 import 'package:shifa_patient_app_v1/core/utils/date_utils.dart' show parseAppointmentDateTime;
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
 
+/// Appointment summary signing **or** medical form 025-2 signing — same layout and flow as
+/// [appointmentId] / [patientFormId] are mutually exclusive (exactly one required).
 class SignAppointmentScreen extends ConsumerStatefulWidget {
-  const SignAppointmentScreen({super.key, required this.appointmentId});
-  final String appointmentId;
+  const SignAppointmentScreen({
+    super.key,
+    this.appointmentId,
+    this.patientFormId,
+  }) : assert(
+          (appointmentId != null && patientFormId == null) ||
+              (appointmentId == null && patientFormId != null),
+          'Exactly one of appointmentId or patientFormId must be set',
+        );
+
+  final String? appointmentId;
+  final String? patientFormId;
 
   @override
   ConsumerState<SignAppointmentScreen> createState() => _SignAppointmentScreenState();
@@ -29,6 +41,8 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
   bool _submitting = false;
   String? _error;
   Map<String, dynamic>? _summary;
+
+  bool get _isPatientForm => widget.patientFormId != null;
 
   @override
   void initState() {
@@ -43,7 +57,13 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
     });
     try {
       final repo = ref.read(bookingsProvider.notifier);
-      final summary = await repo.getAppointmentSummary(widget.appointmentId);
+      final Map<String, dynamic> summary;
+      if (_isPatientForm) {
+        final form = await repo.getPatientFormForSigning(widget.patientFormId!);
+        summary = _patientFormToSummary(form);
+      } else {
+        summary = await repo.getAppointmentSummary(widget.appointmentId!);
+      }
       if (mounted) {
         setState(() {
           _summary = summary;
@@ -58,10 +78,42 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
         final l10n = AppLocalizations.of(context)!;
         setState(() {
           _loading = false;
-          _error = userFriendlyError(l10n, e, logContext: 'Sign appointment');
+          _error = userFriendlyError(
+            l10n,
+            e,
+            logContext: _isPatientForm ? 'Sign patient form' : 'Sign appointment',
+          );
         });
       }
     }
+  }
+
+  /// Reuses the same keys as the appointment summary API so the signing UI is identical.
+  Map<String, dynamic> _patientFormToSummary(Map<String, dynamic> form) {
+    final dateStr = form['date']?.toString() ?? '';
+    final alreadySigned =
+        form['patientSignatureImageBase64']?.toString().trim().isNotEmpty == true;
+
+    final complaints = form['complaints']?.toString().trim();
+    final diagnosis = form['diagnosis']?.toString().trim();
+    String? reason;
+    if (complaints != null &&
+        complaints.isNotEmpty &&
+        diagnosis != null &&
+        diagnosis.isNotEmpty) {
+      reason = '$complaints\n\n$diagnosis';
+    } else {
+      reason = (complaints != null && complaints.isNotEmpty) ? complaints : diagnosis;
+    }
+
+    return {
+      'doctorName': form['doctorName']?.toString(),
+      'startAt': dateStr.isNotEmpty ? dateStr : null,
+      'endAt': null,
+      'location': null,
+      if (reason != null && reason.isNotEmpty) 'reason': reason,
+      'alreadySigned': alreadySigned,
+    };
   }
 
   void _clearSignature() {
@@ -109,7 +161,11 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
       }
       final base64 = base64Encode(pngBytes);
       final repo = ref.read(bookingsProvider.notifier);
-      await repo.submitSignature(widget.appointmentId, base64);
+      if (_isPatientForm) {
+        await repo.submitPatientFormSignature(widget.patientFormId!, base64);
+      } else {
+        await repo.submitSignature(widget.appointmentId!, base64);
+      }
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,7 +181,9 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${l10n.errorSaving}: ${userFriendlyError(l10n, e, logContext: 'Sign appointment')}'),
+            content: Text(
+              '${l10n.errorSaving}: ${userFriendlyError(l10n, e, logContext: _isPatientForm ? 'Sign patient form' : 'Sign appointment')}',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -168,7 +226,6 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Scrollable summary only; signature pad stays outside scroll so it gets touches
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -218,7 +275,6 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
                         ),
                       ),
                     ),
-                    // Signature pad + buttons: fixed below scroll, so no gesture conflict
                     if (_summary != null)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -321,6 +377,10 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
 
   String _formatTime(dynamic startAt, dynamic endAt) {
     if (startAt == null) return '—';
+    final s = startAt.toString().trim();
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
+      return '—';
+    }
     try {
       final startLocal = parseAppointmentDateTime(startAt.toString());
       final startTime = DateFormat('HH:mm').format(startLocal);
@@ -330,7 +390,6 @@ class _SignAppointmentScreenState extends ConsumerState<SignAppointmentScreen> {
       }
       return startTime;
     } catch (_) {
-      final s = startAt.toString();
       final e = endAt?.toString() ?? '';
       final startTime = s.length >= 16 ? s.substring(11, 16) : (s.length >= 11 ? s.substring(11) : '');
       final endTime = e.length >= 16 ? e.substring(11, 16) : (e.length >= 11 ? e.substring(11) : '');

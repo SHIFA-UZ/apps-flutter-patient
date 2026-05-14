@@ -38,6 +38,13 @@ class NotificationTapHandler {
     final id = entityId ?? appointmentId?.toString() ?? documentId ?? chatId;
 
     switch (typeRaw) {
+      case 'signature_requested':
+        final pFormId =
+            _optionalInt(data['patientFormId']) ?? _optionalInt(data['patient_form_id']);
+        if (pFormId != null) return '${AppRoutes.bookings}/sign-form/$pFormId';
+        if (id != null && id.isNotEmpty) return '${AppRoutes.bookings}/$id';
+        if (appointmentId != null) return '${AppRoutes.bookings}/$appointmentId';
+        break;
       case 'appointment_reminder':
       case 'appointment_scheduled':
       case 'appointment_cancelled':
@@ -45,7 +52,6 @@ class NotificationTapHandler {
       case 'appointment_confirmed':
       case 'appointment_upcoming':
       case 'ai_visit_summary_ready':
-      case 'signature_requested':
         if (typeRaw == 'ai_visit_summary_ready' && id != null && id.isNotEmpty) {
           return '${AppRoutes.bookings}/$id/visit-summary';
         }
@@ -75,6 +81,11 @@ class NotificationTapHandler {
         return AppRoutes.tasks;
     }
 
+    if (type == 'SIGNATURE_REQUESTED') {
+      final pFormId =
+          _optionalInt(data['patientFormId']) ?? _optionalInt(data['patient_form_id']);
+      if (pFormId != null) return '${AppRoutes.bookings}/sign-form/$pFormId';
+    }
     if ((type == 'AI_VISIT_SUMMARY_READY') && (appointmentId != null || (id != null && id.isNotEmpty))) {
       return '${AppRoutes.bookings}/${appointmentId ?? id}/visit-summary';
     }
@@ -182,6 +193,9 @@ class NotificationTapHandler {
     final taskId = notification.taskId;
 
     if (notification.isDocumentAccessRequest) return null;
+    if (type == 'SIGNATURE_REQUESTED' && notification.patientFormId != null) {
+      return '${AppRoutes.bookings}/sign-form/${notification.patientFormId}';
+    }
     if (_isTaskType(type)) {
       if (taskId != null) return '${AppRoutes.tasks}/$taskId/check-in';
       return AppRoutes.tasks;
@@ -192,8 +206,11 @@ class NotificationTapHandler {
     if (_isConsultationPaymentPaywallType(type) && appointmentId != null) {
       return '${AppRoutes.bookings}/$appointmentId/pay';
     }
-    if (type == 'SIGNATURE_REQUESTED' || notification.title.toLowerCase().contains('signature')) {
+    if (type == 'SIGNATURE_REQUESTED') {
       return appointmentId != null ? '${AppRoutes.bookings}/$appointmentId' : null;
+    }
+    if (notification.title.toLowerCase().contains('signature') && appointmentId != null) {
+      return '${AppRoutes.bookings}/$appointmentId';
     }
     if (_isAppointmentType(type) && appointmentId != null) {
       return '${AppRoutes.bookings}/$appointmentId';

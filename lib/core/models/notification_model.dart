@@ -6,6 +6,8 @@ class NotificationModel extends Equatable {
   final String message;
   final String type;
   final int? appointmentId;
+  /// Present when type is SIGNATURE_REQUESTED for medical **form** 025-2 (not appointment signing).
+  final int? patientFormId;
   /// Present when type is DOCUMENT_ACCESS_REQUEST; use for approve/reject and deep linking.
   final int? documentAccessRequestId;
   /// Server-side status for DOCUMENT_ACCESS_REQUEST: "pending" | "approved" | "rejected".
@@ -26,6 +28,7 @@ class NotificationModel extends Equatable {
     required this.message,
     required this.type,
     this.appointmentId,
+    this.patientFormId,
     this.documentAccessRequestId,
     this.documentAccessRequestStatus,
     this.taskId,
@@ -60,6 +63,11 @@ class NotificationModel extends Equatable {
       appointmentId: _optionalInt(json['appointmentId']) ??
           _optionalInt(json['appointment_id']) ??
           (data != null ? _optionalInt(data['appointmentId']) ?? _optionalInt(data['appointment_id']) : null),
+      patientFormId: _optionalInt(json['patientFormId']) ??
+          _optionalInt(json['patient_form_id']) ??
+          (data != null
+              ? _optionalInt(data['patientFormId']) ?? _optionalInt(data['patient_form_id'])
+              : null),
       documentAccessRequestId: _optionalInt(json['documentAccessRequestId']) ?? _optionalInt(json['document_access_request_id']),
       documentAccessRequestStatus: (json['documentAccessRequestStatus'] as String?)
           ?? (json['document_access_request_status'] as String?),
@@ -96,6 +104,7 @@ class NotificationModel extends Equatable {
     final createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr) ?? DateTime.now() : DateTime.now();
 
     int? appointmentId = _optionalInt(data['appointmentId']) ?? _optionalInt(data['appointment_id']);
+    int? patientFormId = _optionalInt(data['patientFormId']) ?? _optionalInt(data['patient_form_id']);
     String? documentId = data['documentId']?.toString() ?? data['document_id']?.toString();
     String? chatId = data['chatId']?.toString() ?? data['chat_id']?.toString();
     int? taskId = _optionalInt(data['taskId']) ?? _optionalInt(data['task_id']);
@@ -118,6 +127,7 @@ class NotificationModel extends Equatable {
       message: data['message']?.toString() ?? '',
       type: type,
       appointmentId: appointmentId,
+      patientFormId: patientFormId,
       documentAccessRequestId: _optionalInt(data['documentAccessRequestId']) ?? _optionalInt(data['document_access_request_id']),
       taskId: taskId,
       documentId: documentId,
@@ -144,6 +154,7 @@ class NotificationModel extends Equatable {
       'message': message,
       'type': type,
       'appointmentId': appointmentId,
+      'patientFormId': patientFormId,
       'documentAccessRequestId': documentAccessRequestId,
       'documentAccessRequestStatus': documentAccessRequestStatus,
       'taskId': taskId,
@@ -162,6 +173,7 @@ class NotificationModel extends Equatable {
         message,
         type,
         appointmentId,
+        patientFormId,
         documentAccessRequestId,
         documentAccessRequestStatus,
         taskId,

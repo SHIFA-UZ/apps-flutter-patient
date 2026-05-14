@@ -167,6 +167,8 @@ class AppRoutes {
   static const videoCall = '/bookings/:id/video';
   static const waitingRoom = '/bookings/:id/waiting';
   static const signAppointment = '/bookings/:id/sign';
+  /// Medical form 025-2 signing — same UX as [signAppointment], under Bookings stack.
+  static const signPatientForm = '/bookings/sign-form/:formId';
   static const visitSummary = '/bookings/:id/visit-summary';
   /// Doctor-requested payment deep link / notification target.
   static const consultationPay = '/bookings/:id/pay';
@@ -384,6 +386,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'create',
                     builder: (context, state) => const CreateBookingScreen(),
+                  ),
+                  GoRoute(
+                    path: 'sign-form/:formId',
+                    builder: (context, state) {
+                      final formId = state.pathParameters['formId']!;
+                      return SignAppointmentScreen(patientFormId: formId);
+                    },
                   ),
                   GoRoute(
                     path: ':id',

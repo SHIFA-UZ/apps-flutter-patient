@@ -111,6 +111,14 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
   Future<void> submitSignature(String appointmentId, String signatureImageBase64) async {
     await _repository.submitSignature(appointmentId, signatureImageBase64);
   }
+
+  Future<Map<String, dynamic>> getPatientFormForSigning(String formId) async {
+    return _repository.getPatientFormForSigning(formId);
+  }
+
+  Future<void> submitPatientFormSignature(String formId, String signatureImageBase64) async {
+    await _repository.submitPatientFormSignature(formId, signatureImageBase64);
+  }
 }
 
 final bookingsProvider = StateNotifierProvider<BookingsNotifier, BookingsState>((ref) {

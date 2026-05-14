@@ -125,6 +125,28 @@ class BookingsRepository {
     }
   }
 
+  /// Same pattern as [getAppointmentSummary]: loads form 025-2 for the signing UI.
+  Future<Map<String, dynamic>> getPatientFormForSigning(String formId) async {
+    try {
+      final response = await _apiClient.get('/patients/me/forms/$formId/for-signing');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to load form for signing: $e');
+    }
+  }
+
+  /// Same pattern as [submitSignature]: submits drawn signature for medical form 025-2.
+  Future<void> submitPatientFormSignature(String formId, String signatureImageBase64) async {
+    try {
+      await _apiClient.post(
+        '/patients/me/forms/$formId/submit-signature',
+        data: {'signatureImageBase64': signatureImageBase64},
+      );
+    } catch (e) {
+      throw Exception('Failed to submit form signature: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> createConsultationCheckout({
     required String appointmentId,
     String gateway = 'STRIPE',
