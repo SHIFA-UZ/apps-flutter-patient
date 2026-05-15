@@ -98,7 +98,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? address,
     String? language,
     String? emailOtp,
-    String? phoneVerificationIdToken,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -113,7 +112,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         address: address,
         language: language,
         emailOtp: emailOtp,
-        phoneVerificationIdToken: phoneVerificationIdToken,
       );
       state = state.copyWith(
         isLoading: false,

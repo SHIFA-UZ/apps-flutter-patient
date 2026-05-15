@@ -23,7 +23,6 @@ class DoctorOtpVerifyScreen extends ConsumerStatefulWidget {
 }
 
 class _DoctorOtpVerifyScreenState extends ConsumerState<DoctorOtpVerifyScreen> {
-  final _phoneCodeCtrl = TextEditingController();
   final _emailCodeCtrl = TextEditingController();
   bool _isLoading = false;
   int _resendSecondsRemaining = _resendCooldownSeconds;
@@ -50,7 +49,6 @@ class _DoctorOtpVerifyScreenState extends ConsumerState<DoctorOtpVerifyScreen> {
   @override
   void dispose() {
     _resendTimer?.cancel();
-    _phoneCodeCtrl.dispose();
     _emailCodeCtrl.dispose();
     super.dispose();
   }
@@ -189,7 +187,23 @@ class _DoctorOtpVerifyScreenState extends ConsumerState<DoctorOtpVerifyScreen> {
         ),
       );
     }
-    final hasEmail = state.email != null && state.email!.trim().isNotEmpty;
+    final email = state.email?.trim() ?? '';
+    if (email.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              ref.read(doctorOtpVerificationProvider.notifier).state = null;
+              context.pop();
+            },
+          ),
+          title: Text(l10n.translate('verifyAndCreate')),
+        ),
+        body: Center(child: Text(l10n.translate('error'))),
+      );
+    }
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -209,34 +223,21 @@ class _DoctorOtpVerifyScreenState extends ConsumerState<DoctorOtpVerifyScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              l10n.translate('verificationCodeSent'),
+              l10n.translate('otpSentToEmail').replaceAll('{email}', email),
               style: const TextStyle(fontSize: 16, height: 1.4),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             TextField(
-              controller: _phoneCodeCtrl,
+              controller: _emailCodeCtrl,
               keyboardType: TextInputType.number,
               maxLength: 6,
               decoration: InputDecoration(
-                labelText: l10n.translate('enterPhoneCode'),
+                labelText: l10n.translate('enterEmailCode'),
                 counterText: '',
                 border: const OutlineInputBorder(),
               ),
             ),
-            if (hasEmail) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: _emailCodeCtrl,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                decoration: InputDecoration(
-                  labelText: l10n.translate('enterEmailCode'),
-                  counterText: '',
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-            ],
             const SizedBox(height: 24),
             TextButton(
               onPressed: (_isLoading || _resendSecondsRemaining > 0) ? null : _onResendCode,

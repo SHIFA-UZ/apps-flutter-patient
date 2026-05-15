@@ -199,7 +199,6 @@ class AuthRepository {
     String? address,
     String? language,
     String? emailOtp,
-    String? phoneVerificationIdToken,
   }) async {
     try {
       final data = <String, dynamic>{
@@ -216,9 +215,6 @@ class AuthRepository {
       final pt = phone?.trim();
       if (pt != null && pt.isNotEmpty) data['phone'] = pt;
       if (emailOtp != null && emailOtp.trim().isNotEmpty) data['emailOtp'] = emailOtp.trim();
-      if (phoneVerificationIdToken != null && phoneVerificationIdToken.isNotEmpty) {
-        data['phoneVerificationIdToken'] = phoneVerificationIdToken;
-      }
       final response = await _apiClient.post('/auth/register-patient', data: data);
 
       final token = response.data['token'] as String;
