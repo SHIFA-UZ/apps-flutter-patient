@@ -176,6 +176,11 @@ class AppLocalizations {
       'copilotConfidenceMedium': 'Medium',
       'copilotConfidenceLow': 'Low',
       'copilotThinking': 'Thinking…',
+      'copilotClearChat': 'Clear chat',
+      'copilotClearChatTitle': 'Clear conversation?',
+      'copilotClearChatMessage':
+          'This will remove all messages in this chat. Suggested doctors and booking context will also be reset.',
+      'copilotClearChatConfirm': 'Clear',
 
       // Bookings
       'bookings': 'Bookings',
@@ -556,6 +561,13 @@ class AppLocalizations {
       'deleteAccountComingSoon': 'Delete account functionality coming soon',
       'couldNotReadFileBytes': 'Could not read file bytes',
       'pleaseSelectCheckIn': 'Please select a check-in',
+      'selectCheckIn': 'Select check-in',
+      'checkInEnterGenericValue': 'Enter a value',
+      'checkInEnterLabeledValue': 'Enter {label}',
+      'checkInValueRequired': 'Please enter a value',
+      'checkInValueInvalidNumber': 'Please enter a valid number',
+      'checkInNotesRequired': 'Notes are required',
+      'checkInPleaseSelectYesOrNo': 'Please select Yes or No',
       'checkInSubmittedSuccessfully': 'Check-in submitted successfully',
       'failedToSubmit': 'Failed to submit',
       'taskCheckIn': 'Task Check-in',
@@ -958,6 +970,11 @@ class AppLocalizations {
       'copilotConfidenceMedium': 'Mittel',
       'copilotConfidenceLow': 'Niedrig',
       'copilotThinking': 'Denke nach…',
+      'copilotClearChat': 'Chat löschen',
+      'copilotClearChatTitle': 'Unterhaltung löschen?',
+      'copilotClearChatMessage':
+          'Alle Nachrichten in diesem Chat werden entfernt. Arztempfehlungen und Buchungskontext werden ebenfalls zurückgesetzt.',
+      'copilotClearChatConfirm': 'Löschen',
 
       'locationPermissionDenied': 'Standortberechtigung verweigert.',
       'locationPermissionDeniedForever':
@@ -1436,6 +1453,11 @@ class AppLocalizations {
       'copilotConfidenceMedium': 'O\'rtacha',
       'copilotConfidenceLow': 'Past',
       'copilotThinking': 'O\'ylayapman…',
+      'copilotClearChat': 'Chatni tozalash',
+      'copilotClearChatTitle': 'Suhbatni tozalaysizmi?',
+      'copilotClearChatMessage':
+          'Ushbu chatdagi barcha xabarlar o\'chiriladi. Shifokor tavsiyalari va bron konteksti ham qayta tiklanadi.',
+      'copilotClearChatConfirm': 'Tozalash',
 
       // Bookings
       'bookings': 'Qabullar',
@@ -1759,6 +1781,13 @@ class AppLocalizations {
       'deleteAccountComingSoon': 'Hisobni o\'chirish funksiyasi tez orada',
       'couldNotReadFileBytes': 'Fayl baytlarini o\'qib bo\'lmadi',
       'pleaseSelectCheckIn': 'Iltimos, tekshiruvni tanlang',
+      'selectCheckIn': 'Tekshiruvni tanlang',
+      'checkInEnterGenericValue': 'Qiymatni kiriting',
+      'checkInEnterLabeledValue': '{label} maydonini kiriting',
+      'checkInValueRequired': 'Iltimos, qiymat kiriting',
+      'checkInValueInvalidNumber': 'Iltimos, to\'g\'ri son kiriting',
+      'checkInNotesRequired': 'Izoh kiritish majburiy',
+      'checkInPleaseSelectYesOrNo': 'Iltimos, «Ha» yoki «Yo\'q»ni tanlang',
       'checkInSubmittedSuccessfully': 'Tekshiruv muvaffaqiyatli yuborildi',
       'failedToSubmit': 'Yuborishda xatolik',
       'taskCheckIn': 'Vazifa tekshiruvi',
@@ -2240,6 +2269,11 @@ class AppLocalizations {
       'copilotConfidenceMedium': 'Средняя',
       'copilotConfidenceLow': 'Низкая',
       'copilotThinking': 'Думаю…',
+      'copilotClearChat': 'Очистить чат',
+      'copilotClearChatTitle': 'Очистить переписку?',
+      'copilotClearChatMessage':
+          'Все сообщения в этом чате будут удалены. Рекомендации врачей и контекст записи также сбросятся.',
+      'copilotClearChatConfirm': 'Очистить',
 
       'locationPermissionDenied': 'Доступ к местоположению запрещён.',
       'locationPermissionDeniedForever':

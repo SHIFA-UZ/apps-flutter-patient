@@ -263,6 +263,12 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
     state = state.copyWith(clearError: true);
   }
 
+  /// Clears in-memory chat and persisted copilot memory (messages, summary, structured state).
+  Future<void> clearConversation() async {
+    await _memory.clear();
+    state = CopilotChatState();
+  }
+
   void appendAssistantMessage(String content) {
     _appendAssistantIfNew(content);
     _persistMemory();

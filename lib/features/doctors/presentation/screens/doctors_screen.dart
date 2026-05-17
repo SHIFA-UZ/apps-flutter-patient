@@ -326,6 +326,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
                         hint: l10n.filterBySpecialty,
                         allLabel: l10n.allSpecialties,
                         options: _specialtyOptions(doctorsState.doctors),
+                        labelForOption: l10n.translateProfession,
                         onChanged: (v) => setState(() => _filterSpecialty = v),
                       ),
                     ),
@@ -429,6 +430,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
     required String allLabel,
     required List<T> options,
     required void Function(T?) onChanged,
+    String Function(T value)? labelForOption,
   }) {
     return DropdownButtonFormField<T?>(
       value: value,
@@ -442,7 +444,18 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
       isExpanded: true,
       items: [
         DropdownMenuItem<T?>(value: null, child: Text(allLabel)),
-        ...options.map((o) => DropdownMenuItem<T?>(value: o, child: Text(o.toString()))),
+        ...options.map((o) {
+          final label =
+              labelForOption != null ? labelForOption(o) : o.toString();
+          return DropdownMenuItem<T?>(
+            value: o,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }),
       ],
       onChanged: (v) => onChanged(v),
     );

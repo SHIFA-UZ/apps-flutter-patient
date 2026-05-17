@@ -38,5 +38,12 @@ class CopilotMemoryStore {
       return (messages: const <Map<String, String>>[], summary: summary, structuredState: state);
     }
   }
+
+  Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_messagesKey);
+    await prefs.remove(_summaryKey);
+    await prefs.remove(_stateKey);
+  }
 }
 

@@ -8,8 +8,10 @@ import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
 import 'package:shifa_patient_app_v1/core/utils/image_utils.dart';
+import 'package:shifa_patient_app_v1/features/doctors/presentation/screens/certificate_viewer_screen.dart';
 import 'package:shifa_patient_app_v1/features/doctors/providers/doctors_provider.dart';
 import 'package:shifa_patient_app_v1/features/doctors/providers/reviews_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class DoctorProfileScreen extends ConsumerStatefulWidget {
   final String doctorId;
@@ -516,6 +518,7 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: _doctor!.certificates!.map<Widget>((certUrl) {
+          final fileLabel = _certificateFileLabel(certUrl);
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             elevation: 2,
@@ -523,23 +526,23 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
               borderRadius: BorderRadius.circular(12),
             ),
             child: InkWell(
-              onTap: () async {
-                final uri = Uri.parse(certUrl);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => CertificateViewerScreen(
+                      url: certUrl,
+                      title: fileLabel,
+                    ),
+                  ),
+                );
               },
               borderRadius: BorderRadius.circular(12),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.description,
-                      color: Color(0xFF17C3B2),
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
+                    _certificateThumbnail(certUrl),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,26 +551,26 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
                             l10n.translate('certificate'),
                             style: const TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            certUrl.split('/').last,
+                            fileLabel,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    const Icon(
-                      Icons.open_in_new,
-                      size: 20,
-                      color: Colors.grey,
+                    Icon(
+                      Icons.chevron_right,
+                      size: 22,
+                      color: Colors.grey.shade500,
                     ),
                   ],
                 ),
@@ -575,6 +578,82 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  static String _certificateFileLabel(String url) {
+    try {
+      final segments = Uri.parse(url).pathSegments;
+      if (segments.isEmpty) return url;
+      return Uri.decodeComponent(segments.last);
+    } catch (_) {
+      return url;
+    }
+  }
+
+  static String _certificatePathExtension(String url) {
+    try {
+      final path = Uri.parse(url).path.split('?').first;
+      final i = path.lastIndexOf('.');
+      if (i < 0 || i >= path.length - 1) return '';
+      return path.substring(i + 1).toLowerCase();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Widget _certificateThumbnail(String url) {
+    const size = 72.0;
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final memW = (size * dpr).round();
+    final ext = _certificatePathExtension(url);
+    const imageExt = {'jpg', 'jpeg', 'png', 'webp', 'gif'};
+
+    if (imageExt.contains(ext)) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.cover,
+            memCacheWidth: memW,
+            placeholder: (context, _) => Container(
+              color: Colors.grey.shade200,
+              child: const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            errorWidget: (context, u, err) => _certificateFallbackThumb(ext, size),
+          ),
+        ),
+      );
+    }
+
+    return _certificateFallbackThumb(ext, size);
+  }
+
+  Widget _certificateFallbackThumb(String ext, double size) {
+    final isPdf = ext == 'pdf';
+    const brand = Color(0xFF17C3B2);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: isPdf ? const Color(0xFFFFEBEE) : Colors.grey.shade100,
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Icon(
+        isPdf ? Icons.picture_as_pdf : Icons.insert_drive_file_outlined,
+        color: isPdf ? Colors.red.shade700 : brand,
+        size: 34,
       ),
     );
   }

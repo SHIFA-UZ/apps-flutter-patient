@@ -101,6 +101,41 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
     });
   }
 
+  Future<void> _onClearChat() async {
+    final l10n = AppLocalizations.of(context)!;
+    final chatState = ref.read(copilotChatProvider);
+    if (chatState.isSending) return;
+    if (chatState.messages.isEmpty &&
+        _suggestedDoctors.isEmpty &&
+        (chatState.streamingText == null || chatState.streamingText!.isEmpty)) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.translate('copilotClearChatTitle')),
+        content: Text(l10n.translate('copilotClearChatMessage')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.translate('copilotClearChatConfirm')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    _textController.clear();
+    await ref.read(copilotChatProvider.notifier).clearConversation();
+    if (!mounted) return;
+    setState(() => _suggestedDoctors = []);
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
   Future<void> _onSuggestDoctors() async {
     final l10n = AppLocalizations.of(context)!;
     final chat = ref.read(copilotChatProvider);
@@ -439,6 +474,13 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: l10n.translate('copilotClearChat'),
+            onPressed: chatState.isSending ? null : _onClearChat,
+          ),
+        ],
       ),
       body: Column(
         children: [

@@ -1,4 +1,5 @@
 // lib/features/tasks/data/tasks_repository.dart
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shifa_patient_app_v1/core/models/task_model.dart';
 import 'package:shifa_patient_app_v1/core/network/api_client.dart';
@@ -81,8 +82,23 @@ class TasksRepository {
       if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! >= 300) {
         throw Exception('Failed to submit check-in: ${response.statusCode}');
       }
+    } on DioException catch (e) {
+      final msg = _shortApiErrorMessage(e);
+      if (msg != null) throw Exception(msg);
+      throw Exception('Failed to submit check-in: ${e.response?.statusCode}');
     } catch (e) {
       throw Exception('Failed to submit check-in: $e');
     }
+  }
+
+  /// Returns a short user-facing message from error body when available.
+  static String? _shortApiErrorMessage(DioException e) {
+    final data = e.response?.data;
+    if (data is Map) {
+      final m = data['message'];
+      if (m is String && m.trim().isNotEmpty && m.length < 300) return m.trim();
+    }
+    if (data is String && data.trim().isNotEmpty && data.length < 300) return data.trim();
+    return null;
   }
 }

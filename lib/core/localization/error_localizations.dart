@@ -73,6 +73,10 @@ const Map<String, String> _errorMessageToKey = {
   'Unknown error': 'errorUnknownError',
   'Something went wrong': 'errorSomethingWentWrong',
   'Session expired. Please start again.': 'errorSessionExpiredPleaseStartAgain',
+  // Remote care check-in (API)
+  'Boolean value required': 'checkInPleaseSelectYesOrNo',
+  'Numeric value required': 'checkInValueRequired',
+  'Text value required': 'checkInValueRequired',
   // Bookings (patient app video consultation)
   'serviceId is required for video consultation': 'bookingSelectServiceForVideo',
   'Please select a service for video consultation.': 'bookingSelectServiceForVideo',
