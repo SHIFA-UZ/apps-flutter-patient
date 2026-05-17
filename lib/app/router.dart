@@ -36,6 +36,7 @@ import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/wait
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/sign_appointment_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/visit_summary_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/consultation_payment_screen.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/treatment_plan_summary_screen.dart';
 import 'package:shifa_patient_app_v1/features/chat/presentation/chat_screen.dart';
 import 'package:shifa_patient_app_v1/features/copilot/presentation/shifa_ai_screen.dart';
 import 'package:shifa_patient_app_v1/features/notifications/presentation/screens/notifications_screen.dart';
@@ -170,8 +171,8 @@ class AppRoutes {
   /// Medical form 025-2 signing — same UX as [signAppointment], under Bookings stack.
   static const signPatientForm = '/bookings/sign-form/:formId';
   static const visitSummary = '/bookings/:id/visit-summary';
-  /// Doctor-requested payment deep link / notification target.
-  static const consultationPay = '/bookings/:id/pay';
+  /// Treatment plan balance / summary (deep link from notifications).
+  static const treatmentPlanSummary = '/bookings/treatment-plan/:planId';
 }
 
 // Router provider - will be created in app.dart
@@ -392,6 +393,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) {
                       final formId = state.pathParameters['formId']!;
                       return SignAppointmentScreen(patientFormId: formId);
+                    },
+                  ),
+                  GoRoute(
+                    path: 'treatment-plan/:planId',
+                    builder: (context, state) {
+                      final planId = state.pathParameters['planId']!;
+                      return TreatmentPlanSummaryScreen(planId: planId);
                     },
                   ),
                   GoRoute(

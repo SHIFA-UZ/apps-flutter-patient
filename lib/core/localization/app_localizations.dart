@@ -292,6 +292,17 @@ class AppLocalizations {
       'contactDoctorDirectly':
           'To change this appointment, please contact the doctor directly.',
 
+      // Treatment plan (patient read-only summary)
+      'treatmentPlanScreenTitle': 'Treatment plan',
+      'treatmentPlanLoadFailedWithCode': 'Unable to load plan ({{code}})',
+      'treatmentPlanUnexpectedError': 'Could not load plan: {{error}}',
+      'treatmentPlanNoData': 'No data',
+      'treatmentPlanStatusLine': 'Status: {{status}}',
+      'treatmentPlanTotalLabel': 'Total',
+      'treatmentPlanPaidLabel': 'Paid',
+      'treatmentPlanOutstandingLabel': 'Outstanding',
+      'treatmentPlanNotesLabel': 'Notes',
+
       // Doctors
       'doctors': 'Doctors',
       'myDoctors': 'My Doctors',
@@ -1045,6 +1056,17 @@ class AppLocalizations {
       'contactDoctorDirectly':
           'Um diesen Termin zu ändern, kontaktieren Sie bitte den Arzt direkt.',
 
+      // Treatment plan (patient read-only summary)
+      'treatmentPlanScreenTitle': 'Behandlungsplan',
+      'treatmentPlanLoadFailedWithCode': 'Plan konnte nicht geladen werden ({{code}})',
+      'treatmentPlanUnexpectedError': 'Plan konnte nicht geladen werden: {{error}}',
+      'treatmentPlanNoData': 'Keine Daten',
+      'treatmentPlanStatusLine': 'Status: {{status}}',
+      'treatmentPlanTotalLabel': 'Gesamt',
+      'treatmentPlanPaidLabel': 'Bezahlt',
+      'treatmentPlanOutstandingLabel': 'Offener Betrag',
+      'treatmentPlanNotesLabel': 'Notizen',
+
       // Doctors
       'doctors': 'Ärzte',
       'myDoctors': 'Meine Ärzte',
@@ -1577,6 +1599,17 @@ class AppLocalizations {
       'appointmentLessThan48Hours': 'Uchrashuv 48 soatdan kam vaqt ichida',
       'contactDoctorDirectly':
           'Uchrashuvni o\'zgartirish uchun shifokor bilan to\'g\'ridan-to\'g\'ri bog\'laning.',
+
+      // Treatment plan (patient read-only summary)
+      'treatmentPlanScreenTitle': 'Davolash rejasi',
+      'treatmentPlanLoadFailedWithCode': 'Rejani yuklab bo\'lmadi ({{code}})',
+      'treatmentPlanUnexpectedError': 'Rejani yuklab bo\'lmadi: {{error}}',
+      'treatmentPlanNoData': 'Ma\'lumot yo\'q',
+      'treatmentPlanStatusLine': 'Holat: {{status}}',
+      'treatmentPlanTotalLabel': 'Jami',
+      'treatmentPlanPaidLabel': 'To\'langan',
+      'treatmentPlanOutstandingLabel': 'Qoldiq',
+      'treatmentPlanNotesLabel': 'Izohlar',
 
       // Doctors
       'doctors': 'Shifokorlar',
@@ -2359,6 +2392,17 @@ class AppLocalizations {
       'contactDoctorDirectly':
           'Чтобы изменить эту запись, пожалуйста, свяжитесь с врачом напрямую.',
 
+      // Treatment plan (patient read-only summary)
+      'treatmentPlanScreenTitle': 'План лечения',
+      'treatmentPlanLoadFailedWithCode': 'Не удалось загрузить план ({{code}})',
+      'treatmentPlanUnexpectedError': 'Не удалось загрузить план: {{error}}',
+      'treatmentPlanNoData': 'Нет данных',
+      'treatmentPlanStatusLine': 'Статус: {{status}}',
+      'treatmentPlanTotalLabel': 'Итого',
+      'treatmentPlanPaidLabel': 'Оплачено',
+      'treatmentPlanOutstandingLabel': 'К доплате',
+      'treatmentPlanNotesLabel': 'Заметки',
+
       // Doctors
       'doctors': 'Врачи',
       'myDoctors': 'Мои врачи',
@@ -2862,6 +2906,21 @@ class AppLocalizations {
   String get appointmentLessThan48Hours =>
       translate('appointmentLessThan48Hours');
   String get contactDoctorDirectly => translate('contactDoctorDirectly');
+
+  String get treatmentPlanScreenTitle => translate('treatmentPlanScreenTitle');
+  String treatmentPlanLoadFailedWithCode(String code) =>
+      translate('treatmentPlanLoadFailedWithCode').replaceAll('{{code}}', code);
+  String treatmentPlanUnexpectedError(String error) =>
+      translate('treatmentPlanUnexpectedError').replaceAll('{{error}}', error);
+  String get treatmentPlanNoData => translate('treatmentPlanNoData');
+  String treatmentPlanStatusLine(String status) =>
+      translate('treatmentPlanStatusLine').replaceAll('{{status}}', status);
+  String get treatmentPlanTotalLabel => translate('treatmentPlanTotalLabel');
+  String get treatmentPlanPaidLabel => translate('treatmentPlanPaidLabel');
+  String get treatmentPlanOutstandingLabel =>
+      translate('treatmentPlanOutstandingLabel');
+  String get treatmentPlanNotesLabel => translate('treatmentPlanNotesLabel');
+
   String get signAppointmentSummary => translate('signAppointmentSummary');
   String get appointmentSummaryPreview =>
       translate('appointmentSummaryPreview');

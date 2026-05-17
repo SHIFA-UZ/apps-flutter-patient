@@ -15,6 +15,8 @@ class NotificationModel extends Equatable {
   final String? documentAccessRequestStatus;
   /// Present for TASK_ASSIGNED, TASK_CANCELLED, TASK_REMINDER; use for navigation to tasks.
   final int? taskId;
+  /// Treatment plan notifications (`TREATMENT_PLAN_*`); deep link to summary screen.
+  final int? treatmentPlanId;
   /// Optional payload from backend (e.g. data.documentId, data.chatId, data.doctorName).
   final String? documentId;
   final String? chatId;
@@ -32,6 +34,7 @@ class NotificationModel extends Equatable {
     this.documentAccessRequestId,
     this.documentAccessRequestStatus,
     this.taskId,
+    this.treatmentPlanId,
     this.documentId,
     this.chatId,
     this.doctorName,
@@ -73,6 +76,11 @@ class NotificationModel extends Equatable {
           ?? (json['document_access_request_status'] as String?),
       taskId: _optionalInt(json['taskId']) ?? _optionalInt(json['task_id']) ??
           (data != null ? _optionalInt(data['taskId']) ?? _optionalInt(data['task_id']) : null),
+      treatmentPlanId: _optionalInt(json['treatmentPlanId']) ??
+          _optionalInt(json['treatment_plan_id']) ??
+          (data != null
+              ? _optionalInt(data['treatmentPlanId']) ?? _optionalInt(data['treatment_plan_id'])
+              : null),
       documentId: json['documentId']?.toString() ??
           json['document_id']?.toString() ??
           data?['documentId']?.toString() ??
@@ -108,10 +116,14 @@ class NotificationModel extends Equatable {
     String? documentId = data['documentId']?.toString() ?? data['document_id']?.toString();
     String? chatId = data['chatId']?.toString() ?? data['chat_id']?.toString();
     int? taskId = _optionalInt(data['taskId']) ?? _optionalInt(data['task_id']);
+    int? treatmentPlanId =
+        _optionalInt(data['treatmentPlanId']) ?? _optionalInt(data['treatment_plan_id']);
 
     if (entityId != null && entityId.isNotEmpty) {
       if (_isAppointmentTypeKey(type) || typeRaw.toLowerCase().contains('appointment')) {
         appointmentId = int.tryParse(entityId) ?? appointmentId;
+      } else if (_isTreatmentPlanTypeKey(type)) {
+        treatmentPlanId = int.tryParse(entityId) ?? treatmentPlanId;
       } else if (_isDocumentTypeKey(type) || typeRaw.toLowerCase().contains('document')) {
         documentId = entityId;
       } else if (_isChatTypeKey(type) || typeRaw.toLowerCase().contains('message')) {
@@ -130,6 +142,7 @@ class NotificationModel extends Equatable {
       patientFormId: patientFormId,
       documentAccessRequestId: _optionalInt(data['documentAccessRequestId']) ?? _optionalInt(data['document_access_request_id']),
       taskId: taskId,
+      treatmentPlanId: treatmentPlanId,
       documentId: documentId,
       chatId: chatId,
       doctorName: data['doctorName']?.toString() ?? data['doctor_name']?.toString(),
@@ -146,6 +159,8 @@ class NotificationModel extends Equatable {
       t.contains('MESSAGE') || t.contains('CHAT');
   static bool _isTaskTypeKey(String t) =>
       t.contains('TASK');
+  static bool _isTreatmentPlanTypeKey(String t) =>
+      t.contains('TREATMENT_PLAN');
 
   Map<String, dynamic> toJson() {
     return {
@@ -158,6 +173,7 @@ class NotificationModel extends Equatable {
       'documentAccessRequestId': documentAccessRequestId,
       'documentAccessRequestStatus': documentAccessRequestStatus,
       'taskId': taskId,
+      'treatmentPlanId': treatmentPlanId,
       'documentId': documentId,
       'chatId': chatId,
       'doctorName': doctorName,
@@ -177,6 +193,7 @@ class NotificationModel extends Equatable {
         documentAccessRequestId,
         documentAccessRequestStatus,
         taskId,
+        treatmentPlanId,
         documentId,
         chatId,
         doctorName,

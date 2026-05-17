@@ -65,6 +65,13 @@ class NotificationTapHandler {
         if (id != null && id.isNotEmpty) return '${AppRoutes.bookings}/$id/pay';
         if (appointmentId != null) return '${AppRoutes.bookings}/$appointmentId/pay';
         break;
+      case 'treatment_plan_payment_reminder':
+      case 'treatment_plan_updated':
+        final planId = _optionalInt(data['treatmentPlanId']) ?? _optionalInt(data['treatment_plan_id']);
+        if (planId != null) return '${AppRoutes.bookings}/treatment-plan/$planId';
+        break;
+      case 'prophylaxis_reminder':
+        return AppRoutes.bookings;
       case 'new_document':
       case 'document':
         if (id != null && id.isNotEmpty) return '${AppRoutes.documents}/$id';
@@ -92,6 +99,13 @@ class NotificationTapHandler {
     if (_isConsultationPaymentPaywallType(type) &&
         (appointmentId != null || (id != null && id.isNotEmpty))) {
       return '${AppRoutes.bookings}/${appointmentId ?? id}/pay';
+    }
+    if (_isTreatmentPlanType(type)) {
+      final planId = _optionalInt(data['treatmentPlanId']) ?? _optionalInt(data['treatment_plan_id']);
+      if (planId != null) return '${AppRoutes.bookings}/treatment-plan/$planId';
+    }
+    if (type == 'PROPHYLAXIS_REMINDER') {
+      return AppRoutes.bookings;
     }
     if (_isAppointmentType(type) && (appointmentId != null || (id != null && id.isNotEmpty))) {
       return '${AppRoutes.bookings}/${appointmentId ?? id}';
@@ -128,6 +142,10 @@ class NotificationTapHandler {
         type == 'CONSULTATION_PAYMENT_DUE_24H' ||
         type == 'CONSULTATION_PAYMENT_DUE_6H' ||
         type == 'CONSULTATION_PAYMENT_DUE_1H';
+  }
+
+  static bool _isTreatmentPlanType(String type) {
+    return type.contains('TREATMENT_PLAN');
   }
 
   static bool _isAppointmentType(String type) {
@@ -193,6 +211,12 @@ class NotificationTapHandler {
     final taskId = notification.taskId;
 
     if (notification.isDocumentAccessRequest) return null;
+    if (_isTreatmentPlanType(type) && notification.treatmentPlanId != null) {
+      return '${AppRoutes.bookings}/treatment-plan/${notification.treatmentPlanId}';
+    }
+    if (type == 'PROPHYLAXIS_REMINDER') {
+      return AppRoutes.bookings;
+    }
     if (type == 'SIGNATURE_REQUESTED' && notification.patientFormId != null) {
       return '${AppRoutes.bookings}/sign-form/${notification.patientFormId}';
     }

@@ -191,4 +191,51 @@ void main() {
       },
     );
   });
+
+  group('NotificationTapHandler.getTargetPathFromPayload', () {
+    test('treatment plan payment uses treatmentPlanId', () {
+      expect(
+        NotificationTapHandler.getTargetPathFromPayload({
+          'type': 'TREATMENT_PLAN_PAYMENT_REMINDER',
+          'treatmentPlanId': '55',
+        }),
+        '${AppRoutes.bookings}/treatment-plan/55',
+      );
+    });
+
+    test('prophylaxis reminder maps to bookings', () {
+      expect(
+        NotificationTapHandler.getTargetPathFromPayload({'type': 'PROPHYLAXIS_REMINDER'}),
+        AppRoutes.bookings,
+      );
+    });
+  });
+
+  group('NotificationTapHandler treatment plan (in-app)', () {
+    test('getTargetLocation uses treatmentPlanId', () {
+      final n = NotificationModel(
+        id: 1,
+        title: 'Plan updated',
+        message: 'See details',
+        type: 'TREATMENT_PLAN_UPDATED',
+        treatmentPlanId: 42,
+        createdAt: DateTime.now(),
+      );
+      expect(
+        NotificationTapHandler.getTargetLocation(n),
+        '${AppRoutes.bookings}/treatment-plan/42',
+      );
+    });
+
+    test('PROPHYLAXIS_REMINDER returns bookings tab', () {
+      final n = NotificationModel(
+        id: 1,
+        title: 'Recall',
+        message: 'Book a visit',
+        type: 'PROPHYLAXIS_REMINDER',
+        createdAt: DateTime.now(),
+      );
+      expect(NotificationTapHandler.getTargetLocation(n), AppRoutes.bookings);
+    });
+  });
 }
