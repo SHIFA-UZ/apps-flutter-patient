@@ -7,9 +7,9 @@ import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/core/models/notification_model.dart';
 import 'package:shifa_patient_app_v1/features/notifications/providers/notifications_provider.dart';
-import 'package:shifa_patient_app_v1/features/notifications/services/notification_tap_handler.dart';
 import 'package:shifa_patient_app_v1/features/notifications/utils/notification_localization.dart';
 import 'package:shifa_patient_app_v1/features/notifications/presentation/notification_ui_helpers.dart';
+import 'package:shifa_patient_app_v1/features/notifications/presentation/widgets/notification_details_sheet.dart';
 
 /// Notifications screen for the patient app.
 /// Product-grade UI: grouped by date, semantic colors, cards, filters (adapted from doctor app).
@@ -178,14 +178,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                     l10n: l10n,
                                     controller: controller,
                                     actedRequestIds: actedRequestIds,
-                                    onTap: () async {
-                                      await NotificationTapHandler.handleTap(
-                                        context: context,
-                                        notification: n,
-                                        markAsRead: controller.markAsRead,
-                                        translate: l10n.translate,
-                                      );
-                                    },
+                                    onTap: () => _openNotification(n, controller),
                                   ),
                                 )),
                           ],
@@ -234,6 +227,36 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Tap behavior for in-app notification cards.
+  ///
+  /// Earlier versions delegated to [NotificationTapHandler.handleTap], which
+  /// silently did nothing when the deep-link target couldn't be resolved
+  /// (e.g. when a notification's appointment/treatment-plan ID was missing).
+  /// That left the patient looking at the same list with no indication that
+  /// their tap registered.
+  ///
+  /// New behavior: always mark the notification as read and open a details
+  /// bottom sheet showing the full title and message. The sheet exposes a
+  /// primary action (e.g. "Open treatment plan") that performs the same deep
+  /// link via [NotificationTapHandler.getTargetLocation] when one exists.
+  Future<void> _openNotification(
+    NotificationModel n,
+    NotificationsController controller,
+  ) async {
+    if (!n.isRead && n.id > 0) {
+      try {
+        await controller.markAsRead(n.id);
+      } catch (_) {
+        // Mark-as-read is best-effort; never block the details sheet.
+      }
+    }
+    if (!mounted) return;
+    await NotificationDetailsSheet.show(
+      context: context,
+      notification: n,
     );
   }
 

@@ -159,8 +159,14 @@ class NotificationModel extends Equatable {
       t.contains('MESSAGE') || t.contains('CHAT');
   static bool _isTaskTypeKey(String t) =>
       t.contains('TASK');
-  static bool _isTreatmentPlanTypeKey(String t) =>
-      t.contains('TREATMENT_PLAN');
+  static bool _isTreatmentPlanTypeKey(String t) {
+    final u = t.toUpperCase();
+    if (u.contains('TREATMENT_PLAN')) return true;
+    return u == 'INSTALLMENT_DUE_SOON' ||
+        u == 'INSTALLMENT_DUE_TODAY' ||
+        u == 'INSTALLMENT_OVERDUE' ||
+        u == 'INSTALLMENT_SCHEDULE_CREATED';
+  }
 
   Map<String, dynamic> toJson() {
     return {

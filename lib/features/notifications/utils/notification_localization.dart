@@ -43,6 +43,14 @@ class NotificationLocalization {
         return l10n.translate('consultationPaymentReminderTitle');
       case 'DOCUMENT_ACCESS_REQUEST':
         return l10n.translate('documentAccessRequestTitle');
+      case 'INSTALLMENT_DUE_SOON':
+        return l10n.notificationInstallmentDueSoonTitle;
+      case 'INSTALLMENT_DUE_TODAY':
+        return l10n.notificationInstallmentDueTodayTitle;
+      case 'INSTALLMENT_OVERDUE':
+        return l10n.notificationInstallmentOverdueTitle;
+      case 'INSTALLMENT_SCHEDULE_CREATED':
+        return l10n.notificationInstallmentScheduleCreatedTitle;
       default:
         if (notification.title.toLowerCase().contains('signature')) {
           return l10n.translate('signatureRequestedTitle');
@@ -79,6 +87,14 @@ class NotificationLocalization {
         return l10n.translate('consultationPaymentDue1hMessage');
       case 'DOCUMENT_ACCESS_REQUEST':
         return _localizedDocumentAccessMessage(notification, l10n);
+      case 'INSTALLMENT_DUE_SOON':
+        return l10n.notificationInstallmentDueSoonMessage;
+      case 'INSTALLMENT_DUE_TODAY':
+        return l10n.notificationInstallmentDueTodayMessage;
+      case 'INSTALLMENT_OVERDUE':
+        return l10n.notificationInstallmentOverdueMessage;
+      case 'INSTALLMENT_SCHEDULE_CREATED':
+        return l10n.notificationInstallmentScheduleCreatedMessage;
       case 'AI_VISIT_SUMMARY_READY':
       case 'AI_SCRIBE_READY':
         return l10n.translate('visitSummaryReadyMessage');

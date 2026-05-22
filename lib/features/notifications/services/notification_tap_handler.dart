@@ -67,6 +67,10 @@ class NotificationTapHandler {
         break;
       case 'treatment_plan_payment_reminder':
       case 'treatment_plan_updated':
+      case 'installment_due_soon':
+      case 'installment_due_today':
+      case 'installment_overdue':
+      case 'installment_schedule_created':
         final planId = _optionalInt(data['treatmentPlanId']) ?? _optionalInt(data['treatment_plan_id']);
         if (planId != null) return '${AppRoutes.bookings}/treatment-plan/$planId';
         break;
@@ -100,7 +104,7 @@ class NotificationTapHandler {
         (appointmentId != null || (id != null && id.isNotEmpty))) {
       return '${AppRoutes.bookings}/${appointmentId ?? id}/pay';
     }
-    if (_isTreatmentPlanType(type)) {
+    if (_routesToTreatmentPlanSummary(type)) {
       final planId = _optionalInt(data['treatmentPlanId']) ?? _optionalInt(data['treatment_plan_id']);
       if (planId != null) return '${AppRoutes.bookings}/treatment-plan/$planId';
     }
@@ -144,8 +148,14 @@ class NotificationTapHandler {
         type == 'CONSULTATION_PAYMENT_DUE_1H';
   }
 
-  static bool _isTreatmentPlanType(String type) {
-    return type.contains('TREATMENT_PLAN');
+  /// Deep-link to patient treatment-plan summary (includes installment reminders).
+  static bool _routesToTreatmentPlanSummary(String type) {
+    final u = type.toUpperCase();
+    if (u.contains('TREATMENT_PLAN')) return true;
+    return u == 'INSTALLMENT_DUE_SOON' ||
+        u == 'INSTALLMENT_DUE_TODAY' ||
+        u == 'INSTALLMENT_OVERDUE' ||
+        u == 'INSTALLMENT_SCHEDULE_CREATED';
   }
 
   static bool _isAppointmentType(String type) {
@@ -211,7 +221,7 @@ class NotificationTapHandler {
     final taskId = notification.taskId;
 
     if (notification.isDocumentAccessRequest) return null;
-    if (_isTreatmentPlanType(type) && notification.treatmentPlanId != null) {
+    if (_routesToTreatmentPlanSummary(type) && notification.treatmentPlanId != null) {
       return '${AppRoutes.bookings}/treatment-plan/${notification.treatmentPlanId}';
     }
     if (type == 'PROPHYLAXIS_REMINDER') {

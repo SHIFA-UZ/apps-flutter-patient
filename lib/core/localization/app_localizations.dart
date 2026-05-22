@@ -302,6 +302,27 @@ class AppLocalizations {
       'treatmentPlanPaidLabel': 'Paid',
       'treatmentPlanOutstandingLabel': 'Outstanding',
       'treatmentPlanNotesLabel': 'Notes',
+      'treatmentPlanTitleHeading': 'Plan',
+      'treatmentPlanDiagnosisLabel': 'Diagnosis',
+      'treatmentPlanPaymentStatusLineLong': 'Payment: {{status}}',
+      'treatmentPlanServicesHeading': 'Services',
+      'treatmentPlanInstallmentsHeading': 'Payment schedule',
+      'treatmentPlanInstallmentPlanLabel': 'Installment plan',
+      'treatmentPlanItemDue': 'Due {{date}}',
+      'treatmentPlanQuantityShort': 'Qty {{n}}',
+      'treatmentPlanDiscountLine': 'Discount: {{amount}}',
+      'notificationInstallmentDueSoonTitle': 'Installment due soon',
+      'notificationInstallmentDueSoonMessage':
+          'A treatment plan installment is due in a few days. Open to view details.',
+      'notificationInstallmentDueTodayTitle': 'Installment due today',
+      'notificationInstallmentDueTodayMessage':
+          'A treatment plan installment is due today. Open to view details.',
+      'notificationInstallmentOverdueTitle': 'Installment overdue',
+      'notificationInstallmentOverdueMessage':
+          'A treatment plan installment is overdue. Open to view details.',
+      'notificationInstallmentScheduleCreatedTitle': 'Payment schedule created',
+      'notificationInstallmentScheduleCreatedMessage':
+          'Your clinic set up an installment plan for your treatment. Open to view the schedule.',
 
       // Doctors
       'doctors': 'Doctors',
@@ -607,6 +628,17 @@ class AppLocalizations {
       'notificationEmptyFilterHint': 'Try another filter or check back later.',
       'notificationEmptyBody':
           'You\'ll see appointment updates, documents and tasks here.',
+      // Notification detail sheet action labels.
+      'notificationActionOpenTreatmentPlan': 'Open treatment plan',
+      'notificationActionOpenPayment': 'Complete payment',
+      'notificationActionOpenForm': 'Open form',
+      'notificationActionOpenBookings': 'Open bookings',
+      'notificationActionOpenAppointment': 'View appointment',
+      'notificationActionViewDocument': 'View document',
+      'notificationActionOpenChat': 'Open chat',
+      'notificationActionOpenTask': 'Open task',
+      'notificationActionViewSummary': 'View visit summary',
+      'notificationActionOpenDetails': 'Open details',
       'noName': 'No Name',
       'navigationError': 'Navigation Error',
       'locationLabel': 'Location',
@@ -1066,6 +1098,27 @@ class AppLocalizations {
       'treatmentPlanPaidLabel': 'Bezahlt',
       'treatmentPlanOutstandingLabel': 'Offener Betrag',
       'treatmentPlanNotesLabel': 'Notizen',
+      'treatmentPlanTitleHeading': 'Plan',
+      'treatmentPlanDiagnosisLabel': 'Diagnose',
+      'treatmentPlanPaymentStatusLineLong': 'Zahlung: {{status}}',
+      'treatmentPlanServicesHeading': 'Leistungen',
+      'treatmentPlanInstallmentsHeading': 'Zahlungsplan',
+      'treatmentPlanInstallmentPlanLabel': 'Ratenzahlung',
+      'treatmentPlanItemDue': 'Fällig {{date}}',
+      'treatmentPlanQuantityShort': 'Menge {{n}}',
+      'treatmentPlanDiscountLine': 'Rabatt: {{amount}}',
+      'notificationInstallmentDueSoonTitle': 'Rate bald fällig',
+      'notificationInstallmentDueSoonMessage':
+          'Eine Rate Ihres Behandlungsplans ist in wenigen Tagen fällig. Öffnen Sie die Details.',
+      'notificationInstallmentDueTodayTitle': 'Rate heute fällig',
+      'notificationInstallmentDueTodayMessage':
+          'Eine Rate Ihres Behandlungsplans ist heute fällig. Öffnen Sie die Details.',
+      'notificationInstallmentOverdueTitle': 'Rate überfällig',
+      'notificationInstallmentOverdueMessage':
+          'Eine Rate Ihres Behandlungsplans ist überfällig. Öffnen Sie die Details.',
+      'notificationInstallmentScheduleCreatedTitle': 'Zahlungsplan erstellt',
+      'notificationInstallmentScheduleCreatedMessage':
+          'Ihre Klinik hat einen Ratenzahlungsplan für Ihre Behandlung eingerichtet.',
 
       // Doctors
       'doctors': 'Ärzte',
@@ -1192,6 +1245,16 @@ class AppLocalizations {
       'notificationFilterDocuments': 'Dokumente',
       'notificationFilterTasks': 'Aufgaben',
       'notificationSettings': 'Einstellungen',
+      'notificationActionOpenTreatmentPlan': 'Behandlungsplan öffnen',
+      'notificationActionOpenPayment': 'Zahlung abschließen',
+      'notificationActionOpenForm': 'Formular öffnen',
+      'notificationActionOpenBookings': 'Termine öffnen',
+      'notificationActionOpenAppointment': 'Termin ansehen',
+      'notificationActionViewDocument': 'Dokument ansehen',
+      'notificationActionOpenChat': 'Chat öffnen',
+      'notificationActionOpenTask': 'Aufgabe öffnen',
+      'notificationActionViewSummary': 'Besuchszusammenfassung ansehen',
+      'notificationActionOpenDetails': 'Details öffnen',
       'notificationEmptyFilter': 'Keine Benachrichtigungen in dieser Kategorie',
       'notificationEmptyFilterHint':
           'Versuchen Sie einen anderen Filter oder schauen Sie später noch einmal vorbei.',
@@ -1610,6 +1673,27 @@ class AppLocalizations {
       'treatmentPlanPaidLabel': 'To\'langan',
       'treatmentPlanOutstandingLabel': 'Qoldiq',
       'treatmentPlanNotesLabel': 'Izohlar',
+      'treatmentPlanTitleHeading': 'Reja',
+      'treatmentPlanDiagnosisLabel': 'Tashxis',
+      'treatmentPlanPaymentStatusLineLong': 'To\'lov: {{status}}',
+      'treatmentPlanServicesHeading': 'Xizmatlar',
+      'treatmentPlanInstallmentsHeading': 'To\'lov jadvali',
+      'treatmentPlanInstallmentPlanLabel': 'Bo\'lib-to\'lash rejasi',
+      'treatmentPlanItemDue': 'Muddati {{date}}',
+      'treatmentPlanQuantityShort': 'Soni {{n}}',
+      'treatmentPlanDiscountLine': 'Chegirma: {{amount}}',
+      'notificationInstallmentDueSoonTitle': 'To\'lov muddati yaqinlashmoqda',
+      'notificationInstallmentDueSoonMessage':
+          'Davolash rejasi bo\'yicha to\'lov muddati bir necha kun ichida. Batafsilni oching.',
+      'notificationInstallmentDueTodayTitle': 'To\'lov bugun',
+      'notificationInstallmentDueTodayMessage':
+          'Davolash rejasi bo\'yicha to\'lov bugun. Batafsilni oching.',
+      'notificationInstallmentOverdueTitle': 'To\'lov muddati o\'tgan',
+      'notificationInstallmentOverdueMessage':
+          'Davolash rejasi bo\'yicha to\'lov muddati o\'tgan. Batafsilni oching.',
+      'notificationInstallmentScheduleCreatedTitle': 'To\'lov rejasi yaratildi',
+      'notificationInstallmentScheduleCreatedMessage':
+          'Klinikangiz davolash uchun bo\'lib-to\'lash rejasini tayyorladi. Jadvalni ko\'ring.',
 
       // Doctors
       'doctors': 'Shifokorlar',
@@ -1864,6 +1948,16 @@ class AppLocalizations {
       'notificationFilterDocuments': 'Hujjatlar',
       'notificationFilterTasks': 'Vazifalar',
       'notificationSettings': 'Sozlamalar',
+      'notificationActionOpenTreatmentPlan': 'Davolanish rejasini ochish',
+      'notificationActionOpenPayment': 'To\'lovni yakunlash',
+      'notificationActionOpenForm': 'Shaklni ochish',
+      'notificationActionOpenBookings': 'Qabullarni ochish',
+      'notificationActionOpenAppointment': 'Qabulni ko\'rish',
+      'notificationActionViewDocument': 'Hujjatni ko\'rish',
+      'notificationActionOpenChat': 'Chatni ochish',
+      'notificationActionOpenTask': 'Vazifani ochish',
+      'notificationActionViewSummary': 'Qabul xulosasini ko\'rish',
+      'notificationActionOpenDetails': 'Tafsilotlarni ochish',
       'notificationEmptyFilter': 'Bu toifada bildirishnomalar yo\'q',
       'notificationEmptyFilterHint':
           'Boshqa filtrni tanlang yoki keyinroq qayta tekshiring.',
@@ -2402,6 +2496,27 @@ class AppLocalizations {
       'treatmentPlanPaidLabel': 'Оплачено',
       'treatmentPlanOutstandingLabel': 'К доплате',
       'treatmentPlanNotesLabel': 'Заметки',
+      'treatmentPlanTitleHeading': 'План',
+      'treatmentPlanDiagnosisLabel': 'Диагноз',
+      'treatmentPlanPaymentStatusLineLong': 'Оплата: {{status}}',
+      'treatmentPlanServicesHeading': 'Услуги',
+      'treatmentPlanInstallmentsHeading': 'График оплаты',
+      'treatmentPlanInstallmentPlanLabel': 'Рассрочка',
+      'treatmentPlanItemDue': 'Срок {{date}}',
+      'treatmentPlanQuantityShort': 'Кол-во {{n}}',
+      'treatmentPlanDiscountLine': 'Скидка: {{amount}}',
+      'notificationInstallmentDueSoonTitle': 'Скоро платёж по плану',
+      'notificationInstallmentDueSoonMessage':
+          'Через несколько дней срок платежа по плану лечения. Откройте для подробностей.',
+      'notificationInstallmentDueTodayTitle': 'Платёж сегодня',
+      'notificationInstallmentDueTodayMessage':
+          'Сегодня срок платежа по плану лечения. Откройте для подробностей.',
+      'notificationInstallmentOverdueTitle': 'Просроченный платёж',
+      'notificationInstallmentOverdueMessage':
+          'Просрочен платёж по плану лечения. Откройте для подробностей.',
+      'notificationInstallmentScheduleCreatedTitle': 'Создан график оплаты',
+      'notificationInstallmentScheduleCreatedMessage':
+          'Клиника настроила рассрочку по вашему плану лечения. Откройте, чтобы посмотреть график.',
 
       // Doctors
       'doctors': 'Врачи',
@@ -2569,6 +2684,16 @@ class AppLocalizations {
       'notificationFilterDocuments': 'Документы',
       'notificationFilterTasks': 'Задачи',
       'notificationSettings': 'Настройки',
+      'notificationActionOpenTreatmentPlan': 'Открыть план лечения',
+      'notificationActionOpenPayment': 'Оплатить',
+      'notificationActionOpenForm': 'Открыть форму',
+      'notificationActionOpenBookings': 'Открыть приёмы',
+      'notificationActionOpenAppointment': 'Открыть приём',
+      'notificationActionViewDocument': 'Открыть документ',
+      'notificationActionOpenChat': 'Открыть чат',
+      'notificationActionOpenTask': 'Открыть задачу',
+      'notificationActionViewSummary': 'Открыть итог визита',
+      'notificationActionOpenDetails': 'Открыть подробности',
       'notificationEmptyFilter': 'В этой категории нет уведомлений',
       'notificationEmptyFilterHint':
           'Попробуйте другой фильтр или загляните позже.',
@@ -2920,6 +3045,37 @@ class AppLocalizations {
   String get treatmentPlanOutstandingLabel =>
       translate('treatmentPlanOutstandingLabel');
   String get treatmentPlanNotesLabel => translate('treatmentPlanNotesLabel');
+  String get treatmentPlanTitleHeading => translate('treatmentPlanTitleHeading');
+  String get treatmentPlanDiagnosisLabel => translate('treatmentPlanDiagnosisLabel');
+  String treatmentPlanPaymentStatusLineLong(String status) =>
+      translate('treatmentPlanPaymentStatusLineLong').replaceAll('{{status}}', status);
+  String get treatmentPlanServicesHeading => translate('treatmentPlanServicesHeading');
+  String get treatmentPlanInstallmentsHeading =>
+      translate('treatmentPlanInstallmentsHeading');
+  String get treatmentPlanInstallmentPlanLabel =>
+      translate('treatmentPlanInstallmentPlanLabel');
+  String treatmentPlanItemDue(String date) =>
+      translate('treatmentPlanItemDue').replaceAll('{{date}}', date);
+  String treatmentPlanQuantityShort(int n) =>
+      translate('treatmentPlanQuantityShort').replaceAll('{{n}}', '$n');
+  String treatmentPlanDiscountLine(String amount) =>
+      translate('treatmentPlanDiscountLine').replaceAll('{{amount}}', amount);
+  String get notificationInstallmentDueSoonTitle =>
+      translate('notificationInstallmentDueSoonTitle');
+  String get notificationInstallmentDueSoonMessage =>
+      translate('notificationInstallmentDueSoonMessage');
+  String get notificationInstallmentDueTodayTitle =>
+      translate('notificationInstallmentDueTodayTitle');
+  String get notificationInstallmentDueTodayMessage =>
+      translate('notificationInstallmentDueTodayMessage');
+  String get notificationInstallmentOverdueTitle =>
+      translate('notificationInstallmentOverdueTitle');
+  String get notificationInstallmentOverdueMessage =>
+      translate('notificationInstallmentOverdueMessage');
+  String get notificationInstallmentScheduleCreatedTitle =>
+      translate('notificationInstallmentScheduleCreatedTitle');
+  String get notificationInstallmentScheduleCreatedMessage =>
+      translate('notificationInstallmentScheduleCreatedMessage');
 
   String get signAppointmentSummary => translate('signAppointmentSummary');
   String get appointmentSummaryPreview =>
