@@ -152,6 +152,10 @@ class AppLocalizations {
       'copilotBookWithDoctor': 'Book',
       'copilotViewProfile': 'Profile',
       'copilotTranscribeError': 'Could not transcribe audio',
+      'copilotTranscriptReportHint':
+          'If the transcription looks wrong, you can send it for review (optional audio).',
+      'copilotTranscriptReportAction': 'Report',
+      'copilotTranscriptReportThanks': 'Thank you — we logged this sample for QA.',
       'copilotContinueToBooking':
           'You will choose date and time on the next screen. Continue?',
       'copilotBookingTitle': 'Book appointment',
@@ -989,6 +993,10 @@ class AppLocalizations {
       'copilotBookWithDoctor': 'Buchen',
       'copilotViewProfile': 'Profil',
       'copilotTranscribeError': 'Sprache konnte nicht transkribiert werden',
+      'copilotTranscriptReportHint':
+          'Falsch erkannt? Optional mit Audio zur Qualitätssicherung senden.',
+      'copilotTranscriptReportAction': 'Melden',
+      'copilotTranscriptReportThanks': 'Danke — für die QA gespeichert.',
       'copilotContinueToBooking':
           'Auf der nächsten Seite wählen Sie Datum und Uhrzeit. Fortfahren?',
       'copilotBookingTitle': 'Termin buchen',
@@ -1514,6 +1522,10 @@ class AppLocalizations {
       'copilotBookWithDoctor': 'Bron qilish',
       'copilotViewProfile': 'Profil',
       'copilotTranscribeError': 'Ovozni matnga aylantirib bo\'lmadi',
+      'copilotTranscriptReportHint':
+          'Matn xato chiqdimi? Sifat uchun yuborishingiz mumkin (ovozli ixtiyoriy).',
+      'copilotTranscriptReportAction': 'Xabar berish',
+      'copilotTranscriptReportThanks': 'Rahmat — QA uchun saqlandi.',
       'copilotContinueToBooking':
           'Keyingi sahifada sana va vaqtni tanlaysiz. Davom etasizmi?',
       'copilotBookingTitle': 'Uchrashuv bron qilish',
@@ -2372,6 +2384,10 @@ class AppLocalizations {
       'copilotBookWithDoctor': 'Запись',
       'copilotViewProfile': 'Профиль',
       'copilotTranscribeError': 'Не удалось распознать речь',
+      'copilotTranscriptReportHint':
+          'Текст неверный? Можете отправить на проверку (аудио по желанию).',
+      'copilotTranscriptReportAction': 'Сообщить',
+      'copilotTranscriptReportThanks': 'Спасибо — сохранено для QA.',
       'copilotContinueToBooking':
           'На следующем экране вы выберете дату и время. Продолжить?',
       'copilotBookingTitle': 'Записаться на приём',

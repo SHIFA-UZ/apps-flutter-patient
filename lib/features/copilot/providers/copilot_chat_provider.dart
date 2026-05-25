@@ -20,6 +20,8 @@ class CopilotChatState {
   final bool isAnalyzingSymptoms;
   final bool isFindingDoctors;
   final String? lastError;
+  /// Backend returned daily/burst AI limit ([RATE_LIMIT]).
+  final bool aiRateLimited;
   final String contextSummary;
   final List<String> memorySymptoms;
   final List<String> memorySuspectedConditions;
@@ -35,6 +37,7 @@ class CopilotChatState {
     this.isAnalyzingSymptoms = false,
     this.isFindingDoctors = false,
     this.lastError,
+    this.aiRateLimited = false,
     this.contextSummary = '',
     this.memorySymptoms = const [],
     this.memorySuspectedConditions = const [],
@@ -50,6 +53,7 @@ class CopilotChatState {
     bool? isAnalyzingSymptoms,
     bool? isFindingDoctors,
     String? lastError,
+    bool? aiRateLimited,
     String? contextSummary,
     List<String>? memorySymptoms,
     List<String>? memorySuspectedConditions,
@@ -66,6 +70,7 @@ class CopilotChatState {
       isAnalyzingSymptoms: isAnalyzingSymptoms ?? this.isAnalyzingSymptoms,
       isFindingDoctors: isFindingDoctors ?? this.isFindingDoctors,
       lastError: clearError ? null : (lastError ?? this.lastError),
+      aiRateLimited: clearError ? false : (aiRateLimited ?? this.aiRateLimited),
       contextSummary: contextSummary ?? this.contextSummary,
       memorySymptoms: memorySymptoms ?? this.memorySymptoms,
       memorySuspectedConditions: memorySuspectedConditions ?? this.memorySuspectedConditions,
@@ -76,6 +81,10 @@ class CopilotChatState {
 }
 
 class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
+  /// Shown when backend returns [RATE_LIMIT] (SSE or REST).
+  static const String kDailyAiRateLimitMessage =
+      "You've reached your daily Shifa AI limit. Try again tomorrow.";
+
   CopilotChatNotifier(this._ref) : super(CopilotChatState()) {
     _hydrateMemory();
   }
@@ -94,6 +103,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
     state = state.copyWith(
       messages: hydrated,
       contextSummary: loaded.summary,
+      aiRateLimited: false,
       memorySymptoms: (loaded.structuredState['symptoms'] as List<dynamic>? ?? const []).map((e) => e.toString()).toList(),
       memorySuspectedConditions:
           (loaded.structuredState['suspectedConditions'] as List<dynamic>? ?? const []).map((e) => e.toString()).toList(),
@@ -241,11 +251,13 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
       await _persistMemory();
       return null;
     } on CopilotStreamException catch (e) {
+      final limited = e.code == 'RATE_LIMIT';
       state = state.copyWith(
         isSending: false,
         isThinking: false,
         clearStreaming: true,
-        lastError: e.message,
+        lastError: limited ? CopilotChatNotifier.kDailyAiRateLimitMessage : e.message,
+        aiRateLimited: limited,
       );
       return null;
     } catch (e) {
@@ -254,6 +266,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         isThinking: false,
         clearStreaming: true,
         lastError: e.toString(),
+        aiRateLimited: false,
       );
       return null;
     }
@@ -301,8 +314,14 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
         return;
       }
       _handleResolveFailure(res, language);
+    } on CopilotStreamException catch (e) {
+      final limited = e.code == 'RATE_LIMIT';
+      state = state.copyWith(
+        lastError: limited ? CopilotChatNotifier.kDailyAiRateLimitMessage : e.message,
+        aiRateLimited: limited,
+      );
     } catch (e) {
-      state = state.copyWith(lastError: e.toString());
+      state = state.copyWith(lastError: e.toString(), aiRateLimited: false);
     }
   }
 
@@ -358,7 +377,7 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
       );
       return list;
     } catch (e) {
-      state = state.copyWith(lastError: e.toString());
+      state = state.copyWith(lastError: e.toString(), aiRateLimited: false);
       return const [];
     }
   }
@@ -413,14 +432,32 @@ class CopilotChatNotifier extends StateNotifier<CopilotChatState> {
       );
       await _persistMemory();
       return res.doctors;
+    } on CopilotStreamException catch (e) {
+      final limited = e.code == 'RATE_LIMIT';
+      state = state.copyWith(
+        lastError: limited ? CopilotChatNotifier.kDailyAiRateLimitMessage : e.message,
+        aiRateLimited: limited,
+        isAnalyzingSymptoms: false,
+        isFindingDoctors: false,
+      );
+      return const [];
     } catch (e) {
       state = state.copyWith(
         lastError: e.toString(),
+        aiRateLimited: false,
         isAnalyzingSymptoms: false,
         isFindingDoctors: false,
       );
       return const [];
     }
+  }
+
+  /// Update banner + latch from voice/transcribe when rate limited outside [sendUserMessage].
+  void notifyAiRateLimitedFromAuxiliaryFlow() {
+    state = state.copyWith(
+      lastError: CopilotChatNotifier.kDailyAiRateLimitMessage,
+      aiRateLimited: true,
+    );
   }
 }
 

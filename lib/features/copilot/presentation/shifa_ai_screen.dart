@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
@@ -13,6 +14,8 @@ import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provid
 import 'package:shifa_patient_app_v1/features/chat/presentation/widgets/voice_recording_dialog.dart';
 import 'package:shifa_patient_app_v1/features/copilot/providers/copilot_api_provider.dart';
 import 'package:shifa_patient_app_v1/features/copilot/providers/copilot_chat_provider.dart';
+import 'package:shifa_patient_app_v1/features/copilot/data/copilot_api.dart';
+import 'package:shifa_patient_app_v1/core/network/public_backend_config.dart';
 import 'package:shifa_patient_app_v1/features/profile/providers/profile_provider.dart';
 
 String copilotBackendLanguage(String? profileLanguage) {
@@ -45,6 +48,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
   Future<void> _onSend() async {
     final text = _textController.text;
     if (text.trim().isEmpty) return;
+    if (ref.read(copilotChatProvider).aiRateLimited) return;
     final userText = text.trim();
     _textController.clear();
     final l10n = AppLocalizations.of(context)!;
@@ -139,6 +143,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
   Future<void> _onSuggestDoctors() async {
     final l10n = AppLocalizations.of(context)!;
     final chat = ref.read(copilotChatProvider);
+    if (chat.aiRateLimited) return;
     if (chat.messages.where((m) => m.role == 'user').isEmpty &&
         _textController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -272,6 +277,60 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                 );
               });
             }
+            if (!mounted || text.trim().isEmpty) return;
+
+            try {
+              if (await PublicBackendConfig.transcriptionFeedbackEnabled()) {
+                if (!mounted) return;
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.translate('copilotTranscriptReportHint')),
+                    action: SnackBarAction(
+                      label: l10n.translate('copilotTranscriptReportAction'),
+                      onPressed: () async {
+                        try {
+                          await ref.read(copilotApiProvider).reportTranscriptionFeedback(
+                                transcript: text,
+                                localeHintIso: hint,
+                                audioFilePath: filePath,
+                              );
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.translate('copilotTranscriptReportThanks')),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${l10n.error}: $e')));
+                          return;
+                        }
+                        try {
+                          final f = File(filePath);
+                          if (await f.exists()) await f.delete();
+                        } catch (_) {}
+                      },
+                    ),
+                  ),
+                );
+              }
+            } catch (_) {
+              /* ignore feedback config errors */
+            }
+          } on CopilotStreamException catch (e) {
+            if (!mounted) return;
+            if (e.code == 'RATE_LIMIT') {
+              ref.read(copilotChatProvider.notifier).notifyAiRateLimitedFromAuxiliaryFlow();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(CopilotChatNotifier.kDailyAiRateLimitMessage)),
+              );
+              return;
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${l10n.translate('copilotTranscribeError')}: ${e.message}')),
+            );
           } catch (e) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -457,6 +516,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
       return const Scaffold(body: SizedBox.shrink());
     }
     final chatState = ref.watch(copilotChatProvider);
+    final inputBlocked = chatState.isSending || chatState.aiRateLimited;
     ref.listen<CopilotChatState>(copilotChatProvider, (prev, next) {
       if (next.messages.length != (prev?.messages.length ?? 0) ||
           next.streamingText != prev?.streamingText) {
@@ -593,7 +653,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                   Row(
                     children: [
                       TextButton.icon(
-                        onPressed: _loadingSuggestions ? null : _onSuggestDoctors,
+                        onPressed: (_loadingSuggestions || inputBlocked) ? null : _onSuggestDoctors,
                         icon: _loadingSuggestions
                             ? const SizedBox(
                                 width: 16,
@@ -620,7 +680,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: OutlinedButton(
-                                onPressed: chatState.isSending
+                                onPressed: inputBlocked
                                     ? null
                                     : () {
                                         _textController.text = o;
@@ -639,7 +699,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.mic),
-                        onPressed: chatState.isSending ? null : _transcribeVoice,
+                        onPressed: inputBlocked ? null : _transcribeVoice,
                         tooltip: l10n.translate('recordVoice'),
                       ),
                       Expanded(
@@ -647,7 +707,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                           controller: _textController,
                           minLines: 1,
                           maxLines: 4,
-                          enabled: !chatState.isSending,
+                          enabled: !inputBlocked,
                           decoration: InputDecoration(
                             hintText: l10n.translate('copilotInputHint'),
                             filled: true,
@@ -662,7 +722,7 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
-                        onPressed: chatState.isSending ? null : _onSend,
+                        onPressed: inputBlocked ? null : _onSend,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.all(12),
                           shape: const CircleBorder(),

@@ -35,6 +35,23 @@ class CopilotApi {
     };
   }
 
+  void _rejectCopilotUnlessOk(http.Response response, String fallback) {
+    if (response.statusCode == 200) return;
+    if (response.statusCode == 429) {
+      String code = 'RATE_LIMIT';
+      String message = _extractErrorMessage(response, fallback);
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          code = (decoded['code'] as String?) ?? code;
+          message = (decoded['message'] as String?) ?? message;
+        }
+      } catch (_) {}
+      throw CopilotStreamException(code, message);
+    }
+    throw Exception(_extractErrorMessage(response, fallback));
+  }
+
   String _extractErrorMessage(http.Response response, String fallback) {
     var message = fallback;
     try {
@@ -150,11 +167,36 @@ class CopilotApi {
     }
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);
-    if (response.statusCode != 200) {
-      throw Exception('Transcription failed: HTTP ${response.statusCode}');
-    }
+    _rejectCopilotUnlessOk(response, 'Transcription failed: HTTP ${response.statusCode}');
     final json = jsonDecode(response.body) as Map<String, dynamic>?;
     return (json?['text'] as String?)?.trim() ?? '';
+  }
+
+  /// QA: POST transcript + optional original audio when server enables transcription feedback.
+  Future<void> reportTranscriptionFeedback({
+    required String transcript,
+    required String localeHintIso,
+    String? audioFilePath,
+  }) async {
+    final uri = Uri.parse(
+        '${ApiClient.apiBaseUrl}/patients/me/copilot/transcription-feedback');
+    final token = await StorageService().getAuthToken();
+    final request = http.MultipartRequest('POST', uri);
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    request.fields['transcript'] = transcript;
+    request.fields['locale'] = localeHintIso;
+    if (audioFilePath != null &&
+        audioFilePath.isNotEmpty &&
+        !audioFilePath.startsWith('blob:')) {
+      request.files
+          .add(await http.MultipartFile.fromPath('file', audioFilePath));
+    }
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    _rejectCopilotUnlessOk(
+        response, 'Report transcription failed: HTTP ${response.statusCode}');
   }
 
   /// Books the nearest available slot to [preferredStartUtc] on the server (requires consent).
@@ -212,11 +254,7 @@ class CopilotApi {
       headers: await _authHeaders(),
       body: jsonEncode(body),
     );
-    if (response.statusCode != 200) {
-      throw Exception(
-        _extractErrorMessage(response, 'Resolve booking failed: HTTP ${response.statusCode}'),
-      );
-    }
+    _rejectCopilotUnlessOk(response, 'Resolve booking failed: HTTP ${response.statusCode}');
     return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
@@ -250,11 +288,7 @@ class CopilotApi {
       headers: await _authHeaders(),
       body: jsonEncode({'messages': messages, 'language': language}),
     );
-    if (response.statusCode != 200) {
-      throw Exception(
-        _extractErrorMessage(response, 'Suggest doctors failed: HTTP ${response.statusCode}'),
-      );
-    }
+    _rejectCopilotUnlessOk(response, 'Suggest doctors failed: HTTP ${response.statusCode}');
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final rawDoctors = (body['doctors'] as List<dynamic>? ?? []);
     final doctors = rawDoctors
