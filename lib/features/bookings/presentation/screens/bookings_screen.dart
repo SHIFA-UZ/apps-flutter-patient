@@ -65,10 +65,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     try {
       final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
         appointmentId: appointmentId,
-        gateway: 'STRIPE',
       );
       final paymentId = checkout['paymentId']?.toString();
       final checkoutUrl = checkout['checkoutUrl']?.toString();
+      final checkoutGateway = checkout['gateway']?.toString();
       if (!mounted) return;
       if (paymentId == null || checkoutUrl == null || checkoutUrl.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -79,6 +79,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       final paid = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => _BookingsPaymentCheckoutScreen(
+            appointmentId: appointmentId,
+            checkoutGateway: checkoutGateway,
             paymentId: paymentId,
             checkoutUrl: checkoutUrl,
           ),
@@ -267,12 +269,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
 class _BookingsPaymentCheckoutScreen extends ConsumerStatefulWidget {
   const _BookingsPaymentCheckoutScreen({
+    required this.appointmentId,
     required this.paymentId,
     required this.checkoutUrl,
+    this.checkoutGateway,
   });
 
+  final String appointmentId;
   final String paymentId;
   final String checkoutUrl;
+  final String? checkoutGateway;
 
   @override
   ConsumerState<_BookingsPaymentCheckoutScreen> createState() => _BookingsPaymentCheckoutScreenState();
@@ -280,12 +286,15 @@ class _BookingsPaymentCheckoutScreen extends ConsumerStatefulWidget {
 
 class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPaymentCheckoutScreen> {
   late final WebViewController _controller;
+  late String _pollPaymentId;
   Timer? _pollingTimer;
   bool _checkingStatus = false;
+  bool _stripeReloadTried = false;
 
   @override
   void initState() {
     super.initState();
+    _pollPaymentId = widget.paymentId;
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -296,7 +305,14 @@ class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPayment
               _checkPaymentStatus(forceCloseOnPaid: true);
               return NavigationDecision.prevent;
             }
+            if (url.contains('/api/payments/checkout/cancel')) {
+              if (mounted) Navigator.of(context).pop(false);
+              return NavigationDecision.prevent;
+            }
             return NavigationDecision.navigate;
+          },
+          onWebResourceError: (WebResourceError error) {
+            unawaited(_maybeStripeFallbackAfterMainFrameFailure(error));
           },
         ),
       )
@@ -308,11 +324,34 @@ class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPayment
     );
   }
 
+  Future<void> _maybeStripeFallbackAfterMainFrameFailure(WebResourceError error) async {
+    if (_stripeReloadTried ||
+        !mounted ||
+        error.isForMainFrame != true ||
+        widget.checkoutGateway != 'CLICK') {
+      return;
+    }
+    _stripeReloadTried = true;
+    try {
+      final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
+            appointmentId: widget.appointmentId,
+            gateway: 'STRIPE',
+          );
+      final url = checkout['checkoutUrl']?.toString();
+      final newId = checkout['paymentId']?.toString();
+      if (!mounted || url == null || url.isEmpty || newId == null) return;
+      setState(() => _pollPaymentId = newId);
+      await _controller.loadRequest(Uri.parse(url));
+    } catch (_) {
+      // Backend usually falls back automatically; silent here.
+    }
+  }
+
   Future<void> _checkPaymentStatus({bool forceCloseOnPaid = false}) async {
     if (_checkingStatus || !mounted) return;
     _checkingStatus = true;
     try {
-      final status = await ref.read(bookingsRepositoryProvider).getPaymentStatus(widget.paymentId);
+      final status = await ref.read(bookingsRepositoryProvider).getPaymentStatus(_pollPaymentId);
       final paymentStatus = (status['status']?.toString() ?? '').toUpperCase();
       if (paymentStatus == 'PAID' && mounted && forceCloseOnPaid) {
         Navigator.of(context).pop(true);

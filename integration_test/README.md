@@ -33,6 +33,16 @@ Requires:
 
 Consider [Patrol](https://patrol.leancode.co/) or a dedicated staging job with secrets for stable E2E.
 
+## Promo video screenshots (Remotion)
+
+Use `integration_test/promo_screens_capture_test.dart` to write PNGs straight to **`promo-video/public/assets/screens/`** (sibling folder in this monorepo).
+
+```bash
+flutter test integration_test/promo_screens_capture_test.dart --dart-define=PROMO_CAPTURE=true
+```
+
+Or: `dart run tool/capture_promo_screens.dart` from `apps-flutter-patient`.
+
 ## Coverage threshold (e.g. 70%)
 
 After `flutter test --coverage`, use `lcov` / [very_good_coverage](https://pub.dev/packages/very_good_coverage) on `coverage/lcov.info`.  

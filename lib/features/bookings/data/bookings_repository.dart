@@ -149,13 +149,13 @@ class BookingsRepository {
 
   Future<Map<String, dynamic>> createConsultationCheckout({
     required String appointmentId,
-    String gateway = 'STRIPE',
+    String? gateway,
   }) async {
     final response = await _apiClient.post(
       '/payments/consultation/checkout',
       data: {
         'appointmentId': int.parse(appointmentId),
-        'gateway': gateway,
+        if (gateway != null) 'gateway': gateway,
       },
     );
     return response.data as Map<String, dynamic>;

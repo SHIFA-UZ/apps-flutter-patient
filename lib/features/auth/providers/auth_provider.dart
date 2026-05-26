@@ -15,6 +15,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final Ref _ref;
 
   AuthNotifier(this._ref) : super(AuthState.initial()) {
+    // Integration / promo screenshot runs: skip network auth (see integration_test/promo_screens_capture_test.dart).
+    if (const bool.fromEnvironment('PROMO_CAPTURE', defaultValue: false)) {
+      state = AuthState(
+        isAuthenticated: true,
+        isLoading: false,
+        token: 'promo-capture',
+      );
+      return;
+    }
     // Use a post-frame callback to avoid blocking initialization
     Future.microtask(() => _checkAuth());
   }

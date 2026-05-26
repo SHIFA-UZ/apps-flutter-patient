@@ -23,6 +23,7 @@ class ConsultationPaymentScreen extends ConsumerStatefulWidget {
 class _ConsultationPaymentScreenState extends ConsumerState<ConsultationPaymentScreen> {
   String? _checkoutUrl;
   String? _paymentId;
+  String? _checkoutGateway;
   String? _error;
   bool _loading = true;
 
@@ -39,14 +40,15 @@ class _ConsultationPaymentScreenState extends ConsumerState<ConsultationPaymentS
       _error = null;
       _checkoutUrl = null;
       _paymentId = null;
+      _checkoutGateway = null;
     });
     try {
       final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
             appointmentId: widget.appointmentId,
-            gateway: 'STRIPE',
           );
       final paymentId = checkout['paymentId']?.toString();
       final checkoutUrl = checkout['checkoutUrl']?.toString();
+      final checkoutGateway = checkout['gateway']?.toString();
       if (!mounted) return;
       if (paymentId == null ||
           checkoutUrl == null ||
@@ -61,6 +63,7 @@ class _ConsultationPaymentScreenState extends ConsumerState<ConsultationPaymentS
         _loading = false;
         _paymentId = paymentId;
         _checkoutUrl = checkoutUrl;
+        _checkoutGateway = checkoutGateway;
       });
     } catch (e) {
       if (!mounted) return;
@@ -113,9 +116,10 @@ class _ConsultationPaymentScreenState extends ConsumerState<ConsultationPaymentS
       );
     }
     return _ConsultationPaymentWebView(
+      appointmentId: widget.appointmentId,
+      checkoutGateway: _checkoutGateway,
       paymentId: _paymentId!,
       checkoutUrl: _checkoutUrl!,
-      appointmentId: widget.appointmentId,
     );
   }
 }
@@ -125,11 +129,13 @@ class _ConsultationPaymentWebView extends ConsumerStatefulWidget {
     required this.paymentId,
     required this.checkoutUrl,
     required this.appointmentId,
+    this.checkoutGateway,
   });
 
   final String paymentId;
   final String checkoutUrl;
   final String appointmentId;
+  final String? checkoutGateway;
 
   @override
   ConsumerState<_ConsultationPaymentWebView> createState() =>
@@ -139,12 +145,15 @@ class _ConsultationPaymentWebView extends ConsumerStatefulWidget {
 class _ConsultationPaymentWebViewState
     extends ConsumerState<_ConsultationPaymentWebView> {
   late final WebViewController _controller;
+  late String _pollPaymentId;
   Timer? _pollingTimer;
   bool _checkingStatus = false;
+  bool _stripeReloadTried = false;
 
   @override
   void initState() {
     super.initState();
+    _pollPaymentId = widget.paymentId;
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -155,7 +164,14 @@ class _ConsultationPaymentWebViewState
               _checkPaymentStatus(forceCloseOnPaid: true);
               return NavigationDecision.prevent;
             }
+            if (url.contains('/api/payments/checkout/cancel')) {
+              if (mounted) Navigator.of(context).pop();
+              return NavigationDecision.prevent;
+            }
             return NavigationDecision.navigate;
+          },
+          onWebResourceError: (WebResourceError error) {
+            unawaited(_maybeStripeFallbackAfterMainFrameFailure(error));
           },
         ),
       )
@@ -167,13 +183,34 @@ class _ConsultationPaymentWebViewState
     );
   }
 
+  Future<void> _maybeStripeFallbackAfterMainFrameFailure(WebResourceError error) async {
+    if (_stripeReloadTried ||
+        !mounted ||
+        error.isForMainFrame != true ||
+        widget.checkoutGateway != 'CLICK') {
+      return;
+    }
+    _stripeReloadTried = true;
+    try {
+      final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
+            appointmentId: widget.appointmentId,
+            gateway: 'STRIPE',
+          );
+      final url = checkout['checkoutUrl']?.toString();
+      final newId = checkout['paymentId']?.toString();
+      if (!mounted || url == null || url.isEmpty || newId == null) return;
+      setState(() => _pollPaymentId = newId);
+      await _controller.loadRequest(Uri.parse(url));
+    } catch (_) {}
+  }
+
   Future<void> _checkPaymentStatus({bool forceCloseOnPaid = false}) async {
     if (_checkingStatus || !mounted) return;
     _checkingStatus = true;
     try {
       final status = await ref
           .read(bookingsRepositoryProvider)
-          .getPaymentStatus(widget.paymentId);
+          .getPaymentStatus(_pollPaymentId);
       final paymentStatus = (status['status']?.toString() ?? '').toUpperCase();
       if (paymentStatus == 'PAID' && mounted && forceCloseOnPaid) {
         if (context.mounted) {

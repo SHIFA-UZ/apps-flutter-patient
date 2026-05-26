@@ -731,17 +731,20 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
       var paymentCompleted = bookedAppointment.paymentStatus.toUpperCase() != 'PENDING';
       String? createdPaymentId;
       String? createdCheckoutUrl;
+      String? createdCheckoutGateway;
       if (bookedAppointment.paymentStatus.toUpperCase() == 'PENDING') {
         final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
           appointmentId: bookedAppointment.id,
-          gateway: 'STRIPE',
         );
         createdPaymentId = checkout['paymentId']?.toString();
         createdCheckoutUrl = checkout['checkoutUrl']?.toString();
+        createdCheckoutGateway = checkout['gateway']?.toString();
         if (createdCheckoutUrl != null && createdCheckoutUrl.isNotEmpty && createdPaymentId != null) {
           final paid = await Navigator.of(context).push<bool>(
             MaterialPageRoute(
               builder: (_) => _PaymentCheckoutScreen(
+                appointmentId: bookedAppointment.id,
+                checkoutGateway: createdCheckoutGateway,
                 checkoutUrl: createdCheckoutUrl!,
                 paymentId: createdPaymentId!,
               ),
@@ -796,6 +799,8 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
             final paidFromPending = await Navigator.of(context).push<bool>(
               MaterialPageRoute(
                 builder: (_) => _PaymentPendingScreen(
+                  appointmentId: bookedAppointment.id,
+                  checkoutGateway: createdCheckoutGateway,
                   paymentId: createdPaymentId!,
                   checkoutUrl: createdCheckoutUrl,
                 ),
@@ -883,12 +888,17 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
 
 class _PaymentCheckoutScreen extends ConsumerStatefulWidget {
   const _PaymentCheckoutScreen({
+    required this.appointmentId,
     required this.checkoutUrl,
     required this.paymentId,
+    this.checkoutGateway,
   });
 
+  final String appointmentId;
   final String checkoutUrl;
   final String paymentId;
+  /// From backend checkout response (`CLICK` vs `STRIPE`). Used for client-side Stripe fallback.
+  final String? checkoutGateway;
 
   @override
   ConsumerState<_PaymentCheckoutScreen> createState() => _PaymentCheckoutScreenState();
@@ -896,12 +906,15 @@ class _PaymentCheckoutScreen extends ConsumerStatefulWidget {
 
 class _PaymentCheckoutScreenState extends ConsumerState<_PaymentCheckoutScreen> {
   late final WebViewController _controller;
+  late String _pollPaymentId;
   Timer? _pollingTimer;
   bool _checkingStatus = false;
+  bool _stripeReloadTried = false;
 
   @override
   void initState() {
     super.initState();
+    _pollPaymentId = widget.paymentId;
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -918,6 +931,9 @@ class _PaymentCheckoutScreenState extends ConsumerState<_PaymentCheckoutScreen> 
             }
             return NavigationDecision.navigate;
           },
+          onWebResourceError: (WebResourceError error) {
+            unawaited(_maybeStripeFallbackAfterMainFrameFailure(error));
+          },
         ),
       )
       ..loadRequest(Uri.parse(widget.checkoutUrl));
@@ -928,11 +944,34 @@ class _PaymentCheckoutScreenState extends ConsumerState<_PaymentCheckoutScreen> 
     );
   }
 
+  Future<void> _maybeStripeFallbackAfterMainFrameFailure(WebResourceError error) async {
+    if (_stripeReloadTried ||
+        !mounted ||
+        error.isForMainFrame != true ||
+        widget.checkoutGateway != 'CLICK') {
+      return;
+    }
+    _stripeReloadTried = true;
+    try {
+      final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
+            appointmentId: widget.appointmentId,
+            gateway: 'STRIPE',
+          );
+      final url = checkout['checkoutUrl']?.toString();
+      final newId = checkout['paymentId']?.toString();
+      if (!mounted || url == null || url.isEmpty || newId == null) return;
+      setState(() => _pollPaymentId = newId);
+      await _controller.loadRequest(Uri.parse(url));
+    } catch (_) {
+      // Silent: backend usually falls back automatically; WebView failure is uncommon.
+    }
+  }
+
   Future<void> _checkPaymentStatus({bool forceCloseOnPaid = false}) async {
     if (_checkingStatus || !mounted) return;
     _checkingStatus = true;
     try {
-      final status = await ref.read(bookingsRepositoryProvider).getPaymentStatus(widget.paymentId);
+      final status = await ref.read(bookingsRepositoryProvider).getPaymentStatus(_pollPaymentId);
       final paymentStatus = (status['status']?.toString() ?? '').toUpperCase();
       if (paymentStatus == 'PAID' && mounted && forceCloseOnPaid) {
         Navigator.of(context).pop(true);
@@ -964,12 +1003,16 @@ class _PaymentCheckoutScreenState extends ConsumerState<_PaymentCheckoutScreen> 
 
 class _PaymentPendingScreen extends ConsumerStatefulWidget {
   const _PaymentPendingScreen({
+    required this.appointmentId,
     required this.paymentId,
     this.checkoutUrl,
+    this.checkoutGateway,
   });
 
+  final String appointmentId;
   final String paymentId;
   final String? checkoutUrl;
+  final String? checkoutGateway;
 
   @override
   ConsumerState<_PaymentPendingScreen> createState() => _PaymentPendingScreenState();
@@ -1007,6 +1050,8 @@ class _PaymentPendingScreenState extends ConsumerState<_PaymentPendingScreen> {
     final paid = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => _PaymentCheckoutScreen(
+          appointmentId: widget.appointmentId,
+          checkoutGateway: widget.checkoutGateway,
           checkoutUrl: url,
           paymentId: widget.paymentId,
         ),
