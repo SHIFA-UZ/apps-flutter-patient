@@ -8,7 +8,6 @@ import 'package:shifa_patient_app_v1/core/constants/assets.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart';
 import 'package:shifa_patient_app_v1/core/widgets/language_mini_toggle.dart';
-import 'package:shifa_patient_app_v1/core/widgets/phone_input_field.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/auth_provider.dart';
 
@@ -24,8 +23,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _loginWithPhone = true;
-  String _phoneValue = '';
   Timer? _lockoutRefreshTimer;
 
   @override
@@ -44,8 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  String get _usernameValue =>
-      _loginWithPhone ? _phoneValue : _emailController.text.trim();
+  String get _usernameValue => _emailController.text.trim();
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -193,56 +189,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                // Toggle: Phone vs Email
-                Row(
-                  children: [
-                    Expanded(
-                      child: SegmentedButton<bool>(
-                        segments: [
-                          ButtonSegment(value: true, label: Text(l10n.phoneNumber)),
-                          ButtonSegment(value: false, label: Text(l10n.email)),
-                        ],
-                        selected: {_loginWithPhone},
-                        onSelectionChanged: (Set<bool> selected) {
-                          setState(() => _loginWithPhone = selected.first);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (_loginWithPhone)
-                  PhoneInputField(
-                    labelText: l10n.phoneNumber,
-                    hintText: '901234567',
-                    onChanged: (fullPhone) => setState(() => _phoneValue = fullPhone),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '${l10n.required}: ${l10n.phoneNumber}';
-                      }
-                      final digits = value.replaceAll(RegExp(r'\D'), '');
-                      if (digits.length < 10) {
-                        return l10n.invalidPhone;
-                      }
-                      return null;
-                    },
-                  )
-                else
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: l10n.email,
-                      hintText: l10n.email,
-                      prefixIcon: const Icon(Icons.email),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '${l10n.required}: ${l10n.email}';
-                      }
-                      return null;
-                    },
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: l10n.email,
+                    hintText: l10n.email,
+                    prefixIcon: const Icon(Icons.email),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return '${l10n.required}: ${l10n.email}';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 16),
                 // Password field
                 TextFormField(
