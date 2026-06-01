@@ -6,8 +6,11 @@
   "targets": {
     "shifa-doctor-staging": {
       "hosting": {
-        "patient": ["shifa-bemor"]
+        "patient": [
+          "shifa-bemor"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }
