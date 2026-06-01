@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -331,8 +330,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         return;
       }
 
-      final file = File(image.path);
-      final bytes = await file.readAsBytes();
+      final bytes = await image.readAsBytes();
 
       final form = await _askForTitleAndCategory(
         'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
@@ -397,8 +395,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         return;
       }
 
-      final file = File(image.path);
-      final bytes = await file.readAsBytes();
+      final bytes = await image.readAsBytes();
 
       final form = await _askForTitleAndCategory(
         'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',

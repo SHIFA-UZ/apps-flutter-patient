@@ -112,7 +112,14 @@ flutter run --dart-define=FLAVOR=production
 
 # Run with custom backend URL
 flutter run --dart-define=API_BASE_URL=https://your-backend.com
+
+# Patient web app (Chrome) — same codebase as mobile
+flutter run -d chrome --dart-define=API_BASE_URL=https://shifa-doc-backend-mvp-production.up.railway.app --dart-define=ENVIRONMENT=production
 ```
+
+### Patient web (`bemor.shifa.uz`)
+
+The Flutter web build deploys to Firebase Hosting. See [DEPLOY_WEB.md](DEPLOY_WEB.md) for hosting setup, custom domain DNS, and the manual QA checklist.
 
 ## Build Flavors
 

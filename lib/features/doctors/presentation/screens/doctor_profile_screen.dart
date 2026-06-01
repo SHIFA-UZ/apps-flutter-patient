@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
@@ -705,17 +705,15 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
     final hasCoords = lat != null && lng != null;
 
     try {
-      // 1) Native deep links first (best UX)
-      if (Platform.isAndroid) {
-        // Android: geo:lat,lng?q=encoded_address (prefer coords when available)
+      // 1) Native deep links first (best UX; skip on web)
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         final geoUri = hasCoords
             ? Uri.parse('geo:$lat,$lng?q=${Uri.encodeComponent(address)}')
             : Uri.parse('geo:0,0?q=${Uri.encodeComponent(address)}');
 
         final ok = await launchUrl(geoUri, mode: LaunchMode.externalApplication);
         if (ok) return;
-      } else if (Platform.isIOS) {
-        // iOS: Apple Maps query (coords if available, else address)
+      } else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
         final appleMapsUri = hasCoords
             ? Uri.parse('http://maps.apple.com/?ll=$lat,$lng&q=${Uri.encodeComponent(address)}')
             : Uri.parse('http://maps.apple.com/?q=${Uri.encodeComponent(address)}');

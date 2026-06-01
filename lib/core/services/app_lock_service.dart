@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -55,6 +56,7 @@ class AppLockService {
 
   /// Check if biometric authentication is available
   Future<bool> isBiometricAvailable() async {
+    if (kIsWeb) return false;
     try {
       final isAvailable = await _localAuth.canCheckBiometrics;
       final isDeviceSupported = await _localAuth.isDeviceSupported();

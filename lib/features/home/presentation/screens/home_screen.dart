@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -43,6 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _maybeShowBiometricPrompt() async {
+    if (kIsWeb) return;
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     final lockService = ref.read(appLockServiceProvider);

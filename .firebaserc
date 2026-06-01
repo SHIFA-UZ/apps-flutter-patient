@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "shifa-doctor-staging",
+    "staging": "shifa-doctor-staging"
+  },
+  "targets": {
+    "shifa-doctor-staging": {
+      "hosting": {
+        "patient": ["shifa-bemor"]
+      }
+    }
+  }
+}

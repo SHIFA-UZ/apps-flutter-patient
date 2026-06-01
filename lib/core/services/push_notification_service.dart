@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shifa_patient_app_v1/core/services/push_notification_web_stub.dart'
+    if (dart.library.html) 'package:shifa_patient_app_v1/core/services/push_notification_web.dart'
+    as web_push;
 
 /// Centralized notification service (FCM + local). All entry points funnel to a single
 /// handler so the app can mark-as-read then navigate in one place.
@@ -35,6 +38,9 @@ class PushNotificationService {
   /// IDs we've already marked read or are about to handle – avoid duplicate popups in foreground.
   final Set<String> _readNotificationIds = {};
 
+  /// Web only: payload by notification tag for browser notification click navigation.
+  final Map<String, Map<String, dynamic>> _webNotificationPayloads = {};
+
   /// Initialize: wire all three FCM entry points. Foreground shows local; background and
   /// terminated both use [handleNotificationNavigation].
   Future<void> initialize() async {
@@ -47,7 +53,9 @@ class PushNotificationService {
 
     if (settings.authorizationStatus != AuthorizationStatus.authorized) return;
 
-    await _initializeLocalNotifications();
+    if (!kIsWeb) {
+      await _initializeLocalNotifications();
+    }
 
     _fcmToken = await _firebaseMessaging.getToken();
     if (kDebugMode) debugPrint('FCM Token: $_fcmToken');
@@ -162,6 +170,26 @@ class PushNotificationService {
     required String body,
     Map<String, dynamic>? data,
   }) async {
+    if (kIsWeb) {
+      final nid = data != null ? _notificationIdFromPayload(data) : null;
+      final tag = 'shifa_patient_${nid ?? DateTime.now().millisecondsSinceEpoch}';
+      if (data != null && data.isNotEmpty) {
+        _webNotificationPayloads[tag] = Map<String, dynamic>.from(data);
+      }
+      await web_push.showBrowserNotification(
+        title: title,
+        body: body,
+        tag: tag,
+        onClick: () {
+          final payload = _webNotificationPayloads.remove(tag);
+          if (payload != null) {
+            _deliverPayload(payload);
+          }
+        },
+      );
+      return;
+    }
+
     const androidDetails = AndroidNotificationDetails(
       'shifa_patient_channel',
       'Shifa Patient Notifications',

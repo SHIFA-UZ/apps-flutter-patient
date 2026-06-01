@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
+import 'package:shifa_patient_app_v1/core/utils/file_delete.dart';
 
 class _VoiceRecordingDialog extends StatefulWidget {
   final Function(String filePath, int durationSeconds) onRecordingComplete;
@@ -107,10 +107,7 @@ class _VoiceRecordingDialogState extends State<_VoiceRecordingDialog> {
     if (cancel || _shouldCancel) {
       // Delete recording file
       if (_recordingPath != null) {
-        final file = File(_recordingPath!);
-        if (await file.exists()) {
-          await file.delete();
-        }
+        await deletePathIfExists(_recordingPath!);
       }
       widget.onCancel();
     } else if (_recordingPath != null) {

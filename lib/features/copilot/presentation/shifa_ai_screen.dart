@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
+import 'package:shifa_patient_app_v1/core/utils/file_delete.dart';
 import 'package:intl/intl.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
@@ -307,10 +308,11 @@ class _ShifaAiScreenState extends ConsumerState<ShifaAiScreen> {
                               SnackBar(content: Text('${l10n.error}: $e')));
                           return;
                         }
-                        try {
-                          final f = File(filePath);
-                          if (await f.exists()) await f.delete();
-                        } catch (_) {}
+                        if (!kIsWeb) {
+                          try {
+                            await deletePathIfExists(filePath);
+                          } catch (_) {}
+                        }
                       },
                     ),
                   ),

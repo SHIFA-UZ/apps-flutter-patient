@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +21,7 @@ import 'package:shifa_patient_app_v1/features/chat/presentation/widgets/document
 import 'package:shifa_patient_app_v1/features/chat/presentation/widgets/voice_recording_dialog.dart';
 import 'package:shifa_patient_app_v1/core/services/app_lock_provider.dart';
 import 'package:shifa_patient_app_v1/features/profile/providers/profile_provider.dart';
+import 'package:shifa_patient_app_v1/core/utils/voice_file_exists.dart';
 
 class ChatConversationScreen extends ConsumerStatefulWidget {
   /// Existing conversation id, or null for a new conversation (patient types first message).
@@ -188,8 +189,7 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
         return;
       }
 
-      final file = File(image.path);
-      final bytes = await file.readAsBytes();
+      final bytes = await image.readAsBytes();
       final fileName = 'chat_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
       // Upload via chat attachment endpoint so each image gets a unique URL (UUID filename).
@@ -259,12 +259,14 @@ class _ChatConversationScreenState extends ConsumerState<ChatConversationScreen>
     ref.read(appLockTemporaryDisableProvider.notifier).disable();
     setState(() => _isUploadingVoice = true);
     try {
-      final file = File(filePath);
-      if (!await file.exists()) {
-        ref.read(appLockTemporaryDisableProvider.notifier).enable();
-        return;
+      if (!kIsWeb) {
+        final exists = await voiceFileExists(filePath);
+        if (!exists) {
+          ref.read(appLockTemporaryDisableProvider.notifier).enable();
+          return;
+        }
       }
-      final bytes = await file.readAsBytes();
+      final bytes = await XFile(filePath).readAsBytes();
       final fileSize = bytes.length;
       final fileName = 'voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
