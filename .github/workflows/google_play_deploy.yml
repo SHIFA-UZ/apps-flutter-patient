@@ -129,6 +129,12 @@ jobs:
           org.gradle.daemon=false
           EOF
 
+      - name: Clear stale Android plugin registrant
+        run: |
+          # pub get can generate a registrant that includes dev-only plugins (integration_test).
+          # Release build must regenerate it without dev dependencies.
+          rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
       - name: Build Android App Bundle
         run: |
           flutter build appbundle \
