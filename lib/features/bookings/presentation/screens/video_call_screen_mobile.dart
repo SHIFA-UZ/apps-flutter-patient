@@ -327,7 +327,7 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
   }
 
   Future<void> _toggleVideo() async {
-    if (_isWebPlatform || _callClient == null) {
+    if (_callClient == null) {
       setState(() => _isVideoOff = !_isVideoOff);
       return;
     }

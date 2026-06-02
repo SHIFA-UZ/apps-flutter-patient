@@ -1,9 +1,14 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:js_util' as js_util;
+import 'dart:js_interop';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:js_interop_unsafe';
 
 import 'package:flutter/foundation.dart';
+
+@JS('window')
+external JSObject get _window;
 
 Future<void> showBrowserNotification({
   required String title,
@@ -34,7 +39,7 @@ Future<void> showBrowserNotification({
   );
   notification.onClick.listen((_) {
     try {
-      js_util.callMethod(html.window, 'focus', []);
+      _window.callMethod('focus'.toJS);
     } catch (_) {}
     onClick();
   });
