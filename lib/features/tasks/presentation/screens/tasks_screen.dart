@@ -17,23 +17,33 @@ class TasksScreen extends ConsumerStatefulWidget {
 }
 
 class _TasksScreenState extends ConsumerState<TasksScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
-    // Load tasks after first frame to avoid issues during initialization
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(tasksProvider.notifier).loadTasks();
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reloadTasks());
+  }
+
+  void _reloadTasks() {
+    if (mounted) {
+      ref.read(tasksProvider.notifier).loadTasks();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _reloadTasks();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     super.dispose();
   }
@@ -42,15 +52,18 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final brand = Theme.of(context).colorScheme.primary;
-    final tasks = ref.watch(tasksProvider);
+    final tasksState = ref.watch(tasksProvider);
+    final tasks = tasksState.tasks;
 
-    // Show active tasks (including those that start in the future) and completed tasks
-    // Also include draft tasks in case they exist
-    final openTasks = tasks.where((t) =>
-      t.status == TaskStatus.active || t.status == TaskStatus.draft
-    ).toList();
-    final completedTasks =
-        tasks.where((t) => t.status == TaskStatus.completed).toList();
+    final openTasks = tasks
+        .where((t) =>
+            t.status == TaskStatus.active || t.status == TaskStatus.draft)
+        .toList();
+    final completedTasks = tasks
+        .where((t) =>
+            t.status == TaskStatus.completed ||
+            t.status == TaskStatus.expired)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -68,13 +81,47 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildTasksList(openTasks, brand),
-          _buildTasksList(completedTasks, brand),
-        ],
-      ),
+      body: tasksState.isLoading && tasks.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                if (tasksState.errorMessage != null)
+                  Material(
+                    color: Colors.orange.shade50,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber, color: Colors.orange.shade800),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.error,
+                              style: TextStyle(color: Colors.orange.shade900),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _reloadTasks,
+                            child: Text(l10n.retry),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildTasksList(openTasks, brand),
+                      _buildTasksList(completedTasks, brand),
+                    ],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -103,13 +150,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
           return _TaskCard(
             task: task,
             brand: brand,
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => TaskCheckInScreen(taskId: task.id),
                 ),
               );
+              if (context.mounted) {
+                ref.read(tasksProvider.notifier).loadTasks();
+              }
             },
           );
         },

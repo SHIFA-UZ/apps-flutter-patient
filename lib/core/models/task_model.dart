@@ -82,8 +82,19 @@ class RemoteCareTask {
       return null;
     }
 
+    int parseId(dynamic value) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      return int.parse(value.toString());
+    }
+
+    DateTime parseDateTime(dynamic value) {
+      if (value is String) return DateTime.parse(value);
+      throw FormatException('Invalid date: $value');
+    }
+
     return RemoteCareTask(
-      id: json['id'] as int,
+      id: parseId(json['id']),
       taskName: json['taskName'] as String,
       description: json['description'] as String?,
       category: TaskCategory.values.firstWhere(
@@ -94,15 +105,13 @@ class RemoteCareTask {
         (e) => e.name.toUpperCase() == (json['status'] as String).toUpperCase(),
         orElse: () => TaskStatus.active,
       ),
-      timesPerDay: json['timesPerDay'] as int,
+      timesPerDay: (json['timesPerDay'] as num?)?.toInt() ?? 1,
       morningTime: parseTime(json['morningTime'] as String?),
       afternoonTime: parseTime(json['afternoonTime'] as String?),
       eveningTime: parseTime(json['eveningTime'] as String?),
-      startDate: DateTime.parse(json['startDate'] as String),
-      endDate: json['endDate'] != null
-          ? DateTime.parse(json['endDate'] as String)
-          : null,
-      durationDays: json['durationDays'] as int?,
+      startDate: parseDateTime(json['startDate']),
+      endDate: json['endDate'] != null ? parseDateTime(json['endDate']) : null,
+      durationDays: (json['durationDays'] as num?)?.toInt(),
       inputType: TaskInputType.values.firstWhere(
         (e) => e.name.toUpperCase() == (json['inputType'] as String).toUpperCase(),
         orElse: () => TaskInputType.text,
@@ -110,7 +119,7 @@ class RemoteCareTask {
       inputLabel: json['inputLabel'] as String?,
       notesRequired: json['notesRequired'] as bool? ?? false,
       notesLabel: json['notesLabel'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: parseDateTime(json['createdAt']),
       progress: json['progress'] != null
           ? TaskProgress.fromJson(json['progress'] as Map<String, dynamic>)
           : null,
@@ -133,10 +142,10 @@ class TaskProgress {
 
   factory TaskProgress.fromJson(Map<String, dynamic> json) {
     return TaskProgress(
-      totalCheckIns: json['totalCheckIns'] as int,
-      completedCheckIns: json['completedCheckIns'] as int,
-      pendingCheckIns: json['pendingCheckIns'] as int,
-      missedCheckIns: json['missedCheckIns'] as int,
+      totalCheckIns: (json['totalCheckIns'] as num?)?.toInt() ?? 0,
+      completedCheckIns: (json['completedCheckIns'] as num?)?.toInt() ?? 0,
+      pendingCheckIns: (json['pendingCheckIns'] as num?)?.toInt() ?? 0,
+      missedCheckIns: (json['missedCheckIns'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -197,8 +206,14 @@ class TaskCheckIn {
       return null;
     }
 
+    int parseId(dynamic value) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      return int.parse(value.toString());
+    }
+
     return TaskCheckIn(
-      id: json['id'] as int,
+      id: parseId(json['id']),
       scheduledDate: DateTime.parse(json['scheduledDate'] as String),
       scheduledTime: parseTime(json['scheduledTime'] as String?),
       status: CheckInStatus.values.firstWhere(

@@ -21,9 +21,15 @@ class TasksRepository {
       if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
         final List<dynamic> data = response.data as List<dynamic>;
         debugPrint('Received ${data.length} tasks from API');
-        final tasks = data
-            .map((json) => RemoteCareTask.fromJson(json as Map<String, dynamic>))
-            .toList();
+        final tasks = <RemoteCareTask>[];
+        for (final item in data) {
+          if (item is! Map<String, dynamic>) continue;
+          try {
+            tasks.add(RemoteCareTask.fromJson(item));
+          } catch (e, st) {
+            debugPrint('Skipping task parse error: $e\n$st');
+          }
+        }
         return tasks;
       }
       debugPrint('API returned error status: ${response.statusCode}');
