@@ -21,7 +21,8 @@ jobs:
   build-and-deploy:
     name: Build & Deploy to Play Store (Open Testing)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Cold Gradle + native deps (Daily, Firebase) often exceed 20 min on ubuntu-latest.
+    timeout-minutes: 60
 
     steps:
       #########################
@@ -118,10 +119,21 @@ jobs:
       # PHASE 6: BUILD AAB
       #########################
 
+      - name: Tune Gradle for CI runner
+        run: |
+          # GitHub-hosted runners have ~7 GB RAM; 8G heap causes swap and very slow builds.
+          cat >> android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=1G -XX:ReservedCodeCacheSize=512m -XX:+HeapDumpOnOutOfMemoryError
+          org.gradle.parallel=true
+          org.gradle.caching=true
+          org.gradle.daemon=false
+          EOF
+
       - name: Build Android App Bundle
         run: |
           flutter build appbundle \
             --release \
+            --no-pub \
             --dart-define=FLAVOR=production \
             --build-name=${{ steps.version.outputs.version_name }} \
             --build-number=${{ steps.version.outputs.build_number }}
