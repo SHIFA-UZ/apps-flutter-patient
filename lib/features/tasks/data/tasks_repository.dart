@@ -19,7 +19,15 @@ class TasksRepository {
       final response = await _apiClient.get('/tasks/my-tasks', queryParameters: queryParams);
       debugPrint('Response status: ${response.statusCode}');
       if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
-        final List<dynamic> data = response.data as List<dynamic>;
+        final raw = response.data;
+        final List<dynamic> data;
+        if (raw is List) {
+          data = raw;
+        } else if (raw is Map && raw['data'] is List) {
+          data = raw['data'] as List<dynamic>;
+        } else {
+          throw Exception('Unexpected tasks response shape: ${raw.runtimeType}');
+        }
         debugPrint('Received ${data.length} tasks from API');
         final tasks = <RemoteCareTask>[];
         for (final item in data) {

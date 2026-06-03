@@ -37,51 +37,15 @@ class TasksController extends StateNotifier<TasksLoadState> {
 
   List<RemoteCareTask> get tasks => state.tasks;
 
-  /// Loads open (ACTIVE) and completed tasks; keeps partial results if one call fails.
+  /// Loads all patient-visible tasks in one request (backend excludes CANCELLED only).
   Future<void> loadTasks({TaskStatus? status}) async {
     state = state.copyWith(isLoading: true, clearError: true);
     final repository = ref.read(tasksRepositoryProvider);
 
     try {
-      if (status != null) {
-        final loaded = await repository.getMyTasks(status: status);
-        state = TasksLoadState(tasks: loaded, isLoading: false);
-        return;
-      }
-
-      var openTasks = <RemoteCareTask>[];
-      var completedTasks = <RemoteCareTask>[];
-      String? openError;
-      String? completedError;
-
-      try {
-        openTasks = await repository.getMyTasks(status: null);
-      } catch (e, st) {
-        openError = e.toString();
-        debugPrint('Error loading open tasks: $e\n$st');
-      }
-
-      try {
-        completedTasks = await repository.getMyTasks(status: TaskStatus.completed);
-      } catch (e, st) {
-        completedError = e.toString();
-        debugPrint('Error loading completed tasks: $e\n$st');
-      }
-
-      final merged = [...openTasks, ...completedTasks];
-      final errorParts = <String>[
-        if (openError != null) 'Open: $openError',
-        if (completedError != null) 'Completed: $completedError',
-      ];
-
-      state = TasksLoadState(
-        tasks: merged,
-        isLoading: false,
-        errorMessage: errorParts.isEmpty ? null : errorParts.join(' '),
-      );
-      debugPrint(
-        'Tasks loaded: ${openTasks.length} open, ${completedTasks.length} completed',
-      );
+      final loaded = await repository.getMyTasks(status: status);
+      state = TasksLoadState(tasks: loaded, isLoading: false);
+      debugPrint('Tasks loaded: ${loaded.length}');
     } catch (e, stackTrace) {
       debugPrint('Error loading tasks: $e');
       debugPrint('Stack trace: $stackTrace');

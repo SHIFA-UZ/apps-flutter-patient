@@ -93,18 +93,39 @@ class RemoteCareTask {
       throw FormatException('Invalid date: $value');
     }
 
+    TaskStatus parseStatus(dynamic raw) {
+      if (raw == null) return TaskStatus.active;
+      final s = raw.toString().toUpperCase();
+      return TaskStatus.values.firstWhere(
+        (e) => e.name.toUpperCase() == s,
+        orElse: () => TaskStatus.active,
+      );
+    }
+
+    TaskCategory parseCategory(dynamic raw) {
+      if (raw == null) return TaskCategory.other;
+      final s = raw.toString().toUpperCase();
+      return TaskCategory.values.firstWhere(
+        (e) => e.name.toUpperCase() == s,
+        orElse: () => TaskCategory.other,
+      );
+    }
+
+    TaskInputType parseInputType(dynamic raw) {
+      if (raw == null) return TaskInputType.text;
+      final s = raw.toString().toUpperCase();
+      return TaskInputType.values.firstWhere(
+        (e) => e.name.toUpperCase() == s,
+        orElse: () => TaskInputType.text,
+      );
+    }
+
     return RemoteCareTask(
       id: parseId(json['id']),
-      taskName: json['taskName'] as String,
+      taskName: json['taskName'] as String? ?? '',
       description: json['description'] as String?,
-      category: TaskCategory.values.firstWhere(
-        (e) => e.name.toUpperCase() == (json['category'] as String).toUpperCase(),
-        orElse: () => TaskCategory.other,
-      ),
-      status: TaskStatus.values.firstWhere(
-        (e) => e.name.toUpperCase() == (json['status'] as String).toUpperCase(),
-        orElse: () => TaskStatus.active,
-      ),
+      category: parseCategory(json['category']),
+      status: parseStatus(json['status']),
       timesPerDay: (json['timesPerDay'] as num?)?.toInt() ?? 1,
       morningTime: parseTime(json['morningTime'] as String?),
       afternoonTime: parseTime(json['afternoonTime'] as String?),
@@ -112,10 +133,7 @@ class RemoteCareTask {
       startDate: parseDateTime(json['startDate']),
       endDate: json['endDate'] != null ? parseDateTime(json['endDate']) : null,
       durationDays: (json['durationDays'] as num?)?.toInt(),
-      inputType: TaskInputType.values.firstWhere(
-        (e) => e.name.toUpperCase() == (json['inputType'] as String).toUpperCase(),
-        orElse: () => TaskInputType.text,
-      ),
+      inputType: parseInputType(json['inputType']),
       inputLabel: json['inputLabel'] as String?,
       notesRequired: json['notesRequired'] as bool? ?? false,
       notesLabel: json['notesLabel'] as String?,

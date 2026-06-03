@@ -1,7 +1,8 @@
 // lib/features/tasks/presentation/screens/tasks_screen.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/task_model.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
@@ -41,6 +42,22 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
     }
   }
 
+  String? _lastListPath;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload when landing on the list route (e.g. back from /tasks/25/check-in).
+    final path = GoRouterState.of(context).uri.path;
+    final onList = path == AppRoutes.tasks || path == '/tasks';
+    if (onList && path != _lastListPath) {
+      _lastListPath = path;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _reloadTasks());
+    } else if (!onList) {
+      _lastListPath = null;
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -55,15 +72,21 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
     final tasksState = ref.watch(tasksProvider);
     final tasks = tasksState.tasks;
 
+    // In progress: anything not finished and not cancelled.
     final openTasks = tasks
         .where((t) =>
-            t.status == TaskStatus.active || t.status == TaskStatus.draft)
+            t.status != TaskStatus.completed &&
+            t.status != TaskStatus.cancelled)
         .toList();
-    final completedTasks = tasks
-        .where((t) =>
-            t.status == TaskStatus.completed ||
-            t.status == TaskStatus.expired)
-        .toList();
+    // Completed: fully done, or expired with no pending check-ins left.
+    final completedTasks = tasks.where((t) {
+      if (t.status == TaskStatus.completed) return true;
+      if (t.status == TaskStatus.expired) {
+        final pending = t.progress?.pendingCheckIns ?? 0;
+        return pending == 0 && (t.progress?.totalCheckIns ?? 0) > 0;
+      }
+      return false;
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(

@@ -31,7 +31,7 @@ class ApiClient {
 
     // Debug/development: localhost (emulator uses 10.0.2.2 on Android)
     final defaultUrl = kIsWeb
-        ? 'https  ://shifa-doc-backend-mvp-production.up.railway.app/api'
+        ? 'https://shifa-doc-backend-mvp-production.up.railway.app/api'
         : (defaultTargetPlatform == TargetPlatform.android
             ? 'https://shifa-doc-backend-mvp-production.up.railway.app/api'
             : 'https://shifa-doc-backend-mvp-production.up.railway.app/api');
