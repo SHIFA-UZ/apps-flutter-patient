@@ -1,0 +1,11 @@
+# Copy to key.properties (gitignored) and fill in your Play upload keystore.
+# Google Play expects upload key SHA1:
+#   E3:33:88:4E:68:DF:39:0F:F5:12:90:4C:48:A1:20:33:2C:AF:CF:D3
+#
+# Verify locally:
+#   keytool -list -v -keystore path/to/upload-keystore.jks -alias YOUR_ALIAS
+#
+storeFile=upload-keystore.jks
+storePassword=YOUR_STORE_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+keyPassword=YOUR_KEY_PASSWORD

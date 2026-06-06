@@ -115,6 +115,29 @@ jobs:
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           EOF
 
+      - name: Verify upload keystore fingerprint
+        env:
+          EXPECTED_UPLOAD_KEY_SHA1: E3:33:88:4E:68:DF:39:0F:F5:12:90:4C:48:A1:20:33:2C:AF:CF:D3
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          ACTUAL_SHA1=$(keytool -list -v \
+            -keystore android/app/upload-keystore.jks \
+            -storepass "$STORE_PASSWORD" \
+            -alias "$KEY_ALIAS" 2>/dev/null | awk '/SHA1:/ {print $2; exit}')
+          if [ -z "$ACTUAL_SHA1" ]; then
+            echo "::error::Could not read keystore certificate. Check ANDROID_KEYSTORE_* secrets."
+            exit 1
+          fi
+          echo "Upload key SHA1: $ACTUAL_SHA1"
+          if [ "$ACTUAL_SHA1" != "$EXPECTED_UPLOAD_KEY_SHA1" ]; then
+            echo "::error::Wrong upload keystore."
+            echo "Expected: $EXPECTED_UPLOAD_KEY_SHA1"
+            echo "Actual:   $ACTUAL_SHA1"
+            echo "Update GitHub secret ANDROID_KEYSTORE_BASE64 with the original Play upload keystore."
+            exit 1
+          fi
+
       #########################
       # PHASE 6: BUILD AAB
       #########################

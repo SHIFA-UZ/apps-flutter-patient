@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shifa_patient_app_v1/core/models/user_model.dart';
 import 'package:shifa_patient_app_v1/core/services/app_lock_provider.dart';
@@ -13,6 +15,7 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final Ref _ref;
+  final Completer<void> _initialAuthCompleter = Completer<void>();
 
   AuthNotifier(this._ref) : super(AuthState.initial()) {
     // Integration / promo screenshot runs: skip network auth (see integration_test/promo_screens_capture_test.dart).
@@ -20,12 +23,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = AuthState(
         isAuthenticated: true,
         isLoading: false,
+        isAuthReady: true,
         token: 'promo-capture',
       );
+      _initialAuthCompleter.complete();
       return;
     }
     // Use a post-frame callback to avoid blocking initialization
-    Future.microtask(() => _checkAuth());
+    Future.microtask(_completeInitialAuthCheck);
+  }
+
+  /// Resolves once the first auth restore/validation pass finishes (splash waits on this).
+  Future<void> ensureInitialAuthChecked() => _initialAuthCompleter.future;
+
+  Future<void> _completeInitialAuthCheck() async {
+    try {
+      await _checkAuth();
+    } finally {
+      state = state.copyWith(isAuthReady: true);
+      if (!_initialAuthCompleter.isCompleted) {
+        _initialAuthCompleter.complete();
+      }
+    }
   }
 
   AuthRepository get _repository => _ref.read(authRepositoryProvider);
@@ -216,6 +235,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 class AuthState {
   final bool isAuthenticated;
   final bool isLoading;
+  /// False until the first stored-token check completes on cold start.
+  final bool isAuthReady;
   final String? token;
   final UserModel? user;
   final String? error;
@@ -228,6 +249,7 @@ class AuthState {
   AuthState({
     required this.isAuthenticated,
     required this.isLoading,
+    this.isAuthReady = true,
     this.token,
     this.user,
     this.error,
@@ -240,6 +262,7 @@ class AuthState {
     return AuthState(
       isAuthenticated: false,
       isLoading: false,
+      isAuthReady: false,
       forcePasswordReset: false,
     );
   }
@@ -247,6 +270,7 @@ class AuthState {
   AuthState copyWith({
     bool? isAuthenticated,
     bool? isLoading,
+    bool? isAuthReady,
     String? token,
     UserModel? user,
     String? error,
@@ -259,6 +283,7 @@ class AuthState {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isLoading: isLoading ?? this.isLoading,
+      isAuthReady: isAuthReady ?? this.isAuthReady,
       token: token ?? this.token,
       user: user ?? this.user,
       error: error,

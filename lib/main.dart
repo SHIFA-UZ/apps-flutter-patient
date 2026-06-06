@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -27,19 +29,25 @@ void main() async {
   ));
 
   // Clear Keychain on first launch after reinstall (iOS Keychain persists across uninstalls)
-  final prefs = await SharedPreferences.getInstance();
-  if (prefs.getBool('has_launched_before') != true) {
-    await StorageService().clearAuthToken();
-    await prefs.setBool('has_launched_before', true);
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('has_launched_before') != true) {
+      await StorageService()
+          .clearAuthToken()
+          .timeout(const Duration(seconds: 3), onTimeout: () {});
+      await prefs.setBool('has_launched_before', true);
+    }
+  } catch (e, st) {
+    AppLogger.error('First-launch storage cleanup skipped:', e, st);
   }
 
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 10));
     if (!kIsWeb) {
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     }
-    final pushService = PushNotificationService();
-    await pushService.initialize();
   } catch (e, st) {
     AppLogger.error('Firebase/FCM init skipped (run "dart run flutterfire configure" if you need push):', e, st);
   }
@@ -49,4 +57,13 @@ void main() async {
       child: ShifaPatientApp(),
     ),
   );
+
+  // Defer push permission/token setup so Android leaves the native splash promptly.
+  if (!kIsWeb) {
+    unawaited(
+      PushNotificationService().initialize().catchError((Object e, StackTrace st) {
+        AppLogger.error('Deferred FCM init failed:', e, st);
+      }),
+    );
+  }
 }

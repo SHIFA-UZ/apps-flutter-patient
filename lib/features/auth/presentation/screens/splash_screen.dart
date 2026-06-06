@@ -1,57 +1,82 @@
+import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/constants/assets.dart';
+import 'package:shifa_patient_app_v1/features/auth/providers/auth_provider.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
   late final Animation<double> _t;
+  late final DateTime _startedAt;
+  bool _navigated = false;
+  Timer? _fallbackTimer;
+
+  static const _minSplashDuration = Duration(milliseconds: 1600);
+  static const _authWaitTimeout = Duration(seconds: 4);
+  static const _hardFallback = Duration(seconds: 5);
 
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1600),
-    );
+    _startedAt = DateTime.now();
+    _c = AnimationController(vsync: this, duration: _minSplashDuration);
     _t = CurvedAnimation(parent: _c, curve: Curves.easeInOutCubic)
-      ..addStatusListener((status) async {
-        if (status == AnimationStatus.completed && mounted) {
-          try {
-            await Future.delayed(const Duration(milliseconds: 200));
-            if (!mounted) return;
-            if (context.mounted) {
-              context.go(AppRoutes.login);
-            }
-          } catch (e) {
-            debugPrint('Error navigating from splash: $e');
-            // Fallback: try to navigate anyway
-            if (mounted && context.mounted) {
-              try {
-                context.go(AppRoutes.login);
-              } catch (_) {
-                // Ignore navigation errors
-              }
-            }
-          }
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          unawaited(_navigateAway());
         }
       });
     _c.forward();
+    _fallbackTimer = Timer(_hardFallback, () => unawaited(_navigateAway()));
+  }
+
+  Future<void> _navigateAway() async {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    _fallbackTimer?.cancel();
+
+    final elapsed = DateTime.now().difference(_startedAt);
+    final remaining = _minSplashDuration - elapsed;
+    if (remaining > Duration.zero) {
+      await Future<void>.delayed(remaining);
+    }
+
+    try {
+      await ref
+          .read(authStateProvider.notifier)
+          .ensureInitialAuthChecked()
+          .timeout(_authWaitTimeout);
+    } catch (_) {
+      // Auth restore timed out — continue with best-known auth state.
+    }
+
+    if (!mounted || !context.mounted) return;
+
+    final auth = ref.read(authStateProvider);
+    final destination = !auth.isAuthenticated
+        ? AppRoutes.login
+        : auth.forcePasswordReset
+            ? AppRoutes.resetPassword
+            : AppRoutes.home;
+
+    context.go(destination);
   }
 
   @override
   void dispose() {
+    _fallbackTimer?.cancel();
     _c.dispose();
     super.dispose();
   }
@@ -96,7 +121,6 @@ class _SplashScreenState extends State<SplashScreen>
                 scale: blScale,
                 rotation: blRotation,
                 color: brand,
-                blurSigma: 24,
               ),
               _Blob(
                 baseSize: math.max(w, h) * 0.95,
@@ -104,7 +128,6 @@ class _SplashScreenState extends State<SplashScreen>
                 scale: trScale,
                 rotation: trRotation,
                 color: brand.withAlpha((0.90 * 255).toInt()),
-                blurSigma: 28,
               ),
               Center(
                 child: Opacity(
@@ -133,13 +156,13 @@ class _SplashScreenState extends State<SplashScreen>
   double _lerp(double a, double b, double t) => a + (b - a) * t;
 }
 
+/// Soft gradient blobs — avoids ImageFilter.blur, which can freeze low-end Android GPUs.
 class _Blob extends StatelessWidget {
   final double baseSize;
   final Offset translate;
   final double scale;
   final double rotation;
   final Color color;
-  final double blurSigma;
 
   const _Blob({
     required this.baseSize,
@@ -147,7 +170,6 @@ class _Blob extends StatelessWidget {
     required this.scale,
     required this.rotation,
     required this.color,
-    this.blurSigma = 20,
   });
 
   @override
@@ -157,28 +179,20 @@ class _Blob extends StatelessWidget {
       offset: translate,
       child: Transform.rotate(
         angle: rotation,
-        child: Center(
-          child: ClipRRect(
+        child: Container(
+          width: size * 1.2,
+          height: size * 0.85,
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(size * 0.45),
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                sigmaX: blurSigma,
-                sigmaY: blurSigma,
-              ),
-              child: Container(
-                width: size * 1.2,
-                height: size * 0.85,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      color.withAlpha((0.95 * 255).toInt()),
-                      color.withAlpha((0.70 * 255).toInt())
-                    ],
-                  ),
-                ),
-              ),
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 0.85,
+              colors: [
+                color.withAlpha((0.70 * 255).toInt()),
+                color.withAlpha((0.25 * 255).toInt()),
+                color.withAlpha(0),
+              ],
+              stops: const [0.0, 0.55, 1.0],
             ),
           ),
         ),

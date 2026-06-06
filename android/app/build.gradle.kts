@@ -55,13 +55,14 @@ android {
 
     buildTypes {
         release {
-            // Local/dev resilience: if key.properties is missing, allow building
-            // with debug signing instead of failing packageRelease.
-            signingConfig = if (hasReleaseKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            if (!hasReleaseKeystore) {
+                throw GradleException(
+                    "Release signing is not configured. Create android/key.properties " +
+                        "with storeFile, storePassword, keyAlias, and keyPassword. " +
+                        "Without it, Gradle would sign with the debug key and Google Play will reject the AAB."
+                )
             }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

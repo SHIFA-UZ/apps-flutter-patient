@@ -18,6 +18,8 @@ class _AppLockWrapperState extends ConsumerState<AppLockWrapper> {
   bool _isInitialized = false;
   bool _prevLockEnabled = false;
 
+  static const _storageTimeout = Duration(seconds: 5);
+
   @override
   void initState() {
     super.initState();
@@ -33,7 +35,9 @@ class _AppLockWrapperState extends ConsumerState<AppLockWrapper> {
         return;
       }
       final lockService = ref.read(appLockServiceProvider);
-      final isLockEnabled = await lockService.isLockEnabled();
+      final isLockEnabled = await lockService
+          .isLockEnabled()
+          .timeout(_storageTimeout, onTimeout: () => false);
       if (mounted) {
         setState(() {
           _isInitialized = true;
