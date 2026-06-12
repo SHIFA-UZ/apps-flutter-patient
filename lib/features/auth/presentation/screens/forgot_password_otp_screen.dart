@@ -70,7 +70,7 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
 
   Future<void> _onVerify() async {
     final flowState = ref.read(forgotPasswordFlowProvider);
-    if (flowState == null || flowState.email == null) {
+    if (flowState == null) {
       if (mounted) context.go(AppRoutes.forgotPassword);
       return;
     }
@@ -131,6 +131,17 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
         body: Center(child: Text(l10n.translate('error'))),
       );
     }
+    final isSms = flowState.channel == 'sms';
+    final displayTarget = isSms
+        ? (flowState.phone ?? flowState.identifier)
+        : (flowState.email ?? flowState.identifier);
+    final otpMessage = isSms
+        ? l10n.translate('otpSentToPhone').replaceAll('{phone}', displayTarget)
+        : l10n.translate('otpSentToEmail').replaceAll('{email}', displayTarget);
+    final codeLabel = isSms
+        ? l10n.translate('enterSmsCode')
+        : l10n.translate('enterEmailCode');
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -151,7 +162,7 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
           children: [
             const SizedBox(height: 24),
             Text(
-              l10n.translate('otpSentToEmail').replaceAll('{email}', flowState.email ?? flowState.identifier),
+              otpMessage,
               style: const TextStyle(fontSize: 16, height: 1.4),
               textAlign: TextAlign.center,
             ),
@@ -167,7 +178,7 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
               keyboardType: TextInputType.number,
               maxLength: 6,
               decoration: InputDecoration(
-                labelText: l10n.translate('enterEmailCode'),
+                labelText: codeLabel,
                 counterText: '',
                 border: const OutlineInputBorder(),
               ),

@@ -118,7 +118,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> register({
     required String firstName,
     required String lastName,
-    required String email,
+    String? email,
     String? phone,
     required String password,
     String? birthDate,
@@ -126,6 +126,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? address,
     String? language,
     String? emailOtp,
+    String? smsOtp,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -140,6 +141,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         address: address,
         language: language,
         emailOtp: emailOtp,
+        smsOtp: smsOtp,
       );
       state = state.copyWith(
         isLoading: false,

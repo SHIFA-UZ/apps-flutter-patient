@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart';
+import 'package:shifa_patient_app_v1/core/widgets/phone_input_field.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/features/auth/data/auth_repository.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/otp_verification_provider.dart';
@@ -17,30 +18,33 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
+  final _identifierCtrl = TextEditingController();
   bool _isSending = false;
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _identifierCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _onSendCode() async {
     if (!_formKey.currentState!.validate()) return;
-    final email = _emailCtrl.text.trim().toLowerCase();
-    if (email.isEmpty) return;
+    final raw = _identifierCtrl.text.trim();
+    if (raw.isEmpty) return;
+    final identifier = raw.contains('@') ? raw.toLowerCase() : normalizePhoneForSms(raw);
 
     final l10n = AppLocalizations.of(context)!;
     setState(() => _isSending = true);
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.sendForgotPasswordOtp(email);
+      final channel = await authRepo.sendForgotPasswordOtp(identifier);
       if (!mounted) return;
       ref.read(forgotPasswordFlowProvider.notifier).state = ForgotPasswordFlowState(
-        identifier: email,
-        email: email,
+        identifier: identifier,
+        email: channel == 'email' ? identifier : null,
+        phone: channel == 'sms' ? identifier : null,
+        channel: channel,
       );
       context.push(AppRoutes.forgotPasswordOtp);
     } catch (e) {
@@ -83,23 +87,22 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             children: [
               const SizedBox(height: 24),
               Text(
-                l10n.translate('forgotPasswordEnterEmail'),
+                l10n.translate('forgotPasswordEnterEmailOrPhone'),
                 style: const TextStyle(fontSize: 16, height: 1.4),
               ),
               const SizedBox(height: 24),
               TextFormField(
-                controller: _emailCtrl,
+                controller: _identifierCtrl,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
                 decoration: InputDecoration(
-                  labelText: l10n.translate('email'),
-                  prefixIcon: const Icon(Icons.email_outlined),
+                  labelText: l10n.translate('emailOrPhone'),
+                  prefixIcon: const Icon(Icons.person_outline),
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   final v = (value ?? '').trim();
-                  if (v.isEmpty) return l10n.translate('emailRequired');
-                  if (!v.contains('@') || !v.contains('.')) return l10n.translate('invalidEmail');
+                  if (v.isEmpty) return l10n.translate('emailOrPhoneRequired');
                   return null;
                 },
               ),

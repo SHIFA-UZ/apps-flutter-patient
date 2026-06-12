@@ -159,6 +159,18 @@ class AuthRepository {
     if (response.statusCode != 200) throw Exception('Failed to send email code');
   }
 
+  /// Send 6-digit OTP via SMS to an Uzbek mobile number (+998).
+  Future<void> sendSmsOtp(String phone, {String? purpose}) async {
+    final response = await _apiClient.post(
+      '/auth/send-sms-otp',
+      data: {
+        'phone': phone.trim(),
+        if (purpose != null && purpose.trim().isNotEmpty) 'purpose': purpose.trim(),
+      },
+    );
+    if (response.statusCode != 200) throw Exception('Failed to send SMS code');
+  }
+
   /// Create a patient account for an existing doctor. When email is provided, emailOtp must be set (from sendEmailOtp + user entry).
   Future<String> createPatientForDoctor({
     String? phone,
@@ -192,29 +204,31 @@ class AuthRepository {
     required String firstName,
     required String lastName,
     String? phone,
-    required String email,
+    String? email,
     required String password,
     String? birthDate,
     String? gender,
     String? address,
     String? language,
     String? emailOtp,
+    String? smsOtp,
   }) async {
     try {
       final data = <String, dynamic>{
         'firstName': firstName,
         'lastName': lastName,
-        'phone': null,
-        'email': email.trim(),
         'password': password,
-        'birthDate': birthDate,
-        'gender': gender,
-        'address': address,
-        'language': language,
       };
+      if (birthDate != null && birthDate.isNotEmpty) data['birthDate'] = birthDate;
+      if (gender != null && gender.isNotEmpty) data['gender'] = gender;
+      if (address != null && address.isNotEmpty) data['address'] = address;
+      if (language != null && language.isNotEmpty) data['language'] = language;
       final pt = phone?.trim();
       if (pt != null && pt.isNotEmpty) data['phone'] = pt;
+      final et = email?.trim();
+      if (et != null && et.isNotEmpty) data['email'] = et;
       if (emailOtp != null && emailOtp.trim().isNotEmpty) data['emailOtp'] = emailOtp.trim();
+      if (smsOtp != null && smsOtp.trim().isNotEmpty) data['smsOtp'] = smsOtp.trim();
       final response = await _apiClient.post('/auth/register-patient', data: data);
 
       final token = response.data['token'] as String;
@@ -298,21 +312,53 @@ class AuthRepository {
     }
   }
 
-  /// Send forgot-password OTP to email. Identifier can be email or phone.
-  Future<void> sendForgotPasswordOtp(String identifier) async {
+  /// Send forgot-password OTP. Identifier can be email or phone. Returns delivery channel.
+  Future<String> sendForgotPasswordOtp(String identifier) async {
     try {
-      await _apiClient.post(
+      final response = await _apiClient.post(
         '/auth/send-forgot-password-otp',
         data: {
           'identifier': identifier.trim(),
           'app': 'patient',
         },
       );
+      final data = response.data as Map<String, dynamic>?;
+      return (data?['channel'] as String?) ?? 'email';
     } on DioException catch (e) {
       final errorMessage = AuthErrorSanitizer.sanitize(
         statusCode: e.response?.statusCode,
         data: e.response?.data,
         defaultMessage: 'Failed to send verification code',
+      );
+      throw Exception(errorMessage);
+    }
+  }
+
+  /// Forgot password with SMS OTP: verify code + set new password → returns JWT.
+  Future<LoginResult> forgotPasswordResetWithSms({
+    required String phone,
+    required String smsOtp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/auth/forgot-password-reset',
+        data: {
+          'phone': phone.trim(),
+          'smsOtp': smsOtp.trim(),
+          'app': 'patient',
+          'newPassword': newPassword,
+        },
+      );
+      final token = response.data['token'] as String?;
+      if (token == null || token.isEmpty) throw Exception('No token received');
+      await _storageService.saveAuthToken(token);
+      return LoginResult(token: token, forcePasswordReset: false);
+    } on DioException catch (e) {
+      final errorMessage = AuthErrorSanitizer.sanitize(
+        statusCode: e.response?.statusCode,
+        data: e.response?.data,
+        defaultMessage: 'Failed to reset password',
       );
       throw Exception(errorMessage);
     }

@@ -75,6 +75,16 @@ class AppLocalizations {
       'forgotPasswordEnterEmail':
           'Enter your email address. We will send you a verification code to reset your password.',
       'otpSentToEmail': 'A 6-digit code has been sent to {email}. Check your inbox.',
+      'otpSentToPhone': 'A 6-digit code has been sent to {phone}.',
+      'enterSmsCode': 'Enter SMS code',
+      'emailOrPhone': 'Email or phone number',
+      'emailOrPhoneHint': 'example@email.com or +998 90 123 45 67',
+      'emailOrPhoneRequired': 'Email or phone number is required',
+      'phoneOrEmailRequired': 'Enter your email or phone number',
+      'emailRequiredForForeignPhone': 'Email is required for non-Uzbek phone numbers',
+      'continueToVerification': 'Continue',
+      'forgotPasswordEnterEmailOrPhone':
+          'Enter your email or phone number. We will send you a verification code to reset your password.',
       'emailRequired': 'Email address is required',
       'noAccountWithPhone': 'No account found with this phone number.',
       'sendCode': 'Send code',
@@ -1443,6 +1453,16 @@ class AppLocalizations {
       'forgotPasswordEnterEmail':
           'Email manzilingizni kiriting. Parolni tiklash uchun tasdiqlash kodi yuboramiz.',
       'otpSentToEmail': '6 xonali kod {email} manziliga yuborildi. Pochtangizni tekshiring.',
+      'otpSentToPhone': '6 xonali kod {phone} raqamiga yuborildi.',
+      'enterSmsCode': 'SMS kodini kiriting',
+      'emailOrPhone': 'Email yoki telefon raqami',
+      'emailOrPhoneHint': 'example@email.com yoki +998 90 123 45 67',
+      'emailOrPhoneRequired': 'Email yoki telefon raqami talab qilinadi',
+      'phoneOrEmailRequired': 'Email yoki telefon raqamingizni kiriting',
+      'emailRequiredForForeignPhone': 'O\'zbek raqami bo\'lmagan telefonlar uchun email talab qilinadi',
+      'continueToVerification': 'Davom etish',
+      'forgotPasswordEnterEmailOrPhone':
+          'Email yoki telefon raqamingizni kiriting. Parolni tiklash uchun tasdiqlash kodi yuboramiz.',
       'emailRequired': 'Email manzil talab qilinadi',
       'noAccountWithPhone': 'Bu telefon raqam bilan hisob topilmadi.',
       'sendCode': 'Kodni yuborish',
@@ -2322,6 +2342,16 @@ class AppLocalizations {
       'forgotPasswordEnterEmail':
           'Введите ваш email. Мы отправим вам код для сброса пароля.',
       'otpSentToEmail': '6-значный код отправлен на {email}. Проверьте почту.',
+      'otpSentToPhone': '6-значный код отправлен на {phone}.',
+      'enterSmsCode': 'Введите SMS-код',
+      'emailOrPhone': 'Email или номер телефона',
+      'emailOrPhoneHint': 'example@email.com или +998 90 123 45 67',
+      'emailOrPhoneRequired': 'Требуется email или номер телефона',
+      'phoneOrEmailRequired': 'Введите email или номер телефона',
+      'emailRequiredForForeignPhone': 'Для номеров не из Узбекистана требуется email',
+      'continueToVerification': 'Продолжить',
+      'forgotPasswordEnterEmailOrPhone':
+          'Введите email или номер телефона. Мы отправим код для сброса пароля.',
       'emailRequired': 'Требуется адрес электронной почты',
 
       // Profile

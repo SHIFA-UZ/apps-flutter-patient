@@ -14,7 +14,7 @@ import 'package:shifa_patient_app_v1/features/auth/providers/auth_provider.dart'
 import 'package:shifa_patient_app_v1/features/auth/providers/otp_verification_provider.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/registration_provider.dart';
 
-const _resendCooldownSeconds = 5 * 60; // 5 minutes
+const _resendCooldownSeconds = 5 * 60;
 
 class RegisterOtpVerifyScreen extends ConsumerStatefulWidget {
   const RegisterOtpVerifyScreen({super.key});
@@ -24,8 +24,7 @@ class RegisterOtpVerifyScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScreen> {
-  final _phoneCodeCtrl = TextEditingController();
-  final _emailCodeCtrl = TextEditingController();
+  final _codeCtrl = TextEditingController();
   bool _isLoading = false;
   int _resendSecondsRemaining = _resendCooldownSeconds;
   Timer? _resendTimer;
@@ -51,9 +50,15 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
   @override
   void dispose() {
     _resendTimer?.cancel();
-    _phoneCodeCtrl.dispose();
-    _emailCodeCtrl.dispose();
+    _codeCtrl.dispose();
     super.dispose();
+  }
+
+  String _maskPhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 6) return phone;
+    final last4 = digits.substring(digits.length - 4);
+    return '+998 ** *** $last4';
   }
 
   Future<void> _onVerify() async {
@@ -64,8 +69,8 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
       return;
     }
     final l10n = AppLocalizations.of(context)!;
-    final emailCode = _emailCodeCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
-    if (emailCode.length != 6) {
+    final code = _codeCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
+    if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.translate('invalidVerificationCode'))),
       );
@@ -73,17 +78,15 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
     }
     setState(() => _isLoading = true);
     try {
+      final isEmail = otpState.channel == RegistrationOtpChannel.email;
       await ref.read(authStateProvider.notifier).register(
             firstName: reg.firstName!,
             lastName: reg.lastName!,
-            email: reg.email!.trim(),
+            email: reg.email,
             phone: reg.phone,
             password: reg.password!,
-            birthDate: reg.birthDate,
-            gender: reg.gender,
-            address: reg.address,
-            language: reg.language,
-            emailOtp: emailCode,
+            emailOtp: isEmail ? code : null,
+            smsOtp: isEmail ? null : code,
           );
       ref.read(registerOtpVerificationProvider.notifier).state = null;
       ref.read(registrationProvider.notifier).clear();
@@ -102,14 +105,21 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
 
   Future<void> _onResendCode() async {
     final reg = ref.read(registrationProvider);
-    if (!reg.canRegister || _resendSecondsRemaining > 0) return;
+    final otpState = ref.read(registerOtpVerificationProvider);
+    if (!reg.canRegister || _resendSecondsRemaining > 0 || otpState == null) return;
     final l10n = AppLocalizations.of(context)!;
-    final email = reg.email?.trim();
-    if (email == null || email.isEmpty) return;
     setState(() => _isLoading = true);
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.sendEmailOtp(email);
+      if (otpState.channel == RegistrationOtpChannel.email) {
+        final email = reg.email?.trim();
+        if (email == null || email.isEmpty) return;
+        await authRepo.sendEmailOtp(email);
+      } else {
+        final phone = reg.phone?.trim();
+        if (phone == null || phone.isEmpty) return;
+        await authRepo.sendSmsOtp(phone);
+      }
       if (!mounted) return;
       _startResendCountdown();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -118,7 +128,7 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(userFriendlyError(l10n, e, logContext: 'Resend email OTP'))),
+          SnackBar(content: Text(userFriendlyError(l10n, e, logContext: 'Resend OTP'))),
         );
       }
     } finally {
@@ -200,7 +210,17 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
         ),
       );
     }
-    final email = reg.email?.trim() ?? '';
+    final isEmail = otpState.channel == RegistrationOtpChannel.email;
+    final displayTarget = isEmail
+        ? otpState.destination
+        : _maskPhone(otpState.destination);
+    final otpMessage = isEmail
+        ? l10n.translate('otpSentToEmail').replaceAll('{email}', displayTarget)
+        : l10n.translate('otpSentToPhone').replaceAll('{phone}', displayTarget);
+    final codeLabel = isEmail
+        ? l10n.translate('enterEmailCode')
+        : l10n.translate('enterSmsCode');
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -220,17 +240,17 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              l10n.translate('otpSentToEmail').replaceAll('{email}', email),
+              otpMessage,
               style: const TextStyle(fontSize: 16, height: 1.4),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             TextField(
-              controller: _emailCodeCtrl,
+              controller: _codeCtrl,
               keyboardType: TextInputType.number,
               maxLength: 6,
               decoration: InputDecoration(
-                labelText: l10n.translate('enterEmailCode'),
+                labelText: codeLabel,
                 counterText: '',
                 border: const OutlineInputBorder(),
               ),

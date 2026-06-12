@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shifa_patient_app_v1/features/auth/providers/registration_provider.dart';
 
 /// Holds pending OTP verification data when navigating to the doctor OTP screen.
 /// webConfirmationResult is set on web (signInWithPhoneNumber); verificationId on mobile.
@@ -23,24 +24,25 @@ class DoctorOtpVerificationState {
 
 final doctorOtpVerificationProvider = StateProvider<DoctorOtpVerificationState?>((ref) => null);
 
-/// Holds pending phone OTP verification for the new-user registration flow.
+/// Holds pending OTP verification for the new-user registration flow.
 class RegisterOtpVerificationState {
-  final String verificationId;
-  final ConfirmationResult? webConfirmationResult;
+  final RegistrationOtpChannel channel;
+  final String destination;
 
   RegisterOtpVerificationState({
-    required this.verificationId,
-    this.webConfirmationResult,
+    required this.channel,
+    required this.destination,
   });
 }
 
 final registerOtpVerificationProvider = StateProvider<RegisterOtpVerificationState?>((ref) => null);
 
-/// State for forgot-password flow: email → OTP → new password.
+/// State for forgot-password flow: identifier → OTP → new password.
 class ForgotPasswordFlowState {
   final String identifier;
   final String? email;
   final String? phone;
+  final String channel; // 'email' | 'sms'
   final String? verificationId;
   final ConfirmationResult? webConfirmationResult;
   final int? resendToken;
@@ -51,6 +53,7 @@ class ForgotPasswordFlowState {
     required this.identifier,
     this.email,
     this.phone,
+    this.channel = 'email',
     this.verificationId,
     this.webConfirmationResult,
     this.resendToken,
@@ -62,6 +65,7 @@ class ForgotPasswordFlowState {
     String? identifier,
     String? email,
     String? phone,
+    String? channel,
     String? verificationId,
     ConfirmationResult? webConfirmationResult,
     int? resendToken,
@@ -72,6 +76,7 @@ class ForgotPasswordFlowState {
         identifier: identifier ?? this.identifier,
         email: email ?? this.email,
         phone: phone ?? this.phone,
+        channel: channel ?? this.channel,
         verificationId: verificationId ?? this.verificationId,
         webConfirmationResult: webConfirmationResult ?? this.webConfirmationResult,
         resendToken: resendToken ?? this.resendToken,

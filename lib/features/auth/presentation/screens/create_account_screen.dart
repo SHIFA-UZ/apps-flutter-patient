@@ -8,6 +8,7 @@ import 'package:shifa_patient_app_v1/core/utils/password_validation.dart';
 import 'package:shifa_patient_app_v1/core/widgets/phone_input_field.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/features/auth/data/auth_repository.dart';
+import 'package:shifa_patient_app_v1/features/auth/providers/otp_verification_provider.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/registration_provider.dart';
 
 class CreateAccountScreen extends ConsumerStatefulWidget {
@@ -27,7 +28,6 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  int _currentStep = 0;
   List<PasswordRequirementResult> _passwordRequirements = const [];
   bool _isCheckingDoctor = false;
 
@@ -67,6 +67,14 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return trimmed.isEmpty ? null : trimmed;
   }
 
+  bool _isUzbekPhone(String? phone) {
+    if (phone == null || phone.trim().isEmpty) return false;
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('998') && digits.length == 12) return true;
+    if (digits.length == 9 && digits.startsWith('9')) return true;
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -103,15 +111,14 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: l10n.email,
+                  labelText: '${l10n.email} (${l10n.optional})',
                   hintText: 'example@email.com',
                   prefixIcon: const Icon(Icons.email),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return l10n.translate('emailRequired');
-                  }
-                  if (!_isValidEmail(value)) {
+                  final v = value?.trim() ?? '';
+                  if (v.isEmpty) return null;
+                  if (!_isValidEmail(v)) {
                     return l10n.invalidEmail;
                   }
                   return null;
@@ -119,13 +126,26 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               ),
               const SizedBox(height: 16),
               PhoneInputField(
-                labelText: '${l10n.phoneNumber} (${l10n.optional})',
+                labelText: l10n.phoneNumber,
                 onChanged: (fullPhone) => setState(() => _phoneValue = fullPhone),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return null;
-                  final digits = value.replaceAll(RegExp(r'\D'), '');
-                  if (digits.length < 10) {
-                    return l10n.translate('invalidPhone');
+                  final emailEmpty = _emailController.text.trim().isEmpty;
+                  if (emailEmpty) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.translate('phoneOrEmailRequired');
+                    }
+                    final digits = value.replaceAll(RegExp(r'\D'), '');
+                    if (digits.length < 10) {
+                      return l10n.translate('invalidPhone');
+                    }
+                    if (!_isUzbekPhone(value)) {
+                      return l10n.translate('emailRequiredForForeignPhone');
+                    }
+                  } else if (value != null && value.isNotEmpty) {
+                    final digits = value.replaceAll(RegExp(r'\D'), '');
+                    if (digits.length < 10) {
+                      return l10n.translate('invalidPhone');
+                    }
                   }
                   return null;
                 },
@@ -204,22 +224,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                 },
               ),
               const SizedBox(height: 32),
-              // Step indicators
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(2, (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: index == _currentStep ? const Color(0xFF17C3B2) : Colors.grey[300],
-                  ),
-                )),
-              ),
-              const SizedBox(height: 32),
               ShifaPrimaryButton(
-                label: l10n.next,
+                label: l10n.translate('continueToVerification'),
                 isLoading: _isCheckingDoctor,
                 onPressed: _isCheckingDoctor
                     ? null
@@ -281,14 +287,53 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             }
                             return;
                           }
+                          final phone = _effectivePhone();
+                          final hasEmail = emailTrimmed.isNotEmpty;
+                          if (!hasEmail && phone == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.translate('phoneOrEmailRequired')),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+                          if (!hasEmail && !_isUzbekPhone(phone)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.translate('emailRequiredForForeignPhone')),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
+                          RegistrationOtpChannel channel;
+                          String destination;
+                          if (hasEmail) {
+                            await repo.sendEmailOtp(emailTrimmed);
+                            channel = RegistrationOtpChannel.email;
+                            destination = emailTrimmed;
+                          } else {
+                            await repo.sendSmsOtp(phone!);
+                            channel = RegistrationOtpChannel.sms;
+                            destination = phone;
+                          }
+
                           ref.read(registrationProvider.notifier).updateStep1(
                             firstName: _nameController.text,
                             lastName: _surnameController.text,
-                            phone: _effectivePhone(),
-                            email: emailTrimmed,
+                            phone: phone,
+                            email: hasEmail ? emailTrimmed : null,
                             password: _passwordController.text,
+                            otpChannel: channel,
                           );
-                          if (mounted) context.push(AppRoutes.accountInfo);
+                          ref.read(registerOtpVerificationProvider.notifier).state =
+                              RegisterOtpVerificationState(
+                            channel: channel,
+                            destination: destination,
+                          );
+                          if (mounted) context.push(AppRoutes.registerOtpVerify);
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -8,6 +8,7 @@ class PatientProfileModel extends Equatable {
   final String? email;
   final String? address; // Legacy field for backward compatibility
   final String? birthDate;
+  final String? gender;
   final String? language;
   final String? photoUrl;
   final double? latitude;
@@ -36,6 +37,7 @@ class PatientProfileModel extends Equatable {
     this.email,
     this.address,
     this.birthDate,
+    this.gender,
     this.language,
     this.photoUrl,
     this.latitude,
@@ -59,6 +61,7 @@ class PatientProfileModel extends Equatable {
       email: json['email'] as String?,
       address: json['address'] as String?,
       birthDate: json['birthDate'] as String?,
+      gender: json['gender'] as String?,
       language: json['language'] as String?,
       photoUrl: normalizePhotoUrl(json['photoUrl'] as String?),
       latitude: (json['latitude'] as num?)?.toDouble(),
@@ -86,6 +89,7 @@ class PatientProfileModel extends Equatable {
       'email': email,
       'address': address,
       'birthDate': birthDate,
+      'gender': gender,
       'language': language,
       'photoUrl': photoUrl,
       'latitude': latitude,
@@ -109,6 +113,7 @@ class PatientProfileModel extends Equatable {
     String? email,
     String? address,
     String? birthDate,
+    String? gender,
     String? language,
     String? photoUrl,
     double? latitude,
@@ -130,6 +135,7 @@ class PatientProfileModel extends Equatable {
       email: email ?? this.email,
       address: address ?? this.address,
       birthDate: birthDate ?? this.birthDate,
+      gender: gender ?? this.gender,
       language: language ?? this.language,
       photoUrl: photoUrl ?? this.photoUrl,
       latitude: latitude ?? this.latitude,
@@ -154,6 +160,7 @@ class PatientProfileModel extends Equatable {
         email,
         address,
         birthDate,
+        gender,
         language,
         photoUrl,
         latitude,

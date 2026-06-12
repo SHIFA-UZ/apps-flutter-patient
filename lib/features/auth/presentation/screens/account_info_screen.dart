@@ -191,9 +191,10 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
                     try {
                       await ref.read(authRepositoryProvider).sendEmailOtp(email);
                       if (!mounted) return;
+                      ref.read(registrationProvider.notifier).setOtpChannel(RegistrationOtpChannel.email);
                       ref.read(registerOtpVerificationProvider.notifier).state = RegisterOtpVerificationState(
-                        verificationId: '',
-                        webConfirmationResult: null,
+                        channel: RegistrationOtpChannel.email,
+                        destination: email,
                       );
                       context.push(AppRoutes.registerOtpVerify);
                     } catch (e) {

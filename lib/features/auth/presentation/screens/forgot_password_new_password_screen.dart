@@ -69,7 +69,13 @@ class _ForgotPasswordNewPasswordScreenState extends ConsumerState<ForgotPassword
     try {
       final repository = ref.read(authRepositoryProvider);
       LoginResult result;
-      if (state.email != null && state.emailOtpCode != null) {
+      if (state.channel == 'sms' && state.phone != null && state.emailOtpCode != null) {
+        result = await repository.forgotPasswordResetWithSms(
+          phone: state.phone!,
+          smsOtp: state.emailOtpCode!,
+          newPassword: newPassword,
+        );
+      } else if (state.email != null && state.emailOtpCode != null) {
         result = await repository.forgotPasswordResetWithEmail(
           email: state.email!,
           emailOtp: state.emailOtpCode!,

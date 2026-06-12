@@ -25,6 +25,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _languageController = TextEditingController();
 
   String _phoneValue = '';
+  String? _selectedGender;
 
   DateTime? _selectedBirthDate;
   String? _selectedPhotoUrl;
@@ -72,6 +73,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _addressController.text = profile.address ?? '';
       _languageController.text = profile.language ?? '';
       _phoneValue = profile.phone ?? '';
+      _selectedGender = profile.gender;
       _selectedPhotoUrl = profile.photoUrl;
       _selectedLatitude = profile.latitude;
       _selectedLongitude = profile.longitude;
@@ -155,6 +157,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ? _lastNameController.text.trim() 
             : null,
         birthDate: birthDateFormatted,
+        gender: _selectedGender,
         phone: _phoneValue.trim().isNotEmpty ? _phoneValue.trim() : null,
         address: _addressController.text.trim().isNotEmpty 
             ? _addressController.text.trim() 
@@ -306,6 +309,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                       readOnly: true,
                       onTap: () => _selectBirthDate(context),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      decoration: InputDecoration(
+                        labelText: l10n.gender,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        DropdownMenuItem(value: 'Male', child: Text(l10n.male)),
+                        DropdownMenuItem(value: 'Female', child: Text(l10n.female)),
+                        DropdownMenuItem(value: 'Other', child: Text(l10n.other)),
+                      ],
+                      onChanged: (value) => setState(() => _selectedGender = value),
                     ),
                     const SizedBox(height: 16),
                     // Address
