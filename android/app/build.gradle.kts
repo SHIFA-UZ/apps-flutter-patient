@@ -55,15 +55,27 @@ android {
 
     buildTypes {
         release {
-            if (!hasReleaseKeystore) {
-                throw GradleException(
-                    "Release signing is not configured. Create android/key.properties " +
-                        "with storeFile, storePassword, keyAlias, and keyPassword. " +
-                        "Without it, Gradle would sign with the debug key and Google Play will reject the AAB."
-                )
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
             }
-            signingConfig = signingConfigs.getByName("release")
         }
+    }
+}
+
+// Fail release builds only when actually assembling/bundling release (not on debug builds).
+gradle.taskGraph.whenReady {
+    val buildingRelease = allTasks.any { task ->
+        val name = task.name.lowercase()
+        name.contains("release") && (name.contains("assemble") || name.contains("bundle"))
+    }
+    if (buildingRelease && !hasReleaseKeystore) {
+        throw GradleException(
+            "Release signing is not configured. Create android/key.properties " +
+                "with storeFile, storePassword, keyAlias, and keyPassword. " +
+                "Without it, Gradle would sign with the debug key and Google Play will reject the AAB."
+        )
     }
 }
 
