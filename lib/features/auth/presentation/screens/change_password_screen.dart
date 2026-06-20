@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
+import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/features/auth/data/auth_repository.dart';
 
@@ -55,7 +56,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${l10n.error}: $e'),
+            content: Text(userFriendlyError(l10n, e, logContext: 'Change password')),
             backgroundColor: Colors.red,
           ),
         );

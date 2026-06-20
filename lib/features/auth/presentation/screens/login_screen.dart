@@ -62,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(translateError(l10n, e.toString())),
+            content: Text(userFriendlyError(l10n, e, logContext: 'Login')),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),

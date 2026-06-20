@@ -1,10 +1,15 @@
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/utils/app_logger.dart';
+import 'package:shifa_patient_app_v1/features/auth/data/auth_exceptions.dart';
 
 /// Maps known backend/API error messages (English) to localization keys.
 /// Used to show errors in the user's language.
 const Map<String, String> _errorMessageToKey = {
   // Auth
+  'Could not send verification SMS. Please try again later.': 'errorFailedToSendSmsCode',
+  'Could not send verification email. Please try again later.': 'errorFailedToSendEmailCode',
+  'Could not send verification code': 'errorFailedToSendVerificationCode',
+  'No email address on file. Please contact support.': 'errorNoEmailOnFileContactSupport',
   'No account found': 'errorNoAccountFound',
   'No doctor account found': 'errorNoDoctorAccountFound',
   'No patient account found': 'errorNoPatientAccountFound',
@@ -45,6 +50,8 @@ const Map<String, String> _errorMessageToKey = {
   'Session expired or signed out': 'errorSessionExpiredOrSignedOut',
   'Invalid token': 'errorInvalidToken',
   'Too many requests. Please try again later.': 'errorTooManyRequests',
+  'Too many verification requests. Please try again later.': 'errorTooManyVerificationRequests',
+  kSmsOtpUnavailableMessage: 'errorSmsCouldNotBeSent',
   // Video
   'Authentication required': 'errorAuthenticationRequired',
   'Video call is not yet available. You can join 5 minutes before the appointment start.': 'errorVideoCallNotYetAvailable',
@@ -65,9 +72,7 @@ const Map<String, String> _errorMessageToKey = {
   'No token received from server': 'errorNoTokenReceivedFromServer',
   'Login failed': 'errorLoginFailed',
   'Failed to send email code': 'errorFailedToSendEmailCode',
-  'Could not send verification email. Please try again later.': 'errorFailedToSendEmailCode',
   'Failed to send SMS code': 'errorFailedToSendSmsCode',
-  'Could not send verification SMS. Please try again later.': 'errorFailedToSendSmsCode',
   'SMS verification is only available for Uzbek phone numbers. Please use email.':
       'errorSmsOnlyForUzbekPhone',
   'Could not verify account details': 'errorCouldNotVerifyAccountDetails',
@@ -153,8 +158,28 @@ String translateError(AppLocalizations l10n, String rawMessage) {
     if (translated != exactKey) return translated;
   }
 
-  // Video token / join-window errors (API may vary slightly)
+  // Known OTP / SMS phrases (backend may vary slightly)
   final lower = trimmed.toLowerCase();
+  if (lower.contains('sms could not be sent') ||
+      trimmed == kSmsOtpUnavailableMessage) {
+    final t = l10n.translate('errorSmsCouldNotBeSent');
+    if (t != 'errorSmsCouldNotBeSent') return t;
+  }
+  if (lower.contains('too many verification requests')) {
+    final t = l10n.translate('errorTooManyVerificationRequests');
+    if (t != 'errorTooManyVerificationRequests') return t;
+  }
+  if (lower.contains('connection timed out') ||
+      lower.contains('check your internet and try again')) {
+    final t = l10n.translate('errorConnectionTimedOut');
+    if (t != 'errorConnectionTimedOut') return t;
+  }
+  if (lower.startsWith('network error') && lower.contains('internet')) {
+    final t = l10n.translate('errorNetworkConnection');
+    if (t != 'errorNetworkConnection') return t;
+  }
+
+  // Video token / join-window errors (API may vary slightly)
   if (lower.contains('timeoutexception') &&
       (lower.contains('join failed') || lower.contains('future not completed'))) {
     final t = l10n.translate('videoCallConnectionTimeout');
@@ -234,7 +259,12 @@ String translateError(AppLocalizations l10n, String rawMessage) {
 
 /// Returns a user-friendly error message and logs the raw error in debug only.
 String userFriendlyError(AppLocalizations l10n, Object error, {String? logContext}) {
-  final raw = error.toString();
   AppLogger.error(logContext ?? 'Error', error);
-  return translateError(l10n, raw);
+  if (error is SmsOtpUnavailableException) {
+    return l10n.translate('errorSmsCouldNotBeSent');
+  }
+  if (error is OtpRateLimitException) {
+    return l10n.translate('errorTooManyVerificationRequests');
+  }
+  return translateError(l10n, error.toString());
 }

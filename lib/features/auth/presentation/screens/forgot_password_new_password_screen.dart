@@ -104,7 +104,7 @@ class _ForgotPasswordNewPasswordScreenState extends ConsumerState<ForgotPassword
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(translateError(l10n, e.toString())),
+            content: Text(userFriendlyError(l10n, e, logContext: 'Reset password')),
             backgroundColor: Colors.red,
           ),
         );

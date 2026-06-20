@@ -6,6 +6,8 @@ import 'package:shifa_patient_app_v1/core/utils/app_logger.dart';
 import 'package:shifa_patient_app_v1/core/utils/auth_error_sanitizer.dart';
 import 'package:shifa_patient_app_v1/core/utils/storage_service.dart';
 import 'package:shifa_patient_app_v1/core/widgets/phone_input_field.dart';
+import 'package:shifa_patient_app_v1/features/auth/data/auth_exceptions.dart';
+import 'package:shifa_patient_app_v1/features/auth/providers/registration_provider.dart';
 
 class LoginResult {
   final String token;
@@ -180,29 +182,67 @@ class AuthRepository {
   }
 
   /// Send 6-digit OTP via SMS to an Uzbek mobile number (+998).
-  Future<void> sendSmsOtp(String phone, {String? purpose}) async {
+  /// Returns the channel used ([RegistrationOtpChannel.sms] or email after server-side fallback).
+  /// Throws [SmsOtpUnavailableException] when SMS provider fails and no fallback email was supplied.
+  /// Throws [OtpRateLimitException] when hourly OTP limit is reached.
+  Future<RegistrationOtpChannel> sendSmsOtp(
+    String phone, {
+    String? purpose,
+    String? fallbackEmail,
+  }) async {
     try {
       final response = await _apiClient.post(
         '/auth/send-sms-otp',
         data: {
           'phone': normalizePhoneForSms(phone),
           if (purpose != null && purpose.trim().isNotEmpty) 'purpose': purpose.trim(),
+          if (fallbackEmail != null && fallbackEmail.trim().isNotEmpty)
+            'fallbackEmail': fallbackEmail.trim().toLowerCase(),
         },
       );
       if (response.statusCode != 200) {
         throw Exception('Could not send verification SMS. Please try again later.');
       }
+      return _parseOtpChannelResponse(response.data);
     } on DioException catch (e) {
-      final errorMessage = AuthErrorSanitizer.sanitize(
-        statusCode: e.response?.statusCode,
-        data: e.response?.data ?? e.message,
-        defaultMessage: _networkOrServerMessage(
-          e,
-          'Could not send verification SMS. Please try again later.',
-        ),
-      );
-      throw Exception(errorMessage);
+      throw _mapOtpSendDioException(e, smsDefault: 'Could not send verification SMS. Please try again later.');
     }
+  }
+
+  RegistrationOtpChannel _parseOtpChannelResponse(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final channel = (data['channel'] as String?)?.toLowerCase();
+      if (channel == 'email') return RegistrationOtpChannel.email;
+    }
+    return RegistrationOtpChannel.sms;
+  }
+
+  Exception _mapOtpSendDioException(DioException e, {required String smsDefault}) {
+    final statusCode = e.response?.statusCode;
+    final rawMessage = AuthErrorSanitizer.sanitize(
+      statusCode: statusCode,
+      data: e.response?.data ?? e.message,
+      defaultMessage: smsDefault,
+    );
+    if (statusCode == 503 &&
+        (rawMessage.contains('SMS could not be sent') ||
+            rawMessage == kSmsOtpUnavailableMessage)) {
+      return SmsOtpUnavailableException(rawMessage);
+    }
+    if (statusCode == 429 ||
+        rawMessage.contains('Too many verification requests') ||
+        rawMessage.contains('Too many requests')) {
+      return OtpRateLimitException(rawMessage);
+    }
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return Exception('Connection timed out. Check your internet and try again.');
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      return Exception('Network error. Check your internet connection and try again.');
+    }
+    return Exception(rawMessage);
   }
 
   static String _networkOrServerMessage(DioException e, String serverDefault) {
@@ -371,12 +411,10 @@ class AuthRepository {
       final data = response.data as Map<String, dynamic>?;
       return (data?['channel'] as String?) ?? 'email';
     } on DioException catch (e) {
-      final errorMessage = AuthErrorSanitizer.sanitize(
-        statusCode: e.response?.statusCode,
-        data: e.response?.data,
-        defaultMessage: 'Failed to send verification code',
+      throw _mapOtpSendDioException(
+        e,
+        smsDefault: 'Could not send verification code',
       );
-      throw Exception(errorMessage);
     }
   }
 

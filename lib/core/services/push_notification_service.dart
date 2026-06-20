@@ -38,14 +38,31 @@ class PushNotificationService {
   RemoteMessage? _pendingInitialMessage;
   Map<String, dynamic>? _pendingLocalNotificationTap;
 
-  /// IDs we've already marked read or are about to handle – avoid duplicate popups in foreground.
-  final Set<String> _readNotificationIds = {};
-
   /// Web only: payload by notification tag for browser notification click navigation.
   final Map<String, Map<String, dynamic>> _webNotificationPayloads = {};
 
-  /// Initialize: wire all three FCM entry points. Foreground shows local; background and
-  /// terminated both use [handleNotificationNavigation].
+  /// Drop cached notification strings after the user changes app language.
+  void clearLocalizationCache() {
+    _cachedL10n = null;
+    _notificationDetailsByLang.clear();
+  }
+
+  /// Reload cached strings from SharedPreferences (after language change or cold start).
+  Future<void> refreshLocalizationCache() async {
+    clearLocalizationCache();
+    await _warmLocalizationCache();
+  }
+
+  /// Cached locale strings for push tray — loaded once at init and on language change.
+  AppLocalizations? _cachedL10n;
+  final Map<String, NotificationDetails> _notificationDetailsByLang = {};
+
+  static const int _maxReadNotificationIds = 128;
+
+  /// IDs we've already marked read or are about to handle – avoid duplicate popups in foreground.
+  final Set<String> _readNotificationIds = {};
+
+  /// Initialize: wire all three FCM entry points.
   Future<void> initialize() async {
     final settings = await _firebaseMessaging.requestPermission(
       alert: true,
@@ -59,6 +76,7 @@ class PushNotificationService {
     if (!kIsWeb) {
       await _initializeLocalNotifications();
     }
+    await _warmLocalizationCache();
 
     _fcmToken = await _firebaseMessaging.getToken();
     if (kDebugMode) debugPrint('FCM Token: $_fcmToken');
@@ -98,7 +116,7 @@ class PushNotificationService {
   void _deliverPayload(Map<String, dynamic> data) {
     final notificationId = _notificationIdFromPayload(data);
     if (notificationId != null && notificationId.isNotEmpty) {
-      _readNotificationIds.add(notificationId);
+      _rememberReadNotificationId(notificationId);
     }
     if (_onNotificationTap != null) {
       _onNotificationTap!(data);
@@ -111,6 +129,48 @@ class PushNotificationService {
     final v = data['notificationId'] ?? data['id'];
     if (v == null) return null;
     return v.toString();
+  }
+
+  void _rememberReadNotificationId(String notificationId) {
+    if (_readNotificationIds.length >= _maxReadNotificationIds) {
+      _readNotificationIds.remove(_readNotificationIds.first);
+    }
+    _readNotificationIds.add(notificationId);
+  }
+
+  Future<void> _warmLocalizationCache() async {
+    if (_cachedL10n != null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString('app_language') ?? 'en';
+      _cachedL10n = AppLocalizations.forLanguageCode(code);
+    } catch (_) {
+      _cachedL10n = AppLocalizations.forLanguageCode('en');
+    }
+  }
+
+  AppLocalizations _localizations() {
+    return _cachedL10n ?? AppLocalizations.forLanguageCode('en');
+  }
+
+  NotificationDetails _notificationDetailsFor(AppLocalizations l10n) {
+    final code = l10n.locale.languageCode;
+    return _notificationDetailsByLang.putIfAbsent(code, () {
+      final androidDetails = AndroidNotificationDetails(
+        'shifa_patient_channel',
+        l10n.notificationChannelName,
+        channelDescription: l10n.notificationChannelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+        showWhen: true,
+      );
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+      return NotificationDetails(android: androidDetails, iOS: iosDetails);
+    });
   }
 
   /// Call after setting the tap callback (e.g. when MainShell is ready). Delivers
@@ -161,7 +221,7 @@ class PushNotificationService {
     if (notificationId != null && _readNotificationIds.contains(notificationId)) {
       return;
     }
-    final l10n = await _loadLocalizations();
+    final l10n = _localizations();
     final localized = NotificationLocalization.localizedPushText(
       data: data,
       l10n: l10n,
@@ -174,16 +234,6 @@ class PushNotificationService {
       data: data,
       l10n: l10n,
     );
-  }
-
-  Future<AppLocalizations> _loadLocalizations() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final code = prefs.getString('app_language') ?? 'en';
-      return AppLocalizations.forLanguageCode(code);
-    } catch (_) {
-      return AppLocalizations.forLanguageCode('en');
-    }
   }
 
   Future<void> _showLocalNotification({
@@ -212,28 +262,19 @@ class PushNotificationService {
       return;
     }
 
-    final resolvedL10n = l10n ?? await _loadLocalizations();
-    final androidDetails = AndroidNotificationDetails(
-      'shifa_patient_channel',
-      resolvedL10n.notificationChannelName,
-      channelDescription: resolvedL10n.notificationChannelDescription,
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-    );
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    final notificationDetails = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    final resolvedL10n = l10n ?? _localizations();
+    final notificationDetails = _notificationDetailsFor(resolvedL10n);
 
     final payload = (data != null && data.isNotEmpty) ? jsonEncode(data) : null;
     var id = 0;
     if (data != null) {
       final nid = data['notificationId'] ?? data['id'];
       if (nid != null) {
-        if (nid is int) id = nid; else id = int.tryParse(nid.toString()) ?? 0;
+        if (nid is int) {
+          id = nid;
+        } else {
+          id = int.tryParse(nid.toString()) ?? 0;
+        }
       }
     }
     if (id == 0) id = DateTime.now().millisecondsSinceEpoch.remainder(100000);

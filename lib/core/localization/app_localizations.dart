@@ -83,6 +83,9 @@ class AppLocalizations {
       'phoneOrEmailRequired': 'Enter your email or phone number',
       'emailRequiredForForeignPhone': 'Email is required for non-Uzbek phone numbers',
       'continueToVerification': 'Continue',
+      'smsUnavailableTitle': 'SMS unavailable',
+      'smsUnavailableMessage':
+          'We could not send a text message to your phone. Enter your email address to receive a verification code instead.',
       'forgotPasswordEnterEmailOrPhone':
           'Enter your email or phone number. We will send you a verification code to reset your password.',
       'emailRequired': 'Email address is required',
@@ -868,6 +871,10 @@ class AppLocalizations {
       'errorSessionExpiredOrSignedOut': 'Session expired or signed out',
       'errorInvalidToken': 'Invalid token',
       'errorTooManyRequests': 'Too many requests. Please try again later.',
+      'errorTooManyVerificationRequests':
+          'Too many verification requests. Please try again later.',
+      'errorSmsCouldNotBeSent':
+          'SMS could not be sent. Please use email verification or contact support.',
       'errorPatientProfileNotFoundForUser':
           'Patient profile not found for user \${user.id}. Please fill your profile with phone or email.',
       'errorAuthenticationRequired': 'Authentication required',
@@ -908,6 +915,9 @@ class AppLocalizations {
       'errorNetworkError': 'Network error: {{type}}',
       'errorFailedToSendEmailCode': 'Failed to send email code',
       'errorFailedToSendSmsCode': 'Failed to send SMS code',
+      'errorFailedToSendVerificationCode': 'Failed to send verification code',
+      'errorNoEmailOnFileContactSupport':
+          'No email address on file. Please contact support.',
       'errorSmsOnlyForUzbekPhone':
           'SMS verification is only available for Uzbek phone numbers. Please use email.',
       'errorCouldNotVerifyAccountDetails': 'Could not verify account details. Please try again.',
@@ -967,6 +977,10 @@ class AppLocalizations {
       'accountLockedTryAgainIn':
           'Zu viele Fehlversuche. Konto vorübergehend gesperrt. Bitte in {{minutes}} Minute(n) erneut versuchen.',
       'verifyAndCreate': 'Bestätigen und Konto erstellen',
+      'continueToVerification': 'Weiter zur Bestätigung',
+      'smsUnavailableTitle': 'SMS nicht verfügbar',
+      'smsUnavailableMessage':
+          'Wir konnten keine SMS an Ihr Telefon senden. Geben Sie Ihre E-Mail-Adresse ein, um stattdessen einen Bestätigungscode zu erhalten.',
       'invalidVerificationCode': 'Ungültiger oder abgelaufener Code',
       'noAccountWithPhone': 'Kein Konto mit dieser Telefonnummer gefunden.',
       'resendCode': 'Code erneut senden',
@@ -1446,6 +1460,14 @@ class AppLocalizations {
       'errorFailedToSendEmailCode':
           'Senden des E-Mail-Codes fehlgeschlagen',
       'errorFailedToSendSmsCode': 'SMS-Code konnte nicht gesendet werden',
+      'errorFailedToSendVerificationCode':
+          'Bestätigungscode konnte nicht gesendet werden',
+      'errorNoEmailOnFileContactSupport':
+          'Keine E-Mail-Adresse hinterlegt. Bitte kontaktieren Sie den Support.',
+      'errorTooManyVerificationRequests':
+          'Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.',
+      'errorSmsCouldNotBeSent':
+          'SMS konnte nicht gesendet werden. Bitte E-Mail-Verifizierung nutzen oder Support kontaktieren.',
       'errorSmsOnlyForUzbekPhone':
           'SMS-Verifizierung ist nur für usbekische Telefonnummern verfügbar. Bitte E-Mail verwenden.',
       'errorCouldNotVerifyAccountDetails':
@@ -1539,6 +1561,9 @@ class AppLocalizations {
       'phoneOrEmailRequired': 'Email yoki telefon raqamingizni kiriting',
       'emailRequiredForForeignPhone': 'O\'zbek raqami bo\'lmagan telefonlar uchun email talab qilinadi',
       'continueToVerification': 'Davom etish',
+      'smsUnavailableTitle': 'SMS yuborilmadi',
+      'smsUnavailableMessage':
+          'Telefoningizga SMS yuborib bo\'lmadi. Tasdiqlash kodini olish uchun email manzilingizni kiriting.',
       'forgotPasswordEnterEmailOrPhone':
           'Email yoki telefon raqamingizni kiriting. Parolni tiklash uchun tasdiqlash kodi yuboramiz.',
       'emailRequired': 'Email manzil talab qilinadi',
@@ -2385,6 +2410,13 @@ class AppLocalizations {
       'errorNetworkError': 'Tarmoq xatosi: {{type}}',
       'errorFailedToSendEmailCode': 'Email kodi yuborilmadi',
       'errorFailedToSendSmsCode': 'SMS kodi yuborilmadi',
+      'errorFailedToSendVerificationCode': 'Tasdiqlash kodi yuborilmadi',
+      'errorNoEmailOnFileContactSupport':
+          'Hisobda email manzil yo\'q. Iltimos, qo\'llab-quvvatlash xizmatiga murojaat qiling.',
+      'errorTooManyVerificationRequests':
+          'Juda ko\'p tasdiqlash so\'rovi. Iltimos, keyinroq qayta urinib ko\'ring.',
+      'errorSmsCouldNotBeSent':
+          'SMS yuborib bo\'lmadi. Email orqali tasdiqlashdan foydalaning yoki qo\'llab-quvvatlashga murojaat qiling.',
       'errorSmsOnlyForUzbekPhone':
           'SMS tasdiqlash faqat O\'zbekiston telefon raqamlari uchun mavjud. Iltimos, email ishlating.',
       'errorCouldNotVerifyAccountDetails':
@@ -2463,6 +2495,9 @@ class AppLocalizations {
       'phoneOrEmailRequired': 'Введите email или номер телефона',
       'emailRequiredForForeignPhone': 'Для номеров не из Узбекистана требуется email',
       'continueToVerification': 'Продолжить',
+      'smsUnavailableTitle': 'SMS недоступен',
+      'smsUnavailableMessage':
+          'Не удалось отправить SMS на ваш телефон. Введите email, чтобы получить код подтверждения.',
       'forgotPasswordEnterEmailOrPhone':
           'Введите email или номер телефона. Мы отправим код для сброса пароля.',
       'emailRequired': 'Требуется адрес электронной почты',
@@ -3006,6 +3041,13 @@ class AppLocalizations {
       'errorNetworkError': 'Ошибка сети: {{type}}',
       'errorFailedToSendEmailCode': 'Не удалось отправить код email',
       'errorFailedToSendSmsCode': 'Не удалось отправить SMS-код',
+      'errorFailedToSendVerificationCode': 'Не удалось отправить код подтверждения',
+      'errorNoEmailOnFileContactSupport':
+          'Email не указан в аккаунте. Обратитесь в поддержку.',
+      'errorTooManyVerificationRequests':
+          'Слишком много запросов на код. Попробуйте позже.',
+      'errorSmsCouldNotBeSent':
+          'SMS не удалось отправить. Используйте email или обратитесь в поддержку.',
       'errorSmsOnlyForUzbekPhone':
           'SMS-подтверждение доступно только для узбекских номеров. Используйте email.',
       'errorCouldNotVerifyAccountDetails':

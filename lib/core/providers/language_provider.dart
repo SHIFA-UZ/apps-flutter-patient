@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shifa_patient_app_v1/core/utils/app_logger.dart';
+import 'package:shifa_patient_app_v1/core/services/push_notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum AppLanguage {
@@ -80,6 +81,7 @@ class LanguageNotifier extends StateNotifier<LanguageState> {
           language: language,
           locale: Locale(language.code),
         );
+        await PushNotificationService().refreshLocalizationCache();
       } else {
         // Detect system language
         final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
@@ -90,6 +92,7 @@ class LanguageNotifier extends StateNotifier<LanguageState> {
         );
         // Save detected language
         await prefs.setString('app_language', language.code);
+        await PushNotificationService().refreshLocalizationCache();
       }
     } catch (e) {
       // If error, use default
@@ -109,6 +112,7 @@ class LanguageNotifier extends StateNotifier<LanguageState> {
         language: language,
         locale: Locale(language.code),
       );
+      await PushNotificationService().refreshLocalizationCache();
 
       // Optionally update backend profile if updateBackend is true
       // This will be handled by the profile provider when needed

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
+import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart';
 import 'package:shifa_patient_app_v1/core/utils/password_validation.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/features/auth/data/auth_repository.dart';
@@ -69,7 +70,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${l10n.error}: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(userFriendlyError(l10n, e, logContext: 'Reset password')),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

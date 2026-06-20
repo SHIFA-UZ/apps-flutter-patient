@@ -200,7 +200,7 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
                     } catch (e) {
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(translateError(l10n, e.toString()))),
+                        SnackBar(content: Text(userFriendlyError(l10n, e, logContext: 'Account info OTP'))),
                       );
                     } finally {
                       if (mounted) setState(() => _isSendingOtp = false);

@@ -41,6 +41,8 @@ class AuthErrorSanitizer {
     'Phone number not found',
     'User not found',
     'Too many requests. Please try again later.',
+    'Too many verification requests. Please try again later.',
+    'SMS could not be sent. Please use email verification or contact support.',
   };
 
   /// Patterns that indicate technical/internal content - do not show to users.

@@ -8,6 +8,7 @@ import 'package:shifa_patient_app_v1/core/utils/password_validation.dart';
 import 'package:shifa_patient_app_v1/core/widgets/phone_input_field.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/features/auth/data/auth_repository.dart';
+import 'package:shifa_patient_app_v1/features/auth/data/auth_exceptions.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/otp_verification_provider.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/registration_provider.dart';
 
@@ -58,6 +59,104 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  /// Sends registration OTP via email or SMS. On SMS provider failure, prompts for email.
+  Future<({RegistrationOtpChannel channel, String destination, String? email})?>
+      _sendRegistrationOtp({
+    required AuthRepository repo,
+    required String? phone,
+    required String emailTrimmed,
+    required bool hasEmail,
+    required AppLocalizations l10n,
+  }) async {
+    if (hasEmail) {
+      await repo.sendEmailOtp(emailTrimmed);
+      return (
+        channel: RegistrationOtpChannel.email,
+        destination: emailTrimmed,
+        email: emailTrimmed,
+      );
+    }
+    try {
+      final channel = await repo.sendSmsOtp(phone!);
+      if (channel == RegistrationOtpChannel.email) {
+        final fallback = emailTrimmed.isNotEmpty ? emailTrimmed : null;
+        if (fallback == null) return null;
+        return (
+          channel: RegistrationOtpChannel.email,
+          destination: fallback,
+          email: fallback,
+        );
+      }
+      return (
+        channel: RegistrationOtpChannel.sms,
+        destination: phone,
+        email: null,
+      );
+    } on SmsOtpUnavailableException {
+      final fallbackEmail = await _promptEmailForSmsFallback(l10n);
+      if (fallbackEmail == null) return null;
+      _emailController.text = fallbackEmail;
+      await repo.sendEmailOtp(fallbackEmail);
+      return (
+        channel: RegistrationOtpChannel.email,
+        destination: fallbackEmail,
+        email: fallbackEmail,
+      );
+    }
+  }
+
+  Future<String?> _promptEmailForSmsFallback(AppLocalizations l10n) async {
+    final emailCtrl = TextEditingController();
+    try {
+      return showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.translate('smsUnavailableTitle')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.translate('smsUnavailableMessage')),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                decoration: InputDecoration(
+                  labelText: l10n.email,
+                  hintText: 'example@email.com',
+                  prefixIcon: const Icon(Icons.email),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final v = emailCtrl.text.trim().toLowerCase();
+                if (!_isValidEmail(v)) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text(l10n.invalidEmail)),
+                  );
+                  return;
+                }
+                Navigator.pop(ctx, v);
+              },
+              child: Text(l10n.translate('continueToVerification')),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      emailCtrl.dispose();
+    }
   }
 
   /// Returns a phone string suitable for the API when the user entered a full number; otherwise null.
@@ -314,30 +413,27 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             return;
                           }
 
-                          RegistrationOtpChannel channel;
-                          String destination;
-                          if (hasEmail) {
-                            await repo.sendEmailOtp(emailTrimmed);
-                            channel = RegistrationOtpChannel.email;
-                            destination = emailTrimmed;
-                          } else {
-                            await repo.sendSmsOtp(phone!);
-                            channel = RegistrationOtpChannel.sms;
-                            destination = phone;
-                          }
+                          final otpResult = await _sendRegistrationOtp(
+                            repo: repo,
+                            phone: phone,
+                            emailTrimmed: emailTrimmed,
+                            hasEmail: hasEmail,
+                            l10n: l10n,
+                          );
+                          if (otpResult == null || !mounted) return;
 
                           ref.read(registrationProvider.notifier).updateStep1(
                             firstName: _nameController.text,
                             lastName: _surnameController.text,
                             phone: phone,
-                            email: hasEmail ? emailTrimmed : null,
+                            email: otpResult.email,
                             password: _passwordController.text,
-                            otpChannel: channel,
+                            otpChannel: otpResult.channel,
                           );
                           ref.read(registerOtpVerificationProvider.notifier).state =
                               RegisterOtpVerificationState(
-                            channel: channel,
-                            destination: destination,
+                            channel: otpResult.channel,
+                            destination: otpResult.destination,
                           );
                           if (!mounted) return;
                           context.push(AppRoutes.registerOtpVerify);
@@ -345,7 +441,9 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(userFriendlyError(l10n, e, logContext: 'Create account')),
+                                content: Text(
+                                  userFriendlyError(l10n, e, logContext: 'Create account'),
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );
