@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
+import 'package:shifa_patient_app_v1/features/notifications/utils/notification_localization.dart';
 import 'package:shifa_patient_app_v1/core/services/push_notification_web_stub.dart'
     if (dart.library.html) 'package:shifa_patient_app_v1/core/services/push_notification_web.dart'
     as web_push;
@@ -158,17 +161,36 @@ class PushNotificationService {
     if (notificationId != null && _readNotificationIds.contains(notificationId)) {
       return;
     }
-    await _showLocalNotification(
-      title: message.notification?.title ?? 'New Notification',
-      body: message.notification?.body ?? '',
+    final l10n = await _loadLocalizations();
+    final localized = NotificationLocalization.localizedPushText(
       data: data,
+      l10n: l10n,
+      fallbackTitle: message.notification?.title,
+      fallbackBody: message.notification?.body,
     );
+    await _showLocalNotification(
+      title: localized.title,
+      body: localized.body,
+      data: data,
+      l10n: l10n,
+    );
+  }
+
+  Future<AppLocalizations> _loadLocalizations() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString('app_language') ?? 'en';
+      return AppLocalizations.forLanguageCode(code);
+    } catch (_) {
+      return AppLocalizations.forLanguageCode('en');
+    }
   }
 
   Future<void> _showLocalNotification({
     required String title,
     required String body,
     Map<String, dynamic>? data,
+    AppLocalizations? l10n,
   }) async {
     if (kIsWeb) {
       final nid = data != null ? _notificationIdFromPayload(data) : null;
@@ -190,10 +212,11 @@ class PushNotificationService {
       return;
     }
 
-    const androidDetails = AndroidNotificationDetails(
+    final resolvedL10n = l10n ?? await _loadLocalizations();
+    final androidDetails = AndroidNotificationDetails(
       'shifa_patient_channel',
-      'Shifa Patient Notifications',
-      channelDescription: 'Notifications for messages, appointments, and tasks',
+      resolvedL10n.notificationChannelName,
+      channelDescription: resolvedL10n.notificationChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
@@ -203,7 +226,7 @@ class PushNotificationService {
       presentBadge: true,
       presentSound: true,
     );
-    const notificationDetails = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    final notificationDetails = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     final payload = (data != null && data.isNotEmpty) ? jsonEncode(data) : null;
     var id = 0;

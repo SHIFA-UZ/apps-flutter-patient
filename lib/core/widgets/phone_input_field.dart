@@ -25,10 +25,10 @@ class PhoneInputField extends StatefulWidget {
   final bool autofocus;
 
   @override
-  State<PhoneInputField> createState() => _PhoneInputFieldState();
+  State<PhoneInputField> createState() => PhoneInputFieldState();
 }
 
-class _PhoneInputFieldState extends State<PhoneInputField> {
+class PhoneInputFieldState extends State<PhoneInputField> {
   late CountryCode _countryCode;
   late TextEditingController _numberController;
 
@@ -112,14 +112,16 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     return map[dialCode] ?? 'UZ';
   }
 
-  String get _fullPhone {
+  /// Current E.164 phone (e.g. +998901234567). Prefer reading this at submit time
+  /// instead of relying only on [PhoneInputField.onChanged].
+  String get fullPhone {
     final digits = _numberController.text.replaceAll(RegExp(r'\D'), '');
     final dial = _countryCode.dialCode ?? '+998';
     return '$dial$digits';
   }
 
   void _notifyChanged() {
-    widget.onChanged?.call(_fullPhone);
+    widget.onChanged?.call(fullPhone);
   }
 
   @override
@@ -178,7 +180,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
             ),
             validator: widget.validator != null
                 ? (value) {
-                    final full = _fullPhone;
+                    final full = fullPhone;
                     final digitsOnly = full.replaceAll(RegExp(r'\D'), '');
                     final dialCodeOnly = (_countryCode.dialCode ?? '').replaceAll(RegExp(r'\D'), '');
                     final nationalLength = digitsOnly.length - dialCodeOnly.length;

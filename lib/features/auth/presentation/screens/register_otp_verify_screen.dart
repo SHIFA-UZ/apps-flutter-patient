@@ -33,6 +33,16 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
   void initState() {
     super.initState();
     _startResendCountdown();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureRegistrationState());
+  }
+
+  void _ensureRegistrationState() {
+    if (!mounted) return;
+    final otpState = ref.read(registerOtpVerificationProvider);
+    final reg = ref.read(registrationProvider);
+    if (otpState == null || !reg.canRegister) {
+      context.go(AppRoutes.createAccount);
+    }
   }
 
   void _startResendCountdown() {
@@ -197,17 +207,8 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
     final otpState = ref.watch(registerOtpVerificationProvider);
     final reg = ref.watch(registrationProvider);
     if (otpState == null || !reg.canRegister) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(l10n.translate('error')),
-            ],
-          ),
-        ),
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
     final isEmail = otpState.channel == RegistrationOtpChannel.email;

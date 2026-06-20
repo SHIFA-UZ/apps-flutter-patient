@@ -182,6 +182,18 @@ class _SummaryBody extends StatelessWidget {
           const SizedBox(height: 16),
         ],
         Text(l10n.treatmentPlanStatusLine(status), style: theme.textTheme.titleMedium),
+        if (((payload['linesTotalCount'] as num?)?.toInt() ?? 0) > 0) ...[
+          const SizedBox(height: 8),
+          Chip(
+            label: Text(
+              l10n.treatmentPlanProgressLine(
+                (payload['linesCompletedCount'] as num?)?.toInt() ?? 0,
+                (payload['linesTotalCount'] as num?)?.toInt() ?? 0,
+              ),
+            ),
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
         if (planPaymentStatus.isNotEmpty) ...[
           const SizedBox(height: 6),
           Text(

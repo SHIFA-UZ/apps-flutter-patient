@@ -20,6 +20,7 @@ class CreateAccountScreen extends ConsumerStatefulWidget {
 
 class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _phoneFieldKey = GlobalKey<PhoneInputFieldState>();
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -61,10 +62,12 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
   /// Returns a phone string suitable for the API when the user entered a full number; otherwise null.
   String? _effectivePhone() {
-    final digits = _phoneValue.replaceAll(RegExp(r'\D'), '');
+    final raw = _phoneFieldKey.currentState?.fullPhone ?? _phoneValue;
+    final normalized = normalizePhoneForSms(raw);
+    if (normalized.isEmpty) return null;
+    final digits = normalized.replaceAll(RegExp(r'\D'), '');
     if (digits.length < 10) return null;
-    final trimmed = _phoneValue.trim();
-    return trimmed.isEmpty ? null : trimmed;
+    return normalized;
   }
 
   bool _isUzbekPhone(String? phone) {
@@ -126,6 +129,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               ),
               const SizedBox(height: 16),
               PhoneInputField(
+                key: _phoneFieldKey,
                 labelText: l10n.phoneNumber,
                 onChanged: (fullPhone) => setState(() => _phoneValue = fullPhone),
                 validator: (value) {
@@ -231,13 +235,35 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                     ? null
                     : () async {
                         if (!_formKey.currentState!.validate()) return;
+                        final l10n = AppLocalizations.of(context)!;
                         setState(() => _isCheckingDoctor = true);
                         try {
                           final repo = ref.read(authRepositoryProvider);
                           final emailTrimmed = _emailController.text.trim();
+                          final phone = _effectivePhone();
+                          final hasEmail = emailTrimmed.isNotEmpty;
+                          if (!hasEmail && phone == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.translate('phoneOrEmailRequired')),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+                          if (!hasEmail && !_isUzbekPhone(phone)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.translate('emailRequiredForForeignPhone')),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
                           final result = await repo.checkIdentifier(
-                            phone: _effectivePhone(),
-                            email: emailTrimmed,
+                            phone: phone,
+                            email: hasEmail ? emailTrimmed : null,
                           );
                           if (!mounted) return;
                           if (result.isPatient) {
@@ -279,32 +305,12 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             );
                             if (yes == true && mounted) {
                               context.push(AppRoutes.confirmDoctorToPatient, extra: {
-                                'phone': _effectivePhone(),
-                                'email': emailTrimmed,
+                                'phone': phone,
+                                'email': emailTrimmed.isEmpty ? null : emailTrimmed,
                                 'firstName': result.firstName ?? '',
                                 'lastName': result.lastName ?? '',
                               });
                             }
-                            return;
-                          }
-                          final phone = _effectivePhone();
-                          final hasEmail = emailTrimmed.isNotEmpty;
-                          if (!hasEmail && phone == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(l10n.translate('phoneOrEmailRequired')),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-                          if (!hasEmail && !_isUzbekPhone(phone)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(l10n.translate('emailRequiredForForeignPhone')),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
                             return;
                           }
 
@@ -333,12 +339,13 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             channel: channel,
                             destination: destination,
                           );
-                          if (mounted) context.push(AppRoutes.registerOtpVerify);
+                          if (!mounted) return;
+                          context.push(AppRoutes.registerOtpVerify);
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(translateError(l10n, e.toString())),
+                                content: Text(userFriendlyError(l10n, e, logContext: 'Create account')),
                                 backgroundColor: Colors.red,
                               ),
                             );

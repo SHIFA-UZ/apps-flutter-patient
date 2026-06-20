@@ -325,6 +325,7 @@ class AppLocalizations {
       'treatmentPlanItemDue': 'Due {{date}}',
       'treatmentPlanQuantityShort': 'Qty {{n}}',
       'treatmentPlanDiscountLine': 'Discount: {{amount}}',
+      'treatmentPlanProgressLine': '{{done}} of {{total}} planned items completed',
       'notificationInstallmentDueSoonTitle': 'Installment due soon',
       'notificationInstallmentDueSoonMessage':
           'A treatment plan installment is due in a few days. Open to view details.',
@@ -544,6 +545,29 @@ class AppLocalizations {
       'taskReminderTitle': 'Task reminder',
       'taskAssignedTitle': 'Task assigned',
       'taskCancelledTitle': 'Task cancelled',
+      'taskCompletedTitle': 'Task completed',
+      'taskReminderMessage': 'You have a task check-in scheduled. Open the app when you are ready.',
+      'taskAssignedMessage': 'Your doctor assigned you a new task. Tap to view details.',
+      'taskCancelledMessage': 'A task assigned to you was cancelled.',
+      'taskCompletedMessage': 'Your task check-in was recorded successfully.',
+      'chatNewMessageMessage': 'You have a new message from your care team.',
+      'prophylaxisReminderTitle': 'Time for a visit',
+      'prophylaxisReminderMessage':
+          'It has been a while since your last visit. Please book an appointment with your clinic.',
+      'treatmentPlanPaymentReminderTitle': 'Payment reminder',
+      'treatmentPlanPaymentReminderMessage':
+          'You have an outstanding balance on your treatment plan. Please arrange payment at the clinic.',
+      'treatmentPlanUpdatedTitle': 'Treatment plan updated',
+      'treatmentPlanUpdatedMessage':
+          'Your treatment plan was updated. Open it to review the latest details.',
+      'newDocumentTitle': 'New document',
+      'newDocumentMessage': 'A new document was added to your records. Tap to view it.',
+      'documentAccessApprovedTitle': 'Document access approved',
+      'documentAccessApprovedMessage': 'Your document access request was approved.',
+      'documentAccessRejectedTitle': 'Document access declined',
+      'documentAccessRejectedMessage': 'Your document access request was declined.',
+      'defaultNotificationTitle': 'Notification',
+      'pushNewNotification': 'New notification',
 
       // Status
       'confirmed': 'Confirmed',
@@ -883,6 +907,13 @@ class AppLocalizations {
       'errorLoginFailed': 'Login failed',
       'errorNetworkError': 'Network error: {{type}}',
       'errorFailedToSendEmailCode': 'Failed to send email code',
+      'errorFailedToSendSmsCode': 'Failed to send SMS code',
+      'errorSmsOnlyForUzbekPhone':
+          'SMS verification is only available for Uzbek phone numbers. Please use email.',
+      'errorCouldNotVerifyAccountDetails': 'Could not verify account details. Please try again.',
+      'errorConnectionTimedOut': 'Connection timed out. Check your internet and try again.',
+      'errorNetworkConnection':
+          'Network error. Check your internet connection and try again.',
       'errorFailedToCreatePatientAccount': 'Failed to create patient account',
       'errorRegistrationFailed': 'Registration failed',
       'errorFailedToResetPassword': 'Failed to reset password',
@@ -1125,6 +1156,7 @@ class AppLocalizations {
       'treatmentPlanItemDue': 'Fällig {{date}}',
       'treatmentPlanQuantityShort': 'Menge {{n}}',
       'treatmentPlanDiscountLine': 'Rabatt: {{amount}}',
+      'treatmentPlanProgressLine': '{{done}} von {{total}} geplanten Positionen erledigt',
       'notificationInstallmentDueSoonTitle': 'Rate bald fällig',
       'notificationInstallmentDueSoonMessage':
           'Eine Rate Ihres Behandlungsplans ist in wenigen Tagen fällig. Öffnen Sie die Details.',
@@ -1312,6 +1344,43 @@ class AppLocalizations {
       'taskReminderTitle': 'Aufgaben-Erinnerung',
       'taskAssignedTitle': 'Aufgabe zugewiesen',
       'taskCancelledTitle': 'Aufgabe storniert',
+      'taskCompletedTitle': 'Aufgabe abgeschlossen',
+      'taskReminderMessage':
+          'Sie haben eine geplante Aufgaben-Check-in. Öffnen Sie die App, wenn Sie bereit sind.',
+      'taskAssignedMessage':
+          'Ihr Arzt hat Ihnen eine neue Aufgabe zugewiesen. Tippen Sie für Details.',
+      'taskCancelledMessage': 'Eine Ihnen zugewiesene Aufgabe wurde storniert.',
+      'taskCompletedMessage': 'Ihr Aufgaben-Check-in wurde erfolgreich erfasst.',
+      'chatNewMessageMessage': 'Sie haben eine neue Nachricht von Ihrem Behandlungsteam.',
+      'prophylaxisReminderTitle': 'Zeit für einen Besuch',
+      'prophylaxisReminderMessage':
+          'Seit Ihrem letzten Besuch ist einige Zeit vergangen. Bitte vereinbaren Sie einen Termin.',
+      'treatmentPlanPaymentReminderTitle': 'Zahlungserinnerung',
+      'treatmentPlanPaymentReminderMessage':
+          'Sie haben einen offenen Betrag auf Ihrem Behandlungsplan. Bitte klären Sie die Zahlung in der Praxis.',
+      'treatmentPlanUpdatedTitle': 'Behandlungsplan aktualisiert',
+      'treatmentPlanUpdatedMessage':
+          'Ihr Behandlungsplan wurde aktualisiert. Öffnen Sie ihn für die neuesten Details.',
+      'newDocumentTitle': 'Neues Dokument',
+      'newDocumentMessage': 'Ein neues Dokument wurde Ihrer Akte hinzugefügt. Tippen Sie zum Ansehen.',
+      'documentAccessApprovedTitle': 'Dokumentenzugriff genehmigt',
+      'documentAccessApprovedMessage': 'Ihre Anfrage für Dokumentenzugriff wurde genehmigt.',
+      'documentAccessRejectedTitle': 'Dokumentenzugriff abgelehnt',
+      'documentAccessRejectedMessage': 'Ihre Anfrage für Dokumentenzugriff wurde abgelehnt.',
+      'defaultNotificationTitle': 'Benachrichtigung',
+      'pushNewNotification': 'Neue Benachrichtigung',
+      'newAppointmentScheduledTitle': 'Neuer Termin geplant',
+      'appointmentCancelledTitle': 'Termin abgesagt',
+      'appointmentReminderTitle': 'Terminerinnerung',
+      'appointmentChangedTitle': 'Termin geändert',
+      'notificationMessageScheduled':
+          'Ihr Arzt hat einen Termin für Sie geplant. Details finden Sie unter Termine.',
+      'notificationMessageCancelled':
+          'Ihr Termin wurde abgesagt. Bitte vereinbaren Sie bei Bedarf einen neuen Termin.',
+      'notificationMessageReminder':
+          'Sie haben einen bevorstehenden Termin. Bitte seien Sie pünktlich.',
+      'notificationMessageChanged':
+          'Ihr Termin wurde verschoben. Prüfen Sie Termine für das neue Datum und die Uhrzeit.',
 
       // Backend / API errors (Auth, Security, Video, fallbacks)
       'errorNoAccountFound': 'Konto nicht gefunden',
@@ -1376,6 +1445,15 @@ class AppLocalizations {
       'errorLoginFailed': 'Anmeldung fehlgeschlagen',
       'errorFailedToSendEmailCode':
           'Senden des E-Mail-Codes fehlgeschlagen',
+      'errorFailedToSendSmsCode': 'SMS-Code konnte nicht gesendet werden',
+      'errorSmsOnlyForUzbekPhone':
+          'SMS-Verifizierung ist nur für usbekische Telefonnummern verfügbar. Bitte E-Mail verwenden.',
+      'errorCouldNotVerifyAccountDetails':
+          'Kontodaten konnten nicht geprüft werden. Bitte erneut versuchen.',
+      'errorConnectionTimedOut':
+          'Zeitüberschreitung. Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
+      'errorNetworkConnection':
+          'Netzwerkfehler. Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
       'errorNoTokenReceived': 'Kein Token erhalten',
       'errorFailedToCreatePatientAccount':
           'Patientenkonto konnte nicht erstellt werden',
@@ -1714,6 +1792,7 @@ class AppLocalizations {
       'treatmentPlanItemDue': 'Muddati {{date}}',
       'treatmentPlanQuantityShort': 'Soni {{n}}',
       'treatmentPlanDiscountLine': 'Chegirma: {{amount}}',
+      'treatmentPlanProgressLine': '{{done}}/{{total}} reja bandi bajarildi',
       'notificationInstallmentDueSoonTitle': 'To\'lov muddati yaqinlashmoqda',
       'notificationInstallmentDueSoonMessage':
           'Davolash rejasi bo\'yicha to\'lov muddati bir necha kun ichida. Batafsilni oching.',
@@ -1862,6 +1941,31 @@ class AppLocalizations {
       'taskReminderTitle': 'Vazifa eslatmasi',
       'taskAssignedTitle': 'Vazifa biriktirildi',
       'taskCancelledTitle': 'Vazifa bekor qilindi',
+      'taskCompletedTitle': 'Vazifa bajarildi',
+      'taskReminderMessage':
+          'Rejalashtirilgan vazifa tekshiruvi bor. Tayyor bo\'lgach, ilovani oching.',
+      'taskAssignedMessage':
+          'Shifokoringiz sizga yangi vazifa biriktirdi. Tafsilotlar uchun bosing.',
+      'taskCancelledMessage': 'Sizga biriktirilgan vazifa bekor qilindi.',
+      'taskCompletedMessage': 'Vazifa tekshiruvingiz muvaffaqiyatli qayd etildi.',
+      'chatNewMessageMessage': 'Parvarish jamoangizdan yangi xabar bor.',
+      'prophylaxisReminderTitle': 'Tashrif vaqti keldi',
+      'prophylaxisReminderMessage':
+          'Oxirgi tashrifingizdan beri vaqt o\'tdi. Iltimos, klinikada qabulga yoziling.',
+      'treatmentPlanPaymentReminderTitle': 'To\'lov eslatmasi',
+      'treatmentPlanPaymentReminderMessage':
+          'Davolash rejangizda to\'lanmagan qoldiq bor. Iltimos, klinikada to\'lovni amalga oshiring.',
+      'treatmentPlanUpdatedTitle': 'Davolash rejasi yangilandi',
+      'treatmentPlanUpdatedMessage':
+          'Davolash rejangiz yangilandi. So\'nggi tafsilotlarni ko\'rish uchun oching.',
+      'newDocumentTitle': 'Yangi hujjat',
+      'newDocumentMessage': 'Yozuvlaringizga yangi hujjat qo\'shildi. Ko\'rish uchun bosing.',
+      'documentAccessApprovedTitle': 'Hujjatga kirish tasdiqlandi',
+      'documentAccessApprovedMessage': 'Hujjatga kirish so\'rovingiz tasdiqlandi.',
+      'documentAccessRejectedTitle': 'Hujjatga kirish rad etildi',
+      'documentAccessRejectedMessage': 'Hujjatga kirish so\'rovingiz rad etildi.',
+      'defaultNotificationTitle': 'Bildirishnoma',
+      'pushNewNotification': 'Yangi bildirishnoma',
 
       // App Lock
       'appLock': 'Ilova qulfi',
@@ -2280,6 +2384,15 @@ class AppLocalizations {
       'errorLoginFailed': 'Kirish muvaffaqiyatsiz',
       'errorNetworkError': 'Tarmoq xatosi: {{type}}',
       'errorFailedToSendEmailCode': 'Email kodi yuborilmadi',
+      'errorFailedToSendSmsCode': 'SMS kodi yuborilmadi',
+      'errorSmsOnlyForUzbekPhone':
+          'SMS tasdiqlash faqat O\'zbekiston telefon raqamlari uchun mavjud. Iltimos, email ishlating.',
+      'errorCouldNotVerifyAccountDetails':
+          'Hisob ma\'lumotlarini tekshirib bo\'lmadi. Iltimos, qayta urinib ko\'ring.',
+      'errorConnectionTimedOut':
+          'Ulanish vaqti tugadi. Internetni tekshirib, qayta urinib ko\'ring.',
+      'errorNetworkConnection':
+          'Tarmoq xatosi. Internet aloqasini tekshirib, qayta urinib ko\'ring.',
       'errorFailedToCreatePatientAccount': 'Bemor hisobi yaratilmadi',
       'errorRegistrationFailed': 'Ro\'yxatdan o\'tish muvaffaqiyatsiz',
       'errorFailedToResetPassword': 'Parolni tiklash muvaffaqiyatsiz',
@@ -2551,6 +2664,7 @@ class AppLocalizations {
       'treatmentPlanItemDue': 'Срок {{date}}',
       'treatmentPlanQuantityShort': 'Кол-во {{n}}',
       'treatmentPlanDiscountLine': 'Скидка: {{amount}}',
+      'treatmentPlanProgressLine': '{{done}} из {{total}} пунктов плана выполнено',
       'notificationInstallmentDueSoonTitle': 'Скоро платёж по плану',
       'notificationInstallmentDueSoonMessage':
           'Через несколько дней срок платежа по плану лечения. Откройте для подробностей.',
@@ -2767,6 +2881,31 @@ class AppLocalizations {
       'taskReminderTitle': 'Напоминание о задаче',
       'taskAssignedTitle': 'Назначена задача',
       'taskCancelledTitle': 'Задача отменена',
+      'taskCompletedTitle': 'Задача выполнена',
+      'taskReminderMessage':
+          'У вас запланирована проверка задачи. Откройте приложение, когда будете готовы.',
+      'taskAssignedMessage':
+          'Врач назначил вам новую задачу. Нажмите, чтобы посмотреть детали.',
+      'taskCancelledMessage': 'Назначенная вам задача была отменена.',
+      'taskCompletedMessage': 'Проверка задачи успешно зафиксирована.',
+      'chatNewMessageMessage': 'У вас новое сообщение от команды лечения.',
+      'prophylaxisReminderTitle': 'Пора на приём',
+      'prophylaxisReminderMessage':
+          'С последнего визита прошло много времени. Пожалуйста, запишитесь на приём в клинику.',
+      'treatmentPlanPaymentReminderTitle': 'Напоминание об оплате',
+      'treatmentPlanPaymentReminderMessage':
+          'У вас есть неоплаченный остаток по плану лечения. Пожалуйста, оплатите в клинике.',
+      'treatmentPlanUpdatedTitle': 'План лечения обновлён',
+      'treatmentPlanUpdatedMessage':
+          'Ваш план лечения обновлён. Откройте его, чтобы посмотреть актуальные детали.',
+      'newDocumentTitle': 'Новый документ',
+      'newDocumentMessage': 'В вашу медкарту добавлен новый документ. Нажмите, чтобы открыть.',
+      'documentAccessApprovedTitle': 'Доступ к документу одобрен',
+      'documentAccessApprovedMessage': 'Ваш запрос на доступ к документу одобрен.',
+      'documentAccessRejectedTitle': 'Доступ к документу отклонён',
+      'documentAccessRejectedMessage': 'Ваш запрос на доступ к документу отклонён.',
+      'defaultNotificationTitle': 'Уведомление',
+      'pushNewNotification': 'Новое уведомление',
       'approve': 'Разрешить',
       'reject': 'Отклонить',
       'documentAccessApproved': 'Доступ разрешён',
@@ -2866,6 +3005,15 @@ class AppLocalizations {
       'errorLoginFailed': 'Вход не выполнен',
       'errorNetworkError': 'Ошибка сети: {{type}}',
       'errorFailedToSendEmailCode': 'Не удалось отправить код email',
+      'errorFailedToSendSmsCode': 'Не удалось отправить SMS-код',
+      'errorSmsOnlyForUzbekPhone':
+          'SMS-подтверждение доступно только для узбекских номеров. Используйте email.',
+      'errorCouldNotVerifyAccountDetails':
+          'Не удалось проверить данные аккаунта. Попробуйте снова.',
+      'errorConnectionTimedOut':
+          'Время ожидания истекло. Проверьте интернет и попробуйте снова.',
+      'errorNetworkConnection':
+          'Ошибка сети. Проверьте подключение к интернету и попробуйте снова.',
       'errorFailedToCreatePatientAccount':
           'Не удалось создать аккаунт пациента',
       'errorRegistrationFailed': 'Регистрация не выполнена',
@@ -2908,6 +3056,10 @@ class AppLocalizations {
           'Уведомления об изменениях приёмов',
     },
   };
+
+  static AppLocalizations forLanguageCode(String languageCode) {
+    return AppLocalizations(Locale(languageCode));
+  }
 
   String translate(String key) {
     return _localizedValues[locale.languageCode]?[key] ??
@@ -3106,6 +3258,9 @@ class AppLocalizations {
       translate('treatmentPlanQuantityShort').replaceAll('{{n}}', '$n');
   String treatmentPlanDiscountLine(String amount) =>
       translate('treatmentPlanDiscountLine').replaceAll('{{amount}}', amount);
+  String treatmentPlanProgressLine(int done, int total) => translate(
+        'treatmentPlanProgressLine',
+      ).replaceAll('{{done}}', '$done').replaceAll('{{total}}', '$total');
   String get notificationInstallmentDueSoonTitle =>
       translate('notificationInstallmentDueSoonTitle');
   String get notificationInstallmentDueSoonMessage =>

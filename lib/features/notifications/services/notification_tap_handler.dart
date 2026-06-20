@@ -73,9 +73,15 @@ class NotificationTapHandler {
       case 'installment_schedule_created':
         final planId = _optionalInt(data['treatmentPlanId']) ?? _optionalInt(data['treatment_plan_id']);
         if (planId != null) return '${AppRoutes.bookings}/treatment-plan/$planId';
+        if (typeRaw == 'treatment_plan_payment_reminder') return AppRoutes.bookings;
         break;
       case 'prophylaxis_reminder':
         return AppRoutes.bookings;
+      case 'document_access_approved':
+      case 'document_access_rejected':
+        if (id != null && id.isNotEmpty) return '${AppRoutes.documents}/$id';
+        if (documentId != null && documentId.isNotEmpty) return '${AppRoutes.documents}/$documentId';
+        return AppRoutes.documents;
       case 'new_document':
       case 'document':
         if (id != null && id.isNotEmpty) return '${AppRoutes.documents}/$id';
@@ -87,8 +93,9 @@ class NotificationTapHandler {
       case 'task_assigned':
       case 'task_reminder':
       case 'task_cancelled':
-      case 'task_completed':
         if (taskId != null) return '${AppRoutes.tasks}/$taskId/check-in';
+        return AppRoutes.tasks;
+      case 'task_completed':
         return AppRoutes.tasks;
     }
 
@@ -221,16 +228,29 @@ class NotificationTapHandler {
     final taskId = notification.taskId;
 
     if (notification.isDocumentAccessRequest) return null;
+    if (type == 'DOCUMENT_ACCESS_APPROVED' || type == 'DOCUMENT_ACCESS_REJECTED') {
+      if (documentId != null && documentId.isNotEmpty) {
+        return '${AppRoutes.documents}/$documentId';
+      }
+      return AppRoutes.documents;
+    }
     if (_routesToTreatmentPlanSummary(type) && notification.treatmentPlanId != null) {
       return '${AppRoutes.bookings}/treatment-plan/${notification.treatmentPlanId}';
     }
     if (type == 'PROPHYLAXIS_REMINDER') {
       return AppRoutes.bookings;
     }
+    if (type == 'TREATMENT_PLAN_PAYMENT_REMINDER') {
+      if (notification.treatmentPlanId != null) {
+        return '${AppRoutes.bookings}/treatment-plan/${notification.treatmentPlanId}';
+      }
+      return AppRoutes.bookings;
+    }
     if (type == 'SIGNATURE_REQUESTED' && notification.patientFormId != null) {
       return '${AppRoutes.bookings}/sign-form/${notification.patientFormId}';
     }
     if (_isTaskType(type)) {
+      if (type == 'TASK_COMPLETED') return AppRoutes.tasks;
       if (taskId != null) return '${AppRoutes.tasks}/$taskId/check-in';
       return AppRoutes.tasks;
     }

@@ -184,6 +184,18 @@ class NotificationDetailsSheet extends StatelessWidget {
     if (u.contains('TASK')) {
       return l10n.translate('notificationActionOpenTask');
     }
+    if (u == 'PROPHYLAXIS_REMINDER') {
+      return l10n.translate('notificationActionOpenBookings');
+    }
+    if (u == 'DOCUMENT_ACCESS_APPROVED' || u == 'DOCUMENT_ACCESS_REJECTED') {
+      return l10n.translate('notificationActionViewDocument');
+    }
+    if (u == 'TREATMENT_PLAN_PAYMENT_REMINDER') {
+      return l10n.translate('notificationActionOpenTreatmentPlan');
+    }
+    if (u == 'TASK_COMPLETED') {
+      return l10n.translate('notificationActionOpenTask');
+    }
     if (u == 'AI_VISIT_SUMMARY_READY' || u == 'AI_SCRIBE_READY') {
       return l10n.translate('notificationActionViewSummary');
     }

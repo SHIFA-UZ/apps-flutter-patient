@@ -5,6 +5,7 @@ import 'package:shifa_patient_app_v1/core/network/api_providers.dart';
 import 'package:shifa_patient_app_v1/core/utils/app_logger.dart';
 import 'package:shifa_patient_app_v1/core/utils/auth_error_sanitizer.dart';
 import 'package:shifa_patient_app_v1/core/utils/storage_service.dart';
+import 'package:shifa_patient_app_v1/core/widgets/phone_input_field.dart';
 
 class LoginResult {
   final String token;
@@ -113,7 +114,12 @@ class AuthRepository {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return CheckIdentifierResult(type: 'none');
-      rethrow;
+      final errorMessage = AuthErrorSanitizer.sanitize(
+        statusCode: e.response?.statusCode,
+        data: e.response?.data ?? e.message,
+        defaultMessage: _networkOrServerMessage(e, 'Could not verify account details'),
+      );
+      throw Exception(errorMessage);
     }
   }
 
@@ -152,23 +158,63 @@ class AuthRepository {
 
   /// Send 6-digit OTP to email. Backend stores it for verification.
   Future<void> sendEmailOtp(String email) async {
-    final response = await _apiClient.post(
-      '/auth/send-email-otp',
-      data: {'email': email.trim()},
-    );
-    if (response.statusCode != 200) throw Exception('Failed to send email code');
+    try {
+      final response = await _apiClient.post(
+        '/auth/send-email-otp',
+        data: {'email': email.trim()},
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Could not send verification email. Please try again later.');
+      }
+    } on DioException catch (e) {
+      final errorMessage = AuthErrorSanitizer.sanitize(
+        statusCode: e.response?.statusCode,
+        data: e.response?.data ?? e.message,
+        defaultMessage: _networkOrServerMessage(
+          e,
+          'Could not send verification email. Please try again later.',
+        ),
+      );
+      throw Exception(errorMessage);
+    }
   }
 
   /// Send 6-digit OTP via SMS to an Uzbek mobile number (+998).
   Future<void> sendSmsOtp(String phone, {String? purpose}) async {
-    final response = await _apiClient.post(
-      '/auth/send-sms-otp',
-      data: {
-        'phone': phone.trim(),
-        if (purpose != null && purpose.trim().isNotEmpty) 'purpose': purpose.trim(),
-      },
-    );
-    if (response.statusCode != 200) throw Exception('Failed to send SMS code');
+    try {
+      final response = await _apiClient.post(
+        '/auth/send-sms-otp',
+        data: {
+          'phone': normalizePhoneForSms(phone),
+          if (purpose != null && purpose.trim().isNotEmpty) 'purpose': purpose.trim(),
+        },
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Could not send verification SMS. Please try again later.');
+      }
+    } on DioException catch (e) {
+      final errorMessage = AuthErrorSanitizer.sanitize(
+        statusCode: e.response?.statusCode,
+        data: e.response?.data ?? e.message,
+        defaultMessage: _networkOrServerMessage(
+          e,
+          'Could not send verification SMS. Please try again later.',
+        ),
+      );
+      throw Exception(errorMessage);
+    }
+  }
+
+  static String _networkOrServerMessage(DioException e, String serverDefault) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return 'Connection timed out. Check your internet and try again.';
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Network error. Check your internet connection and try again.';
+    }
+    return serverDefault;
   }
 
   /// Create a patient account for an existing doctor. When email is provided, emailOtp must be set (from sendEmailOtp + user entry).
