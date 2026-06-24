@@ -70,7 +70,7 @@ platform :ios do
       skip_codesigning: false,
       build_path: "./build",
       archive_path: "./build/Runner.xcarchive",
-      verbose: true,
+      verbose: false,
       buildlog_path: "./build/logs"
     )
 

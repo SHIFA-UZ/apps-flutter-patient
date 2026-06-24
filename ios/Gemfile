@@ -1,0 +1,7 @@
+source "https://rubygems.org"
+
+# Pinned to match the versions previously installed via `gem install` in CI.
+# ruby/setup-ruby's bundler-cache restores these from cache (~seconds) instead
+# of recompiling native gems on every macOS run (each billed at 10x).
+gem "cocoapods", "1.16.2"
+gem "fastlane", "2.228.0"
