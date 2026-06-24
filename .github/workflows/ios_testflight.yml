@@ -15,13 +15,14 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.35.5'
-  COCOAPODS_VERSION: '1.16.2'
 
 jobs:
   build-and-deploy-ios:
     name: Build and Deploy iOS to TestFlight
     runs-on: macos-latest
-    timeout-minutes: 60
+    # macOS minutes are billed at 10x. A healthy build is ~25-35 min; cap at 40
+    # so a hung run burns 400 billed minutes instead of 600.
+    timeout-minutes: 40
 
     steps:
       #########################
@@ -30,33 +31,11 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.0'
-
-      - name: Check available iOS SDKs
-        id: check_sdks
-        run: |
-          echo "Available iOS SDKs:"
-          xcodebuild -showsdks | grep -i ios
-
-          if xcodebuild -showsdks | grep -q "iphoneos18"; then
-            echo "iOS 18 SDK is available"
-            echo "ios_sdk_available=true" >> $GITHUB_OUTPUT
-          else
-            echo "iOS 18 SDK not found, will install"
-            echo "ios_sdk_available=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Install iOS SDK if missing
-        if: steps.check_sdks.outputs.ios_sdk_available == 'false'
-        run: |
-          sudo xcodebuild -runFirstLaunch
-          xcodebuild -showsdks
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -65,10 +44,8 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Flutter doctor
-        run: |
-          flutter --version
-          flutter doctor -v
+      - name: Flutter version
+        run: flutter --version
 
       - name: Install Flutter dependencies
         run: flutter pub get
@@ -92,30 +69,25 @@ jobs:
       # PHASE 4: COCOAPODS
       #########################
 
-      - name: Setup Ruby for CocoaPods
+      - name: Setup Ruby & cache gems (CocoaPods, Fastlane)
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
+          working-directory: ios
           bundler-cache: true
 
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods -v ${{ env.COCOAPODS_VERSION }}
-          pod --version
-
-      - name: Clean CocoaPods cache
-        working-directory: ios
-        run: |
-          rm -rf Pods
-          rm -f Podfile.lock
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-
 
       - name: Install iOS dependencies
         working-directory: ios
         run: |
-          pod install --verbose
-          echo ""
-          echo "Installed pods:"
-          pod list | head -20
+          bundle exec pod install
+          echo "CocoaPods version: $(bundle exec pod --version)"
 
       #########################
       # PHASE 5: VERSIONING
@@ -212,11 +184,6 @@ jobs:
       # PHASE 8: FASTLANE - SIGN, ARCHIVE & UPLOAD
       #########################
 
-      - name: Install Fastlane
-        run: |
-          sudo gem install fastlane -v 2.228.0
-          fastlane --version
-
       - name: Setup App Store Connect API key
         env:
           API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -239,7 +206,7 @@ jobs:
           echo "Running Fastlane beta lane..."
           echo "Version: $VERSION_NUMBER ($BUILD_NUMBER)"
 
-          fastlane beta
+          bundle exec fastlane beta
 
           echo "============================================="
           echo "  Fastlane completed successfully!"
