@@ -26,20 +26,37 @@ jobs:
 
     steps:
       #########################
+      # PHASE 0: DISK SPACE (ubuntu-latest ~14 GB; Flutter+NDK+Gradle fills it)
+      #########################
+
+      - name: Free disk space on runner
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Disk space after cleanup
+        run: df -h
+
+      #########################
       # PHASE 1: CHECKOUT & SETUP
       #########################
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: ${{ env.JAVA_VERSION }}
-          cache: 'gradle'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -47,6 +64,12 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
+
+      - name: Precache Android toolchain only
+        run: flutter precache --android --no-ios --no-web --no-universal --no-macos --no-windows --no-linux
+
+      - name: Disk space before dependencies
+        run: df -h
 
       - name: Install Flutter dependencies
         run: flutter pub get
@@ -144,12 +167,13 @@ jobs:
 
       - name: Tune Gradle for CI runner
         run: |
-          # GitHub-hosted runners have ~7 GB RAM; 8G heap causes swap and very slow builds.
+          # GitHub-hosted runners have ~7 GB RAM; keep heap moderate to avoid swap filling disk.
           cat >> android/gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=1G -XX:ReservedCodeCacheSize=512m -XX:+HeapDumpOnOutOfMemoryError
+          org.gradle.jvmargs=-Xmx3G -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m -XX:+HeapDumpOnOutOfMemoryError
           org.gradle.parallel=true
           org.gradle.caching=true
           org.gradle.daemon=false
+          android.enableJetifier=false
           EOF
 
       - name: Clear stale Android plugin registrant
@@ -176,6 +200,14 @@ jobs:
           fi
           AAB_SIZE=$(du -h "$AAB_PATH" | cut -f1)
           echo "AAB built successfully: $AAB_SIZE"
+
+      - name: Prune Gradle intermediates (keep AAB)
+        if: success()
+        run: |
+          rm -rf build/app/intermediates
+          rm -rf build/.cxx
+          rm -rf android/.gradle
+          df -h
 
       #########################
       # PHASE 7: UPLOAD TO GOOGLE PLAY
