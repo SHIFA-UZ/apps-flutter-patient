@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shifa_patient_app_v1/core/models/profession_model.dart';
+import 'package:shifa_patient_app_v1/core/models/region_catalog.dart';
 
 class AppLocalizations {
   final Locale locale;
@@ -345,16 +347,59 @@ class AppLocalizations {
       // Doctors
       'doctors': 'Doctors',
       'myDoctors': 'My Doctors',
+      'recentDoctors': 'Recent',
+      'findADoctor': 'Find a Doctor',
+      'doctorsCount': '{{count}} verified doctors',
+      'doctorsPageSummary': 'Page {{page}} of {{pages}} · {{count}} doctors',
+      'previousPage': 'Previous page',
+      'nextPage': 'Next page',
       'recommended': 'Recommended',
       'sortBy': 'Sort by',
       'sortByDistance': 'Distance',
       'sortByRating': 'Rating',
       'sortByReviews': 'Reviews',
+      'sortByAvailability': 'Availability',
       'filterBy': 'Filter',
       'filterByRegion': 'Region',
       'filterBySpecialty': 'Specialty',
+      'filterByCountry': 'Country',
+      'filterConsultationType': 'Consultation',
+      'filterAvailability': 'Availability',
+      'filterPrice': 'Price',
+      'filterMinRating': 'Rating',
       'allRegions': 'All regions',
       'allSpecialties': 'All specialties',
+      'allCountries': 'All countries',
+      'allConsultationTypes': 'Any consultation type',
+      'allAvailability': 'Any availability',
+      'allPrices': 'Any price',
+      'allRatings': 'Any rating',
+      'filterOnline': 'Online',
+      'filterNearMe': 'Near me',
+      'filterToday': 'Today',
+      'filterThisWeek': 'This week',
+      'filterTopRated': 'Top rated',
+      'filterVerified': 'Verified',
+      'moreFilters': 'Filters',
+      'applyFilters': 'Apply',
+      'consultationOnline': 'Online',
+      'consultationInPerson': 'Clinic',
+      'consultationBoth': 'Online & clinic',
+      'availabilityToday': 'Today',
+      'availabilityTomorrow': 'Tomorrow',
+      'availabilityThisWeek': 'This week',
+      'fromPrice': 'From {{price}}',
+      'viewProfile': 'View profile',
+      'verifiedDoctor': 'Verified',
+      'noUpcomingAvailability': 'No upcoming slots',
+      'countryGermany': 'Germany',
+      'countryUzbekistan': 'Узбекистан',
+      'countryTurkey': 'Turkey',
+      'countryUae': 'UAE',
+      'priceUnder20': 'Under \$20',
+      'price20to50': '\$20–50',
+      'priceOver50': '\$50+',
+      'searchDoctorsHint': 'Search doctor, clinic or specialty...',
       'gettingYourLocation': 'Getting your location…',
       'usingCurrentLocation': 'Using current location for distance',
       'couldNotGetLocationUsingProfile':
@@ -1187,7 +1232,58 @@ class AppLocalizations {
       // Doctors
       'doctors': 'Ärzte',
       'myDoctors': 'Meine Ärzte',
+      'recentDoctors': 'Zuletzt',
+      'findADoctor': 'Arzt finden',
+      'doctorsCount': '{{count}} verifizierte Ärzte',
+      'doctorsPageSummary': 'Seite {{page}} von {{pages}} · {{count}} Ärzte',
+      'previousPage': 'Vorherige Seite',
+      'nextPage': 'Nächste Seite',
       'recommended': 'Empfohlen',
+      'sortBy': 'Sortieren nach',
+      'sortByDistance': 'Entfernung',
+      'sortByRating': 'Bewertung',
+      'sortByReviews': 'Bewertungen',
+      'sortByAvailability': 'Verfügbarkeit',
+      'filterByRegion': 'Region',
+      'filterBySpecialty': 'Fachgebiet',
+      'filterByCountry': 'Land',
+      'filterConsultationType': 'Konsultation',
+      'filterAvailability': 'Verfügbarkeit',
+      'filterPrice': 'Preis',
+      'filterMinRating': 'Bewertung',
+      'allRegions': 'Alle Regionen',
+      'allSpecialties': 'Alle Fachgebiete',
+      'allCountries': 'Alle Länder',
+      'allConsultationTypes': 'Beliebige Konsultationsart',
+      'allAvailability': 'Beliebige Verfügbarkeit',
+      'allPrices': 'Beliebiger Preis',
+      'allRatings': 'Beliebige Bewertung',
+      'filterOnline': 'Online',
+      'filterNearMe': 'In der Nähe',
+      'filterToday': 'Heute',
+      'filterThisWeek': 'Diese Woche',
+      'filterTopRated': 'Top bewertet',
+      'filterVerified': 'Verifiziert',
+      'moreFilters': 'Filter',
+      'applyFilters': 'Anwenden',
+      'consultationOnline': 'Online',
+      'consultationInPerson': 'Praxis',
+      'consultationBoth': 'Online & Praxis',
+      'availabilityToday': 'Heute',
+      'availabilityTomorrow': 'Morgen',
+      'availabilityThisWeek': 'Diese Woche',
+      'fromPrice': 'Ab {{price}}',
+      'viewProfile': 'Profil ansehen',
+      'verifiedDoctor': 'Verifiziert',
+      'noUpcomingAvailability': 'Keine Termine verfügbar',
+      'countryGermany': 'Deutschland',
+      'countryUzbekistan': 'Usbekistan',
+      'countryTurkey': 'Türkei',
+      'countryUae': 'VAE',
+      'priceUnder20': 'Unter 20 \$',
+      'price20to50': '20–50 \$',
+      'priceOver50': 'Über 50 \$',
+      'searchDoctorsHint': 'Arzt, Klinik oder Fachgebiet suchen...',
       'bookAppointment': 'Termin buchen',
       'reviews': 'Bewertungen',
       'noReviews': 'Noch keine Bewertungen',
@@ -1834,16 +1930,59 @@ class AppLocalizations {
       // Doctors
       'doctors': 'Shifokorlar',
       'myDoctors': 'Mening shifokorlarim',
+      'recentDoctors': 'Yaqinda',
+      'findADoctor': 'Shifokor topish',
+      'doctorsCount': '{{count}} tasdiqlangan shifokor',
+      'doctorsPageSummary': '{{page}}/{{pages}}-sahifa · {{count}} shifokor',
+      'previousPage': 'Oldingi sahifa',
+      'nextPage': 'Keyingi sahifa',
       'recommended': 'Tavsiya etilgan',
       'sortBy': 'Saralash',
       'sortByDistance': 'Masofa',
       'sortByRating': 'Reyting',
       'sortByReviews': 'Sharhlar',
+      'sortByAvailability': 'Mavjudlik',
       'filterBy': 'Filtr',
       'filterByRegion': 'Viloyat',
       'filterBySpecialty': 'Mutaxassislik',
+      'filterByCountry': 'Mamlakat',
+      'filterConsultationType': 'Konsultatsiya',
+      'filterAvailability': 'Mavjudlik',
+      'filterPrice': 'Narx',
+      'filterMinRating': 'Reyting',
       'allRegions': 'Barcha viloyatlar',
       'allSpecialties': 'Barcha mutaxassisliklar',
+      'allCountries': 'Barcha mamlakatlar',
+      'allConsultationTypes': 'Har qanday konsultatsiya',
+      'allAvailability': 'Har qanday mavjudlik',
+      'allPrices': 'Har qanday narx',
+      'allRatings': 'Har qanday reyting',
+      'filterOnline': 'Onlayn',
+      'filterNearMe': 'Yaqinimda',
+      'filterToday': 'Bugun',
+      'filterThisWeek': 'Bu hafta',
+      'filterTopRated': 'Eng yuqori reyting',
+      'filterVerified': 'Tasdiqlangan',
+      'moreFilters': 'Filtrlar',
+      'applyFilters': 'Qo\'llash',
+      'consultationOnline': 'Onlayn',
+      'consultationInPerson': 'Klinika',
+      'consultationBoth': 'Onlayn va klinika',
+      'availabilityToday': 'Bugun',
+      'availabilityTomorrow': 'Ertaga',
+      'availabilityThisWeek': 'Bu hafta',
+      'fromPrice': '{{price}} dan',
+      'viewProfile': 'Profilni ko\'rish',
+      'verifiedDoctor': 'Tasdiqlangan',
+      'noUpcomingAvailability': 'Yaqin vaqt uchun slot yo\'q',
+      'countryGermany': 'Germaniya',
+      'countryUzbekistan': 'O\'zbekiston',
+      'countryTurkey': 'Turkiya',
+      'countryUae': 'BAA',
+      'priceUnder20': '20\$ dan kam',
+      'price20to50': '20–50\$',
+      'priceOver50': '50\$+',
+      'searchDoctorsHint': 'Shifokor, klinika yoki mutaxassislik qidirish...',
       'gettingYourLocation': 'Joylashuvingiz olinmoqda…',
       'usingCurrentLocation': 'Masofa uchun joriy joylashuv ishlatilmoqda',
       'couldNotGetLocationUsingProfile':
@@ -2716,7 +2855,58 @@ class AppLocalizations {
       // Doctors
       'doctors': 'Врачи',
       'myDoctors': 'Мои врачи',
+      'recentDoctors': 'Недавние',
+      'findADoctor': 'Найти врача',
+      'doctorsCount': '{{count}} проверенных врачей',
+      'doctorsPageSummary': 'Стр. {{page}} из {{pages}} · {{count}} врачей',
+      'previousPage': 'Предыдущая страница',
+      'nextPage': 'Следующая страница',
       'recommended': 'Рекомендуемые',
+      'sortBy': 'Сортировать',
+      'sortByDistance': 'Расстояние',
+      'sortByRating': 'Рейтинг',
+      'sortByReviews': 'Отзывы',
+      'sortByAvailability': 'Доступность',
+      'filterByRegion': 'Регион',
+      'filterBySpecialty': 'Специальность',
+      'filterByCountry': 'Страна',
+      'filterConsultationType': 'Консультация',
+      'filterAvailability': 'Доступность',
+      'filterPrice': 'Цена',
+      'filterMinRating': 'Рейтинг',
+      'allRegions': 'Все регионы',
+      'allSpecialties': 'Все специальности',
+      'allCountries': 'Все страны',
+      'allConsultationTypes': 'Любой тип консультации',
+      'allAvailability': 'Любая доступность',
+      'allPrices': 'Любая цена',
+      'allRatings': 'Любой рейтинг',
+      'filterOnline': 'Онлайн',
+      'filterNearMe': 'Рядом',
+      'filterToday': 'Сегодня',
+      'filterThisWeek': 'На этой неделе',
+      'filterTopRated': 'Лучшие',
+      'filterVerified': 'Проверенные',
+      'moreFilters': 'Фильтры',
+      'applyFilters': 'Применить',
+      'consultationOnline': 'Онлайн',
+      'consultationInPerson': 'Клиника',
+      'consultationBoth': 'Онлайн и клиника',
+      'availabilityToday': 'Сегодня',
+      'availabilityTomorrow': 'Завтра',
+      'availabilityThisWeek': 'На этой неделе',
+      'fromPrice': 'От {{price}}',
+      'viewProfile': 'Смотреть профиль',
+      'verifiedDoctor': 'Проверен',
+      'noUpcomingAvailability': 'Нет ближайших слотов',
+      'countryGermany': 'Германия',
+      'countryUzbekistan': 'Узбекистан',
+      'countryTurkey': 'Турция',
+      'countryUae': 'ОАЭ',
+      'priceUnder20': 'До \$20',
+      'price20to50': '\$20–50',
+      'priceOver50': 'От \$50',
+      'searchDoctorsHint': 'Поиск врача, клиники или специальности...',
       'bookAppointment': 'Записаться на прием',
       'reviews': 'Отзывы',
       'noReviews': 'Пока нет отзывов',
@@ -3109,22 +3299,50 @@ class AppLocalizations {
         key;
   }
 
-  /// Translates doctor profession/specialty using ProfessionModel (same method as doctor app).
-  /// Backend stores profession as English (e.g. "Dentist"), we find the ProfessionModel and return Uzbek if language is 'uz'.
+  /// Translates doctor profession/specialty using [ProfessionData] (backend stores English).
   String translateProfession(String? profession) {
     if (profession == null || profession.trim().isEmpty) {
       return profession ?? '';
     }
+    return ProfessionData.translate(profession, locale.languageCode);
+  }
 
-    // Find profession model by English name (backend stores English)
-    final professionModel = ProfessionData.findByEnglish(profession.trim());
-    if (professionModel != null) {
-      // Use getDisplayText with current locale language code
-      return professionModel.getDisplayText(locale.languageCode);
+  /// Localized label for a region / viloyat filter value.
+  String translateRegion(String? region) {
+    if (region == null || region.trim().isEmpty) {
+      return region ?? '';
+    }
+    return UzbekistanRegions.displayLabel(region.trim(), locale.languageCode);
+  }
+
+  /// Formats the next bookable slot for discovery cards (e.g. "Bugun · 14:30", "dush 16:00").
+  String formatNextAvailableSlot(DateTime dt) {
+    final local = dt.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final slotDay = DateTime(local.year, local.month, local.day);
+    final time = DateFormat('HH:mm').format(local);
+
+    if (slotDay == today) return '$availabilityToday · $time';
+    if (slotDay == today.add(const Duration(days: 1))) {
+      return '$availabilityTomorrow · $time';
     }
 
-    // Fallback: if not found in ProfessionData, return original
-    return profession;
+    final weekdays = _weekdayShortLabels();
+    return '${weekdays[local.weekday - 1]} $time';
+  }
+
+  List<String> _weekdayShortLabels() {
+    switch (locale.languageCode) {
+      case 'uz':
+        return const ['dush', 'sesh', 'chor', 'pay', 'jum', 'shan', 'yak'];
+      case 'ru':
+        return const ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
+      case 'de':
+        return const ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      default:
+        return const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    }
   }
 
   // Convenience getters
@@ -3338,16 +3556,64 @@ class AppLocalizations {
   String get doctor => translate('doctor');
   String get doctors => translate('doctors');
   String get myDoctors => translate('myDoctors');
+  String get recentDoctors => translate('recentDoctors');
+  String get findADoctor => translate('findADoctor');
+  String doctorsCount(int count) =>
+      translate('doctorsCount').replaceAll('{{count}}', '$count');
+  String doctorsPageSummary(int page, int pages, int count) => translate('doctorsPageSummary')
+      .replaceAll('{{page}}', '$page')
+      .replaceAll('{{pages}}', '$pages')
+      .replaceAll('{{count}}', '$count');
+  String get previousPage => translate('previousPage');
+  String get nextPage => translate('nextPage');
   String get recommended => translate('recommended');
   String get sortBy => translate('sortBy');
   String get sortByDistance => translate('sortByDistance');
   String get sortByRating => translate('sortByRating');
   String get sortByReviews => translate('sortByReviews');
+  String get sortByAvailability => translate('sortByAvailability');
   String get filterBy => translate('filterBy');
   String get filterByRegion => translate('filterByRegion');
   String get filterBySpecialty => translate('filterBySpecialty');
+  String get filterByCountry => translate('filterByCountry');
+  String get filterConsultationType => translate('filterConsultationType');
+  String get filterAvailability => translate('filterAvailability');
+  String get filterPrice => translate('filterPrice');
+  String get filterMinRating => translate('filterMinRating');
   String get allRegions => translate('allRegions');
   String get allSpecialties => translate('allSpecialties');
+  String get allCountries => translate('allCountries');
+  String get allConsultationTypes => translate('allConsultationTypes');
+  String get allAvailability => translate('allAvailability');
+  String get allPrices => translate('allPrices');
+  String get allRatings => translate('allRatings');
+  String get filterOnline => translate('filterOnline');
+  String get filterNearMe => translate('filterNearMe');
+  String get filterToday => translate('filterToday');
+  String get filterThisWeek => translate('filterThisWeek');
+  String get filterTopRated => translate('filterTopRated');
+  String get filterVerified => translate('filterVerified');
+  String get moreFilters => translate('moreFilters');
+  String get applyFilters => translate('applyFilters');
+  String get consultationOnline => translate('consultationOnline');
+  String get consultationInPerson => translate('consultationInPerson');
+  String get consultationBoth => translate('consultationBoth');
+  String get availabilityToday => translate('availabilityToday');
+  String get availabilityTomorrow => translate('availabilityTomorrow');
+  String get availabilityThisWeek => translate('availabilityThisWeek');
+  String fromPrice(String price) =>
+      translate('fromPrice').replaceAll('{{price}}', price);
+  String get viewProfile => translate('viewProfile');
+  String get verifiedDoctor => translate('verifiedDoctor');
+  String get noUpcomingAvailability => translate('noUpcomingAvailability');
+  String get countryGermany => translate('countryGermany');
+  String get countryUzbekistan => translate('countryUzbekistan');
+  String get countryTurkey => translate('countryTurkey');
+  String get countryUae => translate('countryUae');
+  String get priceUnder20 => translate('priceUnder20');
+  String get price20to50 => translate('price20to50');
+  String get priceOver50 => translate('priceOver50');
+  String get searchDoctorsHint => translate('searchDoctorsHint');
   String get gettingYourLocation => translate('gettingYourLocation');
   String get usingCurrentLocation => translate('usingCurrentLocation');
   String get couldNotGetLocationUsingProfile =>

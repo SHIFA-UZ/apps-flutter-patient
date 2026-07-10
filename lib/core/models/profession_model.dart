@@ -11,9 +11,14 @@ class ProfessionModel {
   // Get display text based on language - show only one language
   String getDisplayText(String? language) {
     if (language == 'uz' || language == 'uz_UZ') {
-      return uzbek; // Show only Uzbek when language is UZ
+      return uzbek;
     }
-    return english; // Show only English when language is EN
+    return english;
+  }
+
+  /// Shorter label for filter chips / dropdowns when the English name is long.
+  String getShortDisplayText(String? language) {
+    return getDisplayText(language);
   }
 
   // Search helper - checks both English and Uzbek
@@ -125,15 +130,111 @@ class ProfessionData {
     ProfessionModel(english: 'Sleep Medicine Specialist', uzbek: 'Uyqu bo\'yicha mutaxassis'),
   ];
 
+  /// Known compound profession strings stored in the backend (not exact catalog entries).
+  static const Map<String, String> compoundAliases = {
+    'Dentist, Pediatric': 'Pediatric Dentist',
+    'Dentist, Prosthodontist': 'Prosthodontist',
+    'Oral Surgeon, Dentist': 'Oral Surgeon',
+    'Dentist, Orthodontist': 'Orthodontist',
+    'Dentist, Periodontist': 'Periodontist',
+    'Dentist, Oral Surgeon': 'Oral Surgeon',
+  };
+
+  /// Sub-specialty fragments that appear after a comma in compound values.
+  static const Map<String, String> partAliases = {
+    'Pediatric': 'Pediatric Dentist',
+    'Prosthodontist': 'Prosthodontist',
+    'Orthodontist': 'Orthodontist',
+    'Periodontist': 'Periodontist',
+    'Oral Surgeon': 'Oral Surgeon',
+  };
+
   // Find profession by English name (for backward compatibility)
   static ProfessionModel? findByEnglish(String english) {
+    final trimmed = english.trim();
+    if (trimmed.isEmpty) return null;
     try {
-      return allProfessions.firstWhere(
-        (p) => p.english == english,
-      );
-    } catch (e) {
+      return allProfessions.firstWhere((p) => p.english == trimmed);
+    } catch (_) {
       return null;
     }
+  }
+
+  static ProfessionModel? findByEnglishFlexible(String english) {
+    final trimmed = english.trim();
+    if (trimmed.isEmpty) return null;
+
+    final exact = findByEnglish(trimmed);
+    if (exact != null) return exact;
+
+    final alias = compoundAliases[trimmed];
+    if (alias != null) {
+      final fromAlias = findByEnglish(alias);
+      if (fromAlias != null) return fromAlias;
+    }
+
+    final lower = trimmed.toLowerCase();
+    for (final p in allProfessions) {
+      if (p.english.toLowerCase() == lower) return p;
+    }
+    return null;
+  }
+
+  /// Translates a backend profession string (English) into the active app language.
+  static String translate(String english, String? languageCode) {
+    final trimmed = english.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    final direct = findByEnglishFlexible(trimmed);
+    if (direct != null) {
+      return direct.getDisplayText(languageCode);
+    }
+
+    if (trimmed.contains(',')) {
+      final parts = trimmed
+          .split(',')
+          .map((p) => p.trim())
+          .where((p) => p.isNotEmpty)
+          .toList();
+      if (parts.isNotEmpty) {
+        final labels = <String>[];
+        final seen = <String>{};
+        for (final part in parts) {
+          final label = _translatePart(part, languageCode);
+          if (seen.add(label)) labels.add(label);
+        }
+        if (labels.isNotEmpty) return labels.join(', ');
+      }
+    }
+
+    return trimmed;
+  }
+
+  static String _translatePart(String part, String? languageCode) {
+    final fromPartAlias = partAliases[part];
+    if (fromPartAlias != null) {
+      final model = findByEnglish(fromPartAlias);
+      if (model != null) return model.getDisplayText(languageCode);
+    }
+
+    final flexible = findByEnglishFlexible(part);
+    if (flexible != null) return flexible.getDisplayText(languageCode);
+
+    return part;
+  }
+
+  /// Sort keys (English backend values) by localized label for filter UIs.
+  static List<String> sortEnglishKeysForDisplay(
+    Iterable<String> englishKeys,
+    String? languageCode,
+  ) {
+    final list = englishKeys.toList();
+    list.sort((a, b) {
+      final la = translate(a, languageCode).toLowerCase();
+      final lb = translate(b, languageCode).toLowerCase();
+      return la.compareTo(lb);
+    });
+    return list;
   }
 
   // Find profession by any matching text (English or Uzbek)

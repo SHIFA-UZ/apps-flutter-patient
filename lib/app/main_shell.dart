@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/app/persistent_bottom_bar.dart';
+import 'package:shifa_patient_app_v1/app/shell_tab_index_provider.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/notification_model.dart';
 import 'package:shifa_patient_app_v1/core/services/push_notification_service.dart';
@@ -80,6 +81,12 @@ class _MainShellState extends ConsumerState<MainShell> {
           _showNotificationDialog(context, next);
         });
       }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(shellTabIndexProvider.notifier).state =
+          widget.navigationShell.currentIndex;
     });
 
     return Scaffold(

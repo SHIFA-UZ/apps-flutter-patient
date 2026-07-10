@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
+import 'package:shifa_patient_app_v1/app/shell_tab_index_provider.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
@@ -186,6 +187,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(shellTabIndexProvider, (previous, next) {
+      if (next == 0 && previous != 0) {
+        ref.read(doctorsProvider.notifier).loadDoctors();
+      }
+    });
+
     final l10n = AppLocalizations.of(context)!;
     final bookingsState = ref.watch(bookingsProvider);
     final doctorsState = ref.watch(doctorsProvider);

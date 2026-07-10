@@ -30,6 +30,14 @@ class DoctorModel extends Equatable {
   final String? nextAvailableStartAt;
   final String? recommendationReason;
   final List<String>? triggeredBySymptoms;
+  final String? locationCountry;
+  final double? distanceKm;
+  final bool supportsOnline;
+  final bool supportsInPerson;
+  final int? minPriceMinor;
+  final String? minPriceCurrency;
+  final int? onlineMinPriceMinor;
+  final int? clinicMinPriceMinor;
 
   const DoctorModel({
     required this.id,
@@ -60,7 +68,99 @@ class DoctorModel extends Equatable {
     this.nextAvailableStartAt,
     this.recommendationReason,
     this.triggeredBySymptoms,
+    this.locationCountry,
+    this.distanceKm,
+    this.supportsOnline = false,
+    this.supportsInPerson = false,
+    this.minPriceMinor,
+    this.minPriceCurrency,
+    this.onlineMinPriceMinor,
+    this.clinicMinPriceMinor,
   });
+
+  DoctorModel copyWith({
+    String? nextAvailableStartAt,
+    bool? supportsOnline,
+    bool? supportsInPerson,
+    int? minPriceMinor,
+    String? minPriceCurrency,
+    int? onlineMinPriceMinor,
+    int? clinicMinPriceMinor,
+    String? locationCountry,
+    double? distanceKm,
+  }) {
+    return DoctorModel(
+      id: id,
+      firstName: firstName,
+      lastName: lastName,
+      fullName: fullName,
+      profession: profession,
+      clinic: clinic,
+      address: address,
+      street: street,
+      city: city,
+      region: region,
+      latitude: latitude,
+      longitude: longitude,
+      phone: phone,
+      email: email,
+      photoUrl: photoUrl,
+      rating: rating,
+      reviewCount: reviewCount,
+      specializations: specializations,
+      furtherInformation: furtherInformation,
+      biography: biography,
+      services: services,
+      serviceItems: serviceItems,
+      certificates: certificates,
+      telegram: telegram,
+      instagram: instagram,
+      nextAvailableStartAt: nextAvailableStartAt ?? this.nextAvailableStartAt,
+      recommendationReason: recommendationReason,
+      triggeredBySymptoms: triggeredBySymptoms,
+      locationCountry: locationCountry ?? this.locationCountry,
+      distanceKm: distanceKm ?? this.distanceKm,
+      supportsOnline: supportsOnline ?? this.supportsOnline,
+      supportsInPerson: supportsInPerson ?? this.supportsInPerson,
+      minPriceMinor: minPriceMinor ?? this.minPriceMinor,
+      minPriceCurrency: minPriceCurrency ?? this.minPriceCurrency,
+      onlineMinPriceMinor: onlineMinPriceMinor ?? this.onlineMinPriceMinor,
+      clinicMinPriceMinor: clinicMinPriceMinor ?? this.clinicMinPriceMinor,
+    );
+  }
+
+  /// Online video consult when API flag missing but services exist.
+  bool get effectiveSupportsOnline =>
+      supportsOnline || (serviceItems != null && serviceItems!.isNotEmpty);
+
+  /// In-person when API flag missing but clinic/location exists.
+  bool get effectiveSupportsInPerson =>
+      supportsInPerson ||
+      (clinic != null && clinic!.trim().isNotEmpty) ||
+      (city != null && city!.trim().isNotEmpty) ||
+      latitude != null;
+
+  /// Cheapest display price from list API or service items.
+  (int amountMinor, String currency)? get startingPrice {
+    if (minPriceMinor != null &&
+        minPriceCurrency != null &&
+        minPriceCurrency!.isNotEmpty) {
+      return (minPriceMinor!, minPriceCurrency!);
+    }
+    int? best;
+    String? currency;
+    for (final item in serviceItems ?? const <DoctorServiceItem>[]) {
+      if (item.isFreeConsultation) continue;
+      for (final price in item.prices) {
+        if (best == null || price.amountMinor < best) {
+          best = price.amountMinor;
+          currency = price.currency;
+        }
+      }
+    }
+    if (best == null || currency == null) return null;
+    return (best, currency);
+  }
 
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
     return DoctorModel(
@@ -80,7 +180,7 @@ class DoctorModel extends Equatable {
       email: json['email'] as String?,
       photoUrl: normalizePhotoUrl(json['photoUrl'] as String?),
       rating: json['averageRating'] != null ? (json['averageRating'] as num).toDouble() : null,
-      reviewCount: json['reviewCount'] != null ? (json['reviewCount'] as int) : null,
+      reviewCount: json['reviewCount'] != null ? (json['reviewCount'] as num).toInt() : null,
       specializations: json['specializations'] != null
           ? List<String>.from(json['specializations'])
           : null,
@@ -104,6 +204,16 @@ class DoctorModel extends Equatable {
       triggeredBySymptoms: json['triggeredBySymptoms'] != null
           ? List<String>.from(json['triggeredBySymptoms'])
           : null,
+      locationCountry: json['locationCountry'] as String?,
+      distanceKm: json['distanceKm'] != null ? (json['distanceKm'] as num).toDouble() : null,
+      supportsOnline: json['supportsOnline'] == true,
+      supportsInPerson: json['supportsInPerson'] == true,
+      minPriceMinor: json['minPriceMinor'] != null ? (json['minPriceMinor'] as num).toInt() : null,
+      minPriceCurrency: json['minPriceCurrency'] as String?,
+      onlineMinPriceMinor:
+          json['onlineMinPriceMinor'] != null ? (json['onlineMinPriceMinor'] as num).toInt() : null,
+      clinicMinPriceMinor:
+          json['clinicMinPriceMinor'] != null ? (json['clinicMinPriceMinor'] as num).toInt() : null,
     );
   }
 
@@ -137,6 +247,14 @@ class DoctorModel extends Equatable {
       'nextAvailableStartAt': nextAvailableStartAt,
       'recommendationReason': recommendationReason,
       'triggeredBySymptoms': triggeredBySymptoms,
+      'locationCountry': locationCountry,
+      'distanceKm': distanceKm,
+      'supportsOnline': supportsOnline,
+      'supportsInPerson': supportsInPerson,
+      'minPriceMinor': minPriceMinor,
+      'minPriceCurrency': minPriceCurrency,
+      'onlineMinPriceMinor': onlineMinPriceMinor,
+      'clinicMinPriceMinor': clinicMinPriceMinor,
     };
   }
 
@@ -170,6 +288,14 @@ class DoctorModel extends Equatable {
         nextAvailableStartAt,
         recommendationReason,
         triggeredBySymptoms,
+        locationCountry,
+        distanceKm,
+        supportsOnline,
+        supportsInPerson,
+        minPriceMinor,
+        minPriceCurrency,
+        onlineMinPriceMinor,
+        clinicMinPriceMinor,
       ];
 }
 

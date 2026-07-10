@@ -5,6 +5,7 @@ import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
 import 'package:shifa_patient_app_v1/core/utils/image_utils.dart';
+import 'package:shifa_patient_app_v1/features/doctors/data/doctors_search_filters.dart';
 import 'package:shifa_patient_app_v1/features/doctors/providers/doctors_provider.dart';
 
 class CreateBookingScreen extends ConsumerStatefulWidget {
@@ -36,7 +37,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     if (query.isEmpty) {
       ref.read(doctorsProvider.notifier).loadDoctors();
     } else {
-      ref.read(doctorsProvider.notifier).searchDoctors(search: query);
+      ref.read(doctorsProvider.notifier).searchDoctors(
+            filters: DoctorsSearchFilters(search: query),
+          );
     }
   }
 
