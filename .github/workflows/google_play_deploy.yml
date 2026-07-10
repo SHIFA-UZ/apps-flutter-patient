@@ -16,6 +16,8 @@ concurrency:
 env:
   FLUTTER_VERSION: '3.35.5'
   JAVA_VERSION: '17'
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
 jobs:
   build-and-deploy:
@@ -33,15 +35,19 @@ jobs:
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
-          android: true
+          # Keep preinstalled Android SDK — removing it breaks ANDROID_HOME for flutter build.
+          android: false
           dotnet: true
           haskell: true
           large-packages: true
           docker-images: true
           swap-storage: true
 
-      - name: Disk space after cleanup
-        run: df -h
+      - name: Prune Android emulator images (not needed for AAB)
+        run: |
+          sudo rm -rf "$ANDROID_HOME/system-images" || true
+          sudo rm -rf "$ANDROID_HOME/emulator" || true
+          df -h
 
       #########################
       # PHASE 1: CHECKOUT & SETUP
@@ -68,8 +74,14 @@ jobs:
       - name: Precache Android toolchain only
         run: flutter precache --android --no-ios --no-web --no-universal --no-macos --no-windows --no-linux
 
-      - name: Disk space before dependencies
-        run: df -h
+      - name: Accept Android SDK licenses
+        run: yes | flutter doctor --android-licenses
+
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME"
+          flutter doctor -v
 
       - name: Install Flutter dependencies
         run: flutter pub get
