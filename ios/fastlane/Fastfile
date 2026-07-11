@@ -14,7 +14,7 @@ platform :ios do
       in_house: false
     )
 
-    version_number = ENV["VERSION_NUMBER"] || "1.1.0"
+    version_number = ENV["VERSION_NUMBER"] || "1.1.1"
     build_number = ENV["BUILD_NUMBER"] || "1"
 
     puts "Building version #{version_number} (#{build_number})"
