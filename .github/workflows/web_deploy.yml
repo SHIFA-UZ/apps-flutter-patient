@@ -1,16 +1,8 @@
 name: Deploy Patient Web
 
+# Manual only — trigger from the Actions tab when a web deploy is needed.
 on:
   workflow_dispatch:
-  push:
-    branches: [main, master]
-    paths:
-      - 'lib/**'
-      - 'web/**'
-      - 'pubspec.yaml'
-      - 'pubspec.lock'
-      - 'firebase.json'
-      - '.firebaserc'
 
 jobs:
   deploy:
