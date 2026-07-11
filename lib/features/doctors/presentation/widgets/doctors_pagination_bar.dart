@@ -32,58 +32,62 @@ class DoctorsPaginationBar extends StatelessWidget {
             style: AppDesignSystem.caption.copyWith(color: AppDesignSystem.textSecondary),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _NavButton(
-                icon: Icons.chevron_left,
-                enabled: currentPage > 1,
-                tooltip: l10n.previousPage,
-                onTap: () => onPageSelected(currentPage - 1),
-              ),
-              const SizedBox(width: 4),
-              ...pages.map((page) {
-                if (page == -1) {
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: AppDesignSystem.horizontalScrollPhysics(context),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _NavButton(
+                  icon: Icons.chevron_left,
+                  enabled: currentPage > 1,
+                  tooltip: l10n.previousPage,
+                  onTap: () => onPageSelected(currentPage - 1),
+                ),
+                const SizedBox(width: 4),
+                ...pages.map((page) {
+                  if (page == -1) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text('…', style: AppDesignSystem.caption),
+                    );
+                  }
+                  final selected = page == currentPage;
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('…', style: AppDesignSystem.caption),
-                  );
-                }
-                final selected = page == currentPage;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Material(
-                    color: selected
-                        ? AppDesignSystem.primary.withValues(alpha: 0.15)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    child: InkWell(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Material(
+                      color: selected
+                          ? AppDesignSystem.primary.withValues(alpha: 0.15)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
-                      onTap: selected ? null : () => onPageSelected(page),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Text(
-                          '$page',
-                          style: AppDesignSystem.body2.copyWith(
-                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                            color: selected
-                                ? AppDesignSystem.primary
-                                : AppDesignSystem.textPrimary,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: selected ? null : () => onPageSelected(page),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Text(
+                            '$page',
+                            style: AppDesignSystem.body2.copyWith(
+                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                              color: selected
+                                  ? AppDesignSystem.primary
+                                  : AppDesignSystem.textPrimary,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }),
-              const SizedBox(width: 4),
-              _NavButton(
-                icon: Icons.chevron_right,
-                enabled: currentPage < totalPages,
-                tooltip: l10n.nextPage,
-                onTap: () => onPageSelected(currentPage + 1),
-              ),
-            ],
+                  );
+                }),
+                const SizedBox(width: 4),
+                _NavButton(
+                  icon: Icons.chevron_right,
+                  enabled: currentPage < totalPages,
+                  tooltip: l10n.nextPage,
+                  onTap: () => onPageSelected(currentPage + 1),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -282,7 +282,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
         },
         child: CustomScrollView(
           controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: AppDesignSystem.listScrollPhysics(context),
           slivers: [
             SliverToBoxAdapter(
               child: AppHeader(
@@ -324,6 +324,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
                   ),
                   child: TextField(
                     controller: _searchController,
+                    textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
                       hintText: l10n.searchDoctorsHint,
                       prefixIcon: const Icon(Icons.search),

@@ -50,6 +50,7 @@ class DoctorQuickFilterChips extends StatelessWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      physics: AppDesignSystem.horizontalScrollPhysics(context),
       padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.screenPaddingH),
       child: Row(
         children: [

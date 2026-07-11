@@ -166,7 +166,7 @@ class _DoctorDiscoveryCardState extends State<DoctorDiscoveryCard> {
               IconButton(
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 onPressed: () => setState(() => _expanded = !_expanded),
                 icon: Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,

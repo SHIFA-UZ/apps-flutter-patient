@@ -45,6 +45,8 @@ class SegmentedControl extends StatelessWidget {
                       ),
                       child: Text(
                         labels[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: AppDesignSystem.body2.copyWith(
                           fontWeight: FontWeight.w600,
                           color: isSelected ? Colors.white : AppDesignSystem.textSecondary,

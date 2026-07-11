@@ -38,6 +38,8 @@ Future<DoctorFiltersSheetResult?> showDoctorFiltersSheet({
   return showModalBottomSheet<DoctorFiltersSheetResult>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -125,23 +127,14 @@ class _DoctorFiltersSheetState extends State<_DoctorFiltersSheet> {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + bottomInset),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomInset),
       child: SingleChildScrollView(
+        physics: AppDesignSystem.listScrollPhysics(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppDesignSystem.border,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(l10n.moreFilters, style: AppDesignSystem.h2),
             const SizedBox(height: 16),
             _dropdown(

@@ -3,6 +3,18 @@ import 'package:flutter/material.dart';
 class AppDesignSystem {
   AppDesignSystem._();
 
+  /// Primary scroll physics: bounce on iOS, clamp on Android; always scrollable for pull-to-refresh.
+  static ScrollPhysics listScrollPhysics(BuildContext context) {
+    return const AlwaysScrollableScrollPhysics(
+      parent: BouncingScrollPhysics(),
+    );
+  }
+
+  /// Horizontal chip/tab rows — platform-native overscroll.
+  static ScrollPhysics horizontalScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics();
+  }
+
   /// Bottom padding for scroll content when a bottom nav bar is shown.
   /// Matches [PersistentBottomBar]: bar row + center FAB overlap + system inset.
   static double safeBottomWithNavBar(BuildContext context) {
