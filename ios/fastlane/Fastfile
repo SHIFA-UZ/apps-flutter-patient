@@ -14,7 +14,7 @@ platform :ios do
       in_house: false
     )
 
-    version_number = ENV["VERSION_NUMBER"] || "1.1.0"
+    version_number = ENV["VERSION_NUMBER"] || "1.1.1"
     build_number = ENV["BUILD_NUMBER"] || "1"
 
     puts "Building version #{version_number} (#{build_number})"
@@ -77,13 +77,15 @@ platform :ios do
     puts "Build complete: shifa_patient.ipa"
 
     # Upload to TestFlight — skip processing wait to save CI minutes.
-    # Changelog is set separately after Apple processes the build.
+    # NOTE: do NOT pass `changelog:` here. When a changelog is supplied,
+    # fastlane must wait for the build to appear on App Store Connect to
+    # attach it, which defeats `skip_waiting_for_build_processing`. Set the
+    # changelog separately after Apple finishes processing (~10-20 min).
     upload_to_testflight(
       api_key: api_key,
       skip_waiting_for_build_processing: true,
       skip_submission: true,
       ipa: "./build/ipa/shifa_patient.ipa",
-      changelog: ENV["TESTFLIGHT_CHANGELOG"] || "Bug fixes and improvements",
       wait_for_uploaded_build: false
     )
 

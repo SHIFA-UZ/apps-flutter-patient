@@ -195,6 +195,10 @@ flutter build ios --dart-define=FLAVOR=production   # Build iOS
 
 ---
 
+## Commit Permission Rule
+
+**NEVER run `git commit` (or `git push`) without explicit permission from the user for that specific change.** Make and stage the edits, summarize what changed, and wait for the user to say to commit. Do not commit as part of completing a task unless the user asked you to commit. This applies even when the user approved a plan or the code changes — approval to write code is NOT approval to commit. When in doubt, stop and ask.
+
 ## Git Branching Rule
 
 **NEVER commit and push directly to `main`.** Before committing and pushing changes, check the current branch. If on `main`:

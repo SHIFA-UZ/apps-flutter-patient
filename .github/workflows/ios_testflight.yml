@@ -108,14 +108,8 @@ jobs:
           # Formula: 19 (offset) + github.run_number (starts at 1) = 20, 21, 22, ...
           BUILD_NUMBER=$(( 19 + ${{ github.run_number }} ))
 
-          CHANGELOG="Bug fixes and improvements"
-
           echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
-
-          echo "TESTFLIGHT_CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
 
           echo "Version: $VERSION_NAME+$BUILD_NUMBER"
 

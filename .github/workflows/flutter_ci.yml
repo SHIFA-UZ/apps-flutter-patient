@@ -1,11 +1,9 @@
 # Shifa Patient App — PR / push quality gates
 name: Flutter CI
 
+# Manual only — run from the Actions tab when needed, not on every push/PR.
 on:
-  push:
-    branches: [main, master, develop]
-  pull_request:
-    branches: [main, master, develop]
+  workflow_dispatch:
 
 concurrency:
   group: flutter-ci-${{ github.workflow }}-${{ github.ref }}
