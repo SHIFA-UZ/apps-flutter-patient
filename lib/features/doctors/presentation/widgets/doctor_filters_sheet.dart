@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shifa_patient_app_v1/core/layout/responsive_layout.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/profession_model.dart';
 import 'package:shifa_patient_app_v1/core/models/region_catalog.dart';
@@ -35,6 +36,28 @@ Future<DoctorFiltersSheetResult?> showDoctorFiltersSheet({
   required List<String> specialtyOptions,
   required DoctorFiltersSheetResult initial,
 }) {
+  final sheet = _DoctorFiltersSheet(
+    regionOptions: regionOptions,
+    specialtyOptions: specialtyOptions,
+    initial: initial,
+  );
+
+  if (ResponsiveLayout.isWide(context, breakpoint: 640)) {
+    return showDialog<DoctorFiltersSheetResult>(
+      context: context,
+      builder: (ctx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 480,
+            maxHeight: MediaQuery.sizeOf(ctx).height * 0.85,
+          ),
+          child: sheet,
+        ),
+      ),
+    );
+  }
+
   return showModalBottomSheet<DoctorFiltersSheetResult>(
     context: context,
     isScrollControlled: true,
@@ -43,11 +66,7 @@ Future<DoctorFiltersSheetResult?> showDoctorFiltersSheet({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
-    builder: (context) => _DoctorFiltersSheet(
-      regionOptions: regionOptions,
-      specialtyOptions: specialtyOptions,
-      initial: initial,
-    ),
+    builder: (context) => sheet,
   );
 }
 

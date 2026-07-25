@@ -39,14 +39,40 @@ class ApiClient {
     return defaultUrl;
   }
 
+  /// Origin used to resolve relative media URLs (photos, documents).
+  /// Always derived from [apiBaseUrl] so release never points at localhost.
   static String get publicBaseUrl {
-    if (kIsWeb) return 'http://localhost:8090';
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return 'http://10.0.2.2:8090';
-      default:
-        return 'http://localhost:8090';
-    }
+    final api = apiBaseUrl; // typically .../api
+    final origin = api.replaceAll(RegExp(r'/api/?$'), '');
+    if (origin.isNotEmpty) return origin;
+    return AppConfig.productionApiBaseUrl.replaceAll(RegExp(r'/api/?$'), '');
+  }
+
+  /// Auth paths that must work without a JWT (and should skip Keystore reads).
+  static bool isUnauthenticatedAuthPath(String path) {
+    final normalized = path.contains('://')
+        ? Uri.tryParse(path)?.path ?? path
+        : path;
+    final p = normalized.startsWith('/') ? normalized : '/$normalized';
+    const publicSuffixes = <String>[
+      '/auth/login',
+      '/auth/register',
+      '/auth/register-patient',
+      '/auth/register-clinic-staff',
+      '/auth/verify-key',
+      '/auth/check-existing-patient',
+      '/auth/check-existing-doctor',
+      '/auth/check-identifier',
+      '/auth/create-patient-for-doctor',
+      '/auth/send-email-otp',
+      '/auth/send-sms-otp',
+      '/auth/verify',
+      '/auth/forgot-password-reset',
+      '/auth/send-login-otp',
+      '/auth/verify-email-otp',
+      '/auth/send-forgot-password-otp',
+    ];
+    return publicSuffixes.any((s) => p == s || p.endsWith(s));
   }
 
   ApiClient() {
@@ -55,8 +81,9 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: apiBaseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 20),
+        sendTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 25),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -67,10 +94,19 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token if available (from secure storage)
-          final token = await StorageService().getAuthToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Skip Keystore only for unauthenticated auth endpoints (register/OTP/login).
+          // Authenticated /auth/* (e.g. reset-password) must still send Bearer.
+          if (!isUnauthenticatedAuthPath(options.path)) {
+            try {
+              final token = await StorageService()
+                  .getAuthToken()
+                  .timeout(const Duration(seconds: 2));
+              if (token != null) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+            } on Exception catch (_) {
+              // Proceed without token rather than blocking the request.
+            }
           }
           return handler.next(options);
         },

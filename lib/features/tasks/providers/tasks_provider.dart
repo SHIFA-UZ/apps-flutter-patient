@@ -45,10 +45,10 @@ class TasksController extends StateNotifier<TasksLoadState> {
     try {
       final loaded = await repository.getMyTasks(status: status);
       state = TasksLoadState(tasks: loaded, isLoading: false);
-      debugPrint('Tasks loaded: ${loaded.length}');
+      if (kDebugMode) debugPrint('Tasks loaded: ${loaded.length}');
     } catch (e, stackTrace) {
-      debugPrint('Error loading tasks: $e');
-      debugPrint('Stack trace: $stackTrace');
+      if (kDebugMode) debugPrint('Error loading tasks: $e');
+      if (kDebugMode) debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -71,7 +71,7 @@ final taskByIdProvider = FutureProvider.family<RemoteCareTask?, int>((ref, taskI
     final repository = ref.read(tasksRepositoryProvider);
     return await repository.getMyTask(taskId);
   } catch (e) {
-    debugPrint('Error loading task $taskId: $e');
+    if (kDebugMode) debugPrint('Error loading task $taskId: $e');
     return null;
   }
 });
@@ -81,7 +81,7 @@ final taskCheckInsProvider = FutureProvider.family<List<TaskCheckIn>, int>((ref,
     final repository = ref.read(tasksRepositoryProvider);
     return await repository.getMyCheckIns(taskId);
   } catch (e) {
-    debugPrint('Error loading check-ins for $taskId: $e');
+    if (kDebugMode) debugPrint('Error loading check-ins for $taskId: $e');
     return [];
   }
 });

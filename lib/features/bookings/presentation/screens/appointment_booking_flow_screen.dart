@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shifa_patient_app_v1/core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,8 @@ import 'package:shifa_patient_app_v1/features/bookings/providers/schedule_provid
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
 import 'package:shifa_patient_app_v1/features/bookings/data/bookings_repository.dart';
 import 'package:shifa_patient_app_v1/features/bookings/data/schedule_repository.dart';
+import 'package:shifa_patient_app_v1/features/documents/providers/documents_provider.dart';
+import 'package:shifa_patient_app_v1/core/services/app_lock_provider.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/localization/error_localizations.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
@@ -47,6 +50,9 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
   int? _selectedServiceId;
   final GlobalKey _serviceSectionKey = GlobalKey();
   bool _highlightServiceSection = false;
+  final List<_PendingBookingDoc> _pendingDocs = [];
+  bool _isUploadingDoc = false;
+  static const int _maxBookingDocs = 5;
 
   // Multi-location support
   List<PublicDoctorLocation> _locations = const [];
@@ -552,12 +558,76 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
                       ),
                     ),
                   ),
+                  if (_locationStepCompleted) const SizedBox(height: 16),
+                  if (_locationStepCompleted)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.translate('attachDocumentsOptional'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.translate('attachDocumentsHint'),
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (_pendingDocs.isNotEmpty) ...[
+                              ..._pendingDocs.map(
+                                (d) => ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                  leading: const Icon(Icons.picture_as_pdf_outlined),
+                                  title: Text(d.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: _isBooking || _isUploadingDoc
+                                        ? null
+                                        : () => _removePendingDoc(d),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            OutlinedButton.icon(
+                              onPressed: (_isBooking ||
+                                      _isUploadingDoc ||
+                                      _pendingDocs.length >= _maxBookingDocs)
+                                  ? null
+                                  : _pickAndUploadBookingDoc,
+                              icon: _isUploadingDoc
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.attach_file),
+                              label: Text(
+                                _isUploadingDoc
+                                    ? l10n.translate('uploadingDocument')
+                                    : l10n.translate('addDocument'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (_locationStepCompleted) const SizedBox(height: 24),
                   // Confirm button
                   if (_locationStepCompleted)
                   ShifaPrimaryButton(
                     label: l10n.translate('confirm'),
-                    onPressed: (_selectedTime == null || _isBooking)
+                    onPressed: (_selectedTime == null || _isBooking || _isUploadingDoc)
                         ? null
                         : () async {
                             await _confirmBooking();
@@ -663,6 +733,112 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
     return true;
   }
 
+  Future<void> _removePendingDoc(_PendingBookingDoc doc) async {
+    setState(() => _pendingDocs.remove(doc));
+    try {
+      await ref.read(documentsProvider.notifier).deleteDocument('${doc.id}');
+    } catch (_) {
+      // Best-effort cleanup of orphaned pre-appointment upload.
+    }
+  }
+
+  Future<void> _pickAndUploadBookingDoc() async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_pendingDocs.length >= _maxBookingDocs) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n
+                .translate('maxBookingDocuments')
+                .replaceAll('{count}', '$_maxBookingDocs'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    ref.read(appLockTemporaryDisableProvider.notifier).disable();
+    FilePickerResult? result;
+    try {
+      result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        withData: true,
+        allowMultiple: true,
+      );
+    } finally {
+      ref.read(appLockTemporaryDisableProvider.notifier).enable();
+    }
+    if (!mounted) return;
+    if (result == null || result.files.isEmpty) return;
+
+    setState(() => _isUploadingDoc = true);
+    var skippedUnreadable = 0;
+    var skippedOverCap = 0;
+    try {
+      for (final file in result.files) {
+        if (_pendingDocs.length >= _maxBookingDocs) {
+          skippedOverCap++;
+          continue;
+        }
+        final bytes = file.bytes;
+        if (bytes == null || bytes.isEmpty) {
+          skippedUnreadable++;
+          continue;
+        }
+        final title = file.name;
+        final doc = await ref.read(documentsProvider.notifier).uploadDocument(
+              fileBytes: bytes,
+              fileName: file.name,
+              title: title,
+              category: 'PRE_APPOINTMENT',
+            );
+        if (doc == null) {
+          skippedUnreadable++;
+          continue;
+        }
+        final id = int.tryParse(doc.id);
+        if (id == null) {
+          skippedUnreadable++;
+          continue;
+        }
+        if (!mounted) return;
+        setState(() {
+          _pendingDocs.add(_PendingBookingDoc(id: id, title: doc.title));
+        });
+      }
+      if (!mounted) return;
+      if (skippedUnreadable > 0 || skippedOverCap > 0) {
+        final parts = <String>[];
+        if (skippedUnreadable > 0) {
+          parts.add(l10n.translate('bookingDocUnreadableSkipped'));
+        }
+        if (skippedOverCap > 0) {
+          parts.add(
+            l10n
+                .translate('maxBookingDocuments')
+                .replaceAll('{count}', '$_maxBookingDocs'),
+          );
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(parts.join(' '))),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              userFriendlyError(l10n, e, logContext: 'Booking attach document'),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingDoc = false);
+    }
+  }
+
   Future<void> _confirmBooking() async {
     if (_selectedTime == null) return;
 
@@ -724,6 +900,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
         isVideo: _isVideoConsultation,
         serviceId: _isVideoConsultation ? _selectedServiceId : null,
         locationId: bookingLocationId,
+        documentIds: _pendingDocs.map((d) => d.id).toList(),
       );
 
       AppLogger.debug('Appointment booked successfully!');
@@ -1218,4 +1395,10 @@ class _LocationPicker extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PendingBookingDoc {
+  const _PendingBookingDoc({required this.id, required this.title});
+  final int id;
+  final String title;
 }

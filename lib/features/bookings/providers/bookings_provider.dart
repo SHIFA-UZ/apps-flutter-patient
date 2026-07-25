@@ -75,6 +75,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
     bool isVideo = false,
     int? serviceId,
     int? locationId,
+    List<int>? documentIds,
   }) async {
     try {
       final appointment = await _repository.bookAppointment(
@@ -85,6 +86,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
         isVideo: isVideo,
         serviceId: serviceId,
         locationId: locationId,
+        documentIds: documentIds,
       );
       // Reload appointments after booking
       await loadAppointments();

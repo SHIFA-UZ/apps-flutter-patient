@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31+ cloud backup / device transfer exclusions for auth + app lock. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="shifa_app_lock_prefs.xml"/>
+        <exclude domain="sharedpref" path="shifa_auth_secure.xml"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="shifa_app_lock_prefs.xml"/>
+        <exclude domain="sharedpref" path="shifa_auth_secure.xml"/>
+    </device-transfer>
+</data-extraction-rules>

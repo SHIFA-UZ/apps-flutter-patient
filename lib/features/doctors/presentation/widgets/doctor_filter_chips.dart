@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shifa_patient_app_v1/core/layout/responsive_layout.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/theme/app_design_system.dart';
 
@@ -51,7 +52,7 @@ class DoctorQuickFilterChips extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: AppDesignSystem.horizontalScrollPhysics(context),
-      padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.screenPaddingH),
+      padding: EdgeInsets.symmetric(horizontal: ResponsiveLayout.horizontalInset(context)),
       child: Row(
         children: [
           _chip(

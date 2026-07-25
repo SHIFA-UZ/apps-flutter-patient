@@ -15,9 +15,9 @@ class TasksRepository {
       if (status != null) {
         queryParams['status'] = status.name.toUpperCase();
       }
-      debugPrint('Fetching tasks from /tasks/my-tasks with params: $queryParams');
+      if (kDebugMode) debugPrint('Fetching tasks from /tasks/my-tasks with params: $queryParams');
       final response = await _apiClient.get('/tasks/my-tasks', queryParameters: queryParams);
-      debugPrint('Response status: ${response.statusCode}');
+      if (kDebugMode) debugPrint('Response status: ${response.statusCode}');
       if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
         final raw = response.data;
         final List<dynamic> data;
@@ -28,23 +28,23 @@ class TasksRepository {
         } else {
           throw Exception('Unexpected tasks response shape: ${raw.runtimeType}');
         }
-        debugPrint('Received ${data.length} tasks from API');
+        if (kDebugMode) debugPrint('Received ${data.length} tasks from API');
         final tasks = <RemoteCareTask>[];
         for (final item in data) {
           if (item is! Map<String, dynamic>) continue;
           try {
             tasks.add(RemoteCareTask.fromJson(item));
           } catch (e, st) {
-            debugPrint('Skipping task parse error: $e\n$st');
+            if (kDebugMode) debugPrint('Skipping task parse error: $e\n$st');
           }
         }
         return tasks;
       }
-      debugPrint('API returned error status: ${response.statusCode}');
+      if (kDebugMode) debugPrint('API returned error status: ${response.statusCode}');
       throw Exception('Failed to load tasks: ${response.statusCode}');
     } catch (e, stackTrace) {
-      debugPrint('Exception in getMyTasks: $e');
-      debugPrint('Stack trace: $stackTrace');
+      if (kDebugMode) debugPrint('Exception in getMyTasks: $e');
+      if (kDebugMode) debugPrint('Stack trace: $stackTrace');
       throw Exception('Failed to load tasks: $e');
     }
   }

@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/app/shell_tab_index_provider.dart';
+import 'package:shifa_patient_app_v1/core/layout/responsive_layout.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/doctor_model.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
@@ -271,6 +272,8 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
     final displayList =
         _selectedTab == 0 ? doctorsState.myDoctors : doctorsState.doctors;
     final totalCount = doctorsState.totalCount;
+    final pagePadding = ResponsiveLayout.symmetricPagePadding(context);
+    final listHorizontal = ResponsiveLayout.horizontalInset(context);
 
     return Scaffold(
       backgroundColor: AppDesignSystem.background,
@@ -300,12 +303,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDesignSystem.screenPaddingH,
-                  16,
-                  AppDesignSystem.screenPaddingH,
-                  8,
-                ),
+                padding: pagePadding.copyWith(top: 16, bottom: 8),
                 child: SegmentedControl(
                   selectedIndex: _selectedTab,
                   labels: [l10n.recentDoctors, l10n.recommended],
@@ -316,12 +314,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
             if (_selectedTab == 1) ...[
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDesignSystem.screenPaddingH,
-                    8,
-                    AppDesignSystem.screenPaddingH,
-                    8,
-                  ),
+                  padding: pagePadding.copyWith(top: 8, bottom: 8),
                   child: TextField(
                     controller: _searchController,
                     textInputAction: TextInputAction.search,
@@ -430,7 +423,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.screenPaddingH),
+                padding: EdgeInsets.symmetric(horizontal: listHorizontal),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -465,11 +458,14 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
               ),
             if (_selectedTab == 1 && !doctorsState.isLoading && displayList.isNotEmpty)
               SliverToBoxAdapter(
-                child: DoctorsPaginationBar(
-                  currentPage: doctorsState.currentPage,
-                  totalPages: doctorsState.totalPages,
-                  totalCount: doctorsState.totalCount,
-                  onPageSelected: _goToPage,
+                child: Padding(
+                  padding: pagePadding,
+                  child: DoctorsPaginationBar(
+                    currentPage: doctorsState.currentPage,
+                    totalPages: doctorsState.totalPages,
+                    totalCount: doctorsState.totalCount,
+                    onPageSelected: _goToPage,
+                  ),
                 ),
               ),
             if (_selectedTab == 1 &&

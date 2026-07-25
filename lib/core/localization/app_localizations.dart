@@ -85,6 +85,11 @@ class AppLocalizations {
       'phoneOrEmailRequired': 'Enter your email or phone number',
       'emailRequiredForForeignPhone': 'Email is required for non-Uzbek phone numbers',
       'continueToVerification': 'Continue',
+      'sendingVerificationCode': 'Sending verification code…',
+      'tryAgain': 'Try again',
+      'continueWithEmail': 'Continue with email',
+      'smsFailedUseEmailMessage':
+          'SMS is not working right now. Please enter your email address to receive a verification code instead.',
       'smsUnavailableTitle': 'SMS unavailable',
       'smsUnavailableMessage':
           'We could not send a text message to your phone. Enter your email address to receive a verification code instead.',
@@ -258,6 +263,14 @@ class AppLocalizations {
       'download': 'Download',
       'downloadStarted': 'Download started',
       'reasonForVisitOptional': 'Reason for Visit (Optional)',
+      'attachDocumentsOptional': 'Attach documents (optional)',
+      'attachDocumentsHint':
+          'Share PDFs so your doctor can prepare before the visit. Up to 5 PDFs.',
+      'addDocument': 'Add PDF',
+      'uploadingDocument': 'Uploading…',
+      'maxBookingDocuments': 'You can attach up to {count} PDFs to a booking.',
+      'bookingDocUnreadableSkipped':
+          'Some files could not be read and were skipped.',
       'videoConsultation': 'Video consultation',
       'haveYourAppointment': 'Have your appointment via video call',
       'videoConsultationServiceLabel': 'Service (required for video)',
@@ -1023,6 +1036,11 @@ class AppLocalizations {
           'Zu viele Fehlversuche. Konto vorübergehend gesperrt. Bitte in {{minutes}} Minute(n) erneut versuchen.',
       'verifyAndCreate': 'Bestätigen und Konto erstellen',
       'continueToVerification': 'Weiter zur Bestätigung',
+      'sendingVerificationCode': 'Bestätigungscode wird gesendet…',
+      'tryAgain': 'Erneut versuchen',
+      'continueWithEmail': 'Mit E-Mail fortfahren',
+      'smsFailedUseEmailMessage':
+          'SMS funktioniert derzeit nicht. Bitte geben Sie Ihre E-Mail-Adresse ein, um einen Bestätigungscode zu erhalten.',
       'smsUnavailableTitle': 'SMS nicht verfügbar',
       'smsUnavailableMessage':
           'Wir konnten keine SMS an Ihr Telefon senden. Geben Sie Ihre E-Mail-Adresse ein, um stattdessen einen Bestätigungscode zu erhalten.',
@@ -1657,6 +1675,11 @@ class AppLocalizations {
       'phoneOrEmailRequired': 'Email yoki telefon raqamingizni kiriting',
       'emailRequiredForForeignPhone': 'O\'zbek raqami bo\'lmagan telefonlar uchun email talab qilinadi',
       'continueToVerification': 'Davom etish',
+      'sendingVerificationCode': 'Tasdiqlash kodi yuborilmoqda…',
+      'tryAgain': 'Qayta urinish',
+      'continueWithEmail': 'Email orqali davom etish',
+      'smsFailedUseEmailMessage':
+          'SMS hozir ishlamayapti. Tasdiqlash kodini olish uchun email manzilingizni kiriting.',
       'smsUnavailableTitle': 'SMS yuborilmadi',
       'smsUnavailableMessage':
           'Telefoningizga SMS yuborib bo\'lmadi. Tasdiqlash kodini olish uchun email manzilingizni kiriting.',
@@ -1828,6 +1851,15 @@ class AppLocalizations {
       'noAvailableTimeSlots': 'Bu sana uchun bo\'sh vaqtlar mavjud emas',
       'errorLoadingSlots': 'Vaqt bo\'shliqlarini yuklashda xatolik',
       'reasonForVisitOptional': 'Tashrif sababi (ixtiyoriy)',
+      'attachDocumentsOptional': 'Hujjatlarni biriktirish (ixtiyoriy)',
+      'attachDocumentsHint':
+          'Shifokor tashrifdan oldin tayyorlanishi uchun PDF yuboring. Ko\'pi bilan 5 ta PDF.',
+      'addDocument': 'PDF qo‘shish',
+      'uploadingDocument': 'Yuklanmoqda…',
+      'maxBookingDocuments':
+          'Bron qilishda ko\'pi bilan {count} ta PDF biriktirishingiz mumkin.',
+      'bookingDocUnreadableSkipped':
+          'Ba\'zi fayllarni o\'qib bo\'lmadi va o\'tkazib yuborildi.',
       'videoConsultation': 'Video qabul',
       'videoConsultationServiceLabel': 'Xizmat (video uchun majburiy)',
       'videoConsultationServiceHint': 'Video qabul uchun xizmatni tanlang',
@@ -2634,6 +2666,11 @@ class AppLocalizations {
       'phoneOrEmailRequired': 'Введите email или номер телефона',
       'emailRequiredForForeignPhone': 'Для номеров не из Узбекистана требуется email',
       'continueToVerification': 'Продолжить',
+      'sendingVerificationCode': 'Отправка кода подтверждения…',
+      'tryAgain': 'Попробовать снова',
+      'continueWithEmail': 'Продолжить с email',
+      'smsFailedUseEmailMessage':
+          'SMS сейчас не работает. Введите адрес электронной почты, чтобы получить код подтверждения.',
       'smsUnavailableTitle': 'SMS недоступен',
       'smsUnavailableMessage':
           'Не удалось отправить SMS на ваш телефон. Введите email, чтобы получить код подтверждения.',

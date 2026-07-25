@@ -67,18 +67,19 @@
 	<!-- Export compliance: app only uses standard HTTPS encryption -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<!-- Permissions for video calling -->
+	<!-- Permissions for video calling, chat media, and documents -->
 	<key>NSCameraUsageDescription</key>
-	<string>We need camera access for video consultations</string>
+	<string>Shifa needs camera access for video consultations, chat photos, and document uploads.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We need microphone access for video consultations</string>
+	<string>Shifa needs microphone access for video consultations and voice messages.</string>
 	<!-- Location (for profile/doctors near me) -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We use your location to show doctors near you and for your profile address</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We use your location to show doctors near you and for your profile address</string>
-	<!-- Photo library (profile image) -->
+	<string>We use your location to show doctors near you and for your profile address.</string>
+	<!-- Photo library (profile image / documents) -->
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need photo library access to set your profile picture</string>
+	<string>Shifa needs photo library access to set your profile picture and attach documents.</string>
+	<!-- App lock with Face ID / Touch ID -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Shifa uses Face ID to unlock the app when app lock is enabled.</string>
 </dict>
 </plist>

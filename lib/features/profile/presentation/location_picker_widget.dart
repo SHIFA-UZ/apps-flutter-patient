@@ -1,4 +1,4 @@
-// Location Picker Widget - Structured, User-Friendly Design
+﻿// Location Picker Widget - Structured, User-Friendly Design
 // Adapted from doctor app for patient profiles
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -197,11 +197,11 @@ class _LocationPickerSectionState extends State<LocationPickerSection> {
           'address': formattedAddress, // Legacy formatted address
         });
         
-        debugPrint('Location reverse geocoded successfully');
+        if (kDebugMode) debugPrint('Location reverse geocoded successfully');
       }
     } catch (e, stackTrace) {
       AppLogger.error('Reverse geocoding error:', e);
-      debugPrint('Stack trace: $stackTrace');
+      if (kDebugMode) debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -505,11 +505,11 @@ class _MapPickerScreenState extends State<_MapPickerScreen> {
         // Animate map to current location
         _mapController.move(currentLocation, 15.0);
         
-        debugPrint('Current location obtained: ${position.latitude}, ${position.longitude}');
+        if (kDebugMode) debugPrint('Current location obtained: ${position.latitude}, ${position.longitude}');
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error getting current location:', e);
-      debugPrint('Stack trace: $stackTrace');
+      if (kDebugMode) debugPrint('Stack trace: $stackTrace');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
