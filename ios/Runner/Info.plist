@@ -75,6 +75,8 @@
 	<!-- Location (for profile/doctors near me) -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We use your location to show doctors near you and for your profile address.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We use your location to show doctors near you and for your profile address.</string>
 	<!-- Photo library (profile image / documents) -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Shifa needs photo library access to set your profile picture and attach documents.</string>
