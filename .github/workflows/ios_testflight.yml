@@ -40,8 +40,16 @@ jobs:
       # setup-xcode selects Xcode 26 but does NOT install its iOS runtime.
       # On macos-latest the iOS 26 platform isn't pre-bundled, so the build
       # fails with "iOS 26.0 is not installed" unless we download it here.
+      # Fail loudly if the download fails — do NOT fall back to a no-op
+      # (a masked failure here surfaces later as a confusing build error).
       - name: Install iOS platform
-        run: xcodebuild -downloadPlatform iOS -quiet || sudo xcodebuild -runFirstLaunch
+        run: |
+          set -euo pipefail
+          echo "iOS SDKs before:"
+          xcodebuild -showsdks | grep -i ios || true
+          xcodebuild -downloadPlatform iOS
+          echo "iOS SDKs after:"
+          xcodebuild -showsdks | grep -i ios
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
