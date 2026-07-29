@@ -30,6 +30,7 @@ import 'package:shifa_patient_app_v1/features/profile/presentation/screens/edit_
 import 'package:shifa_patient_app_v1/features/profile/presentation/screens/delete_account_otp_verify_screen.dart';
 import 'package:shifa_patient_app_v1/features/settings/presentation/screens/app_lock_settings_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/appointment_booking_flow_screen.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/confirm_booking_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/video_call_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/waiting_room_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/sign_appointment_screen.dart';
@@ -572,10 +573,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // Legacy confirm-booking stub redirected to bookings list.
+      // Confirm booking (separate route, no bottom nav)
       GoRoute(
         path: AppRoutes.confirmBooking,
-        redirect: (context, state) => AppRoutes.bookings,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ConfirmBookingScreen(
+            doctorId: extra?['doctorId'] as String? ?? '',
+            date: extra?['date'] as String? ?? '',
+            time: extra?['time'] as String? ?? '',
+            reason: extra?['reason'] as String?,
+            isVideo: extra?['isVideo'] as bool? ?? false,
+          );
+        },
       ),
 
       // Video call (fullscreen, no bottom nav)

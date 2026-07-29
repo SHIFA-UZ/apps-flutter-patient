@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:shifa_patient_app_v1/core/network/api_client.dart';
+import 'package:shifa_patient_app_v1/core/config/app_config.dart';
 
 /// Cached values from GET /api/public/config (no auth).
 class PublicBackendConfig {
@@ -26,10 +26,11 @@ class PublicBackendConfig {
       }
     }
 
+    if (AppConfig.apiBaseUrl.isEmpty) return {};
+
     try {
       _fetching = true;
-      // ApiClient.apiBaseUrl already ends with /api and falls back in release.
-      final uri = Uri.parse('${ApiClient.apiBaseUrl}/public/config');
+      final uri = Uri.parse('${AppConfig.apiBaseUrl}/api/public/config');
       final response =
           await http.get(uri).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {

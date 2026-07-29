@@ -21,7 +21,7 @@ plugins {
 android {
     namespace = "com.shifa.patientapp"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "28.2.13676358"
+    ndkVersion = "27.3.13750724"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
