@@ -7,19 +7,27 @@ class StorageService {
   static const String userIdKey = 'user_id';
 
   /// Dedicated secure storage for auth. Uses Android Keystore / iOS Keychain.
+  /// resetOnError: true — if the Keystore key is corrupted (e.g. after data restore
+  /// without matching keystore key), silently wipe and start fresh rather than
+  /// throwing an exception that blocks login indefinitely.
   static final FlutterSecureStorage _authStorage = FlutterSecureStorage(
     aOptions: const AndroidOptions(
       sharedPreferencesName: 'shifa_auth_secure',
-      resetOnError: false,
+      resetOnError: true,
     ),
   );
 
   Future<void> saveAuthToken(String token) async {
     await _authStorage.write(key: authTokenKey, value: token);
-    await _authStorage.write(
-      key: authTokenSavedAtKey,
-      value: DateTime.now().toIso8601String(),
-    );
+    // Timestamp is used for the 401 grace period; failure here must not block login.
+    try {
+      await _authStorage.write(
+        key: authTokenSavedAtKey,
+        value: DateTime.now().toIso8601String(),
+      );
+    } catch (_) {
+      // Non-critical: grace period simply won't apply without a saved timestamp.
+    }
   }
 
   Future<String?> getAuthToken() async {

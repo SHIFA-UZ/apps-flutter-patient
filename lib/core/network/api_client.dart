@@ -100,12 +100,13 @@ class ApiClient {
             try {
               final token = await StorageService()
                   .getAuthToken()
-                  .timeout(const Duration(seconds: 2));
+                  .timeout(const Duration(seconds: 4));
               if (token != null) {
                 options.headers['Authorization'] = 'Bearer $token';
               }
             } on Exception catch (_) {
-              // Proceed without token rather than blocking the request.
+              // Keystore timeout or error — proceed without token.
+              // The request will get a 401, which is handled below.
             }
           }
           return handler.next(options);
@@ -126,6 +127,14 @@ class ApiClient {
                   path.startsWith('/auth/');
 
               if (!isPublicEndpoint && !_isLoggingOut) {
+                // If the request itself had no Bearer header (keystore timeout during onRequest),
+                // the 401 is not caused by an invalid token — do not logout.
+                final sentBearer = error.requestOptions.headers
+                    .containsKey('Authorization');
+                if (!sentBearer) {
+                  return handler.next(error);
+                }
+
                 final now = DateTime.now();
                 if (_lastLogoutAttempt != null) {
                   final timeSinceLastAttempt = now.difference(_lastLogoutAttempt!);
@@ -135,14 +144,27 @@ class ApiClient {
                 }
 
                 final storage = StorageService();
-                final token = await storage.getAuthToken();
+                String? token;
+                try {
+                  token = await storage.getAuthToken()
+                      .timeout(const Duration(seconds: 4));
+                } on Exception catch (_) {
+                  // Keystore unavailable — cannot confirm token state, skip logout.
+                  return handler.next(error);
+                }
                 if (token == null) {
                   return handler.next(error);
                 }
 
                 // Grace period: do not logout within 10s of saving token (avoids race after login)
                 const gracePeriodSeconds = 10;
-                final savedAtStr = await storage.getAuthTokenSavedAt();
+                String? savedAtStr;
+                try {
+                  savedAtStr = await storage.getAuthTokenSavedAt()
+                      .timeout(const Duration(seconds: 4));
+                } on Exception catch (_) {
+                  savedAtStr = null;
+                }
                 if (savedAtStr != null) {
                   try {
                     final savedAt = DateTime.parse(savedAtStr);
