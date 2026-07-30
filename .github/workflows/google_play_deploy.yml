@@ -199,7 +199,9 @@ jobs:
           flutter build appbundle \
             --release \
             --no-pub \
+            --dart-define=ENVIRONMENT=production \
             --dart-define=FLAVOR=production \
+            --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }} \
             --build-name=${{ steps.version.outputs.version_name }} \
             --build-number=${{ steps.version.outputs.build_number }}
 

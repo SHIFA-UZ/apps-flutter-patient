@@ -39,14 +39,40 @@ class ApiClient {
     return defaultUrl;
   }
 
+  /// Origin used to resolve relative media URLs (photos, documents).
+  /// Always derived from [apiBaseUrl] so release never points at localhost.
   static String get publicBaseUrl {
-    if (kIsWeb) return 'http://localhost:8090';
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return 'http://10.0.2.2:8090';
-      default:
-        return 'http://localhost:8090';
-    }
+    final api = apiBaseUrl; // typically .../api
+    final origin = api.replaceAll(RegExp(r'/api/?$'), '');
+    if (origin.isNotEmpty) return origin;
+    return AppConfig.productionApiBaseUrl.replaceAll(RegExp(r'/api/?$'), '');
+  }
+
+  /// Auth paths that must work without a JWT (and should skip Keystore reads).
+  static bool isUnauthenticatedAuthPath(String path) {
+    final normalized = path.contains('://')
+        ? Uri.tryParse(path)?.path ?? path
+        : path;
+    final p = normalized.startsWith('/') ? normalized : '/$normalized';
+    const publicSuffixes = <String>[
+      '/auth/login',
+      '/auth/register',
+      '/auth/register-patient',
+      '/auth/register-clinic-staff',
+      '/auth/verify-key',
+      '/auth/check-existing-patient',
+      '/auth/check-existing-doctor',
+      '/auth/check-identifier',
+      '/auth/create-patient-for-doctor',
+      '/auth/send-email-otp',
+      '/auth/send-sms-otp',
+      '/auth/verify',
+      '/auth/forgot-password-reset',
+      '/auth/send-login-otp',
+      '/auth/verify-email-otp',
+      '/auth/send-forgot-password-otp',
+    ];
+    return publicSuffixes.any((s) => p == s || p.endsWith(s));
   }
 
   ApiClient() {
@@ -67,10 +93,19 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token if available (from secure storage)
-          final token = await StorageService().getAuthToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Skip Keystore for login/register/OTP — a broken Android Keystore
+          // must not block unauthenticated auth calls.
+          if (!isUnauthenticatedAuthPath(options.path)) {
+            try {
+              final token = await StorageService()
+                  .getAuthToken()
+                  .timeout(const Duration(seconds: 4));
+              if (token != null) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+            } on Exception catch (_) {
+              // Proceed without token rather than blocking the request.
+            }
           }
           return handler.next(options);
         },
@@ -86,10 +121,16 @@ class ApiClient {
             final statusCode = error.response?.statusCode;
             if (statusCode == 401) {
               final path = error.requestOptions.path;
-              final isPublicEndpoint = path.startsWith('/public/') ||
-                  path.startsWith('/auth/');
+              final isPublicEndpoint = isUnauthenticatedAuthPath(path) ||
+                  path.contains('/public/') ||
+                  path.contains('/auth/');
 
               if (!isPublicEndpoint && !_isLoggingOut) {
+                // Request went out without Bearer (Keystore miss) → do not logout.
+                if (!error.requestOptions.headers.containsKey('Authorization')) {
+                  return handler.next(error);
+                }
+
                 final now = DateTime.now();
                 if (_lastLogoutAttempt != null) {
                   final timeSinceLastAttempt = now.difference(_lastLogoutAttempt!);
@@ -99,14 +140,28 @@ class ApiClient {
                 }
 
                 final storage = StorageService();
-                final token = await storage.getAuthToken();
+                String? token;
+                try {
+                  token = await storage
+                      .getAuthToken()
+                      .timeout(const Duration(seconds: 4));
+                } on Exception catch (_) {
+                  return handler.next(error);
+                }
                 if (token == null) {
                   return handler.next(error);
                 }
 
                 // Grace period: do not logout within 10s of saving token (avoids race after login)
                 const gracePeriodSeconds = 10;
-                final savedAtStr = await storage.getAuthTokenSavedAt();
+                String? savedAtStr;
+                try {
+                  savedAtStr = await storage
+                      .getAuthTokenSavedAt()
+                      .timeout(const Duration(seconds: 4));
+                } on Exception catch (_) {
+                  savedAtStr = null;
+                }
                 if (savedAtStr != null) {
                   try {
                     final savedAt = DateTime.parse(savedAtStr);

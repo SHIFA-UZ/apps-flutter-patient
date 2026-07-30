@@ -100,16 +100,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
         loginAttemptsRemaining: null,
       );
     } catch (e) {
-      final justLocked = await attemptService.recordFailedAttempt();
-      final remaining = await attemptService.remainingAttempts();
-      final lockoutSec = await attemptService.lockoutRemainingSeconds();
-      final lockoutMinutes = (lockoutSec / 60).ceil().clamp(1, LoginAttemptService.lockoutDurationMinutes);
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      var justLocked = false;
+      var remaining = 0;
+      int? lockoutMinutes;
+      try {
+        justLocked = await attemptService.recordFailedAttempt();
+        remaining = await attemptService.remainingAttempts();
+        final lockoutSec = await attemptService.lockoutRemainingSeconds();
+        lockoutMinutes = (lockoutSec / 60)
+            .ceil()
+            .clamp(1, LoginAttemptService.lockoutDurationMinutes);
+      } catch (_) {
+        // Never replace the real login error with a lockout-tracking failure.
+      }
       state = state.copyWith(
         isLoading: false,
         error: errorMessage,
         isAuthenticated: false,
-        loginAttemptsRemaining: remaining,
+        loginAttemptsRemaining: remaining > 0 ? remaining : null,
         loginLockedUntilMinutes: justLocked ? lockoutMinutes : null,
       );
     }
