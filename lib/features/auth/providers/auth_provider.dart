@@ -68,17 +68,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String username, String password) async {
     final attemptService = _ref.read(loginAttemptServiceProvider);
 
-    if (await attemptService.isLockedOut()) {
-      final sec = await attemptService.lockoutRemainingSeconds();
-      final minutes = (sec / 60).ceil().clamp(1, LoginAttemptService.lockoutDurationMinutes);
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: false,
-        error: null,
-        loginLockedUntilMinutes: minutes,
-        loginAttemptsRemaining: 0,
-      );
-      return;
+    // Local lockout bookkeeping must never block or mask a real sign-in attempt.
+    try {
+      if (await attemptService.isLockedOut()) {
+        final sec = await attemptService.lockoutRemainingSeconds();
+        final minutes = (sec / 60)
+            .ceil()
+            .clamp(1, LoginAttemptService.lockoutDurationMinutes);
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: false,
+          error: null,
+          loginLockedUntilMinutes: minutes,
+          loginAttemptsRemaining: 0,
+        );
+        return;
+      }
+    } catch (_) {
+      // Storage unavailable — continue to the sign-in request.
     }
 
     state = state.copyWith(
@@ -89,7 +96,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
     try {
       final result = await _repository.login(username, password);
-      await attemptService.clearAttempts();
+      try {
+        await attemptService.clearAttempts();
+      } catch (_) {
+        // Non-critical: sign-in already succeeded.
+      }
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,

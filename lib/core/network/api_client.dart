@@ -10,14 +10,31 @@ class ApiClient {
   bool _isLoggingOut = false;
   DateTime? _lastLogoutAttempt;
 
+  /// True when [value] is an absolute http(s) URL with a host.
+  /// A malformed --dart-define (missing scheme, stray whitespace, placeholder)
+  /// must never silently replace the known-good production endpoint.
+  static bool _isUsableBaseUrl(String value) {
+    final uri = Uri.tryParse(value);
+    if (uri == null) return false;
+    if (uri.host.isEmpty) return false;
+    return uri.scheme == 'https' || uri.scheme == 'http';
+  }
+
   static String get apiBaseUrl {
-    // If API_BASE_URL is provided via --dart-define, use it
-    if (AppConfig.apiBaseUrl.isNotEmpty) {
+    // If API_BASE_URL is provided via --dart-define, use it when it is valid.
+    final configured = AppConfig.apiBaseUrl.trim();
+    if (configured.isNotEmpty) {
       // Remove /api suffix if present, as we add it below
-      final base = AppConfig.apiBaseUrl.replaceAll(RegExp(r'/api/?$'), '');
-      final url = '$base/api';
-      AppLogger.debug('🔗 Using API_BASE_URL from environment: $url');
-      return url;
+      final base = configured.replaceAll(RegExp(r'/api/?$'), '');
+      if (_isUsableBaseUrl(base)) {
+        final url = '$base/api';
+        AppLogger.debug('🔗 Using API_BASE_URL from environment: $url');
+        return url;
+      }
+      AppLogger.error(
+        'Ignoring invalid API_BASE_URL; falling back to production endpoint.',
+        configured,
+      );
     }
 
     // Release build without API_BASE_URL: use production URL so Play Store testers can reach backend
