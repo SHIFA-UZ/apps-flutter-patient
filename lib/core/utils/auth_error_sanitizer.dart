@@ -13,6 +13,7 @@ class AuthErrorSanitizer {
     'Email OTP required when email is provided',
     'Email verification code required',
     'Invalid or expired email verification code',
+    'Invalid or expired verification code',
     'Invalid phone number',
     'Account is disabled',
     'Account is disabled.',

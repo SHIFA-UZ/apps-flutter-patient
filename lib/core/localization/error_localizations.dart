@@ -18,6 +18,7 @@ const Map<String, String> _errorMessageToKey = {
   'Email OTP required when email is provided': 'errorEmailOtpRequiredWhenEmailProvided',
   'Email verification code required': 'errorEmailVerificationCodeRequired',
   'Invalid or expired email verification code': 'errorInvalidOrExpiredEmailVerificationCode',
+  'Invalid or expired verification code': 'invalidVerificationCode',
   'Invalid phone number': 'errorInvalidPhoneNumber',
   'Account is disabled': 'errorAccountIsDisabled',
   'Account is disabled.': 'errorAccountIsDisabled',

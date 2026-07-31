@@ -10,31 +10,14 @@ class ApiClient {
   bool _isLoggingOut = false;
   DateTime? _lastLogoutAttempt;
 
-  /// True when [value] is an absolute http(s) URL with a host.
-  /// A malformed --dart-define (missing scheme, stray whitespace, placeholder)
-  /// must never silently replace the known-good production endpoint.
-  static bool _isUsableBaseUrl(String value) {
-    final uri = Uri.tryParse(value);
-    if (uri == null) return false;
-    if (uri.host.isEmpty) return false;
-    return uri.scheme == 'https' || uri.scheme == 'http';
-  }
-
   static String get apiBaseUrl {
-    // If API_BASE_URL is provided via --dart-define, use it when it is valid.
-    final configured = AppConfig.apiBaseUrl.trim();
-    if (configured.isNotEmpty) {
+    // If API_BASE_URL is provided via --dart-define, use it
+    if (AppConfig.apiBaseUrl.isNotEmpty) {
       // Remove /api suffix if present, as we add it below
-      final base = configured.replaceAll(RegExp(r'/api/?$'), '');
-      if (_isUsableBaseUrl(base)) {
-        final url = '$base/api';
-        AppLogger.debug('🔗 Using API_BASE_URL from environment: $url');
-        return url;
-      }
-      AppLogger.error(
-        'Ignoring invalid API_BASE_URL; falling back to production endpoint.',
-        configured,
-      );
+      final base = AppConfig.apiBaseUrl.replaceAll(RegExp(r'/api/?$'), '');
+      final url = '$base/api';
+      AppLogger.debug('🔗 Using API_BASE_URL from environment: $url');
+      return url;
     }
 
     // Release build without API_BASE_URL: use production URL so Play Store testers can reach backend
@@ -56,40 +39,14 @@ class ApiClient {
     return defaultUrl;
   }
 
-  /// Origin used to resolve relative media URLs (photos, documents).
-  /// Always derived from [apiBaseUrl] so release never points at localhost.
   static String get publicBaseUrl {
-    final api = apiBaseUrl; // typically .../api
-    final origin = api.replaceAll(RegExp(r'/api/?$'), '');
-    if (origin.isNotEmpty) return origin;
-    return AppConfig.productionApiBaseUrl.replaceAll(RegExp(r'/api/?$'), '');
-  }
-
-  /// Auth paths that must work without a JWT (and should skip Keystore reads).
-  static bool isUnauthenticatedAuthPath(String path) {
-    final normalized = path.contains('://')
-        ? Uri.tryParse(path)?.path ?? path
-        : path;
-    final p = normalized.startsWith('/') ? normalized : '/$normalized';
-    const publicSuffixes = <String>[
-      '/auth/login',
-      '/auth/register',
-      '/auth/register-patient',
-      '/auth/register-clinic-staff',
-      '/auth/verify-key',
-      '/auth/check-existing-patient',
-      '/auth/check-existing-doctor',
-      '/auth/check-identifier',
-      '/auth/create-patient-for-doctor',
-      '/auth/send-email-otp',
-      '/auth/send-sms-otp',
-      '/auth/verify',
-      '/auth/forgot-password-reset',
-      '/auth/send-login-otp',
-      '/auth/verify-email-otp',
-      '/auth/send-forgot-password-otp',
-    ];
-    return publicSuffixes.any((s) => p == s || p.endsWith(s));
+    if (kIsWeb) return 'http://localhost:8090';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'http://10.0.2.2:8090';
+      default:
+        return 'http://localhost:8090';
+    }
   }
 
   ApiClient() {
@@ -110,19 +67,10 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Skip Keystore for login/register/OTP — a broken Android Keystore
-          // must not block unauthenticated auth calls.
-          if (!isUnauthenticatedAuthPath(options.path)) {
-            try {
-              final token = await StorageService()
-                  .getAuthToken()
-                  .timeout(const Duration(seconds: 4));
-              if (token != null) {
-                options.headers['Authorization'] = 'Bearer $token';
-              }
-            } on Exception catch (_) {
-              // Proceed without token rather than blocking the request.
-            }
+          // Add auth token if available (from secure storage)
+          final token = await StorageService().getAuthToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
           }
           return handler.next(options);
         },
@@ -138,16 +86,10 @@ class ApiClient {
             final statusCode = error.response?.statusCode;
             if (statusCode == 401) {
               final path = error.requestOptions.path;
-              final isPublicEndpoint = isUnauthenticatedAuthPath(path) ||
-                  path.contains('/public/') ||
-                  path.contains('/auth/');
+              final isPublicEndpoint = path.startsWith('/public/') ||
+                  path.startsWith('/auth/');
 
               if (!isPublicEndpoint && !_isLoggingOut) {
-                // Request went out without Bearer (Keystore miss) → do not logout.
-                if (!error.requestOptions.headers.containsKey('Authorization')) {
-                  return handler.next(error);
-                }
-
                 final now = DateTime.now();
                 if (_lastLogoutAttempt != null) {
                   final timeSinceLastAttempt = now.difference(_lastLogoutAttempt!);
@@ -157,28 +99,14 @@ class ApiClient {
                 }
 
                 final storage = StorageService();
-                String? token;
-                try {
-                  token = await storage
-                      .getAuthToken()
-                      .timeout(const Duration(seconds: 4));
-                } on Exception catch (_) {
-                  return handler.next(error);
-                }
+                final token = await storage.getAuthToken();
                 if (token == null) {
                   return handler.next(error);
                 }
 
                 // Grace period: do not logout within 10s of saving token (avoids race after login)
                 const gracePeriodSeconds = 10;
-                String? savedAtStr;
-                try {
-                  savedAtStr = await storage
-                      .getAuthTokenSavedAt()
-                      .timeout(const Duration(seconds: 4));
-                } on Exception catch (_) {
-                  savedAtStr = null;
-                }
+                final savedAtStr = await storage.getAuthTokenSavedAt();
                 if (savedAtStr != null) {
                   try {
                     final savedAt = DateTime.parse(savedAtStr);

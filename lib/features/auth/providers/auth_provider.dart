@@ -68,24 +68,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String username, String password) async {
     final attemptService = _ref.read(loginAttemptServiceProvider);
 
-    // Local lockout bookkeeping must never block or mask a real sign-in attempt.
-    try {
-      if (await attemptService.isLockedOut()) {
-        final sec = await attemptService.lockoutRemainingSeconds();
-        final minutes = (sec / 60)
-            .ceil()
-            .clamp(1, LoginAttemptService.lockoutDurationMinutes);
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: false,
-          error: null,
-          loginLockedUntilMinutes: minutes,
-          loginAttemptsRemaining: 0,
-        );
-        return;
-      }
-    } catch (_) {
-      // Storage unavailable — continue to the sign-in request.
+    if (await attemptService.isLockedOut()) {
+      final sec = await attemptService.lockoutRemainingSeconds();
+      final minutes = (sec / 60).ceil().clamp(1, LoginAttemptService.lockoutDurationMinutes);
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: false,
+        error: null,
+        loginLockedUntilMinutes: minutes,
+        loginAttemptsRemaining: 0,
+      );
+      return;
     }
 
     state = state.copyWith(
@@ -96,11 +89,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
     try {
       final result = await _repository.login(username, password);
-      try {
-        await attemptService.clearAttempts();
-      } catch (_) {
-        // Non-critical: sign-in already succeeded.
-      }
+      await attemptService.clearAttempts();
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
@@ -111,25 +100,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
         loginAttemptsRemaining: null,
       );
     } catch (e) {
+      final justLocked = await attemptService.recordFailedAttempt();
+      final remaining = await attemptService.remainingAttempts();
+      final lockoutSec = await attemptService.lockoutRemainingSeconds();
+      final lockoutMinutes = (lockoutSec / 60).ceil().clamp(1, LoginAttemptService.lockoutDurationMinutes);
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
-      var justLocked = false;
-      var remaining = 0;
-      int? lockoutMinutes;
-      try {
-        justLocked = await attemptService.recordFailedAttempt();
-        remaining = await attemptService.remainingAttempts();
-        final lockoutSec = await attemptService.lockoutRemainingSeconds();
-        lockoutMinutes = (lockoutSec / 60)
-            .ceil()
-            .clamp(1, LoginAttemptService.lockoutDurationMinutes);
-      } catch (_) {
-        // Never replace the real login error with a lockout-tracking failure.
-      }
       state = state.copyWith(
         isLoading: false,
         error: errorMessage,
         isAuthenticated: false,
-        loginAttemptsRemaining: remaining > 0 ? remaining : null,
+        loginAttemptsRemaining: remaining,
         loginLockedUntilMinutes: justLocked ? lockoutMinutes : null,
       );
     }

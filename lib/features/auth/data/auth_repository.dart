@@ -76,19 +76,6 @@ class AuthRepository {
       final statusCode = e.response?.statusCode;
       final data = e.response?.data;
       AppLogger.apiError(statusCode, data, '/auth/login');
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        throw Exception(
-          'Connection timed out. Check your internet and try again.',
-        );
-      }
-      if (e.type == DioExceptionType.connectionError ||
-          e.response == null) {
-        throw Exception(
-          'Network error. Check your internet connection and try again.',
-        );
-      }
       final errorMessage = AuthErrorSanitizer.sanitize(
         statusCode: statusCode,
         data: data ?? e.message,
