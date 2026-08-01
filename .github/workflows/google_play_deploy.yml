@@ -188,11 +188,26 @@ jobs:
           android.enableJetifier=false
           EOF
 
+      # "flutter pub get" registers dev-dependency plugins too, and integration_test
+      # has no AAR on the release compile path, so the generated registrant fails to
+      # build. Removing just that one registration keeps every real plugin; deleting
+      # the whole file (the previous workaround) produced an app with none at all.
+      # The emptied try/catch left behind is valid Java.
+      - name: Drop dev-dependency plugin from registrant
+        run: |
+          REGISTRANT=android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          if grep -q integration_test "$REGISTRANT"; then
+            sed -i '/integration_test/d' "$REGISTRANT"
+            echo "Removed integration_test registration."
+          else
+            echo "No dev-dependency registration found; nothing to strip."
+          fi
+
       # The registrant is git-ignored, so the only copy is the one "flutter pub get"
-      # produced above. Deleting it here left --no-pub with nothing to regenerate,
-      # and the v2 embedding looks the class up by reflection: when it is missing
-      # the app starts with no plugins registered at all. Secure storage then
-      # throws on every call, so sign-in failed after the server had accepted it.
+      # produced above. With --no-pub nothing regenerates it, and the v2 embedding
+      # resolves the class by reflection: when it is missing the app starts with no
+      # plugins registered at all. Secure storage then throws on every call, so
+      # sign-in failed after the server had already accepted the credentials.
       - name: Verify Android plugin registrant exists
         run: |
           REGISTRANT=android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
@@ -200,7 +215,17 @@ jobs:
             echo "::error::$REGISTRANT is missing. The build would ship with no plugins registered."
             exit 1
           fi
-          echo "Registrant present, $(grep -c 'flutterEngine.getPlugins().add' "$REGISTRANT") plugins registered."
+          COUNT=$(grep -c 'flutterEngine.getPlugins().add' "$REGISTRANT" || true)
+          echo "Registrant registers $COUNT plugins."
+          if [ "$COUNT" -lt 10 ]; then
+            echo "::error::Only $COUNT plugins registered; the registrant looks truncated."
+            exit 1
+          fi
+          # Auth tokens live here. Its absence is what made sign-in fail in the store build.
+          if ! grep -q FlutterSecureStoragePlugin "$REGISTRANT"; then
+            echo "::error::flutter_secure_storage is not registered; sign-in would fail after the server accepts the login."
+            exit 1
+          fi
 
       - name: Build Android App Bundle
         run: |
@@ -228,13 +253,18 @@ jobs:
       - name: Verify plugins are registered in the AAB
         run: |
           AAB_PATH="build/app/outputs/bundle/release/app-release.aab"
-          if unzip -p "$AAB_PATH" 'base/dex/classes*.dex' \
-               | grep -aq 'Lio/flutter/plugins/GeneratedPluginRegistrant;'; then
-            echo "GeneratedPluginRegistrant is compiled into the AAB."
-          else
+          DEX=$(mktemp)
+          unzip -p "$AAB_PATH" 'base/dex/classes*.dex' > "$DEX"
+          if ! grep -aq 'Lio/flutter/plugins/GeneratedPluginRegistrant;' "$DEX"; then
             echo "::error::GeneratedPluginRegistrant is absent from the AAB. The app would start with no plugins registered (secure storage, Firebase, preferences all dead). Refusing to publish."
             exit 1
           fi
+          if ! grep -aq 'FlutterSecureStoragePlugin' "$DEX"; then
+            echo "::error::flutter_secure_storage is absent from the AAB. Sign-in would fail after the server accepts the login. Refusing to publish."
+            exit 1
+          fi
+          rm -f "$DEX"
+          echo "Registrant and secure storage plugin are both compiled into the AAB."
 
       - name: Prune Gradle intermediates (keep AAB)
         if: success()
