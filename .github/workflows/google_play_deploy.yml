@@ -188,11 +188,19 @@ jobs:
           android.enableJetifier=false
           EOF
 
-      - name: Clear stale Android plugin registrant
+      # The registrant is git-ignored, so the only copy is the one "flutter pub get"
+      # produced above. Deleting it here left --no-pub with nothing to regenerate,
+      # and the v2 embedding looks the class up by reflection: when it is missing
+      # the app starts with no plugins registered at all. Secure storage then
+      # throws on every call, so sign-in failed after the server had accepted it.
+      - name: Verify Android plugin registrant exists
         run: |
-          # pub get can generate a registrant that includes dev-only plugins (integration_test).
-          # Release build must regenerate it without dev dependencies.
-          rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          REGISTRANT=android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          if [ ! -f "$REGISTRANT" ]; then
+            echo "::error::$REGISTRANT is missing. The build would ship with no plugins registered."
+            exit 1
+          fi
+          echo "Registrant present, $(grep -c 'flutterEngine.getPlugins().add' "$REGISTRANT") plugins registered."
 
       - name: Build Android App Bundle
         run: |
@@ -213,6 +221,20 @@ jobs:
           fi
           AAB_SIZE=$(du -h "$AAB_PATH" | cut -f1)
           echo "AAB built successfully: $AAB_SIZE"
+
+      # A missing registrant does not fail the build, it just produces an app
+      # where every plugin channel throws. Check the compiled artifact rather
+      # than trusting the source file to have survived.
+      - name: Verify plugins are registered in the AAB
+        run: |
+          AAB_PATH="build/app/outputs/bundle/release/app-release.aab"
+          if unzip -p "$AAB_PATH" 'base/dex/classes*.dex' \
+               | grep -aq 'Lio/flutter/plugins/GeneratedPluginRegistrant;'; then
+            echo "GeneratedPluginRegistrant is compiled into the AAB."
+          else
+            echo "::error::GeneratedPluginRegistrant is absent from the AAB. The app would start with no plugins registered (secure storage, Firebase, preferences all dead). Refusing to publish."
+            exit 1
+          fi
 
       - name: Prune Gradle intermediates (keep AAB)
         if: success()
