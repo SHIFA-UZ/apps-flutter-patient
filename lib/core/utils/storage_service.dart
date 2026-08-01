@@ -10,16 +10,23 @@ class StorageService {
   static final FlutterSecureStorage _authStorage = FlutterSecureStorage(
     aOptions: const AndroidOptions(
       sharedPreferencesName: 'shifa_auth_secure',
-      resetOnError: false,
+      // An undecryptable entry (restored backup, rotated Keystore key) would
+      // otherwise throw on every read and lock the user out permanently.
+      // Clearing it costs a re-login instead.
+      resetOnError: true,
     ),
   );
 
   Future<void> saveAuthToken(String token) async {
     await _authStorage.write(key: authTokenKey, value: token);
-    await _authStorage.write(
-      key: authTokenSavedAtKey,
-      value: DateTime.now().toIso8601String(),
-    );
+    // The timestamp only feeds the 401 grace period, so losing it must not
+    // fail a sign-in that already produced a valid token.
+    try {
+      await _authStorage.write(
+        key: authTokenSavedAtKey,
+        value: DateTime.now().toIso8601String(),
+      );
+    } catch (_) {}
   }
 
   Future<String?> getAuthToken() async {

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ replacement for backup_rules.xml (fullBackupContent), which the
+  platform ignores from API 31 onward. Both rule sets are kept so the
+  exclusions apply on every supported version.
+
+  Auth state must never travel to another device or install: a restored
+  FlutterSecureStorage entry cannot be decrypted by the new device's Keystore
+  key, which leaves the app holding a token it can neither read nor clear.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- App lock PIN/biometric settings -->
+        <exclude domain="sharedpref" path="shifa_app_lock_prefs.xml"/>
+        <!-- Auth tokens (FlutterSecureStorage) -->
+        <exclude domain="sharedpref" path="shifa_auth_secure.xml"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="shifa_app_lock_prefs.xml"/>
+        <exclude domain="sharedpref" path="shifa_auth_secure.xml"/>
+    </device-transfer>
+</data-extraction-rules>

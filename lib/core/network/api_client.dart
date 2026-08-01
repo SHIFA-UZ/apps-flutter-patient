@@ -49,6 +49,33 @@ class ApiClient {
     }
   }
 
+  /// Auth paths that must work without a JWT. A slow or broken Android Keystore
+  /// must never delay or block sign-in, registration or OTP delivery.
+  static bool isUnauthenticatedAuthPath(String path) {
+    final normalized =
+        path.contains('://') ? Uri.tryParse(path)?.path ?? path : path;
+    final p = normalized.startsWith('/') ? normalized : '/$normalized';
+    const publicSuffixes = <String>[
+      '/auth/login',
+      '/auth/register',
+      '/auth/register-patient',
+      '/auth/register-clinic-staff',
+      '/auth/verify-key',
+      '/auth/check-existing-patient',
+      '/auth/check-existing-doctor',
+      '/auth/check-identifier',
+      '/auth/create-patient-for-doctor',
+      '/auth/send-email-otp',
+      '/auth/send-sms-otp',
+      '/auth/verify',
+      '/auth/verify-email-otp',
+      '/auth/send-login-otp',
+      '/auth/send-forgot-password-otp',
+      '/auth/forgot-password-reset',
+    ];
+    return publicSuffixes.any((s) => p == s || p.endsWith(s));
+  }
+
   ApiClient() {
     AppLogger.debug('🔗 ApiClient initialized with baseUrl: $apiBaseUrl');
     
@@ -67,10 +94,19 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token if available (from secure storage)
-          final token = await StorageService().getAuthToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Unauthenticated auth calls carry no token, so never touch the
+          // Keystore for them: sign-in, registration and OTP delivery must not
+          // depend on it being readable.
+          if (!isUnauthenticatedAuthPath(options.path)) {
+            try {
+              final token = await StorageService().getAuthToken();
+              if (token != null) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+            } catch (_) {
+              // Proceed unauthenticated and let the response decide, rather
+              // than failing the request outright.
+            }
           }
           return handler.next(options);
         },
@@ -90,6 +126,14 @@ class ApiClient {
                   path.startsWith('/auth/');
 
               if (!isPublicEndpoint && !_isLoggingOut) {
+                // The request went out with no Bearer token (Keystore read
+                // timed out above), so this 401 says nothing about whether the
+                // stored session is still valid. Never sign the user out here.
+                if (!error.requestOptions.headers
+                    .containsKey('Authorization')) {
+                  return handler.next(error);
+                }
+
                 final now = DateTime.now();
                 if (_lastLogoutAttempt != null) {
                   final timeSinceLastAttempt = now.difference(_lastLogoutAttempt!);
@@ -99,14 +143,25 @@ class ApiClient {
                 }
 
                 final storage = StorageService();
-                final token = await storage.getAuthToken();
+                String? token;
+                try {
+                  token = await storage.getAuthToken();
+                } catch (_) {
+                  // Cannot confirm the session is stale — keep the user in.
+                  return handler.next(error);
+                }
                 if (token == null) {
                   return handler.next(error);
                 }
 
                 // Grace period: do not logout within 10s of saving token (avoids race after login)
                 const gracePeriodSeconds = 10;
-                final savedAtStr = await storage.getAuthTokenSavedAt();
+                String? savedAtStr;
+                try {
+                  savedAtStr = await storage.getAuthTokenSavedAt();
+                } catch (_) {
+                  savedAtStr = null;
+                }
                 if (savedAtStr != null) {
                   try {
                     final savedAt = DateTime.parse(savedAtStr);

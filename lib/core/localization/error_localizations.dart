@@ -111,7 +111,14 @@ final List<({String prefix, String key, String placeholder})> _errorMessagePrefi
 
 /// Patterns that indicate technical content - never show to users.
 final _technicalPatterns = [
-  RegExp(r'\b(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b', caseSensitive: false),
+  // Require SQL-shaped context: bare words like "create" or "update" appear in
+  // legitimate user-facing messages ("You need to create a patient account").
+  RegExp(r'\bSELECT\b[\s\S]*\bFROM\b', caseSensitive: false),
+  RegExp(r'\bINSERT\s+INTO\b', caseSensitive: false),
+  RegExp(r'\bUPDATE\b[\s\S]*\bSET\b', caseSensitive: false),
+  RegExp(r'\bDELETE\s+FROM\b', caseSensitive: false),
+  RegExp(r'\b(DROP|ALTER|CREATE)\s+(TABLE|INDEX|DATABASE|SCHEMA)\b',
+      caseSensitive: false),
   RegExp(r'\b(ORA-\d+|SQLSTATE|syntax error)\b', caseSensitive: false),
   RegExp(r'\bat\s+\w+\.\w+\s*\([^)]*\)', caseSensitive: false),
   RegExp(r'\bCaused by:\s', caseSensitive: false),
@@ -142,10 +149,8 @@ String translateError(AppLocalizations l10n, String rawMessage) {
     trimmed = next;
   }
 
-  // Safety net: never show technical content
-  if (_isTechnicalMessage(trimmed)) return l10n.translate('errorSomethingWentWrong');
-
-  // Login error: X - if X is technical, we already returned above; if not mapped, use generic
+  // Login error: X - if X is technical use a generic login failure; otherwise
+  // fall through so the inner message can be translated below.
   if (trimmed.startsWith('Login error: ')) {
     final inner = trimmed.substring('Login error: '.length).trim();
     if (_isTechnicalMessage(inner)) return l10n.translate('errorLoginFailed');
@@ -242,6 +247,10 @@ String translateError(AppLocalizations l10n, String rawMessage) {
   if (trimmed.startsWith('Registration error: ')) {
     return l10n.translate('errorRegistrationFailed');
   }
+
+  // Safety net: never show technical content. Runs only after every known
+  // mapping has been tried, so a translatable message is never masked.
+  if (_isTechnicalMessage(trimmed)) return l10n.translate('errorSomethingWentWrong');
 
   // Unknown message - if it looks like raw output, use generic
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
