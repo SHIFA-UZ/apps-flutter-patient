@@ -3490,7 +3490,7 @@ class AppLocalizations {
       'passwordRequirementLowercase': 'Одна строчная буква',
       'passwordRequirementMaxLength': 'Не более 128 символов',
       'passwordRequirementMinLength': 'Не менее 8 символов',
-      'passwordRequirementSpecialChar': 'Один спецсимвол (!@#$%^&* и т. д.)',
+      'passwordRequirementSpecialChar': 'Один спецсимвол (!@#\$%^&* и т. д.)',
       'passwordRequirementUppercase': 'Одна заглавная буква',
       'passwordResetSuccess': 'Пароль успешно сброшен.',
       'passwordTooLong': 'Пароль должен быть не длиннее 128 символов',
