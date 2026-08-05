@@ -33,6 +33,10 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   List<PasswordRequirementResult> _passwordRequirements = const [];
   bool _isCheckingDoctor = false;
 
+  /// Client-side SMS send count for this session. Backend also enforces 3/hour.
+  static const _maxSmsAttempts = 3;
+  int _smsSendAttempts = 0;
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +65,9 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  /// Sends registration OTP via email or SMS. On SMS provider failure, prompts for email.
+  /// Sends registration OTP via email or SMS.
+  /// After [_maxSmsAttempts] SMS sends (or when the backend refuses further SMS),
+  /// prompts for email so we stop burning DevSMS credits on undeliverable numbers.
   Future<({RegistrationOtpChannel channel, String destination, String? email})?>
       _sendRegistrationOtp({
     required AuthRepository repo,
@@ -78,33 +84,58 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
         email: emailTrimmed,
       );
     }
+
+    if (_smsSendAttempts >= _maxSmsAttempts) {
+      return _continueWithEmailFallback(repo, l10n, emailTrimmed);
+    }
+
     try {
-      final channel = await repo.sendSmsOtp(phone!);
+      final channel = await repo.sendSmsOtp(
+        phone!,
+        fallbackEmail: emailTrimmed.isNotEmpty ? emailTrimmed : null,
+      );
       if (channel == RegistrationOtpChannel.email) {
-        final fallback = emailTrimmed.isNotEmpty ? emailTrimmed : null;
+        final fallback = emailTrimmed.isNotEmpty
+            ? emailTrimmed
+            : await _promptEmailForSmsFallback(l10n);
         if (fallback == null) return null;
+        _emailController.text = fallback;
         return (
           channel: RegistrationOtpChannel.email,
           destination: fallback,
           email: fallback,
         );
       }
+      _smsSendAttempts++;
       return (
         channel: RegistrationOtpChannel.sms,
         destination: phone,
         email: null,
       );
     } on SmsOtpUnavailableException {
-      final fallbackEmail = await _promptEmailForSmsFallback(l10n);
-      if (fallbackEmail == null) return null;
-      _emailController.text = fallbackEmail;
-      await repo.sendEmailOtp(fallbackEmail);
-      return (
-        channel: RegistrationOtpChannel.email,
-        destination: fallbackEmail,
-        email: fallbackEmail,
-      );
+      return _continueWithEmailFallback(repo, l10n, emailTrimmed);
+    } on OtpRateLimitException {
+      return _continueWithEmailFallback(repo, l10n, emailTrimmed);
     }
+  }
+
+  Future<({RegistrationOtpChannel channel, String destination, String? email})?>
+      _continueWithEmailFallback(
+    AuthRepository repo,
+    AppLocalizations l10n,
+    String emailTrimmed,
+  ) async {
+    final fallbackEmail = emailTrimmed.isNotEmpty
+        ? emailTrimmed
+        : await _promptEmailForSmsFallback(l10n);
+    if (fallbackEmail == null) return null;
+    _emailController.text = fallbackEmail;
+    await repo.sendEmailOtp(fallbackEmail);
+    return (
+      channel: RegistrationOtpChannel.email,
+      destination: fallbackEmail,
+      email: fallbackEmail,
+    );
   }
 
   Future<String?> _promptEmailForSmsFallback(AppLocalizations l10n) async {
@@ -119,7 +150,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.translate('smsUnavailableMessage')),
+              Text(l10n.translate('smsFailedUseEmailMessage')),
               const SizedBox(height: 16),
               TextField(
                 controller: emailCtrl,
@@ -149,7 +180,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                 }
                 Navigator.pop(ctx, v);
               },
-              child: Text(l10n.translate('continueToVerification')),
+              child: Text(l10n.translate('continueWithEmail')),
             ),
           ],
         ),

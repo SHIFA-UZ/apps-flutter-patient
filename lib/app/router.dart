@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/core/utils/app_logger.dart';
+import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/features/auth/presentation/screens/splash_screen.dart';
 import 'package:shifa_patient_app_v1/features/auth/presentation/screens/login_screen.dart';
 import 'package:shifa_patient_app_v1/features/auth/presentation/screens/create_account_screen.dart';
@@ -423,8 +424,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                           final extra = state.extra as Map<String, dynamic>?;
                           return SubmitReviewScreen(
                             doctorId: extra?['doctorId'] as String? ?? '',
-                            doctorName:
-                                extra?['doctorName'] as String? ?? 'Doctor',
+                            doctorName: extra?['doctorName'] as String? ??
+                                (AppLocalizations.of(context)?.translate('doctor') ??
+                                    'Doctor'),
                             appointmentId: id,
                           );
                         },

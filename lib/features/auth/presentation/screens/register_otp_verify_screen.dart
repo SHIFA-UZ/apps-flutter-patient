@@ -10,11 +10,14 @@ import 'package:shifa_patient_app_v1/core/services/app_lock_provider.dart';
 import 'package:shifa_patient_app_v1/core/services/app_lock_service.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/features/auth/data/auth_repository.dart';
+import 'package:shifa_patient_app_v1/features/auth/data/auth_exceptions.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/auth_provider.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/otp_verification_provider.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/registration_provider.dart';
 
 const _resendCooldownSeconds = 5 * 60;
+/// Must match backend [SmsOtpService.MAX_SMS_SENDS_PER_HOUR] (initial send + resends).
+const _maxSmsSends = 3;
 
 class RegisterOtpVerifyScreen extends ConsumerStatefulWidget {
   const RegisterOtpVerifyScreen({super.key});
@@ -28,6 +31,8 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
   bool _isLoading = false;
   int _resendSecondsRemaining = _resendCooldownSeconds;
   Timer? _resendTimer;
+  /// Counts the initial SMS send as 1 once the screen opens on the SMS channel.
+  int _smsSendsUsed = 1;
 
   @override
   void initState() {
@@ -42,6 +47,11 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
     final reg = ref.read(registrationProvider);
     if (otpState == null || !reg.canRegister) {
       context.go(AppRoutes.createAccount);
+      return;
+    }
+    // Initial SMS already sent on the previous screen.
+    if (otpState.channel != RegistrationOtpChannel.sms) {
+      _smsSendsUsed = 0;
     }
   }
 
@@ -113,6 +123,83 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
     }
   }
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  Future<String?> _promptEmailForSmsFallback(AppLocalizations l10n) async {
+    final emailCtrl = TextEditingController();
+    try {
+      return showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.translate('smsUnavailableTitle')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.translate('smsFailedUseEmailMessage')),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                decoration: InputDecoration(
+                  labelText: l10n.email,
+                  hintText: 'example@email.com',
+                  prefixIcon: const Icon(Icons.email),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final v = emailCtrl.text.trim().toLowerCase();
+                if (!_isValidEmail(v)) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text(l10n.invalidEmail)),
+                  );
+                  return;
+                }
+                Navigator.pop(ctx, v);
+              },
+              child: Text(l10n.translate('continueWithEmail')),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      emailCtrl.dispose();
+    }
+  }
+
+  Future<void> _switchToEmailChannel(String email) async {
+    final authRepo = ref.read(authRepositoryProvider);
+    await authRepo.sendEmailOtp(email);
+    ref.read(registrationProvider.notifier).setOtpChannel(RegistrationOtpChannel.email);
+    // Keep phone/password; attach email for register + verify.
+    final reg = ref.read(registrationProvider);
+    ref.read(registrationProvider.notifier).updateStep1(
+          firstName: reg.firstName ?? '',
+          lastName: reg.lastName ?? '',
+          phone: reg.phone,
+          email: email,
+          password: reg.password ?? '',
+          otpChannel: RegistrationOtpChannel.email,
+        );
+    ref.read(registerOtpVerificationProvider.notifier).state =
+        RegisterOtpVerificationState(
+      channel: RegistrationOtpChannel.email,
+      destination: email,
+    );
+  }
+
   Future<void> _onResendCode() async {
     final reg = ref.read(registrationProvider);
     final otpState = ref.read(registerOtpVerificationProvider);
@@ -126,9 +213,45 @@ class _RegisterOtpVerifyScreenState extends ConsumerState<RegisterOtpVerifyScree
         if (email == null || email.isEmpty) return;
         await authRepo.sendEmailOtp(email);
       } else {
-        final phone = reg.phone?.trim();
-        if (phone == null || phone.isEmpty) return;
-        await authRepo.sendSmsOtp(phone);
+        // After 3 SMS (initial + resends), stop burning credits and switch to email.
+        if (_smsSendsUsed >= _maxSmsSends) {
+          final existing = reg.email?.trim();
+          final email = (existing != null && existing.isNotEmpty)
+              ? existing
+              : await _promptEmailForSmsFallback(l10n);
+          if (email == null) return;
+          await _switchToEmailChannel(email);
+        } else {
+          final phone = reg.phone?.trim();
+          if (phone == null || phone.isEmpty) return;
+          try {
+            final channel = await authRepo.sendSmsOtp(
+              phone,
+              fallbackEmail: reg.email?.trim(),
+            );
+            if (channel == RegistrationOtpChannel.email) {
+              final email = reg.email?.trim().isNotEmpty == true
+                  ? reg.email!.trim()
+                  : await _promptEmailForSmsFallback(l10n);
+              if (email == null) return;
+              await _switchToEmailChannel(email);
+            } else {
+              _smsSendsUsed++;
+            }
+          } on SmsOtpUnavailableException {
+            final email = reg.email?.trim().isNotEmpty == true
+                ? reg.email!.trim()
+                : await _promptEmailForSmsFallback(l10n);
+            if (email == null) return;
+            await _switchToEmailChannel(email);
+          } on OtpRateLimitException {
+            final email = reg.email?.trim().isNotEmpty == true
+                ? reg.email!.trim()
+                : await _promptEmailForSmsFallback(l10n);
+            if (email == null) return;
+            await _switchToEmailChannel(email);
+          }
+        }
       }
       if (!mounted) return;
       _startResendCountdown();

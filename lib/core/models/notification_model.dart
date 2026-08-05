@@ -135,7 +135,7 @@ class NotificationModel extends Equatable {
 
     return NotificationModel(
       id: id,
-      title: data['title']?.toString() ?? 'Notification',
+      title: data['title']?.toString() ?? '',
       message: data['message']?.toString() ?? '',
       type: type,
       appointmentId: appointmentId,

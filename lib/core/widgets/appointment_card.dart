@@ -110,7 +110,9 @@ class AppointmentCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        doctor?.fullName ?? 'Unknown',
+                        doctor?.fullName ??
+                            (AppLocalizations.of(context)?.translate('unknownDoctor') ??
+                                'Unknown'),
                         style: AppDesignSystem.body2.copyWith(
                           fontWeight: FontWeight.w600,
                           color: isCancelled ? AppDesignSystem.textTertiary : AppDesignSystem.textPrimary,

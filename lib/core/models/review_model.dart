@@ -21,7 +21,9 @@ class ReviewModel extends Equatable {
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
     return ReviewModel(
       id: json['id']?.toString() ?? '',
-      patientName: json['patientName'] ?? 'Anonymous',
+      patientName: (json['patientName'] as String?)?.trim().isNotEmpty == true
+          ? json['patientName'] as String
+          : '',
       patientPhotoUrl: normalizePhotoUrl(json['patientPhotoUrl'] as String?),
       rating: json['rating'] as int,
       comment: json['comment'] as String?,

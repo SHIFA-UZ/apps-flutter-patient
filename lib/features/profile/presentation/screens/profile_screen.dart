@@ -10,6 +10,7 @@ import 'package:shifa_patient_app_v1/core/network/api_providers.dart';
 import 'package:shifa_patient_app_v1/core/providers/language_provider.dart';
 import 'package:shifa_patient_app_v1/core/utils/image_utils.dart';
 import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
+import 'package:shifa_patient_app_v1/core/widgets/app_version_footer.dart';
 import 'package:shifa_patient_app_v1/features/auth/providers/auth_provider.dart';
 import 'package:shifa_patient_app_v1/features/profile/data/account_deletion_repository.dart';
 import 'package:shifa_patient_app_v1/features/profile/providers/profile_provider.dart';
@@ -185,7 +186,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const AppVersionFooter(
+                      padding: EdgeInsets.fromLTRB(8, 32, 8, 16),
+                    ),
                   ],
                 ),
               ),

@@ -996,7 +996,10 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> with 
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        review.patientName,
+                        review.patientName.isNotEmpty
+                            ? review.patientName
+                            : (AppLocalizations.of(context)?.translate('anonymous') ??
+                                'Anonymous'),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,

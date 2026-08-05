@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Application configuration that reads from environment variables
 /// 
 /// This allows the app to work in different environments (dev, staging, production)
@@ -39,6 +37,13 @@ class AppConfig {
 
   /// Enable debug logging (disabled in production)
   static bool get enableDebugLogging => !isProduction;
+
+  /// Display name shown in version footers.
+  static const String appDisplayName = 'Shifa Bemor';
+
+  /// Human-readable release date for the current [pubspec] versionName.
+  /// Update this whenever you bump the version shipped to stores.
+  static const String releaseDateLabel = '5 Aug 2026';
 
   /// Google Maps API key for geocoding services
   /// 
