@@ -60,6 +60,7 @@ class BookingsRepository {
     int? serviceId,
     int? locationId,
     List<int>? documentIds,
+    int? rescheduleAppointmentId,
   }) async {
     try {
       final requestData = {
@@ -71,6 +72,7 @@ class BookingsRepository {
         if (serviceId != null) 'serviceId': serviceId,
         if (locationId != null) 'locationId': locationId,
         if (documentIds != null && documentIds.isNotEmpty) 'documentIds': documentIds,
+        if (rescheduleAppointmentId != null) 'rescheduleAppointmentId': rescheduleAppointmentId,
       };
       
       AppLogger.debug('Booking request data: $requestData');

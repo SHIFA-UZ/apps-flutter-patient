@@ -76,6 +76,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
     int? serviceId,
     int? locationId,
     List<int>? documentIds,
+    int? rescheduleAppointmentId,
   }) async {
     try {
       final appointment = await _repository.bookAppointment(
@@ -87,6 +88,7 @@ class BookingsNotifier extends StateNotifier<BookingsState> {
         serviceId: serviceId,
         locationId: locationId,
         documentIds: documentIds,
+        rescheduleAppointmentId: rescheduleAppointmentId,
       );
       // Reload appointments after booking
       await loadAppointments();

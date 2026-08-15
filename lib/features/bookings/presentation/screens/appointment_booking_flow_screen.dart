@@ -892,6 +892,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
 
       AppLogger.debug(
           'Booking params - startAt: $startAtUtc, slotMinutes: ${selectedSlot.slotMinutes}, doctorId: ${widget.doctorId}, locationId: $bookingLocationId');
+      final rescheduleId = int.tryParse(widget.rescheduleId ?? '');
       final bookedAppointment = await ref.read(bookingsProvider.notifier).bookAppointment(
         doctorId: widget.doctorId,
         startAt: startAtUtc,
@@ -901,6 +902,7 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
         serviceId: _isVideoConsultation ? _selectedServiceId : null,
         locationId: bookingLocationId,
         documentIds: _pendingDocs.map((d) => d.id).toList(),
+        rescheduleAppointmentId: rescheduleId,
       );
 
       AppLogger.debug('Appointment booked successfully!');
@@ -928,28 +930,6 @@ class _AppointmentBookingFlowScreenState extends ConsumerState<AppointmentBookin
             ),
           );
           paymentCompleted = paid == true;
-        }
-      }
-
-      // If this is a reschedule, cancel the old appointment
-      if (widget.rescheduleId != null && widget.rescheduleId!.isNotEmpty) {
-        try {
-          AppLogger.debug('Cancelling old appointment: ${widget.rescheduleId}');
-          await ref.read(bookingsProvider.notifier).cancelAppointment(widget.rescheduleId!);
-          AppLogger.debug('Old appointment cancelled successfully');
-        } catch (e) {
-          AppLogger.error('Error cancelling old appointment:', e);
-          // Don't fail the whole operation if cancel fails
-          if (mounted) {
-            final l10n = AppLocalizations.of(context)!;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${l10n.translate('newAppointmentBookedButFailedToCancelOld')}: ${userFriendlyError(l10n, e, logContext: 'Booking flow')}'),
-                backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 4),
-              ),
-            );
-          }
         }
       }
 
