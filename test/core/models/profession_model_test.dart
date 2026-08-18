@@ -10,6 +10,23 @@ void main() {
       );
     });
 
+    test('includes Urologist and other high-volume specialties', () {
+      expect(
+        ProfessionData.findByEnglish('Urologist')?.uzbek,
+        'Urolog',
+      );
+      expect(
+        ProfessionData.allProfessions.map((p) => p.english),
+        containsAll([
+          'Urologist',
+          'Hospitalist',
+          'Colorectal Surgeon (Proctologist)',
+          'Radiation Oncologist',
+          'Pediatric Urologist',
+        ]),
+      );
+    });
+
     test('translates compound backend aliases to Uzbek', () {
       expect(
         ProfessionData.translate('Dentist, Pediatric', 'uz'),
