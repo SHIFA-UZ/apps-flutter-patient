@@ -166,6 +166,20 @@ class BookingsRepository {
     return response.data as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> createTreatmentPlanCheckout({
+    required String treatmentPlanId,
+    String? installmentItemId,
+  }) async {
+    final response = await _apiClient.post(
+      '/payments/treatment-plan/checkout',
+      data: {
+        'treatmentPlanId': int.parse(treatmentPlanId),
+        if (installmentItemId != null) 'installmentItemId': int.parse(installmentItemId),
+      },
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> getPaymentStatus(String paymentId) async {
     final response = await _apiClient.get('/payments/$paymentId');
     return response.data as Map<String, dynamic>;

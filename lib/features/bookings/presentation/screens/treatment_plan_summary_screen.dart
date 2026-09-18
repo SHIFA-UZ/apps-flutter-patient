@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/network/api_providers.dart';
 
-/// Read-only summary from `GET /patients/me/treatment-plans/{id}` (doctor-facing plans / ledger).
+/// Summary from `GET /patients/me/treatment-plans/{id}` with optional Click pay.
 class TreatmentPlanSummaryScreen extends ConsumerStatefulWidget {
   final String planId;
 
@@ -61,6 +62,16 @@ class _TreatmentPlanSummaryScreenState extends ConsumerState<TreatmentPlanSummar
   String _money(num minor, String currency) =>
       '${(minor.toDouble() / 100).toStringAsFixed(2)} $currency';
 
+  void _pay({String? installmentItemId}) {
+    final path =
+        '${AppRoutes.bookings}/treatment-plan/${widget.planId}/pay';
+    if (installmentItemId != null) {
+      context.push('$path?installmentItemId=$installmentItemId');
+    } else {
+      context.push(path);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -84,6 +95,8 @@ class _TreatmentPlanSummaryScreenState extends ConsumerState<TreatmentPlanSummar
                         payload: _payload!,
                         formatMoney: _money,
                         l10n: l10n,
+                        onPayOutstanding: () => _pay(),
+                        onPayInstallment: (id) => _pay(installmentItemId: id),
                       ),
       ),
     );
@@ -94,11 +107,15 @@ class _SummaryBody extends StatelessWidget {
   final Map<String, dynamic> payload;
   final String Function(num minor, String currency) formatMoney;
   final AppLocalizations l10n;
+  final VoidCallback onPayOutstanding;
+  final void Function(String installmentItemId) onPayInstallment;
 
   const _SummaryBody({
     required this.payload,
     required this.formatMoney,
     required this.l10n,
+    required this.onPayOutstanding,
+    required this.onPayInstallment,
   });
 
   List<Map<String, dynamic>> _asMapList(dynamic raw) {
@@ -106,10 +123,16 @@ class _SummaryBody extends StatelessWidget {
     return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  bool _isUnpaidInstallment(String? status) {
+    final s = (status ?? '').toUpperCase();
+    return s == 'PENDING' || s == 'OVERDUE';
+  }
+
   List<Widget> _installmentItemRows({
     required Map<String, dynamic> plan,
     required String defaultCurrency,
     required ThemeData theme,
+    required bool canPayOnline,
   }) {
     final items = _asMapList(plan['items']);
     final planCur = plan['currency']?.toString() ?? defaultCurrency;
@@ -150,6 +173,15 @@ class _SummaryBody extends StatelessWidget {
                   item['status']?.toString() ?? '',
                   style: theme.textTheme.bodySmall,
                 ),
+                if (canPayOnline &&
+                    _isUnpaidInstallment(item['status']?.toString()) &&
+                    item['id'] != null) ...[
+                  const SizedBox(height: 6),
+                  TextButton(
+                    onPressed: () => onPayInstallment(item['id'].toString()),
+                    child: Text(l10n.treatmentPlanPayInstallment),
+                  ),
+                ],
               ],
             ),
           ],
@@ -172,6 +204,7 @@ class _SummaryBody extends StatelessWidget {
     final planPaymentStatus = payload['planPaymentStatus']?.toString() ?? '';
     final lines = _asMapList(payload['lines']);
     final installmentPlans = _asMapList(payload['installmentPlans']);
+    final canPayOnline = owed > 0 && currency.toUpperCase() == 'UZS';
 
     return ListView(
       children: [
@@ -214,6 +247,25 @@ class _SummaryBody extends StatelessWidget {
           '${l10n.treatmentPlanOutstandingLabel}: ${formatMoney(owed, currency)}',
           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
+        if (owed > 0) ...[
+          const SizedBox(height: 12),
+          if (canPayOnline) ...[
+            Text(
+              l10n.treatmentPlanPayOnlineHint,
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: onPayOutstanding,
+              icon: const Icon(Icons.payment),
+              label: Text(l10n.treatmentPlanPayOutstanding),
+            ),
+          ] else
+            Text(
+              l10n.treatmentPlanOnlinePayUnavailable,
+              style: theme.textTheme.bodySmall,
+            ),
+        ],
         if (lines.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(l10n.treatmentPlanServicesHeading, style: theme.textTheme.titleSmall),
@@ -224,7 +276,7 @@ class _SummaryBody extends StatelessWidget {
               children: [
                 for (var i = 0; i < lines.length; i++) ...[
                   if (i > 0) const Divider(height: 1),
-                      Padding(
+                  Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     child: Builder(
                       builder: (context) {
@@ -331,7 +383,12 @@ class _SummaryBody extends StatelessWidget {
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 8),
-                    ..._installmentItemRows(plan: plan, defaultCurrency: currency, theme: theme),
+                    ..._installmentItemRows(
+                      plan: plan,
+                      defaultCurrency: currency,
+                      theme: theme,
+                      canPayOnline: canPayOnline,
+                    ),
                   ],
                 ),
               ),
