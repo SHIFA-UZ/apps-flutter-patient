@@ -38,6 +38,7 @@ import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/sign
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/visit_summary_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/consultation_payment_screen.dart';
 import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/treatment_plan_summary_screen.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/screens/treatment_plan_payment_screen.dart';
 import 'package:shifa_patient_app_v1/features/chat/presentation/chat_screen.dart';
 import 'package:shifa_patient_app_v1/features/copilot/presentation/shifa_ai_screen.dart';
 import 'package:shifa_patient_app_v1/features/notifications/presentation/screens/notifications_screen.dart';
@@ -402,6 +403,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                       final planId = state.pathParameters['planId']!;
                       return TreatmentPlanSummaryScreen(planId: planId);
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'pay',
+                        builder: (context, state) {
+                          final planId = state.pathParameters['planId']!;
+                          final installmentItemId =
+                              state.uri.queryParameters['installmentItemId'];
+                          return TreatmentPlanPaymentScreen(
+                            planId: planId,
+                            installmentItemId: installmentItemId,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: ':id',

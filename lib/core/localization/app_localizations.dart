@@ -344,6 +344,13 @@ class AppLocalizations {
       'treatmentPlanQuantityShort': 'Qty {{n}}',
       'treatmentPlanDiscountLine': 'Discount: {{amount}}',
       'treatmentPlanProgressLine': '{{done}} of {{total}} planned items completed',
+      'treatmentPlanPayOutstanding': 'Pay outstanding',
+      'treatmentPlanPayInstallment': 'Pay installment',
+      'treatmentPlanPayOnlineHint':
+          'You can pay this balance online with Click.',
+      'treatmentPlanPaymentSuccess': 'Payment received. Your balance was updated.',
+      'treatmentPlanOnlinePayUnavailable':
+          'Online payment is only available for UZS balances.',
       'notificationInstallmentDueSoonTitle': 'Installment due soon',
       'notificationInstallmentDueSoonMessage':
           'A treatment plan installment is due in a few days. Open to view details.',
@@ -617,7 +624,7 @@ class AppLocalizations {
           'It has been a while since your last visit. Please book an appointment with your clinic.',
       'treatmentPlanPaymentReminderTitle': 'Payment reminder',
       'treatmentPlanPaymentReminderMessage':
-          'You have an outstanding balance on your treatment plan. Please arrange payment at the clinic.',
+          'You have an outstanding balance on your treatment plan. You can pay online in the app.',
       'treatmentPlanUpdatedTitle': 'Treatment plan updated',
       'treatmentPlanUpdatedMessage':
           'Your treatment plan was updated. Open it to review the latest details.',
@@ -1235,6 +1242,13 @@ class AppLocalizations {
       'treatmentPlanQuantityShort': 'Menge {{n}}',
       'treatmentPlanDiscountLine': 'Rabatt: {{amount}}',
       'treatmentPlanProgressLine': '{{done}} von {{total}} geplanten Positionen erledigt',
+      'treatmentPlanPayOutstanding': 'Offenen Betrag zahlen',
+      'treatmentPlanPayInstallment': 'Rate zahlen',
+      'treatmentPlanPayOnlineHint':
+          'Sie können diesen Betrag online mit Click bezahlen.',
+      'treatmentPlanPaymentSuccess': 'Zahlung eingegangen. Ihr Saldo wurde aktualisiert.',
+      'treatmentPlanOnlinePayUnavailable':
+          'Online-Zahlung ist nur für UZS-Beträge verfügbar.',
       'notificationInstallmentDueSoonTitle': 'Rate bald fällig',
       'notificationInstallmentDueSoonMessage':
           'Eine Rate Ihres Behandlungsplans ist in wenigen Tagen fällig. Öffnen Sie die Details.',
@@ -1486,7 +1500,7 @@ class AppLocalizations {
           'Seit Ihrem letzten Besuch ist einige Zeit vergangen. Bitte vereinbaren Sie einen Termin.',
       'treatmentPlanPaymentReminderTitle': 'Zahlungserinnerung',
       'treatmentPlanPaymentReminderMessage':
-          'Sie haben einen offenen Betrag auf Ihrem Behandlungsplan. Bitte klären Sie die Zahlung in der Praxis.',
+          'Sie haben einen offenen Betrag auf Ihrem Behandlungsplan. Sie können online in der App bezahlen.',
       'treatmentPlanUpdatedTitle': 'Behandlungsplan aktualisiert',
       'treatmentPlanUpdatedMessage':
           'Ihr Behandlungsplan wurde aktualisiert. Öffnen Sie ihn für die neuesten Details.',
@@ -1948,6 +1962,13 @@ class AppLocalizations {
       'treatmentPlanQuantityShort': 'Soni {{n}}',
       'treatmentPlanDiscountLine': 'Chegirma: {{amount}}',
       'treatmentPlanProgressLine': '{{done}}/{{total}} reja bandi bajarildi',
+      'treatmentPlanPayOutstanding': 'Qoldiqni to\'lash',
+      'treatmentPlanPayInstallment': 'Bo\'lib-to\'lovni to\'lash',
+      'treatmentPlanPayOnlineHint':
+          'Bu qoldiqni Click orqali onlayn to\'lashingiz mumkin.',
+      'treatmentPlanPaymentSuccess': 'To\'lov qabul qilindi. Qoldiq yangilandi.',
+      'treatmentPlanOnlinePayUnavailable':
+          'Onlayn to\'lov faqat UZS qoldiqlar uchun mavjud.',
       'notificationInstallmentDueSoonTitle': 'To\'lov muddati yaqinlashmoqda',
       'notificationInstallmentDueSoonMessage':
           'Davolash rejasi bo\'yicha to\'lov muddati bir necha kun ichida. Batafsilni oching.',
@@ -2152,7 +2173,7 @@ class AppLocalizations {
           'Oxirgi tashrifingizdan beri vaqt o\'tdi. Iltimos, klinikada qabulga yoziling.',
       'treatmentPlanPaymentReminderTitle': 'To\'lov eslatmasi',
       'treatmentPlanPaymentReminderMessage':
-          'Davolash rejangizda to\'lanmagan qoldiq bor. Iltimos, klinikada to\'lovni amalga oshiring.',
+          'Davolash rejangizda to\'lanmagan qoldiq bor. Ilovada onlayn to\'lashingiz mumkin.',
       'treatmentPlanUpdatedTitle': 'Davolash rejasi yangilandi',
       'treatmentPlanUpdatedMessage':
           'Davolash rejangiz yangilandi. So\'nggi tafsilotlarni ko\'rish uchun oching.',
@@ -2879,6 +2900,13 @@ class AppLocalizations {
       'treatmentPlanQuantityShort': 'Кол-во {{n}}',
       'treatmentPlanDiscountLine': 'Скидка: {{amount}}',
       'treatmentPlanProgressLine': '{{done}} из {{total}} пунктов плана выполнено',
+      'treatmentPlanPayOutstanding': 'Оплатить задолженность',
+      'treatmentPlanPayInstallment': 'Оплатить платёж',
+      'treatmentPlanPayOnlineHint':
+          'Вы можете оплатить этот остаток онлайн через Click.',
+      'treatmentPlanPaymentSuccess': 'Оплата получена. Баланс обновлён.',
+      'treatmentPlanOnlinePayUnavailable':
+          'Онлайн-оплата доступна только для сумм в UZS.',
       'notificationInstallmentDueSoonTitle': 'Скоро платёж по плану',
       'notificationInstallmentDueSoonMessage':
           'Через несколько дней срок платежа по плану лечения. Откройте для подробностей.',
@@ -3159,7 +3187,7 @@ class AppLocalizations {
           'С последнего визита прошло много времени. Пожалуйста, запишитесь на приём в клинику.',
       'treatmentPlanPaymentReminderTitle': 'Напоминание об оплате',
       'treatmentPlanPaymentReminderMessage':
-          'У вас есть неоплаченный остаток по плану лечения. Пожалуйста, оплатите в клинике.',
+          'У вас есть неоплаченный остаток по плану лечения. Вы можете оплатить онлайн в приложении.',
       'treatmentPlanUpdatedTitle': 'План лечения обновлён',
       'treatmentPlanUpdatedMessage':
           'Ваш план лечения обновлён. Откройте его, чтобы посмотреть актуальные детали.',
@@ -3811,6 +3839,16 @@ class AppLocalizations {
   String treatmentPlanProgressLine(int done, int total) => translate(
         'treatmentPlanProgressLine',
       ).replaceAll('{{done}}', '$done').replaceAll('{{total}}', '$total');
+  String get treatmentPlanPayOutstanding =>
+      translate('treatmentPlanPayOutstanding');
+  String get treatmentPlanPayInstallment =>
+      translate('treatmentPlanPayInstallment');
+  String get treatmentPlanPayOnlineHint =>
+      translate('treatmentPlanPayOnlineHint');
+  String get treatmentPlanPaymentSuccess =>
+      translate('treatmentPlanPaymentSuccess');
+  String get treatmentPlanOnlinePayUnavailable =>
+      translate('treatmentPlanOnlinePayUnavailable');
   String get notificationInstallmentDueSoonTitle =>
       translate('notificationInstallmentDueSoonTitle');
   String get notificationInstallmentDueSoonMessage =>
