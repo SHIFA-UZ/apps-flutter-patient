@@ -106,6 +106,7 @@
     <string name="close">Close</string>
     <string name="codeExpiresIn">Code expires in %1$s</string>
     <string name="codeSentAgain">Verification code sent again</string>
+    <string name="comingSoon">Coming soon</string>
     <string name="comment">Comment</string>
     <string name="commentOptional">Comment (Optional)</string>
     <string name="complete">Complete</string>
@@ -556,6 +557,7 @@
     <string name="notificationMessageScheduled">Doctor has scheduled an appointment for you. Check the details in your appointments.</string>
     <string name="notificationSettings">Settings</string>
     <string name="notifications">Notifications</string>
+    <string name="now">Now</string>
     <string name="ok">OK</string>
     <string name="openDocument">Open Document</string>
     <string name="openInMaps">Open in Maps</string>

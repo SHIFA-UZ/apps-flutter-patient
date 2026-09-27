@@ -20,6 +20,11 @@ const val COULD_NOT_SEND_VERIFICATION_CODE = "Could not send verification code"
 const val FAILED_TO_RESET_PASSWORD = "Failed to reset password"
 const val FAILED_TO_UPLOAD_PHOTO = "Failed to upload photo"
 const val FAILED_TO_UPDATE_PROFILE = "Failed to update profile"
+const val FAILED_TO_LOAD_PROFILE = "Failed to load profile"
+const val FAILED_TO_LOAD_APPOINTMENTS = "Failed to load appointments"
+const val FAILED_TO_LOAD_DOCTOR = "Failed to load doctor"
+const val FAILED_TO_LOAD_TASKS = "Failed to load tasks"
+const val FAILED_TO_LOAD_NOTIFICATIONS = "Error loading notifications"
 private const val INVALID_CREDENTIALS = "Invalid credentials"
 private const val NO_ACCOUNT_FOUND = "No account found"
 const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
@@ -80,6 +85,8 @@ private val MESSAGES: Map<String, StringResource> =
         "No email address on file. Please contact support." to Res.string.errorNoEmailOnFileContactSupport,
         FAILED_TO_UPLOAD_PHOTO to Res.string.failedToUploadPhoto,
         FAILED_TO_UPDATE_PROFILE to Res.string.failedToUpdateProfile,
+        FAILED_TO_LOAD_DOCTOR to Res.string.failedToLoadDoctor,
+        FAILED_TO_LOAD_NOTIFICATIONS to Res.string.errorLoadingNotifications,
         NO_TOKEN_RECEIVED to Res.string.errorNoTokenReceivedFromServer,
         NETWORK_ERROR to Res.string.errorNetworkConnection,
         CONNECTION_TIMED_OUT to Res.string.errorConnectionTimedOut,
@@ -93,12 +100,15 @@ fun sanitizeError(
     status: Int,
     raw: String?,
     defaultMessage: String,
+    auth: Boolean = true,
 ): String {
     raw?.trim()?.removePrefix("Login error: ")?.takeIf { it in MESSAGES }?.let { return it }
-    return when (status) {
-        401 -> INVALID_CREDENTIALS
-        404 -> NO_ACCOUNT_FOUND
-        429 -> TOO_MANY_REQUESTS
+    // The 401/404 texts are the auth sanitizer's (01 §8): elsewhere a 404 isn't "No account found".
+    return when {
+        status == 429 -> TOO_MANY_REQUESTS
+        !auth -> defaultMessage
+        status == 401 -> INVALID_CREDENTIALS
+        status == 404 -> NO_ACCOUNT_FOUND
         else -> defaultMessage
     }
 }

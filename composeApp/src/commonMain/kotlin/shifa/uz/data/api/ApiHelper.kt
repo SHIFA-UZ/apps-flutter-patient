@@ -9,6 +9,10 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import shifa.uz.data.model.ApiError
 import shifa.uz.data.model.ApiException
 
@@ -31,7 +35,8 @@ suspend inline fun <reified T> apiCall(
         }
     val status = response.status.value
     if (!response.status.isSuccess()) {
-        return Result.failure(ApiException.of(status, sanitizeError(status, errorText(response), defaultMessage)))
+        val auth = "/auth/" in response.call.request.url.encodedPath
+        return Result.failure(ApiException.of(status, sanitizeError(status, errorText(response), defaultMessage, auth)))
     }
     return try {
         Result.success(response.body<T>())
@@ -64,4 +69,10 @@ internal suspend fun errorText(response: HttpResponse): String? {
         }
     val error = runCatching { errorJson.decodeFromString<ApiError>(text) }.getOrNull()
     return error?.message ?: error?.error ?: text
+}
+
+/** A JSON array, or the array under [key]. Items that don't decode are skipped; any other shape is empty (B2, T1). */
+internal inline fun <reified T> JsonElement.items(key: String? = null): List<T> {
+    val array = this as? JsonArray ?: key?.let { (this as? JsonObject)?.get(it) } as? JsonArray ?: return emptyList()
+    return array.mapNotNull { runCatching { apiJson.decodeFromJsonElement<T>(it) }.getOrNull() }
 }

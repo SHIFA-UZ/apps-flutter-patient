@@ -106,6 +106,7 @@
     <string name="close">Закрыть</string>
     <string name="codeExpiresIn">Код истекает через %1$s</string>
     <string name="codeSentAgain">Код подтверждения отправлен снова</string>
+    <string name="comingSoon">Скоро</string>
     <string name="comment">Комментарий</string>
     <string name="commentOptional">Комментарий (необязательно)</string>
     <string name="complete">Завершить</string>
@@ -556,6 +557,7 @@
     <string name="notificationMessageScheduled">Врач назначил вам приём. Подробности в разделе «Записи».</string>
     <string name="notificationSettings">Настройки</string>
     <string name="notifications">Уведомления</string>
+    <string name="now">Сейчас</string>
     <string name="ok">ОК</string>
     <string name="openDocument">Открыть документ</string>
     <string name="openInMaps">Открыть в картах</string>

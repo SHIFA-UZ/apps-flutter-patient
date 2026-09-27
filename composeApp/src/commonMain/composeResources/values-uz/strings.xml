@@ -106,6 +106,7 @@
     <string name="close">Yopish</string>
     <string name="codeExpiresIn">Kod %1$s da tugaydi</string>
     <string name="codeSentAgain">Tasdiqlash kodi qayta yuborildi</string>
+    <string name="comingSoon">Tez orada</string>
     <string name="comment">Izoh</string>
     <string name="commentOptional">Izoh (ixtiyoriy)</string>
     <string name="complete">Tugallash</string>
@@ -556,6 +557,7 @@
     <string name="notificationMessageScheduled">Shifokor siz uchun qabul belgiladi. Tafsilotlarni Qabullar bo'limida ko'ring.</string>
     <string name="notificationSettings">Sozlamalar</string>
     <string name="notifications">Bildirishnomalar</string>
+    <string name="now">Hozir</string>
     <string name="ok">OK</string>
     <string name="openDocument">Hujjatni ochish</string>
     <string name="openInMaps">Xaritada ochish</string>

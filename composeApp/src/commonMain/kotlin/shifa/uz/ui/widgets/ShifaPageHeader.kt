@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +40,7 @@ fun ShifaMainHeader(
     avatarUrl: String? = null,
     onNotifications: (() -> Unit)? = null,
     onAvatar: (() -> Unit)? = null,
+    notificationCount: Int = 0,
 ) {
     Row(
         modifier.fillMaxWidth().height(ShifaSize.S100).padding(horizontal = ShifaSpacing.Inset.Md),
@@ -50,12 +53,21 @@ fun ShifaMainHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             onNotifications?.let {
-                ShifaActionButton(
-                    it,
-                    icon = Res.drawable.ic_bell_16,
-                    contentDescription = "Notifications",
-                    secondary = true,
-                )
+                // No badge in Figma; the unread count (N2) uses the Material one, capped at 9+.
+                BadgedBox(badge = {
+                    if (notificationCount > 0) {
+                        Badge(containerColor = ShifaColors.Icon.Error, contentColor = ShifaColors.Text.Inverse) {
+                            Text(if (notificationCount > 9) "9+" else "$notificationCount")
+                        }
+                    }
+                }) {
+                    ShifaActionButton(
+                        it,
+                        icon = Res.drawable.ic_bell_16,
+                        contentDescription = "Notifications",
+                        secondary = true,
+                    )
+                }
             }
             ShifaAvatar(
                 avatarUrl,

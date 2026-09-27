@@ -148,6 +148,7 @@ import shifa.uz.ui.widgets.ShifaTertiaryButton
 import shifa.uz.ui.widgets.ShifaTray
 import shifa.uz.utils.Country
 import shifa.uz.utils.countries
+import shifa.uz.utils.formatDate
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.rememberImagePickerLauncher
 
@@ -679,9 +680,6 @@ internal fun CountryTray(
 
 // The Material date picker counts in UTC midnights.
 private fun LocalDate.toEpochMillis() = atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
-
-internal fun formatDate(date: LocalDate) =
-    "${date.dayOfMonth.toString().padStart(2, '0')}.${date.monthNumber.toString().padStart(2, '0')}.${date.year}"
 
 @Composable
 private fun RegisterDialogs(

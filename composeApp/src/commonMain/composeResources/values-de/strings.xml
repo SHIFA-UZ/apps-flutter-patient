@@ -54,6 +54,7 @@
     <string name="close">Schließen</string>
     <string name="codeExpiresIn">Code läuft ab in %1$s</string>
     <string name="codeSentAgain">Bestätigungscode erneut gesendet</string>
+    <string name="comingSoon">Demnächst</string>
     <string name="comment">Kommentar</string>
     <string name="commentOptional">Kommentar (optional)</string>
     <string name="complete">Fertig</string>
@@ -332,6 +333,7 @@
     <string name="notificationMessageScheduled">Ihr Arzt hat einen Termin für Sie geplant. Details finden Sie unter Termine.</string>
     <string name="notificationSettings">Einstellungen</string>
     <string name="notifications">Benachrichtigungen</string>
+    <string name="now">Jetzt</string>
     <string name="openDocument">Dokument öffnen</string>
     <string name="other">Andere</string>
     <string name="otpSentToAccountEmail">Ein 6-stelliger Code wurde an die E-Mail-Adresse Ihres Kontos gesendet. Prüfen Sie Ihren Posteingang.</string>

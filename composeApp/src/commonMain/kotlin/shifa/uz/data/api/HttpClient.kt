@@ -21,6 +21,16 @@ import shifa.uz.utils.getAdjustedBaseUrl
 
 expect fun createHttpEngine(): HttpClientEngine
 
+// isLenient also reads numeric IDs into String fields (15 §1.9).
+internal val apiJson =
+    Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+        explicitNulls = false // optional keys are omitted, not sent as null (A2, P2)
+        prettyPrint = true
+    }
+
 /** The app-wide client. */
 val httpClient: HttpClient by lazy { createHttpClient(TokenStorage()) }
 
@@ -31,17 +41,7 @@ fun createHttpClient(
     val baseUrl = getAdjustedBaseUrl(ApiConfig.BASE_URL)
     val apiHost = Url(baseUrl).host
     return HttpClient(engine) {
-        install(ContentNegotiation) {
-            json(
-                Json {
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                    encodeDefaults = true
-                    explicitNulls = false // optional keys are omitted, not sent as null (A2, P2)
-                    prettyPrint = true
-                },
-            )
-        }
+        install(ContentNegotiation) { json(apiJson) }
 
         // INFO logs the request line and status only, never headers or bodies (token, password).
         install(Logging) {

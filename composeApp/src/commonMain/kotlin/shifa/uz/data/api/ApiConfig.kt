@@ -16,6 +16,11 @@ object ApiConfig {
         const val FORGOT_PASSWORD_RESET = "auth/forgot-password-reset"
         const val PROFILE = "patients/me/profile"
         const val PATIENT_PHOTO = "patients/me/photo"
+        const val APPOINTMENTS = "patients/me/appointments"
+        const val MY_TASKS = "tasks/my-tasks"
+        const val UNREAD_NOTIFICATIONS_COUNT = "notifications/unread/count"
+
+        fun doctor(id: String) = "public/doctors/$id"
     }
 
     // 01 §4.2: sent without a token. A request matches when its path ends with one of these.

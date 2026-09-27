@@ -1,6 +1,7 @@
 package shifa.uz.ui.widgets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -16,13 +17,14 @@ import androidx.compose.ui.graphics.Color
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_arrow_right_16
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSpacing
 
 // Figma names the background the section sits on: card-on-color = white on a coloured page, etc.
-enum class ShifaSectionType(internal val bg: Color) {
+enum class ShifaSectionType(internal val bg: Color, internal val border: Color? = null) {
     CardOnColor(ShifaColors.Alpha.White90),
-    CardOnWhite(ShifaColors.Alpha.Teal15),
+    CardOnWhite(ShifaColors.Alpha.Teal15, ShifaColors.Border.Brand),
     CardTransparent(Color.Transparent),
 }
 
@@ -40,6 +42,9 @@ fun ShifaSection(
             .fillMaxWidth()
             // Figma clips here; a rounded background alone keeps the cards' shadows intact.
             .background(type.bg, ShifaRadius.ControlLg)
+            .then(
+                type.border?.let { Modifier.border(ShifaDimens.SectionBorder, it, ShifaRadius.ControlLg) } ?: Modifier,
+            )
             .padding(vertical = ShifaSpacing.Inset.Sm)
             .then(
                 if (type == ShifaSectionType.CardTransparent) {

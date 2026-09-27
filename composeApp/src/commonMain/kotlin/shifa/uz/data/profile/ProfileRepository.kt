@@ -3,6 +3,7 @@ package shifa.uz.data.profile
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -15,16 +16,22 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import shifa.uz.data.api.ApiConfig
+import shifa.uz.data.api.FAILED_TO_LOAD_PROFILE
 import shifa.uz.data.api.FAILED_TO_UPDATE_PROFILE
 import shifa.uz.data.api.FAILED_TO_UPLOAD_PHOTO
 import shifa.uz.data.api.apiCall
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.ProfileUpdate
 
 class ProfileRepository(
     private val client: HttpClient = httpClient,
 ) {
+    /** P1. */
+    suspend fun getProfile(): Result<PatientProfile> =
+        apiCall(FAILED_TO_LOAD_PROFILE) { client.get(ApiConfig.Endpoints.PROFILE) }
+
     /** P2. The response isn't read yet; the profile screen will parse it. */
     suspend fun updateProfile(update: ProfileUpdate): Result<Unit> =
         apiCall<String>(FAILED_TO_UPDATE_PROFILE) {

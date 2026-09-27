@@ -10,3 +10,11 @@ data class ProfileUpdate(
     val locationCountry: String? = null,
     val photoUrl: String? = null,
 )
+
+/** P1, the keys Home reads (15 §5.1). */
+@Serializable
+data class PatientProfile(
+    val id: String? = null,
+    val fullName: String = "",
+    val photoUrl: String? = null,
+)

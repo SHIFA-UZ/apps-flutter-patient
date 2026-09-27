@@ -20,8 +20,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.bookings
+import shifa.composeapp.generated.resources.documents
+import shifa.composeapp.generated.resources.home
 import shifa.composeapp.generated.resources.ic_nav_bookings
 import shifa.composeapp.generated.resources.ic_nav_bookings_selected
 import shifa.composeapp.generated.resources.ic_nav_documents
@@ -31,6 +36,8 @@ import shifa.composeapp.generated.resources.ic_nav_home_selected
 import shifa.composeapp.generated.resources.ic_nav_messages
 import shifa.composeapp.generated.resources.ic_nav_messages_selected
 import shifa.composeapp.generated.resources.ic_nav_shifa_ai
+import shifa.composeapp.generated.resources.messages
+import shifa.composeapp.generated.resources.shifaAiTitle
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -41,15 +48,15 @@ import shifa.uz.ui.theme.ShifaTextStyles
 
 // Selected icons are drawn with a thicker stroke in Figma, hence two drawables per tab.
 enum class ShifaTab(
-    val label: String,
+    val label: StringResource,
     internal val icon: DrawableResource,
     internal val selectedIcon: DrawableResource,
 ) {
-    Home("Home", Res.drawable.ic_nav_home, Res.drawable.ic_nav_home_selected),
-    Bookings("Bookings", Res.drawable.ic_nav_bookings, Res.drawable.ic_nav_bookings_selected),
-    ShifaAi("Shifa AI", Res.drawable.ic_nav_shifa_ai, Res.drawable.ic_nav_shifa_ai),
-    Documents("Documents", Res.drawable.ic_nav_documents, Res.drawable.ic_nav_documents_selected),
-    Messages("Messages", Res.drawable.ic_nav_messages, Res.drawable.ic_nav_messages_selected),
+    Home(Res.string.home, Res.drawable.ic_nav_home, Res.drawable.ic_nav_home_selected),
+    Bookings(Res.string.bookings, Res.drawable.ic_nav_bookings, Res.drawable.ic_nav_bookings_selected),
+    ShifaAi(Res.string.shifaAiTitle, Res.drawable.ic_nav_shifa_ai, Res.drawable.ic_nav_shifa_ai),
+    Documents(Res.string.documents, Res.drawable.ic_nav_documents, Res.drawable.ic_nav_documents_selected),
+    Messages(Res.string.messages, Res.drawable.ic_nav_messages, Res.drawable.ic_nav_messages_selected),
 }
 
 @Composable
@@ -91,7 +98,7 @@ fun ShifaNavBar(
                     )
                 }
                 Text(
-                    tab.label,
+                    stringResource(tab.label),
                     style =
                         ShifaTextStyles.caption().copy(
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,

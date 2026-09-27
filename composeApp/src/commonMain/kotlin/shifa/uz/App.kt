@@ -10,8 +10,8 @@ import androidx.compose.runtime.setValue
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.ui.forgotpassword.ForgotPasswordScreen
-import shifa.uz.ui.home.HomeScreen
 import shifa.uz.ui.login.LoginScreen
+import shifa.uz.ui.navigation.MainScreen
 import shifa.uz.ui.register.RegisterScreen
 import shifa.uz.ui.splash.SplashScreen
 import shifa.uz.ui.theme.ShifaTheme
@@ -41,7 +41,7 @@ fun App() {
                 Screen.ForgotPassword ->
                     ForgotPasswordScreen(onSignedIn = { screen = Screen.Home }, onClose = { screen = Screen.Login })
                 Screen.Home ->
-                    HomeScreen(onLogOut = {
+                    MainScreen(onLogOut = {
                         auth.logout()
                         screen = Screen.Login
                     })

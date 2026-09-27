@@ -97,6 +97,9 @@ object ShifaDimens {
     // chat-bubble
     val ChatBubbleMaxWidth = 360.dp
 
+    // section
+    val SectionBorder = 1.dp
+
     // nav-bar
     val NavBarTileWidth = 65.dp
 
