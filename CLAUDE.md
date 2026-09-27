@@ -4,8 +4,8 @@ This repo is a template. API and UI come from new specs / Figma — the tech sta
 
 ## Sources of truth
 
-- `docs/spec/` is the source of truth for API and features; `docs/spec/15-api-reference.md` wins for request and response shapes.
-- Do not reproduce bugs listed in `docs/spec/00-README.md`.
+- `docs/kmp-spec/` is the source of truth for API and features; `docs/kmp-spec/15-api-reference.md` wins for request and response shapes.
+- Do not reproduce bugs listed in `docs/kmp-spec/00-README.md`.
 - UI comes from Figma via the Figma MCP. Map design tokens into `ui/theme/`, reusable components into `ui/widgets/`.
 
 ## Git
