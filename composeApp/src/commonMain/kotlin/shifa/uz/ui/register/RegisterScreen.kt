@@ -455,7 +455,7 @@ internal fun CodeEntry(
 }
 
 // 05 §7: m:ss.
-private fun formatCountdown(seconds: Int) = "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
+internal fun formatCountdown(seconds: Int) = "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
 
 // Header, a scrolling body centred in the free space, then the pager and the action (Figma page-elements).
 @Composable
@@ -585,7 +585,7 @@ internal fun PasswordChecklist(password: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BirthDatePicker(
+internal fun BirthDatePicker(
     selected: LocalDate?,
     onPick: (LocalDate) -> Unit,
     onDismiss: () -> Unit,
@@ -679,7 +679,7 @@ internal fun CountryTray(
 }
 
 // The Material date picker counts in UTC midnights.
-private fun LocalDate.toEpochMillis() = atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+internal fun LocalDate.toEpochMillis() = atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
 
 @Composable
 private fun RegisterDialogs(
@@ -763,7 +763,7 @@ internal fun RegisterDialogContent(
 }
 
 @Composable
-private fun MessagePopUp(
+internal fun MessagePopUp(
     title: String,
     message: String,
     onClose: () -> Unit,

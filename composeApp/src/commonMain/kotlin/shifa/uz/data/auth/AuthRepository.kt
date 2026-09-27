@@ -6,6 +6,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -17,6 +18,7 @@ import shifa.uz.data.api.COULD_NOT_SEND_EMAIL_OTP
 import shifa.uz.data.api.COULD_NOT_SEND_SMS_OTP
 import shifa.uz.data.api.COULD_NOT_SEND_VERIFICATION_CODE
 import shifa.uz.data.api.COULD_NOT_VERIFY_ACCOUNT
+import shifa.uz.data.api.FAILED_TO_CHANGE_PASSWORD
 import shifa.uz.data.api.FAILED_TO_CREATE_PATIENT_ACCOUNT
 import shifa.uz.data.api.FAILED_TO_RESET_PASSWORD
 import shifa.uz.data.api.LOGIN_FAILED
@@ -28,9 +30,11 @@ import shifa.uz.data.api.TOO_MANY_VERIFICATION_REQUESTS
 import shifa.uz.data.api.apiCall
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.ChangePasswordRequest
 import shifa.uz.data.model.CheckIdentifierRequest
 import shifa.uz.data.model.CheckIdentifierResponse
 import shifa.uz.data.model.CreatePatientForDoctorRequest
+import shifa.uz.data.model.FcmTokenRequest
 import shifa.uz.data.model.ForgotPasswordOtpRequest
 import shifa.uz.data.model.ForgotPasswordOtpResponse
 import shifa.uz.data.model.ForgotPasswordResetRequest
@@ -78,10 +82,22 @@ class AuthRepository(
         }.map { it ?: CheckIdentifierResponse() }
             .recoverCatching { if (it is ApiException.NotFound) CheckIdentifierResponse() else throw it }
 
-    /** A4. The response body is not read. */
-    suspend fun sendEmailOtp(email: String): Result<Unit> =
+    /** A4. [purpose] is `ACCOUNT_DELETION` for the deletion code. The response body is not read. */
+    suspend fun sendEmailOtp(
+        email: String,
+        purpose: String? = null,
+    ): Result<Unit> =
         apiCall<String>(COULD_NOT_SEND_EMAIL_OTP) {
-            postJson(ApiConfig.Endpoints.SEND_EMAIL_OTP, SendEmailOtpRequest(email))
+            postJson(ApiConfig.Endpoints.SEND_EMAIL_OTP, SendEmailOtpRequest(email, purpose))
+        }.map {}
+
+    /** A8, change-password variant. A 401 (wrong current password) is under /auth/, so it doesn't log out. */
+    suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String,
+    ): Result<Unit> =
+        apiCall<String>(FAILED_TO_CHANGE_PASSWORD) {
+            postJson(ApiConfig.Endpoints.RESET_PASSWORD, ChangePasswordRequest(currentPassword, newPassword))
         }.map {}
 
     /** A5. Where the code went: the server may fall back to email. See [needsEmailFallback] for failures. */
@@ -178,8 +194,16 @@ class AuthRepository(
             }
         }
 
-    // No logout endpoint (05 §2.8).
-    fun logout() = tokenStorage.clear()
+    /** 05 §2.8: unregisters push (P7 with "", errors ignored), then drops the token. No logout endpoint. */
+    suspend fun logout() {
+        apiCall<String>("") {
+            client.put(ApiConfig.Endpoints.FCM_TOKEN) {
+                contentType(ContentType.Application.Json)
+                setBody(FcmTokenRequest(""))
+            }
+        }
+        tokenStorage.clear()
+    }
 }
 
 /** A5 failures that switch registration to the email code (05 §2.4 step 5): SMS unavailable or rate limited. */

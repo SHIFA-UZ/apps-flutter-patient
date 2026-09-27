@@ -21,9 +21,11 @@ import org.jetbrains.compose.resources.PreviewContextConfigurationEffect
 import org.jetbrains.compose.resources.painterResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_eye_20
+import shifa.composeapp.generated.resources.ic_globe_24
 import shifa.composeapp.generated.resources.ic_plus_16
 import shifa.composeapp.generated.resources.ic_plus_22
 import shifa.composeapp.generated.resources.ic_plus_24
+import shifa.composeapp.generated.resources.ic_trash_24
 import shifa.uz.ui.navigation.ShifaNavBar
 import shifa.uz.ui.navigation.ShifaTab
 import shifa.uz.ui.theme.ShifaColors
@@ -176,6 +178,8 @@ internal fun CardsPreview() =
             total = 13,
         )
         ShifaSettingsItem("Setting Page", {})
+        ShifaSettingsItem("Language", {}, icon = Res.drawable.ic_globe_24)
+        ShifaSettingsItem("Delete my Account", {}, icon = Res.drawable.ic_trash_24, destructive = true)
     }
 
 @Preview

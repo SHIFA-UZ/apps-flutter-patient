@@ -167,6 +167,7 @@
     <string name="errorEmailOtpRequiredWhenEmailProvided">Bei Angabe einer E-Mail ist ein Bestätigungscode (OTP) erforderlich</string>
     <string name="errorEmailVerificationCodeRequired">E-Mail-Bestätigungscode erforderlich</string>
     <string name="errorFailedToChangePassword">Passwort konnte nicht geändert werden</string>
+    <string name="errorCurrentPasswordIncorrect">Das aktuelle Passwort ist falsch.</string>
     <string name="errorFailedToCreatePatientAccount">Patientenkonto konnte nicht erstellt werden</string>
     <string name="errorFailedToResetPassword">Passwort konnte nicht zurückgesetzt werden</string>
     <string name="errorFailedToSendEmailCode">Senden des E-Mail-Codes fehlgeschlagen</string>
@@ -255,6 +256,7 @@
     <string name="fromPrice">Ab %1$s</string>
     <string name="furtherInformation">Weitere Informationen</string>
     <string name="gender">Geschlecht</string>
+    <string name="generalInformation">Allgemeine Informationen</string>
     <string name="hello">Hallo</string>
     <string name="hidePassword">Passwort verbergen</string>
     <string name="howWasYourExperience">Wie war Ihre Erfahrung?</string>
@@ -267,6 +269,7 @@
     <string name="leaveReview">Bewertung abgeben</string>
     <string name="loading">Lädt...</string>
     <string name="location">Standort</string>
+    <string name="locationAndLanguage">Standort &amp; Sprache</string>
     <string name="locationPermissionDenied">Standortberechtigung verweigert.</string>
     <string name="locationPermissionDeniedForever">Standortberechtigung dauerhaft verweigert. Bitte in den Einstellungen aktivieren.</string>
     <string name="logOut">Abmelden</string>
@@ -390,6 +393,7 @@
     <string name="searchDoctorsHint">Arzt, Klinik oder Fachgebiet suchen...</string>
     <string name="searchDocuments">Dokumente suchen...</string>
     <string name="selectLanguage">Sprache auswählen</string>
+    <string name="selectOnMap">Auf Karte auswählen</string>
     <string name="send">Senden</string>
     <string name="sendingVerificationCode">Bestätigungscode wird gesendet…</string>
     <string name="settingsTitle">Einstellungen</string>

@@ -32,6 +32,14 @@ data class CheckIdentifierResponse(
 @Serializable
 data class SendEmailOtpRequest(
     val email: String,
+    val purpose: String? = null,
+)
+
+/** A8, the change-password variant. */
+@Serializable
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String,
 )
 
 @Serializable

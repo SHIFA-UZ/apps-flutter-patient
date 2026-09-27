@@ -305,6 +305,7 @@
     <string name="errorEmailOtpRequiredWhenEmailProvided">При указании email требуется код подтверждения (OTP)</string>
     <string name="errorEmailVerificationCodeRequired">Требуется код подтверждения email</string>
     <string name="errorFailedToChangePassword">Не удалось изменить пароль</string>
+    <string name="errorCurrentPasswordIncorrect">Текущий пароль указан неверно.</string>
     <string name="errorFailedToCreatePatientAccount">Не удалось создать аккаунт пациента</string>
     <string name="errorFailedToGenerateToken">Не удалось сгенерировать токен</string>
     <string name="errorFailedToGenerateTokenDetail">Не удалось сгенерировать токен: %1$s</string>
@@ -434,6 +435,7 @@
     <string name="furtherInformation">Дополнительная информация</string>
     <string name="gastroenterologist">Гастроэнтеролог</string>
     <string name="gender">Пол</string>
+    <string name="generalInformation">Общая информация</string>
     <string name="general_practitioner">Терапевт</string>
     <string name="generalpractitioner">Терапевт</string>
     <string name="getCurrentLocation">Определить текущее местоположение</string>
@@ -466,6 +468,7 @@
     <string name="loading">Загрузка...</string>
     <string name="loadingDocument">Загрузка документа...</string>
     <string name="location">Местоположение</string>
+    <string name="locationAndLanguage">Местоположение и язык</string>
     <string name="locationLabel">Местоположение</string>
     <string name="locationPermissionDenied">Доступ к местоположению запрещён.</string>
     <string name="locationPermissionDeniedForever">Доступ к местоположению постоянно запрещён. Включите в настройках.</string>
@@ -673,6 +676,7 @@
     <string name="selectLanguage">Выберите язык</string>
     <string name="selectLocation">Выберите локацию</string>
     <string name="selectLocationOnMap">Выберите место на карте</string>
+    <string name="selectOnMap">Выбрать на карте</string>
     <string name="selectedLocation">Выбранное местоположение</string>
     <string name="send">Отправить</string>
     <string name="sendCode">Отправить код</string>

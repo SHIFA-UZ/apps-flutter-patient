@@ -40,6 +40,7 @@ import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CheckIdentifierResponse
 import shifa.uz.data.model.OtpChannel
+import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.ProfileUpdate
 import shifa.uz.data.model.RegisterPatientRequest
 import shifa.uz.data.profile.ProfileRepository
@@ -62,11 +63,11 @@ class RegisterViewModelTest {
                 anyOrNull(),
             )
         } doReturn Result.success(CheckIdentifierResponse())
-        wheneverBlocking { auth.sendEmailOtp(any()) } doReturn Result.success(Unit)
+        wheneverBlocking { auth.sendEmailOtp(any(), anyOrNull()) } doReturn Result.success(Unit)
         wheneverBlocking { auth.sendSmsOtp(any()) } doReturn Result.success(OtpChannel.Sms)
         wheneverBlocking { auth.registerPatient(any()) } doReturn Result.success(Unit)
         wheneverBlocking { auth.createPatientForDoctor(anyOrNull(), any(), any()) } doReturn Result.success(Unit)
-        wheneverBlocking { profile.updateProfile(any()) } doReturn Result.success(Unit)
+        wheneverBlocking { profile.updateProfile(any()) } doReturn Result.success(PatientProfile())
         wheneverBlocking { profile.uploadPhoto(any(), any()) } doReturn Result.success("https://cdn/p.jpg")
         classToTest = RegisterViewModel(auth, profile)
     }
@@ -198,7 +199,7 @@ class RegisterViewModelTest {
 
             assertThat(state.dialog).isNull()
             assertThat(state.error).isEqualTo(Res.string.emailRequired)
-            verifyBlocking(auth, never()) { sendEmailOtp(any()) }
+            verifyBlocking(auth, never()) { sendEmailOtp(any(), anyOrNull()) }
         }
 
     @Test
@@ -241,7 +242,14 @@ class RegisterViewModelTest {
             }
             verifyBlocking(profile) { uploadPhoto(photo.fileBytes, "me.jpg") }
             verifyBlocking(profile) {
-                updateProfile(ProfileUpdate("1990-05-01", "Tashkent", "United Arab Emirates", "https://cdn/p.jpg"))
+                updateProfile(
+                    ProfileUpdate(
+                        birthDate = "1990-05-01",
+                        address = "Tashkent",
+                        locationCountry = "United Arab Emirates",
+                        photoUrl = "https://cdn/p.jpg",
+                    ),
+                )
             }
             assertThat(state).isEqualTo(RegisterUiState())
         }

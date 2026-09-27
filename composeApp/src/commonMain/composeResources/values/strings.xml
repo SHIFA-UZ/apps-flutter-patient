@@ -305,6 +305,7 @@
     <string name="errorEmailOtpRequiredWhenEmailProvided">Email OTP required when email is provided</string>
     <string name="errorEmailVerificationCodeRequired">Email verification code required</string>
     <string name="errorFailedToChangePassword">Failed to change password</string>
+    <string name="errorCurrentPasswordIncorrect">The current password is incorrect.</string>
     <string name="errorFailedToCreatePatientAccount">Failed to create patient account</string>
     <string name="errorFailedToGenerateToken">Failed to generate token</string>
     <string name="errorFailedToGenerateTokenDetail">Failed to generate token: %1$s</string>
@@ -434,6 +435,7 @@
     <string name="furtherInformation">Further Information</string>
     <string name="gastroenterologist">Gastroenterologist</string>
     <string name="gender">Gender</string>
+    <string name="generalInformation">General Information</string>
     <string name="general_practitioner">General Practitioner</string>
     <string name="generalpractitioner">General Practitioner</string>
     <string name="getCurrentLocation">Get Current Location</string>
@@ -466,6 +468,7 @@
     <string name="loading">Loading...</string>
     <string name="loadingDocument">Loading document...</string>
     <string name="location">Location</string>
+    <string name="locationAndLanguage">Location &amp; Language</string>
     <string name="locationLabel">Location</string>
     <string name="locationPermissionDenied">Location permissions are denied.</string>
     <string name="locationPermissionDeniedForever">Location permissions are permanently denied. Please enable them in settings.</string>
@@ -673,6 +676,7 @@
     <string name="selectLanguage">Select Language</string>
     <string name="selectLocation">Select location</string>
     <string name="selectLocationOnMap">Select location on map</string>
+    <string name="selectOnMap">Select on Map</string>
     <string name="selectedLocation">Selected Location</string>
     <string name="send">Send</string>
     <string name="sendCode">Send code</string>

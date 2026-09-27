@@ -338,13 +338,17 @@ fun ShifaSettingsItem(
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    icon: DrawableResource? = null,
+    destructive: Boolean = false,
 ) {
     Row(
         modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = ShifaSpacing.Inset.Xs),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CardTitle(title, Modifier.weight(1f))
+        val tint = if (destructive) ShifaColors.Icon.Error else ShifaColors.Icon.Primary
+        icon?.let { Icon(painterResource(it), null, tint = tint) }
+        CardTitle(title, Modifier.weight(1f), if (destructive) ShifaColors.Text.Error else ShifaColors.Text.Primary)
         Chevron()
     }
 }
@@ -469,11 +473,12 @@ internal fun CardChrome(
 internal fun CardTitle(
     text: String,
     modifier: Modifier = Modifier,
+    color: Color = ShifaColors.Text.Primary,
 ) = Text(
     text,
     modifier.lineBox(MaterialTheme.typography.titleSmall),
     style = MaterialTheme.typography.titleSmall,
-    color = ShifaColors.Text.Primary,
+    color = color,
     maxLines = 1,
     overflow = TextOverflow.Ellipsis,
 )

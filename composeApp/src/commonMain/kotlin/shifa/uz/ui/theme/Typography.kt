@@ -91,6 +91,10 @@ object ShifaTextStyles {
     @Composable
     fun chatInput() = manrope(manropeFontFamily(), FontWeight.SemiBold, 14, 16)
 
+    // profile name (Bold "Input text")
+    @Composable
+    fun profileName() = manrope(manropeFontFamily(), FontWeight.Bold, 16, 16)
+
     // interactive-chip, Type=filter / Type=slot (Bold when active)
     @Composable
     fun chipFilter() = manrope(manropeFontFamily(), FontWeight.Medium, 12, 18)

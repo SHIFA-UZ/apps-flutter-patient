@@ -305,6 +305,7 @@
     <string name="errorEmailOtpRequiredWhenEmailProvided">Email kiritilganda tasdiqlash kodi (OTP) talab qilinadi</string>
     <string name="errorEmailVerificationCodeRequired">Email tasdiqlash kodi talab qilinadi</string>
     <string name="errorFailedToChangePassword">Parolni o'zgartirib bo'lmadi</string>
+    <string name="errorCurrentPasswordIncorrect">Joriy parol noto'g'ri.</string>
     <string name="errorFailedToCreatePatientAccount">Bemor hisobi yaratilmadi</string>
     <string name="errorFailedToGenerateToken">Token yaratishda xato</string>
     <string name="errorFailedToGenerateTokenDetail">Token yaratishda xato: %1$s</string>
@@ -434,6 +435,7 @@
     <string name="furtherInformation">Qo'shimcha ma'lumot</string>
     <string name="gastroenterologist">Gastroenterolog</string>
     <string name="gender">Jins</string>
+    <string name="generalInformation">Umumiy ma'lumot</string>
     <string name="general_practitioner">Shifokor-terapevt</string>
     <string name="generalpractitioner">Shifokor-terapevt</string>
     <string name="getCurrentLocation">Joriy joylashuvni olish</string>
@@ -466,6 +468,7 @@
     <string name="loading">Yuklanmoqda...</string>
     <string name="loadingDocument">Hujjat yuklanmoqda...</string>
     <string name="location">Manzil</string>
+    <string name="locationAndLanguage">Manzil va til</string>
     <string name="locationLabel">Manzil</string>
     <string name="locationPermissionDenied">Joylashuv ruxsatlari rad etildi.</string>
     <string name="locationPermissionDeniedForever">Joylashuv ruxsatlari doimiy ravishda rad etildi. Iltimos, sozlamalarda yoqing.</string>
@@ -673,6 +676,7 @@
     <string name="selectLanguage">Tilni tanlash</string>
     <string name="selectLocation">Joyni tanlang</string>
     <string name="selectLocationOnMap">Xaritada manzilni tanlash</string>
+    <string name="selectOnMap">Xaritada tanlash</string>
     <string name="selectedLocation">Tanlangan joylashuv</string>
     <string name="send">Yuborish</string>
     <string name="sendCode">Kodni yuborish</string>

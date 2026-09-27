@@ -3,10 +3,10 @@
 ## Tab shell (`ui/navigation/MainScreen.kt`, SHELL-01/03)
 
 - The Figma bar (`ShifaNavBar`): Home, Bookings, Shifa AI, Documents, Messages. The labels are localized. The plan's 4-tab list (Home, Bookings, Documents, Doctors) is older than the design; this follows Figma.
-- Only Home is built. Every other tab and every page Home links to (Account, Notifications, Tasks, Doctors, Appointment) is a "Coming soon" placeholder. Account holds Log out until the profile screen exists.
+- Only Home is built. Every other tab and every page Home links to (Notifications, Tasks, Doctors, Appointment) is a "Coming soon" placeholder. The avatar opens Profile ([profile.md](profile.md)).
 - Android back: a page closes, then a tab other than Home goes to Home, then the app closes (02 §10).
 - Tabs keep their state (`rememberSaveableStateHolder`). ViewModels live in a store scoped to the signed-in session, so none outlive a logout. This is hand-rolled until the nav library (deferred) gives per-destination scoping. SHELL-02 (routes, redirect guard) is not built.
-- Header (SHELL-03): `ShifaMainHeader` with the avatar (Account) and the bell (Notifications). The bell shows the N2 unread count, capped at 9+. Figma has no badge, so it uses the Material one. The chat icon and its badge are not in the Figma header.
+- Header (SHELL-03): `ShifaMainHeader` with the avatar (Profile) and the bell (Notifications). The bell shows the N2 unread count, capped at 9+. Figma has no badge, so it uses the Material one. The chat icon and its badge are not in the Figma header.
 
 ## Home (`ui/home/`, HOME-01..04)
 

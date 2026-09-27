@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -29,25 +30,26 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.appointmentDetails
 import shifa.composeapp.generated.resources.comingSoon
-import shifa.composeapp.generated.resources.logOut
 import shifa.composeapp.generated.resources.myDoctors
 import shifa.composeapp.generated.resources.myTasks
 import shifa.composeapp.generated.resources.notifications
 import shifa.composeapp.generated.resources.profile
 import shifa.uz.ui.home.HomeScreen
+import shifa.uz.ui.home.HomeViewModel
+import shifa.uz.ui.profile.ProfileScreen
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
-import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
 
-// ponytail: pages Home links to that aren't built yet. Each becomes a real screen with its ticket.
+// Pages over the tabs. ponytail: all but Account are placeholders, each becomes a real screen with its ticket.
 private enum class Page(val title: StringResource) {
-    Account(Res.string.profile), // AUTH-08 / PROF-01; holds Log out meanwhile
+    Account(Res.string.profile), // PROF-01
     Notifications(Res.string.notifications), // NOTIF-01
     Tasks(Res.string.myTasks), // TASK-01
     Doctors(Res.string.myDoctors), // DOC-01, also a doctor's page
@@ -57,12 +59,13 @@ private enum class Page(val title: StringResource) {
 /** The signed-in shell (02): tabs under the floating nav bar, pages over it. */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun MainScreen(onLogOut: () -> Unit) {
+fun MainScreen(
+    onLogOut: () -> Unit,
+    onAccountDeleted: () -> Unit,
+) {
     // ViewModels live as long as this session, so nothing of it outlives a logout.
-    // ponytail: hand-rolled; a nav library scopes them per destination (deferred).
-    val owner = remember { SessionViewModels() }
-    DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
-    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+    ScopedViewModels {
+        val home = viewModel { HomeViewModel() }
         var tab by rememberSaveable { mutableStateOf(ShifaTab.Home) }
         var page by rememberSaveable { mutableStateOf<Page?>(null) }
         val tabs = rememberSaveableStateHolder()
@@ -83,6 +86,7 @@ fun MainScreen(onLogOut: () -> Unit) {
                             onDoctor = { page = Page.Doctors },
                             onSignedOut = onLogOut,
                             contentPadding = navPadding,
+                            viewModel = home,
                         )
                     else -> ComingSoon(stringResource(tab.label))
                 }
@@ -98,23 +102,43 @@ fun MainScreen(onLogOut: () -> Unit) {
             )
             page?.let {
                 BackHandler { page = null }
-                ComingSoon(stringResource(it.title), onBack = { page = null }) {
-                    if (it == Page.Account) ShifaSecondaryButton(stringResource(Res.string.logOut), onLogOut)
+                // Each page gets fresh ViewModels, cleared when it closes.
+                key(it) {
+                    ScopedViewModels {
+                        if (it == Page.Account) {
+                            ProfileScreen(
+                                onBack = { page = null },
+                                onLogOut = onLogOut,
+                                onAccountDeleted = onAccountDeleted,
+                                onProfileChanged = home::refresh,
+                            )
+                        } else {
+                            ComingSoon(stringResource(it.title), onBack = { page = null })
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-private class SessionViewModels : ViewModelStoreOwner {
-    override val viewModelStore = ViewModelStore()
+/** [content]'s ViewModels are cleared when it leaves the composition. ponytail: a nav library does this per destination (deferred). */
+@Composable
+internal fun ScopedViewModels(content: @Composable () -> Unit) {
+    val owner =
+        remember {
+            object : ViewModelStoreOwner {
+                override val viewModelStore = ViewModelStore()
+            }
+        }
+    DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
+    CompositionLocalProvider(LocalViewModelStoreOwner provides owner, content = content)
 }
 
 @Composable
-private fun ComingSoon(
+internal fun ComingSoon(
     title: String,
     onBack: (() -> Unit)? = null,
-    action: @Composable () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaSubHeader(title, onBack = onBack)
@@ -128,7 +152,6 @@ private fun ComingSoon(
                 style = MaterialTheme.typography.bodyMedium,
                 color = ShifaColors.Text.Tertiary,
             )
-            action()
         }
     }
 }

@@ -8,7 +8,6 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -54,9 +53,7 @@ internal fun networkErrorMessage(e: Exception) =
         else -> NETWORK_ERROR
     }
 
-private val errorJson = Json { ignoreUnknownKeys = true }
-
-// 15 §1.6: `message`, else `error`, else the raw body.
+// 15 §1.6: `message`, else `error`, else the raw body. Lenient: the backend sends `error` as the status number.
 @PublishedApi
 internal suspend fun errorText(response: HttpResponse): String? {
     val text =
@@ -67,7 +64,7 @@ internal suspend fun errorText(response: HttpResponse): String? {
         } catch (e: Exception) {
             return null
         }
-    val error = runCatching { errorJson.decodeFromString<ApiError>(text) }.getOrNull()
+    val error = runCatching { apiJson.decodeFromString<ApiError>(text) }.getOrNull()
     return error?.message ?: error?.error ?: text
 }
 

@@ -13,6 +13,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Test
 import shifa.uz.data.api.createHttpClient
+import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.DeleteAccountChallenge
+import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.ProfileUpdate
 import shifa.uz.data.storage.TokenStorage
 
@@ -66,5 +69,52 @@ class ProfileRepositoryTest {
             assertThat(request.url.encodedPath).isEqualTo("/api/patients/me/profile")
             assertThat(Json.parseToJsonElement((request.body as TextContent).text))
                 .isEqualTo(Json.parseToJsonElement("""{"birthDate":"1990-05-01","locationCountry":"Germany"}"""))
+        }
+
+    @Test
+    fun `the patch returns the updated profile`() =
+        runTest {
+            body = """{"id":7,"fullName":"Ali Valiyev","email":"a@shifa.uz","gender":"Male","language":"uz"}"""
+
+            val profile = classToTest.updateProfile(ProfileUpdate(language = "uz")).getOrThrow()
+
+            assertThat(profile).isEqualTo(
+                PatientProfile(
+                    id = "7",
+                    fullName = "Ali Valiyev",
+                    email = "a@shifa.uz",
+                    gender = "Male",
+                    language = "uz",
+                ),
+            )
+        }
+
+    @Test
+    fun `deletion posts no body and reads the challenge, an empty one fails`() =
+        runTest {
+            body = """{"challengeId":"c1","maskedEmail":"a***@shifa.uz"}"""
+
+            assertThat(
+                classToTest.requestDeletion().getOrThrow(),
+            ).isEqualTo(DeleteAccountChallenge("c1", "a***@shifa.uz", 300))
+            assertThat(request.method).isEqualTo(HttpMethod.Post)
+            assertThat(request.url.encodedPath).isEqualTo("/api/patients/me/delete-account/request")
+
+            body = """{"challengeId":""}"""
+            assertThat(
+                classToTest.requestDeletion().exceptionOrNull(),
+            ).isInstanceOf(ApiException.ServerError::class.java)
+        }
+
+    @Test
+    fun `the deletion confirm sends the challenge, email and code`() =
+        runTest {
+            body = "{}"
+
+            classToTest.confirmDeletion("c1", "a@shifa.uz", "123456").getOrThrow()
+
+            assertThat(request.url.encodedPath).isEqualTo("/api/patients/me/delete-account/confirm")
+            assertThat(Json.parseToJsonElement((request.body as TextContent).text))
+                .isEqualTo(Json.parseToJsonElement("""{"challengeId":"c1","email":"a@shifa.uz","emailOtp":"123456"}"""))
         }
 }

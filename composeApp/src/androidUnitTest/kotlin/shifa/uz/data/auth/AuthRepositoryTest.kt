@@ -10,6 +10,7 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
 import io.ktor.client.request.get
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
@@ -252,6 +253,53 @@ class AuthRepositoryTest {
             val error = classToTest.resetForgottenPassword("a@shifa.uz", OtpChannel.Email, "1", "p").exceptionOrNull()
 
             assertThat(error!!.message).isEqualTo("Failed to reset password")
+            assertThat(tokens.token).isNull()
+        }
+
+    @Test
+    fun `the deletion code sends its purpose`() =
+        runTest {
+            classToTest.sendEmailOtp("a@shifa.uz", "ACCOUNT_DELETION").getOrThrow()
+
+            assertThat(
+                requestJson,
+            ).isEqualTo(Json.parseToJsonElement("""{"email":"a@shifa.uz","purpose":"ACCOUNT_DELETION"}"""))
+        }
+
+    @Test
+    fun `change password posts both passwords with the token, and a wrong current one keeps its message`() =
+        runTest {
+            tokens.token = "t"
+            classToTest.changePassword("old", "New1!pass").getOrThrow()
+
+            assertThat(request.url.encodedPath).isEqualTo("/api/auth/reset-password")
+            assertThat(request.headers[HttpHeaders.Authorization]).isEqualTo("Bearer t")
+            assertThat(requestJson)
+                .isEqualTo(Json.parseToJsonElement("""{"currentPassword":"old","newPassword":"New1!pass"}"""))
+
+            // The backend's ErrorHandler body: `error` is the status number.
+            replyJson(
+                HttpStatusCode.BadRequest,
+                """{"error":400,"message":"Current password is incorrect","status":400}""",
+            )
+            assertThat(
+                classToTest.changePassword("x", "y").exceptionOrNull()!!.message,
+            ).isEqualTo("Current password is incorrect")
+            assertThat(tokens.token).isEqualTo("t")
+        }
+
+    @Test
+    fun `logout clears the push token, then the session, even when that call fails`() =
+        runTest {
+            tokens.token = "t"
+            replyJson(HttpStatusCode.InternalServerError, "{}")
+
+            classToTest.logout()
+
+            assertThat(request.method).isEqualTo(HttpMethod.Put)
+            assertThat(request.url.encodedPath).isEqualTo("/api/patients/me/fcm-token")
+            assertThat(request.headers[HttpHeaders.Authorization]).isEqualTo("Bearer t")
+            assertThat(requestJson).isEqualTo(Json.parseToJsonElement("""{"fcmToken":""}"""))
             assertThat(tokens.token).isNull()
         }
 

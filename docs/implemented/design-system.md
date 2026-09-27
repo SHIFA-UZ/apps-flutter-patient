@@ -20,7 +20,7 @@ Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `
 | ShifaSearchField, ShifaDropdown, ShifaSwitch | `ShifaSearchField`, `ShifaDropdown` (opens inline), `ShifaSwitch` |
 | ShifaChips | `ShifaChip` (filter / slot), `ShifaChipGrid` (4 columns), `ShifaCarousel` |
 | ShifaTag | `ShifaTag` (primary / secondary / tertiary) |
-| ShifaCards | upcoming (`1572:13984`) and past (`1573:12114`) appointment cards, `ShifaDoctorCard` full / compact / in (`1590:9994`), document, certificate (`1592:9994`), doctor service (`1670:13024`), check-in (`1662:18576`), task, `ShifaSettingsItem` |
+| ShifaCards | upcoming (`1572:13984`) and past (`1573:12114`) appointment cards, `ShifaDoctorCard` full / compact / in (`1590:9994`), document, certificate (`1592:9994`), doctor service (`1670:13024`), check-in (`1662:18576`), task, `ShifaSettingsItem` (optional icon, destructive red for Delete my Account) |
 | ShifaSection | `ShifaSection`: header with an optional arrow; background type card-on-color / on-white / transparent |
 | ShifaPageHeader | `ShifaMainHeader`, `ShifaSubHeader` |
 | ShifaNavBar | `ShifaNavBar`, `ShifaTab` (`1572:13574`) |

@@ -122,6 +122,10 @@ object ShifaDimens {
 
     // create account (1631:10131, 1631:10296, 1631:10449)
     val RegisterAvatar = 280.dp
+
+    // profile (1703:16707, 1703:17376)
+    val ProfileAvatar = 52.dp
+    val ProfileAvatarLarge = 125.dp
 }
 
 // Figma: shifa/radius/* and semantic/radius/control-*. Full (999) = CircleShape.
@@ -148,6 +152,7 @@ object ShifaShadow {
     val Card = Shadow(radius = 14.dp, color = Color(0x26000000))
     val Tray = Shadow(radius = 26.dp, color = Color(0x66000000)) // trays, modals
     val Dropdown = Shadow(radius = 6.dp, color = Color(0x26000000)) // raw in Figma: expanded dropdown
+    val Section = Shadow(radius = 12.7.dp, color = Color(0x26000000)) // raw in Figma: section inside a section
     val NavBar = Shadow(radius = 41.4.dp, color = Color(0x3B000000), offset = DpOffset(2.dp, 2.dp))
     val ChatTray =
         Shadow(

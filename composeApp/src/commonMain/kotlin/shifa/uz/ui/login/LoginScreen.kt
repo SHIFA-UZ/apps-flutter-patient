@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
@@ -46,6 +47,7 @@ import shifa.composeapp.generated.resources.emailOrPhoneRequired
 import shifa.composeapp.generated.resources.forgotPassword
 import shifa.composeapp.generated.resources.hidePassword
 import shifa.composeapp.generated.resources.ic_alert_circle_16
+import shifa.composeapp.generated.resources.ic_check_circle_16
 import shifa.composeapp.generated.resources.ic_clock_16
 import shifa.composeapp.generated.resources.ic_eye_20
 import shifa.composeapp.generated.resources.ic_eye_off_20
@@ -74,6 +76,7 @@ fun LoginScreen(
     onSignedIn: () -> Unit,
     onForgotPassword: () -> Unit,
     onCreateAccount: () -> Unit,
+    notice: StringResource? = null,
     viewModel: LoginViewModel = viewModel { LoginViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
@@ -95,6 +98,7 @@ fun LoginScreen(
         onSignIn = viewModel::signIn,
         onForgotPassword = onForgotPassword,
         onCreateAccount = onCreateAccount,
+        notice = notice,
     )
 }
 
@@ -108,6 +112,7 @@ internal fun LoginScreenContent(
     onSignIn: () -> Unit,
     onForgotPassword: () -> Unit,
     onCreateAccount: () -> Unit,
+    notice: StringResource? = null,
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
         Column(
@@ -117,6 +122,14 @@ internal fun LoginScreenContent(
             ShifaPageElement(ShifaPageElementType.Body) {
                 Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
                     Hero()
+                    // After account deletion (14 §3.5).
+                    notice?.let {
+                        ShifaBanner(
+                            stringResource(it),
+                            Res.drawable.ic_check_circle_16,
+                            ShifaBannerType.Success,
+                        )
+                    }
                     if (state.isLocked) {
                         ShifaBanner(
                             stringResource(

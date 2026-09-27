@@ -21,6 +21,8 @@ const val FAILED_TO_RESET_PASSWORD = "Failed to reset password"
 const val FAILED_TO_UPLOAD_PHOTO = "Failed to upload photo"
 const val FAILED_TO_UPDATE_PROFILE = "Failed to update profile"
 const val FAILED_TO_LOAD_PROFILE = "Failed to load profile"
+const val FAILED_TO_CHANGE_PASSWORD = "Failed to change password"
+const val FAILED_TO_DELETE_ACCOUNT = "Failed to delete account" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_APPOINTMENTS = "Failed to load appointments"
 const val FAILED_TO_LOAD_DOCTOR = "Failed to load doctor"
 const val FAILED_TO_LOAD_TASKS = "Failed to load tasks"
@@ -55,6 +57,8 @@ private val MESSAGES: Map<String, StringResource> =
         "Key already used" to Res.string.errorKeyAlreadyUsed,
         "Username is required" to Res.string.errorUsernameRequired,
         "Password is required" to Res.string.errorPasswordRequired,
+        // A8, a 400.
+        "Current password is incorrect" to Res.string.errorCurrentPasswordIncorrect,
         INVALID_CREDENTIALS to Res.string.errorInvalidCredentials,
         "Account is locked" to Res.string.errorAccountLocked,
         "Invalid credentials - password mismatch" to Res.string.errorInvalidCredentialsPasswordMismatch,
@@ -85,6 +89,7 @@ private val MESSAGES: Map<String, StringResource> =
         "No email address on file. Please contact support." to Res.string.errorNoEmailOnFileContactSupport,
         FAILED_TO_UPLOAD_PHOTO to Res.string.failedToUploadPhoto,
         FAILED_TO_UPDATE_PROFILE to Res.string.failedToUpdateProfile,
+        FAILED_TO_CHANGE_PASSWORD to Res.string.errorFailedToChangePassword,
         FAILED_TO_LOAD_DOCTOR to Res.string.failedToLoadDoctor,
         FAILED_TO_LOAD_NOTIFICATIONS to Res.string.errorLoadingNotifications,
         NO_TOKEN_RECEIVED to Res.string.errorNoTokenReceivedFromServer,
