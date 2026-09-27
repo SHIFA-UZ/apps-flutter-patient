@@ -2,35 +2,44 @@ package shifa.uz.data.model
 
 import kotlinx.serialization.Serializable
 
+/** Error body. The envelope is unverified; the backend sends `message` or `error` (15 §1.6). */
 @Serializable
 data class ApiError(
-    val timestamp: String,
-    val status: Int,
-    val code: String,
-    val message: String,
-    val path: String,
-    val retryAfterSeconds: Int? = null,
-    val refreshTokenUrl: String? = null,
+    val message: String? = null,
+    val error: String? = null,
 )
 
+/** [message] is display-safe: a canonical English string, localized by `toUserMessage()`. */
 sealed class ApiException(message: String) : Exception(message) {
-    data class ValidationError(val error: ApiError) : ApiException(error.message)
+    class ValidationError(message: String) : ApiException(message)
 
-    data class Unauthorized(val error: ApiError) : ApiException(error.message)
+    class Unauthorized(message: String) : ApiException(message)
 
-    data class TokenExpired(val error: ApiError) : ApiException(error.message)
+    class Forbidden(message: String) : ApiException(message)
 
-    data class TokenInvalid(val error: ApiError) : ApiException(error.message)
+    class NotFound(message: String) : ApiException(message)
 
-    data class Forbidden(val error: ApiError) : ApiException(error.message)
+    class Conflict(message: String) : ApiException(message)
 
-    data class NotFound(val error: ApiError) : ApiException(error.message)
+    class RateLimit(message: String) : ApiException(message)
 
-    data class Conflict(val error: ApiError) : ApiException(error.message)
+    class ServerError(message: String) : ApiException(message)
 
-    data class RateLimit(val error: ApiError, val retryAfter: Int) : ApiException(error.message)
+    class NetworkError(message: String) : ApiException(message)
 
-    data class ServerError(val error: ApiError) : ApiException(error.message)
-
-    data class NetworkError(override val message: String) : ApiException(message)
+    companion object {
+        fun of(
+            status: Int,
+            message: String,
+        ): ApiException =
+            when (status) {
+                400, 422 -> ValidationError(message)
+                401 -> Unauthorized(message)
+                403 -> Forbidden(message)
+                404 -> NotFound(message)
+                409 -> Conflict(message)
+                429 -> RateLimit(message)
+                else -> ServerError(message)
+            }
+    }
 }

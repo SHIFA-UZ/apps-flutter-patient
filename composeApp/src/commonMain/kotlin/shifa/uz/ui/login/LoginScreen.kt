@@ -26,8 +26,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +39,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
@@ -70,11 +74,22 @@ import shifa.uz.ui.widgets.ShifaTertiaryButton
 
 @Composable
 fun LoginScreen(
+    onSignedIn: () -> Unit,
     onForgotPassword: () -> Unit,
     onCreateAccount: () -> Unit,
     viewModel: LoginViewModel = viewModel { LoginViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    val signedIn by rememberUpdatedState(onSignedIn)
+    LaunchedEffect(viewModel) { viewModel.signedIn.collect { signedIn() } }
+    if (state.isLocked) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(30_000) // 05 §2.2: count the minutes down, unlock when it expires
+                viewModel.refreshLockout()
+            }
+        }
+    }
     LoginScreenContent(
         state = state,
         onIdentifierChange = viewModel::onIdentifierChange,
@@ -111,13 +126,21 @@ internal fun LoginScreenContent(
                                 Res.string.accountLockedTryAgainIn,
                                 state.loginLockedUntilMinutes.toString(),
                             ),
-                            locked = true,
+                            Res.drawable.ic_clock_16,
+                            isError = true,
                         )
-                    } else if (state.showAttemptsBanner) {
-                        Banner(
-                            stringResource(Res.string.loginAttemptsRemaining, state.loginAttemptsRemaining.toString()),
-                            locked = false,
-                        )
+                    } else {
+                        state.error?.let { Banner(stringResource(it), Res.drawable.ic_alert_circle_16, isError = true) }
+                        if (state.showAttemptsBanner) {
+                            Banner(
+                                stringResource(
+                                    Res.string.loginAttemptsRemaining,
+                                    state.loginAttemptsRemaining.toString(),
+                                ),
+                                Res.drawable.ic_alert_circle_16,
+                                isError = false,
+                            )
+                        }
                     }
                     ShifaInputField(
                         value = state.identifier,
@@ -220,27 +243,29 @@ private fun Hero() {
     }
 }
 
-// No Figma component: styled like the feedback notification, red when locked, orange otherwise (05 §3.2).
+// No Figma component: styled like the feedback notification, red for errors and the lock, orange for
+// the attempts countdown (05 §3.2). The Flutter app shows the error in a SnackBar; inline stays until the next edit.
 @Composable
 private fun Banner(
     text: String,
-    locked: Boolean,
+    icon: DrawableResource,
+    isError: Boolean,
 ) {
-    val accent = if (locked) ShifaColors.Border.Error else ShifaColors.Border.Warning
+    val accent = if (isError) ShifaColors.Border.Error else ShifaColors.Border.Warning
     Row(
         Modifier
             .fillMaxWidth()
             .clip(ShifaRadius.ControlMd)
-            .background(if (locked) ShifaColors.Bg.ErrorSubtle else ShifaColors.Bg.WarningSubtle)
+            .background(if (isError) ShifaColors.Bg.ErrorSubtle else ShifaColors.Bg.WarningSubtle)
             .border(ShifaSize.S2, accent, ShifaRadius.ControlMd)
             .padding(ShifaSpacing.Inset.Sm),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painterResource(if (locked) Res.drawable.ic_clock_16 else Res.drawable.ic_alert_circle_16),
+            painterResource(icon),
             contentDescription = null,
-            tint = if (locked) ShifaColors.Icon.Error else ShifaColors.Icon.Warning,
+            tint = if (isError) ShifaColors.Icon.Error else ShifaColors.Icon.Warning,
         )
         Text(text, style = MaterialTheme.typography.bodyMedium, color = ShifaColors.Text.Primary)
     }

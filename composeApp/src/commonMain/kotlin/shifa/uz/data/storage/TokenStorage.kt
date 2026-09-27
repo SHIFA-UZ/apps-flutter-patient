@@ -3,7 +3,7 @@ package shifa.uz.data.storage
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
 
-class TokenStorage(private val settings: Settings = Settings()) {
+class TokenStorage(private val settings: Settings = secureSettings) {
     companion object {
         private const val KEY_TOKEN = "auth_token"
     }

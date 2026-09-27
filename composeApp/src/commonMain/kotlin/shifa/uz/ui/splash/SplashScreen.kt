@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.lerp
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.img_logo
@@ -36,14 +38,20 @@ import shifa.uz.ui.theme.ShifaSize
 
 private const val SPLASH_MS = 1600 // 02 §8: animation length and minimum on-screen time
 
-// ponytail: always ends on Login. AUTH-01 adds the session restore (4 s wait, 5 s fallback) here.
+private const val RESTORE_TIMEOUT_MS = 5_000L // 05 §2.1: past this, go to Login
+
+/** Plays the animation while [restoreSession] runs, then reports whether the user is signed in. */
 @Composable
-fun SplashScreen(onFinished: () -> Unit) {
+fun SplashScreen(
+    restoreSession: suspend () -> Boolean,
+    onFinished: (signedIn: Boolean) -> Unit,
+) {
     val finish by rememberUpdatedState(onFinished)
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
+        val signedIn = async { withTimeoutOrNull(RESTORE_TIMEOUT_MS) { restoreSession() } ?: false }
         progress.animateTo(1f, tween(SPLASH_MS, easing = EaseInOutCubic))
-        finish()
+        finish(signedIn.await())
     }
     SplashScreenContent(progress.value)
 }

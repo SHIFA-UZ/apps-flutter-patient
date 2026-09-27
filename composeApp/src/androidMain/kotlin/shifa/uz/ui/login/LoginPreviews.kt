@@ -2,6 +2,8 @@ package shifa.uz.ui.login
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.errorInvalidCredentials
 import shifa.uz.ui.widgets.PreviewTheme
 
 @Composable
@@ -34,3 +36,15 @@ internal fun LoginAttemptsPreview() =
 @Composable
 internal fun LoginLockedPreview() =
     Login(LoginUiState(identifier = "patient@shifa.uz", password = "wrong", loginLockedUntilMinutes = 5))
+
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun LoginFailedPreview() =
+    Login(
+        LoginUiState(
+            identifier = "patient@shifa.uz",
+            password = "wrong",
+            error = Res.string.errorInvalidCredentials,
+            loginAttemptsRemaining = 4,
+        ),
+    )

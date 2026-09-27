@@ -35,6 +35,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.security.crypto)
         }
 
         androidUnitTest.dependencies {
@@ -46,6 +47,8 @@ kotlin {
             implementation(libs.truth)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
+            implementation(libs.ktor.client.mock)
+            implementation(libs.multiplatform.settings.test)
         }
 
         iosMain.dependencies {
@@ -68,7 +71,6 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.auth)
 
             // Kotlinx Serialization
             implementation(libs.kotlinx.serialization.json)

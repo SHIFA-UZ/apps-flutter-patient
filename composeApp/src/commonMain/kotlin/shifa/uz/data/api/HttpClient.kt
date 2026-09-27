@@ -1,21 +1,36 @@
 package shifa.uz.data.api
 
-import io.ktor.client.*
-import io.ktor.client.engine.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.auth.providers.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.HttpSend
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.DEFAULT
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.plugin
+import io.ktor.client.request.bearerAuth
+import io.ktor.http.Url
 import io.ktor.http.encodedPath
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import shifa.uz.data.storage.TokenStorage
 import shifa.uz.utils.getAdjustedBaseUrl
 
 expect fun createHttpEngine(): HttpClientEngine
 
-fun createHttpClient(tokenProvider: () -> String?): HttpClient {
-    return HttpClient(createHttpEngine()) {
+/** The app-wide client. */
+val httpClient: HttpClient by lazy { createHttpClient(TokenStorage()) }
+
+fun createHttpClient(
+    tokenStorage: TokenStorage,
+    engine: HttpClientEngine = createHttpEngine(),
+): HttpClient {
+    val baseUrl = getAdjustedBaseUrl(ApiConfig.BASE_URL)
+    val apiHost = Url(baseUrl).host
+    return HttpClient(engine) {
         install(ContentNegotiation) {
             json(
                 Json {
@@ -27,46 +42,28 @@ fun createHttpClient(tokenProvider: () -> String?): HttpClient {
             )
         }
 
+        // INFO logs the request line and status only, never headers or bodies (token, password).
         install(Logging) {
             logger = Logger.DEFAULT
             level = LogLevel.INFO
         }
 
-        install(Auth) {
-            bearer {
-                loadTokens {
-                    val token = tokenProvider()
-                    if (token != null) {
-                        val tokenPreview = if (token.length >= 10) token.take(10) else token
-                        BearerTokens(accessToken = token, refreshToken = "")
-                    } else {
-                        null
-                    }
-                }
-                refreshTokens {
-                    val token = tokenProvider()
-                    if (token != null) {
-                        val tokenPreview = if (token.length >= 10) token.take(10) else token
-                        BearerTokens(accessToken = token, refreshToken = "")
-                    } else {
-                        null
-                    }
-                }
-                sendWithoutRequest { request ->
-                    val shouldSend = request.url.encodedPath.startsWith("/api/")
-                    shouldSend
-                }
-            }
-        }
-
+        // 01 §4.1: 30 s connect and receive, no send timeout.
         install(HttpTimeout) {
-            requestTimeoutMillis = ApiConfig.TIMEOUT_MS
             connectTimeoutMillis = ApiConfig.TIMEOUT_MS
+            socketTimeoutMillis = ApiConfig.TIMEOUT_MS
         }
 
-        defaultRequest {
-            val adjustedUrl = getAdjustedBaseUrl(ApiConfig.BASE_URL)
-            url(adjustedUrl)
+        defaultRequest { url(baseUrl) }
+    }.apply {
+        // 01 §4.2: the token goes on every backend request except the public auth paths, and never to
+        // another host (00 bug 7). A plain interceptor, because Ktor's Auth plugin caches the token.
+        plugin(HttpSend).intercept { request ->
+            val path = request.url.encodedPath
+            if (request.url.host == apiHost && ApiConfig.PUBLIC_AUTH_PATHS.none(path::endsWith)) {
+                tokenStorage.token?.let(request::bearerAuth)
+            }
+            execute(request)
         }
     }
 }

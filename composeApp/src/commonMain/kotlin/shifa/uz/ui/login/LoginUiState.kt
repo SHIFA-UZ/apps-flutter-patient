@@ -1,8 +1,8 @@
 package shifa.uz.ui.login
 
 import androidx.compose.runtime.Stable
-
-private const val MAX_LOGIN_ATTEMPTS = 5 // 05 §6.2
+import org.jetbrains.compose.resources.StringResource
+import shifa.uz.data.auth.MAX_LOGIN_ATTEMPTS
 
 @Stable
 data class LoginUiState(
@@ -12,6 +12,7 @@ data class LoginUiState(
     val identifierError: Boolean = false,
     val passwordError: Boolean = false,
     val isLoading: Boolean = false,
+    val error: StringResource? = null,
     val loginAttemptsRemaining: Int = 0,
     val loginLockedUntilMinutes: Int = 0,
 ) {

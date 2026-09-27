@@ -27,6 +27,11 @@ class LoginScreenshotTest {
     }
 
     @Test
+    fun `failed sign in`() {
+        captureRoboImage("screenshots/Login_failed.png") { LoginFailedPreview() }
+    }
+
+    @Test
     fun `attempts banner`() {
         captureRoboImage("screenshots/Login_attempts.png") { LoginAttemptsPreview() }
     }
