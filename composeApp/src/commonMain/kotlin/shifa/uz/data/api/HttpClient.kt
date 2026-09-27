@@ -37,6 +37,7 @@ fun createHttpClient(
                     ignoreUnknownKeys = true
                     isLenient = true
                     encodeDefaults = true
+                    explicitNulls = false // optional keys are omitted, not sent as null (A2, P2)
                     prettyPrint = true
                 },
             )

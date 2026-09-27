@@ -25,11 +25,12 @@ Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `
 | ShifaPageHeader | `ShifaMainHeader`, `ShifaSubHeader` |
 | ShifaNavBar | `ShifaNavBar`, `ShifaTab` (`1572:13574`) |
 | ShifaNotification | `ShifaNotification` (5 types, `1598:10299`), `ShifaMessageNotification` |
+| ShifaBanner | `ShifaBanner` error / warning / success: an inline message box for screens (login lockout, register errors). No Figma component; styled like `ShifaNotification`. |
 | ShifaPager, ShifaPageElement, ShifaImageContainer | pager dots, page-element slots, 302dp image box |
 | ShifaChat | `ShifaChatBar` (`1673:14877`), `ShifaChatBubble` and `ShifaChatImageBubble` (`1673:14821`) |
 | ShifaTray, ShifaPopUp | `ShifaTray`, `ShifaChatTray` (`1681:13188`), `ShifaPopUp` (`1702:14263`). They only draw: host them in `ModalBottomSheet` / `Dialog` (see `ShifaTray.kt`). |
 
-Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img_*`). `img_logo` is the white Shifa mark; tint it. `ic_eye_20` and `ic_eye_off_20` are Feather icons, because Figma has no eye icon.
+Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img_*`). `img_logo` is the white Shifa mark; tint it. `ic_eye_20` and `ic_eye_off_20` are Feather icons, because Figma has no eye icon. `ic_upload_22` and `ic_calendar_20` come from the create-account frames.
 
 ## Previews and tests
 

@@ -179,6 +179,7 @@
     <string name="couldNotRefreshPaymentStatus">To'lov holatini yangilab bo'lmadi. Iltimos, qayta urinib ko'ring.</string>
     <string name="country">Mamlakat</string>
     <string name="countryGermany">Germaniya</string>
+    <string name="countryOfResidence">Yashash mamlakati</string>
     <string name="countryTurkey">Turkiya</string>
     <string name="countryUae">BAA</string>
     <string name="countryUzbekistan">O'zbekiston</string>
@@ -564,6 +565,7 @@
     <string name="orthopedist">Ortoped</string>
     <string name="other">Boshqa</string>
     <string name="otolaryngologist">LOR shifokori</string>
+    <string name="otpSentToAccountEmail">6 xonali kod hisobingizdagi email manziliga yuborildi. Pochtangizni tekshiring.</string>
     <string name="otpSentToEmail">6 xonali kod %1$s manziliga yuborildi. Pochtangizni tekshiring.</string>
     <string name="otpSentToPhone">6 xonali kod %1$s raqamiga yuborildi.</string>
     <string name="password">Parol</string>
@@ -655,6 +657,7 @@
     <string name="save">Saqlash</string>
     <string name="saveChanges">O'zgarishlarni saqlash</string>
     <string name="savePassword">Saqlash va davom etish</string>
+    <string name="searchCountry">Mamlakatni qidirish...</string>
     <string name="searchDoctors">Shifokorlarni qidirish...</string>
     <string name="searchDoctorsHint">Shifokor, klinika yoki mutaxassislik qidirish...</string>
     <string name="searchDocuments">Hujjatlarni qidirish</string>

@@ -19,9 +19,9 @@ This repo is a template. API and UI come from new specs / Figma — the tech sta
 
 - Kotlin Multiplatform (Android + iOS: `iosArm64`, `iosSimulatorArm64`), single module `composeApp`
 - Compose Multiplatform + Material 3 for all UI (shared in `commonMain`)
-- Ktor Client (OkHttp on Android, Darwin on iOS) + ContentNegotiation, Logging, Auth (bearer), HttpTimeout
+- Ktor Client (OkHttp on Android, Darwin on iOS) + ContentNegotiation, Logging, HttpTimeout; the Bearer token is added by an `HttpSend` interceptor (no Auth plugin, no refresh token)
 - kotlinx.serialization (JSON), kotlinx.coroutines, kotlinx.datetime
-- Multiplatform Settings (`no-arg`) for local key/value + token storage
+- Multiplatform Settings (`no-arg`) for local key/value; the token uses `secureSettings` (`KeychainSettings` on iOS, EncryptedSharedPreferences from `androidx.security:security-crypto` on Android)
 - Kamel for async image loading
 - JetBrains `lifecycle-viewmodel-compose` for ViewModels
 - Firebase (google-services, App Distribution for debug builds)
@@ -36,9 +36,9 @@ composeApp/src/
 ├── commonMain/kotlin/<pkg>/
 │   ├── App.kt              # root: theme + top-level screen switching
 │   ├── data/
-│   │   ├── api/            # HttpClient.kt, ApiHelper.kt, ApiConfig.kt
+│   │   ├── api/            # HttpClient.kt, ApiHelper.kt, ApiConfig.kt, ErrorMessages.kt
 │   │   ├── model/          # @Serializable DTOs, one file per domain (XxxModels.kt), ApiError.kt
-│   │   ├── storage/        # TokenStorage (Settings wrapper)
+│   │   ├── storage/        # TokenStorage, SecureSettings (expect/actual secure store)
 │   │   └── <feature>/      # XxxRepository.kt
 │   ├── ui/
 │   │   ├── theme/          # Color.kt, Theme.kt, Typography.kt (tokens from Figma)
@@ -54,13 +54,13 @@ iosApp/                     # Xcode host app
 
 ### Data layer
 - `ApiConfig` holds `BASE_URL`, `TIMEOUT_MS`, and `Endpoints` (consts, or functions for path params).
-- `createHttpClient(tokenProvider)` builds the Ktor client; engine via `expect fun createHttpEngine()`.
-- Authenticated calls use `getWithRefresh/postWithRefresh/putWithRefresh/patchWithRefresh/deleteWithRefresh` from `ApiHelper.kt` (auto token refresh on 401 `TOKEN_EXPIRED`, clears storage on invalid token).
+- `createHttpClient(tokenStorage, engine)` builds the Ktor client (engine defaults to `expect fun createHttpEngine()`); the app uses the shared `httpClient`. The token goes only to the backend host and never on `ApiConfig.PUBLIC_AUTH_PATHS`.
+- Calls go through `apiCall<T>(defaultMessage) { client.get(…) }` from `ApiHelper.kt`: returns `Result<T>`, non-2xx becomes an `ApiException` whose message is sanitized by `sanitizeError` (`ErrorMessages.kt`), no response becomes `NetworkError`. There is no refresh token; a 401 means logout.
 - Repositories take `HttpClient` (and `TokenStorage` if needed) via constructor and return `Result<T>`. Map HTTP errors to the sealed `ApiException` (ValidationError, Unauthorized, NotFound, Conflict, RateLimit, ServerError, NetworkError…).
 
 ### UI layer
 - One `XxxUiState` `@Stable data class` per screen with defaults; derived flags as properties (`isInputValid`).
-- ViewModel: constructor-injected deps with default values (no DI framework), `private val _state = MutableStateFlow(XxxUiState())`, `val state: StateFlow<…> = _state.asStateFlow()`, updates via `_state.value = _state.value.copy(...)`, async work in `viewModelScope.launch`, `result.fold(onSuccess, onFailure)` mapping `ApiException` → user message.
+- ViewModel: constructor-injected deps with default values (no DI framework), `private val _state = MutableStateFlow(XxxUiState())`, `val state: StateFlow<…> = _state.asStateFlow()`, updates via `_state.value = _state.value.copy(...)`, async work in `viewModelScope.launch`, `result.fold(onSuccess, onFailure)` mapping the failure to a localized `StringResource` with `e.toUserMessage()`.
 - Screen split in two:
   - `XxxScreen(viewModel = viewModel { XxxViewModel() }, onNavigate… callbacks)` — collects state, wires callbacks.
   - `internal fun XxxScreenContent(state, onXxx: () -> Unit, …)` — stateless, used by previews and screenshot tests.

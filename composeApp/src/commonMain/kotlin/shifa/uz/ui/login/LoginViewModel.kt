@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.auth.LoginAttempts
+import shifa.uz.data.auth.normalizePhone
 import shifa.uz.data.model.ApiException
 
 class LoginViewModel(
@@ -90,13 +91,9 @@ class LoginViewModel(
     }
 }
 
-/**
- * 05 §2.2 identifier normalization. Emails and anything that isn't a phone number go as typed. Phones
- * become `+<digits>`; a 9-digit local number gets Uzbekistan's `+998` (the Flutter app sent `+90…`, 05 Q8).
- */
+/** 05 §2.2 identifier normalization. Emails and anything that isn't a phone number go as typed. */
 internal fun loginUsername(text: String): String {
     val raw = text.trim()
-    val digits = raw.filter(Char::isDigit)
-    if ('@' in raw || digits.isEmpty() || raw.any(Char::isLetter)) return raw
-    return if (digits.length == 9) "+998$digits" else "+$digits"
+    if ('@' in raw || raw.none(Char::isDigit) || raw.any(Char::isLetter)) return raw
+    return normalizePhone(raw)
 }

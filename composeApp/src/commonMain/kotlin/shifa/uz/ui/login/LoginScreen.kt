@@ -8,14 +8,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -23,8 +21,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,7 +36,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
@@ -66,6 +61,8 @@ import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
+import shifa.uz.ui.widgets.ShifaBanner
+import shifa.uz.ui.widgets.ShifaBannerType
 import shifa.uz.ui.widgets.ShifaInputField
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
@@ -121,24 +118,26 @@ internal fun LoginScreenContent(
                 Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
                     Hero()
                     if (state.isLocked) {
-                        Banner(
+                        ShifaBanner(
                             stringResource(
                                 Res.string.accountLockedTryAgainIn,
                                 state.loginLockedUntilMinutes.toString(),
                             ),
                             Res.drawable.ic_clock_16,
-                            isError = true,
+                            ShifaBannerType.Error,
                         )
                     } else {
-                        state.error?.let { Banner(stringResource(it), Res.drawable.ic_alert_circle_16, isError = true) }
+                        state.error?.let {
+                            ShifaBanner(stringResource(it), Res.drawable.ic_alert_circle_16, ShifaBannerType.Error)
+                        }
                         if (state.showAttemptsBanner) {
-                            Banner(
+                            ShifaBanner(
                                 stringResource(
                                     Res.string.loginAttemptsRemaining,
                                     state.loginAttemptsRemaining.toString(),
                                 ),
                                 Res.drawable.ic_alert_circle_16,
-                                isError = false,
+                                ShifaBannerType.Warning,
                             )
                         }
                     }
@@ -240,33 +239,5 @@ private fun Hero() {
                 tint = ShifaColors.Icon.Inverse,
             )
         }
-    }
-}
-
-// No Figma component: styled like the feedback notification, red for errors and the lock, orange for
-// the attempts countdown (05 §3.2). The Flutter app shows the error in a SnackBar; inline stays until the next edit.
-@Composable
-private fun Banner(
-    text: String,
-    icon: DrawableResource,
-    isError: Boolean,
-) {
-    val accent = if (isError) ShifaColors.Border.Error else ShifaColors.Border.Warning
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(ShifaRadius.ControlMd)
-            .background(if (isError) ShifaColors.Bg.ErrorSubtle else ShifaColors.Bg.WarningSubtle)
-            .border(ShifaSize.S2, accent, ShifaRadius.ControlMd)
-            .padding(ShifaSpacing.Inset.Sm),
-        horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painterResource(icon),
-            contentDescription = null,
-            tint = if (isError) ShifaColors.Icon.Error else ShifaColors.Icon.Warning,
-        )
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = ShifaColors.Text.Primary)
     }
 }

@@ -19,8 +19,11 @@ import org.junit.Test
 import shifa.uz.data.api.LOGIN_FAILED
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.api.NO_TOKEN_RECEIVED
+import shifa.uz.data.api.SMS_COULD_NOT_BE_SENT
 import shifa.uz.data.api.createHttpClient
 import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.OtpChannel
+import shifa.uz.data.model.RegisterPatientRequest
 import shifa.uz.data.storage.TokenStorage
 import java.io.IOException
 
@@ -42,6 +45,8 @@ class AuthRepositoryTest {
     private suspend fun loginError(): ApiException = classToTest.login("u", "p").exceptionOrNull() as ApiException
 
     private val request get() = engine.requestHistory.single()
+
+    private val requestJson get() = Json.parseToJsonElement((request.body as TextContent).text)
 
     @Test
     fun `login posts the credentials as a patient without a token and saves the new one`() =
@@ -118,6 +123,136 @@ class AuthRepositoryTest {
             val error = loginError()
             assertThat(error).isInstanceOf(ApiException.NetworkError::class.java)
             assertThat(error.message).isEqualTo(NETWORK_ERROR)
+        }
+
+    @Test
+    fun `check-identifier sends only the given keys and reads the type`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, """{"type":"doctor","firstName":"Aziz","lastName":"Karimov"}""")
+
+            val response = classToTest.checkIdentifier("+998901234567", null).getOrThrow()
+
+            assertThat(response.type).isEqualTo("doctor")
+            assertThat(response.firstName).isEqualTo("Aziz")
+            assertThat(request.url.encodedPath).isEqualTo("/api/auth/check-identifier")
+            assertThat(requestJson).isEqualTo(Json.parseToJsonElement("""{"phone":"+998901234567"}"""))
+        }
+
+    @Test
+    fun `no account is none whether it is a 404, null or a missing type`() =
+        runTest {
+            for ((status, body) in listOf(
+                HttpStatusCode.NotFound to "{}",
+                HttpStatusCode.OK to "null",
+                HttpStatusCode.OK to "{}",
+            )) {
+                replyJson(status, body)
+                assertThat(classToTest.checkIdentifier(null, "a@shifa.uz").getOrThrow().type).isEqualTo("none")
+            }
+        }
+
+    @Test
+    fun `send-sms-otp reports where the code went`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, """{"message":"sent"}""")
+            assertThat(classToTest.sendSmsOtp("+998901234567").getOrThrow()).isEqualTo(OtpChannel.Sms)
+
+            replyJson(HttpStatusCode.OK, """{"channel":"EMAIL"}""")
+            assertThat(classToTest.sendSmsOtp("+998901234567").getOrThrow()).isEqualTo(OtpChannel.Email)
+        }
+
+    @Test
+    fun `SMS failures that switch to email`() =
+        runTest {
+            replyJson(HttpStatusCode.ServiceUnavailable, """{"message":"$SMS_COULD_NOT_BE_SENT"}""")
+            assertThat(classToTest.sendSmsOtp("+998901234567").exceptionOrNull()!!.needsEmailFallback()).isTrue()
+
+            replyJson(HttpStatusCode.TooManyRequests, "{}")
+            assertThat(classToTest.sendSmsOtp("+998901234567").exceptionOrNull()!!.needsEmailFallback()).isTrue()
+
+            replyJson(HttpStatusCode.InternalServerError, "{}")
+            assertThat(classToTest.sendSmsOtp("+998901234567").exceptionOrNull()!!.needsEmailFallback()).isFalse()
+        }
+
+    @Test
+    fun `register omits null keys and saves the token`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, """{"token":"t2"}""")
+
+            classToTest.registerPatient(
+                RegisterPatientRequest("Ali", "Valiyev", "Secret1!", "+998901234567", smsOtp = "123456"),
+            )
+                .getOrThrow()
+
+            assertThat(tokens.token).isEqualTo("t2")
+            assertThat(requestJson).isEqualTo(
+                Json.parseToJsonElement(
+                    """{"firstName":"Ali","lastName":"Valiyev","password":"Secret1!",""" +
+                        """"phone":"+998901234567","smsOtp":"123456"}""",
+                ),
+            )
+        }
+
+    @Test
+    fun `send-forgot-password-otp sends the identifier as a patient and defaults to email`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, "{}")
+            assertThat(classToTest.sendForgotPasswordOtp("a@shifa.uz").getOrThrow()).isEqualTo(OtpChannel.Email)
+            assertThat(request.url.encodedPath).isEqualTo("/api/auth/send-forgot-password-otp")
+            assertThat(request.headers[HttpHeaders.Authorization]).isNull()
+            assertThat(
+                requestJson,
+            ).isEqualTo(Json.parseToJsonElement("""{"identifier":"a@shifa.uz","app":"patient"}"""))
+
+            replyJson(HttpStatusCode.OK, """{"channel":"sms"}""")
+            assertThat(classToTest.sendForgotPasswordOtp("+998901234567").getOrThrow()).isEqualTo(OtpChannel.Sms)
+        }
+
+    @Test
+    fun `an email reset sends email and emailOtp, then saves the token`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, """{"token":"t3"}""")
+
+            classToTest.resetForgottenPassword("a@shifa.uz", OtpChannel.Email, "123456", "Secret1!").getOrThrow()
+            assertThat(tokens.token).isEqualTo("t3")
+            assertThat(request.url.encodedPath).isEqualTo("/api/auth/forgot-password-reset")
+            assertThat(requestJson).isEqualTo(
+                Json.parseToJsonElement(
+                    """{"newPassword":"Secret1!","email":"a@shifa.uz","emailOtp":"123456","app":"patient"}""",
+                ),
+            )
+        }
+
+    @Test
+    fun `a phone reset sends phone, and a code the server emailed goes as emailOtp (05 Q13)`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, """{"token":"t4"}""")
+            classToTest.resetForgottenPassword("+998901234567", OtpChannel.Sms, "111111", "Secret1!").getOrThrow()
+            classToTest.resetForgottenPassword("+998901234567", OtpChannel.Email, "222222", "Secret1!").getOrThrow()
+
+            val (sms, email) =
+                engine.requestHistory.map { Json.parseToJsonElement((it.body as TextContent).text) }
+            assertThat(sms).isEqualTo(
+                Json.parseToJsonElement(
+                    """{"newPassword":"Secret1!","phone":"+998901234567","smsOtp":"111111","app":"patient"}""",
+                ),
+            )
+            assertThat(email).isEqualTo(
+                Json.parseToJsonElement(
+                    """{"newPassword":"Secret1!","phone":"+998901234567","emailOtp":"222222","app":"patient"}""",
+                ),
+            )
+        }
+
+    @Test
+    fun `a failed reset saves nothing and falls back to failed to reset password`() =
+        runTest {
+            replyJson(HttpStatusCode.BadRequest, """{"message":"stack trace"}""")
+
+            val error = classToTest.resetForgottenPassword("a@shifa.uz", OtpChannel.Email, "1", "p").exceptionOrNull()
+
+            assertThat(error!!.message).isEqualTo("Failed to reset password")
+            assertThat(tokens.token).isNull()
         }
 
     @Test

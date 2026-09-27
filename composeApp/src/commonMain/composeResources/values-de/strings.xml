@@ -115,6 +115,7 @@
     <string name="copilotViewProfile">Profil</string>
     <string name="couldNotRefreshPaymentStatus">Zahlungsstatus konnte nicht aktualisiert werden. Bitte erneut versuchen.</string>
     <string name="countryGermany">Deutschland</string>
+    <string name="countryOfResidence">Wohnsitzland</string>
     <string name="countryTurkey">Türkei</string>
     <string name="countryUae">VAE</string>
     <string name="countryUzbekistan">Usbekistan</string>
@@ -333,6 +334,7 @@
     <string name="notifications">Benachrichtigungen</string>
     <string name="openDocument">Dokument öffnen</string>
     <string name="other">Andere</string>
+    <string name="otpSentToAccountEmail">Ein 6-stelliger Code wurde an die E-Mail-Adresse Ihres Kontos gesendet. Prüfen Sie Ihren Posteingang.</string>
     <string name="otpSentToEmail">Ein 6-stelliger Code wurde an %1$s gesendet. Prüfen Sie Ihren Posteingang.</string>
     <string name="password">Passwort</string>
     <string name="passwordTooShort">Passwort muss mindestens 6 Zeichen lang sein</string>
@@ -381,6 +383,7 @@
     <string name="retry">Wiederholen</string>
     <string name="reviews">Bewertungen</string>
     <string name="save">Speichern</string>
+    <string name="searchCountry">Land suchen...</string>
     <string name="searchDoctors">Ärzte suchen...</string>
     <string name="searchDoctorsHint">Arzt, Klinik oder Fachgebiet suchen...</string>
     <string name="searchDocuments">Dokumente suchen...</string>

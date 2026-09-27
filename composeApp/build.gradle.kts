@@ -65,6 +65,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.compose.ui.backhandler)
 
             // Ktor - HTTP Client
             implementation(libs.ktor.client.core)

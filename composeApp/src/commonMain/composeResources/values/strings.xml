@@ -179,9 +179,10 @@
     <string name="couldNotRefreshPaymentStatus">Could not refresh payment status. Please try again.</string>
     <string name="country">Country</string>
     <string name="countryGermany">Germany</string>
+    <string name="countryOfResidence">Country of Residence</string>
     <string name="countryTurkey">Turkey</string>
     <string name="countryUae">UAE</string>
-    <string name="countryUzbekistan">Узбекистан</string>
+    <string name="countryUzbekistan">Uzbekistan</string>
     <string name="createAPinCode">Create a PIN code to secure your app</string>
     <string name="createAccount">Create Account</string>
     <string name="createBooking">Create Booking</string>
@@ -564,6 +565,7 @@
     <string name="orthopedist">Orthopedist</string>
     <string name="other">Other</string>
     <string name="otolaryngologist">ENT Specialist</string>
+    <string name="otpSentToAccountEmail">A 6-digit code has been sent to the email on your account. Check your inbox.</string>
     <string name="otpSentToEmail">A 6-digit code has been sent to %1$s. Check your inbox.</string>
     <string name="otpSentToPhone">A 6-digit code has been sent to %1$s.</string>
     <string name="password">Password</string>
@@ -655,6 +657,7 @@
     <string name="save">Save</string>
     <string name="saveChanges">Save changes</string>
     <string name="savePassword">Save &amp; Continue</string>
+    <string name="searchCountry">Search country...</string>
     <string name="searchDoctors">Search doctors...</string>
     <string name="searchDoctorsHint">Search doctor, clinic or specialty...</string>
     <string name="searchDocuments">Search documents...</string>

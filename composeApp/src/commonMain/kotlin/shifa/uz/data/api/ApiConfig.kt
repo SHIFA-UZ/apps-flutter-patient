@@ -7,7 +7,15 @@ object ApiConfig {
 
     object Endpoints {
         const val LOGIN = "auth/login"
+        const val CHECK_IDENTIFIER = "auth/check-identifier"
+        const val SEND_EMAIL_OTP = "auth/send-email-otp"
+        const val SEND_SMS_OTP = "auth/send-sms-otp"
+        const val REGISTER_PATIENT = "auth/register-patient"
+        const val CREATE_PATIENT_FOR_DOCTOR = "auth/create-patient-for-doctor"
+        const val SEND_FORGOT_PASSWORD_OTP = "auth/send-forgot-password-otp"
+        const val FORGOT_PASSWORD_RESET = "auth/forgot-password-reset"
         const val PROFILE = "patients/me/profile"
+        const val PATIENT_PHOTO = "patients/me/photo"
     }
 
     // 01 §4.2: sent without a token. A request matches when its path ends with one of these.

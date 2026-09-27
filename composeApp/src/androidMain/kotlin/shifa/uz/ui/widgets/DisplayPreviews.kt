@@ -6,6 +6,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.ic_alert_circle_16
+import shifa.composeapp.generated.resources.ic_check_circle_16
 import shifa.uz.ui.theme.ShifaColors
 
 private const val BODY =
@@ -50,6 +53,20 @@ internal fun PageElementPreview() =
 internal fun ImageContainerPreview() =
     Gallery(background = ShifaColors.Bg.Canvas) {
         ShifaImageContainer(url = null, contentDescription = null)
+    }
+
+@Preview
+@Composable
+internal fun BannerPreview() =
+    Gallery {
+        ShifaBannerType.entries.forEach {
+            val success = it == ShifaBannerType.Success
+            ShifaBanner(
+                "${it.name}: $BODY",
+                if (success) Res.drawable.ic_check_circle_16 else Res.drawable.ic_alert_circle_16,
+                it,
+            )
+        }
     }
 
 @Composable

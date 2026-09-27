@@ -9,9 +9,20 @@ const val LOGIN_FAILED = "Login failed"
 const val NO_TOKEN_RECEIVED = "No token received from server"
 const val NETWORK_ERROR = "Network error. Check your internet connection and try again."
 const val CONNECTION_TIMED_OUT = "Connection timed out. Check your internet and try again."
+const val COULD_NOT_VERIFY_ACCOUNT = "Could not verify account details"
+const val COULD_NOT_SEND_EMAIL_OTP = "Could not send verification email. Please try again later."
+const val COULD_NOT_SEND_SMS_OTP = "Could not send verification SMS. Please try again later."
+const val SMS_COULD_NOT_BE_SENT = "SMS could not be sent. Please use email verification or contact support."
+const val TOO_MANY_VERIFICATION_REQUESTS = "Too many verification requests. Please try again later."
+const val REGISTRATION_FAILED = "Registration failed"
+const val FAILED_TO_CREATE_PATIENT_ACCOUNT = "Failed to create patient account"
+const val COULD_NOT_SEND_VERIFICATION_CODE = "Could not send verification code"
+const val FAILED_TO_RESET_PASSWORD = "Failed to reset password"
+const val FAILED_TO_UPLOAD_PHOTO = "Failed to upload photo"
+const val FAILED_TO_UPDATE_PROFILE = "Failed to update profile"
 private const val INVALID_CREDENTIALS = "Invalid credentials"
 private const val NO_ACCOUNT_FOUND = "No account found"
-private const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
+const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
 
 // 01 §8 known-safe backend strings (plus the app's own), mapped to their l10n keys (01 §9.2).
 // Only these ever reach the UI; add entries as features need them.
@@ -55,9 +66,20 @@ private val MESSAGES: Map<String, StringResource> =
         "Phone number not found" to Res.string.errorPhoneNumberNotFound,
         "User not found" to Res.string.errorUserNotFound,
         TOO_MANY_REQUESTS to Res.string.errorTooManyRequests,
-        "Too many verification requests. Please try again later." to Res.string.errorTooManyVerificationRequests,
-        "SMS could not be sent. Please use email verification or contact support." to Res.string.errorSmsCouldNotBeSent,
+        TOO_MANY_VERIFICATION_REQUESTS to Res.string.errorTooManyVerificationRequests,
+        SMS_COULD_NOT_BE_SENT to Res.string.errorSmsCouldNotBeSent,
         LOGIN_FAILED to Res.string.errorLoginFailed,
+        COULD_NOT_VERIFY_ACCOUNT to Res.string.errorCouldNotVerifyAccountDetails,
+        COULD_NOT_SEND_EMAIL_OTP to Res.string.errorFailedToSendEmailCode,
+        COULD_NOT_SEND_SMS_OTP to Res.string.errorFailedToSendSmsCode,
+        REGISTRATION_FAILED to Res.string.errorRegistrationFailed,
+        FAILED_TO_CREATE_PATIENT_ACCOUNT to Res.string.errorFailedToCreatePatientAccount,
+        COULD_NOT_SEND_VERIFICATION_CODE to Res.string.errorFailedToSendVerificationCode,
+        FAILED_TO_RESET_PASSWORD to Res.string.errorFailedToResetPassword,
+        // A9. Flutter translated it but its sanitizer dropped it (05 §4.2).
+        "No email address on file. Please contact support." to Res.string.errorNoEmailOnFileContactSupport,
+        FAILED_TO_UPLOAD_PHOTO to Res.string.failedToUploadPhoto,
+        FAILED_TO_UPDATE_PROFILE to Res.string.failedToUpdateProfile,
         NO_TOKEN_RECEIVED to Res.string.errorNoTokenReceivedFromServer,
         NETWORK_ERROR to Res.string.errorNetworkConnection,
         CONNECTION_TIMED_OUT to Res.string.errorConnectionTimedOut,

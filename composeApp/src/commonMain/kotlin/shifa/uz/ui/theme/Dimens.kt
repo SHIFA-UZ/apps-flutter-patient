@@ -116,6 +116,9 @@ object ShifaDimens {
     val LoginHeroTile = 111.dp
     val LoginLogo = DpSize(59.dp, 43.dp)
     val LoginFooterHeight = 66.dp
+
+    // create account (1631:10131, 1631:10296, 1631:10449)
+    val RegisterAvatar = 280.dp
 }
 
 // Figma: shifa/radius/* and semantic/radius/control-*. Full (999) = CircleShape.
