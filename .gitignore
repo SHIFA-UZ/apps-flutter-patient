@@ -70,3 +70,7 @@ keystore.properties
 composeApp/screenshots/*_compare.png
 composeApp/screenshots/*_actual.png
 composeApp/screenshots/*_diff.png
+
+# graphify machine-local paths
+graphify-out/.graphify_python
+graphify-out/.graphify_root
