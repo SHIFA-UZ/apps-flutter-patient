@@ -13,6 +13,7 @@ This repo is a template. API and UI come from new specs / Figma — the tech sta
 
 - Remote: `SHIFA-UZ/apps-flutter-patient` (the Flutter app lives on `main`). This KMP rewrite lives on branch `shifa2.0`, branched from `main`.
 - Commit all work to `shifa2.0`. Never merge, rebase or open a PR into `main`, and never push to `main`, until the user says the rewrite is done.
+- Never commit or push on your own. Show the user the finished work (what changed, screenshots, test results), and only commit and push once they approve.
 
 ## Tech stack (do not swap without asking)
 
