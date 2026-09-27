@@ -1,0 +1,47 @@
+# Design system
+
+Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `1572:11699`. Light mode only.
+
+## Tokens (`ui/theme/`)
+
+- `Color.kt`: `ShifaColors.Text|Icon|Bg|Border|Interactive|Alpha.*`, named after Figma `semantic/color/*`.
+- `Typography.kt`: Manrope. `MaterialTheme.typography` slots are annotated with the Figma component that uses each one. Styles with no M3 slot are in `ShifaTextStyles`.
+- `Dimens.kt`:
+  - `ShifaSpacing.Inset|Gap|Stack` (`semantic/space/*`), `ShifaSize.S*` (`shifa/size/*`), `ShifaRadius`, `ShifaShadow` (applied with `Modifier.dropShadow`).
+  - `ShifaDimens.<Component><Part>` holds raw Figma values that have no variable.
+- `Modifier.lineBox(style)` sizes text to Figma's line boxes. Compose pads line heights smaller than the font's own height, so use it wherever the height must match Figma.
+
+## Widgets (`ui/widgets/`, nav bar in `ui/navigation/`)
+
+| File | Composables |
+|---|---|
+| ShifaButtons | `ShifaPrimaryButton`, `ShifaSecondaryButton`, `ShifaTertiaryButton`, `ShifaActionButton` (pill), `ShifaIconButton` |
+| ShifaInputField | `ShifaInputField` (`clearable` hides the X) |
+| ShifaSearchField, ShifaDropdown, ShifaSwitch | `ShifaSearchField`, `ShifaDropdown` (opens inline), `ShifaSwitch` |
+| ShifaChips | `ShifaChip` (filter / slot), `ShifaChipGrid` (4 columns), `ShifaCarousel` |
+| ShifaTag | `ShifaTag` (primary / secondary / tertiary) |
+| ShifaCards | upcoming (`1572:13984`) and past (`1573:12114`) appointment cards, `ShifaDoctorCard` full / compact / in (`1590:9994`), document, certificate (`1592:9994`), doctor service (`1670:13024`), check-in (`1662:18576`), task, `ShifaSettingsItem` |
+| ShifaSection | `ShifaSection`: header with an optional arrow; background type card-on-color / on-white / transparent |
+| ShifaPageHeader | `ShifaMainHeader`, `ShifaSubHeader` |
+| ShifaNavBar | `ShifaNavBar`, `ShifaTab` (`1572:13574`) |
+| ShifaNotification | `ShifaNotification` (5 types, `1598:10299`), `ShifaMessageNotification` |
+| ShifaPager, ShifaPageElement, ShifaImageContainer | pager dots, page-element slots, 302dp image box |
+| ShifaChat | `ShifaChatBar` (`1673:14877`), `ShifaChatBubble` and `ShifaChatImageBubble` (`1673:14821`) |
+| ShifaTray, ShifaPopUp | `ShifaTray`, `ShifaChatTray` (`1681:13188`), `ShifaPopUp` (`1702:14263`). They only draw: host them in `ModalBottomSheet` / `Dialog` (see `ShifaTray.kt`). |
+
+Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img_*`).
+
+## Previews and tests
+
+- Previews live in `androidMain/.../ui/widgets/*Previews.kt` and use `Gallery`. `Gallery` forces inspection mode so Compose resources load under Robolectric.
+- Every widget file has a `*ScreenshotTest` that captures its preview into `composeApp/screenshots/`.
+
+## Known differences from Figma / open questions
+
+- Section, tray and pop-up titles are raw black in Figma; they use `Text.Primary` (#272727) here.
+- Certificate illustration has no soft shadow (vector drawables can't blur). The doctor card "in" badge sits about 2px low.
+- Chat send button has no disabled state; the waveform is static.
+- Open questions:
+  - `ShifaImageContainer`: Fit or Crop? Currently Fit.
+  - Dropdown: inline or popup? Currently inline.
+  - Search icon colour when focused.

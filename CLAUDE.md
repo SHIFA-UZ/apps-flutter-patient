@@ -7,6 +7,7 @@ This repo is a template. API and UI come from new specs / Figma — the tech sta
 - `docs/kmp-spec/` is the source of truth for API and features; `docs/kmp-spec/15-api-reference.md` wins for request and response shapes.
 - Do not reproduce bugs listed in `docs/kmp-spec/00-README.md`.
 - UI comes from Figma via the Figma MCP. Map design tokens into `ui/theme/`, reusable components into `ui/widgets/`.
+- `docs/implemented/` records what's already built. Read `docs/implemented/README.md` before starting a task, and update it (status, area file, log line) at the end of every job, in the same commit.
 
 ## Git
 
