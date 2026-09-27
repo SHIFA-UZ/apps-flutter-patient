@@ -76,4 +76,12 @@ object ShifaColors {
         val Teal15 = Color(0x2600BBB0)
         val Black5 = Color(0x0D000000)
     }
+
+    // Colours Figma sets as raw values (no variable), named <component><Part>.
+    object Raw {
+        val SplashBlob = Color(0xA600A39A) // #00BBB0 at 65% under a 25% black grain, baked to its average
+        val SplashLogo = Color(0xFF59C2BC)
+        val GlassTile = Color(0x5CFFFFFF) // splash and login hero tile
+        val GlassTileBorder = Color.White
+    }
 }

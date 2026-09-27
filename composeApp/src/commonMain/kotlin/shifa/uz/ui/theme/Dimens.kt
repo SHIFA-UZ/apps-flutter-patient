@@ -6,6 +6,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 
 // Figma: semantic/space/*. Inset = padding, gap = between siblings in a row, stack = between siblings in a column.
@@ -98,6 +99,23 @@ object ShifaDimens {
 
     // nav-bar
     val NavBarTileWidth = 65.dp
+
+    // splash (1614:12212 → 1614:12237). Blob centres are offsets from the screen centre.
+    val SplashTile = 178.dp
+    val SplashTileRadius = 37.dp
+    val SplashBlobWidth = 891.563.dp
+    val SplashBlobHeight = 609.879.dp
+    val SplashBlobBlur = 25.dp
+    val SplashBlobAStart = DpOffset((-99.61).dp, 139.6.dp)
+    val SplashBlobAEnd = DpOffset((-81.16).dp, 388.84.dp)
+    val SplashBlobBStart = DpOffset((-10.16).dp, (-233.16).dp)
+    val SplashBlobBEnd = DpOffset(107.84.dp, (-376.16).dp)
+
+    // login (1614:12247)
+    val LoginHeroHeight = 358.dp
+    val LoginHeroTile = 111.dp
+    val LoginLogo = DpSize(59.dp, 43.dp)
+    val LoginFooterHeight = 66.dp
 }
 
 // Figma: shifa/radius/* and semantic/radius/control-*. Full (999) = CircleShape.

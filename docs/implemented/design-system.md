@@ -4,7 +4,7 @@ Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `
 
 ## Tokens (`ui/theme/`)
 
-- `Color.kt`: `ShifaColors.Text|Icon|Bg|Border|Interactive|Alpha.*`, named after Figma `semantic/color/*`.
+- `Color.kt`: `ShifaColors.Text|Icon|Bg|Border|Interactive|Alpha.*`, named after Figma `semantic/color/*`. Colours Figma sets as raw values (no variable) go in `ShifaColors.Raw.<Component><Part>`.
 - `Typography.kt`: Manrope. `MaterialTheme.typography` slots are annotated with the Figma component that uses each one. Styles with no M3 slot are in `ShifaTextStyles`.
 - `Dimens.kt`:
   - `ShifaSpacing.Inset|Gap|Stack` (`semantic/space/*`), `ShifaSize.S*` (`shifa/size/*`), `ShifaRadius`, `ShifaShadow` (applied with `Modifier.dropShadow`).
@@ -16,7 +16,7 @@ Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `
 | File | Composables |
 |---|---|
 | ShifaButtons | `ShifaPrimaryButton`, `ShifaSecondaryButton`, `ShifaTertiaryButton`, `ShifaActionButton` (pill), `ShifaIconButton` |
-| ShifaInputField | `ShifaInputField` (`clearable` hides the X) |
+| ShifaInputField | `ShifaInputField` (`clearable` hides the X; `trailingIcon` replaces it, e.g. the password eye) |
 | ShifaSearchField, ShifaDropdown, ShifaSwitch | `ShifaSearchField`, `ShifaDropdown` (opens inline), `ShifaSwitch` |
 | ShifaChips | `ShifaChip` (filter / slot), `ShifaChipGrid` (4 columns), `ShifaCarousel` |
 | ShifaTag | `ShifaTag` (primary / secondary / tertiary) |
@@ -29,11 +29,11 @@ Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `
 | ShifaChat | `ShifaChatBar` (`1673:14877`), `ShifaChatBubble` and `ShifaChatImageBubble` (`1673:14821`) |
 | ShifaTray, ShifaPopUp | `ShifaTray`, `ShifaChatTray` (`1681:13188`), `ShifaPopUp` (`1702:14263`). They only draw: host them in `ModalBottomSheet` / `Dialog` (see `ShifaTray.kt`). |
 
-Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img_*`).
+Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img_*`). `img_logo` is the white Shifa mark; tint it. `ic_eye_20` and `ic_eye_off_20` are Feather icons, because Figma has no eye icon.
 
 ## Previews and tests
 
-- Previews live in `androidMain/.../ui/widgets/*Previews.kt` and use `Gallery`. `Gallery` forces inspection mode so Compose resources load under Robolectric.
+- Previews live in `androidMain/.../ui/widgets/*Previews.kt` and use `Gallery`. Screen previews use `PreviewTheme`. Both force inspection mode so Compose resources load under Robolectric.
 - Every widget file has a `*ScreenshotTest` that captures its preview into `composeApp/screenshots/`.
 
 ## Known differences from Figma / open questions

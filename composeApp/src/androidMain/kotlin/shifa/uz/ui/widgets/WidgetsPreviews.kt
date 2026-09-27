@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -17,7 +18,9 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.PreviewContextConfigurationEffect
+import org.jetbrains.compose.resources.painterResource
 import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.ic_eye_20
 import shifa.composeapp.generated.resources.ic_plus_16
 import shifa.composeapp.generated.resources.ic_plus_22
 import shifa.composeapp.generated.resources.ic_plus_24
@@ -29,18 +32,22 @@ import shifa.uz.ui.theme.ShifaTheme
 // Also rendered by the screenshot tests in androidUnitTest. Robolectric doesn't start the
 // Compose resources ContentProvider, so inspection mode is forced to let the effect set the context.
 @Composable
+internal fun PreviewTheme(content: @Composable () -> Unit) =
+    CompositionLocalProvider(LocalInspectionMode provides true) {
+        PreviewContextConfigurationEffect()
+        ShifaTheme(content)
+    }
+
+@Composable
 internal fun Gallery(
     background: Color = ShifaColors.Bg.Surface,
     content: @Composable ColumnScope.() -> Unit,
-) = CompositionLocalProvider(LocalInspectionMode provides true) {
-    PreviewContextConfigurationEffect()
-    ShifaTheme {
-        Column(
-            Modifier.width(402.dp).background(background).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = content,
-        )
-    }
+) = PreviewTheme {
+    Column(
+        Modifier.width(402.dp).background(background).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        content = content,
+    )
 }
 
 @Preview
@@ -102,6 +109,9 @@ internal fun InputFieldPreview() =
         ShifaInputField("Input", {}, "label", supportingText = "Suggestive Text")
         ShifaInputField("Input", {}, "label", supportingText = "Suggestive Text", isError = true)
         ShifaInputField("", {}, "label", supportingText = "Suggestive Text", enabled = false)
+        ShifaInputField("Input", {}, "label", trailingIcon = {
+            Icon(painterResource(Res.drawable.ic_eye_20), null, tint = ShifaColors.Icon.Secondary)
+        })
     }
 
 @Preview

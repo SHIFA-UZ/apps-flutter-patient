@@ -39,6 +39,7 @@ import shifa.uz.ui.theme.lineBox
 /**
  * Figma input-field. States map to: disabled = !enabled, error = isError,
  * active = focused, filled = non-empty value, default = otherwise.
+ * [trailingIcon] replaces the clear X (e.g. a password eye).
  */
 @Composable
 fun ShifaInputField(
@@ -53,6 +54,7 @@ fun ShifaInputField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: (@Composable () -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
@@ -101,7 +103,9 @@ fun ShifaInputField(
                             innerTextField()
                         }
                     }
-                    if (enabled && clearable) {
+                    if (trailingIcon != null) {
+                        trailingIcon()
+                    } else if (enabled && clearable) {
                         Icon(
                             painterResource(Res.drawable.ic_x_20),
                             contentDescription = "Clear",
