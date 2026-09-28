@@ -30,7 +30,18 @@ data class PatientProfile(
     val language: String? = null,
     val photoUrl: String? = null,
     val locationStreetAddress: String? = null,
+    val subscriptionTier: String? = null,
+    val features: List<String> = emptyList(),
 )
+
+/** 09 §7: the feature list decides when present, else the tier (only PRO is shut out). Fails open. */
+val PatientProfile?.canUseShifaAi: Boolean
+    get() =
+        when {
+            this == null -> true
+            features.isNotEmpty() -> "PATIENT_SHIFA_AI" in features
+            else -> !subscriptionTier.equals("PRO", ignoreCase = true)
+        }
 
 /** P5. An empty [challengeId] is a failure. */
 @Serializable

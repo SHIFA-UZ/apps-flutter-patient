@@ -16,6 +16,7 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 | Bookings, appointment details and doctor profile | [bookings.md](bookings.md) |
 | My Tasks and check-in | [tasks.md](tasks.md) |
 | Notifications | [notifications.md](notifications.md) |
+| Shifa AI | [shifa-ai.md](shifa-ai.md) |
 
 ## Status
 
@@ -33,7 +34,7 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 | AUTH-03 Create account | Mostly done | Figma 3-step wizard (account → info → photo), password checklist, check-identifier dialogs, the email/SMS choice with the email fallback. Not built: `PhoneInputField` with a country picker (a plain phone field instead, so the 04 parsing bug can't happen). |
 | AUTH-04 Register OTP verify | Mostly done | Code screen, masked destination, 300 s resend, `register-patient`, then the photo (P3) and step 2 (P2) are saved. Not built: the PIN setup prompt (needs LOCK-01). Not yet tried against the backend. |
 | AUTH-05 Doctor → patient | Mostly done | The step-1 "existing doctor" dialog replaces the confirm screen, then the email code and `create-patient-for-doctor`. Phone-only matches stop with "email required" (Q7). No PIN prompt (LOCK-01). |
-| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar; Home, Bookings and Documents are built, the rest are "Coming soon" placeholders. Back goes page → Home tab → exit. The centre Shifa AI tab is shown (Figma). |
+| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar; Home, Bookings, Shifa AI and Documents are built, Messages is a "Coming soon" placeholder. Back goes page → Home tab → exit. The centre Shifa AI tab is hidden for gated profiles (AI-01). |
 | SHELL-03 App header | Done | Avatar → Profile, bell → Notifications (NOTIF-01), with the N2 unread badge. No chat icon (not in the Figma header). |
 | HOME-01 Home + Upcoming | Done | P1 greeting, pull to refresh, B2 upcoming (confirmed, until the join window closes), "Now" + Join, error banner. Cards and Join open the appointment details (BOOK-06). |
 | HOME-02 My Tasks | Done | T1, open tasks, up to 3. The cards and the arrow open My Tasks (TASK-01). |
@@ -46,7 +47,7 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 | PROF-05 Change password | Done | A8 with the registration password policy. A wrong current password says so. No Figma frame. |
 | PROF-06 Delete account | Mostly done | P5 → email code (A4) → P6 → logout → Login notice. Phone-only accounts stop with "email required" (Q16). Not yet tried against the backend. |
 | PROF-07 Logout from profile | Done | Confirm dialog → awaited AUTH-08 → Login. |
-| AUTH-08 Logout | Partly done | P7 `""`, token wipe, session-scoped state is dropped. Not built: clearing the PIN (LOCK-01), copilot memory (no copilot yet) and the global 401 path (CORE-05). |
+| AUTH-08 Logout | Partly done | P7 `""`, token wipe, session-scoped state is dropped. Also clears the Shifa AI chats. Not built: clearing the PIN (LOCK-01) and the global 401 path (CORE-05). |
 | AUTH-06 Forgot password | Mostly done | Identifier → code → new password → auto-login (A9, A10), no Figma frames. Fixes Q8, Q10, Q12, Q13. Not built: the success SnackBar. Not yet tried against the backend. |
 | DOCS-01 Documents list | Done | Figma list with title search, pull to refresh and local dates. Category filter chips, a category tag on cards and swipe-left delete for own uploads (none of them in Figma). |
 | DOCS-02 Upload document | Mostly done | Camera / photo / PDF tray, the Figma upload pop-up with title and optional type, F2 multipart. No date field (not in Figma), no camera rationale, the app lock isn't suspended (no LOCK-01). |
@@ -64,6 +65,7 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 | NOTIF-01 Inbox, details sheet, badge | Mostly done | Figma inbox with filter chips, date groups and the 13 §6.3 texts, pull to refresh, N3 on tap, N4 from the header, the bell refreshes. The details tray shows the linked appointment, document or task card with its button. Unread titles are brand (Figma has no unread look). No ⋮ menu (not in Figma). |
 | NOTIF-03 FCM token & push display | Done, not tried on a device | Firebase Messaging on Android and iOS (SPM). P7 after login and on each token refresh; logout sends `""`. The permission is asked after login. `shifa_patient_channel` is the manifest default, so background pushes use it too. Foreground pushes show as notifications with the backend's text, and they refresh the bell. |
 | NOTIF-04 Tap routing | Partly done | Inbox trays and push taps (background and cold start, after sign-in) open appointment details, the document viewer, the check-in, or the Bookings / Documents / My Tasks list when the item isn't found. Other push types open the inbox. No routes to screens that don't exist yet. |
+| AI-01 Gating, entry, streaming chat | Mostly done | Figma chats list with search and the chat with streamed X1 replies, saved on the device (20 chats, cleared on logout). Gated by `features`, else the tier. Rate limit latch, delete chat with confirm. Voice (AI-02), attachments and suggestions (AI-03) aren't built. Not tried against the backend. |
 
 ## Log
 
@@ -88,3 +90,4 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 - 2026-09-28: Built the notification center (NOTIF-01, NOTIF-04 in part, Figma 1703:15201, 1703:15698, 1703:16143, 1703:16483): N1 inbox with filters and date groups, the details tray with the linked card, N3 on tap, N4 mark all. The bell opens it instead of the placeholder. Cards take `LocalCardOnSurface` for the in-tray look.
 - 2026-09-28: Notifications: a Payments filter chip and brand titles on unread cards (neither in Figma). Built push (NOTIF-03, NOTIF-04 for pushes): Firebase Messaging on Android and iOS, P7 after login, the permission prompt, the channel, foreground display, and push taps routed like the inbox tray, cold start included.
 - 2026-09-28: Added `docs/backend-improvements.md`: what the app needs from the backend team (localized push text, per-device push tokens, a staging backend, error codes and more).
+- 2026-09-28: Built Shifa AI (AI-01, Figma 1655:16752, 1673:14621, 1673:14790, 1681:13859): the chats tab with search and New Chat, the chat with streamed X1 replies, local chats cleared on logout, the rate limit, delete chat, and the tab gating. Documents' upload tray takes a title; sent chat bubbles align their text to the end.

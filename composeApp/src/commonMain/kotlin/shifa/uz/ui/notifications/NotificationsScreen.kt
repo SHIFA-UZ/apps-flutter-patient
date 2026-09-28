@@ -190,7 +190,13 @@ internal fun NotificationsContent(
                             )
                             items.forEach {
                                 val (title, message) = texts(it)
-                                ShifaNotification(title, message, iconOf(it.kind), time = time(it.createdAt, now), unread = !it.isRead) {
+                                ShifaNotification(
+                                    title,
+                                    message,
+                                    iconOf(it.kind),
+                                    time = time(it.createdAt, now),
+                                    unread = !it.isRead,
+                                ) {
                                     onOpen(it)
                                 }
                             }
@@ -310,7 +316,7 @@ private fun texts(n: AppNotification): Pair<String, String> {
 
 /** 13 §4.1 time: "Just now", "N minutes ago", HH:mm today, "Yesterday HH:mm", else "MMM d • HH:mm". */
 @Composable
-private fun time(
+internal fun time(
     at: Instant,
     now: Instant,
 ): String {

@@ -17,6 +17,7 @@
     <string name="addedByYou">Добавлено вами</string>
     <string name="additionalNotesOptional">Дополнительные заметки (необязательно)</string>
     <string name="address">Адрес</string>
+    <string name="addToChat">Добавить в чат</string>
     <string name="all">Все</string>
     <string name="allAvailability">Любая доступность</string>
     <string name="allConsultationTypes">Любой тип консультации</string>
@@ -45,6 +46,7 @@
     <string name="appointmentSummaryPreview">Сводка приёма</string>
     <string name="approve">Разрешить</string>
     <string name="areYouSureCancel">Вы уверены, что хотите отменить эту запись?</string>
+    <string name="askAnything">Спросите что угодно</string>
     <string name="attachDocumentsHint">Прикрепите PDF, чтобы врач мог подготовиться к визиту. До 5 PDF.</string>
     <string name="attachDocumentsOptional">Прикрепить документы (необязательно)</string>
     <string name="attachFile">Прикрепить файл</string>
@@ -89,6 +91,7 @@
     <string name="chatImage">Изображение в чате</string>
     <string name="chatNewMessageMessage">У вас новое сообщение от команды лечения.</string>
     <string name="chatNewMessageTitle">Новое сообщение</string>
+    <string name="chats">Чаты</string>
     <string name="checkInEnterGenericValue">Введите значение</string>
     <string name="checkInEnterLabeledValue">Введите %1$s</string>
     <string name="checkInNotesRequired">Необходимо указать заметки</string>
@@ -165,6 +168,7 @@
     <string name="copilotConfirmBookFromChatTitle">Подтвердить запись из чата</string>
     <string name="copilotConsentAutoBook">Разрешаю Shifa записать меня от моего имени</string>
     <string name="copilotContinueToBooking">На следующем экране вы выберете дату и время. Продолжить?</string>
+    <string name="copilotDailyLimit">Вы достигли дневного лимита Shifa AI. Попробуйте завтра.</string>
     <string name="copilotInputHint">Введите сообщение…</string>
     <string name="copilotNextSlot">Ближайшее время:</string>
     <string name="copilotNoProviderOnPlatform">На платформе Shifa пока нет врача, подходящего под эти симптомы. Загляните во вкладку «Врачи» или попробуйте позже. При ухудшении состояния обратитесь за срочной помощью или в скорую.</string>
@@ -209,6 +213,8 @@
     <string name="deleteAccountOtpSubtitle">Введите 6-значный код, отправленный на вашу электронную почту.</string>
     <string name="deleteAccountVerifyTitle">Подтвердите удаление</string>
     <string name="deleteAccountWarning">Это действие необратимо. Ваши личные идентификаторы (телефон/почта/имя) будут удалены. Некоторые медицинские данные могут храниться по закону, но не будут доступны из нового аккаунта.</string>
+    <string name="deleteChatMessage">Этот чат и его сообщения будут удалены с этого устройства.</string>
+    <string name="deleteChatTitle">Удалить чат?</string>
     <string name="deleteDocumentConfirmation">Вы уверены, что хотите удалить этот документ?</string>
     <string name="dentist">Стоматолог</string>
     <string name="dermatologist">Дерматолог</string>
@@ -514,6 +520,7 @@
     <string name="newAppointmentBookedButFailedToCancelOld">Новый приём забронирован, но не удалось отменить старый</string>
     <string name="newAppointmentScheduled">Назначен новый приём</string>
     <string name="newAppointmentScheduledTitle">Новый приём назначен</string>
+    <string name="newChat">Новый чат</string>
     <string name="newDocumentMessage">В вашу медкарту добавлен новый документ. Нажмите, чтобы открыть.</string>
     <string name="newDocumentTitle">Новый документ</string>
     <string name="newPassword">Новый пароль</string>

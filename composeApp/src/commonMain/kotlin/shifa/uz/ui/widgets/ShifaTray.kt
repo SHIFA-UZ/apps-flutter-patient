@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.ZeroCornerSize
@@ -52,6 +53,7 @@ fun ShifaChatTray(
     modifier: Modifier = Modifier,
     suggestions: List<String> = emptyList(),
     onSuggestion: (String) -> Unit = {},
+    sendEnabled: Boolean = true,
     chatBar: @Composable () -> Unit,
 ) = TraySheet(TrayShape, modifier) {
     if (suggestions.isNotEmpty()) {
@@ -64,13 +66,15 @@ fun ShifaChatTray(
     }
     // Figma puts the shadow on the row frame, i.e. under each child.
     val rowShadow = Modifier.dropShadow(ShifaRadius.Full, ShifaShadow.ChatTray)
+    // The tray sits on the screen's bottom edge, so it pads for the system bar itself.
     Row(
+        Modifier.navigationBarsPadding(),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ShifaIconButton(Res.drawable.ic_plus_24, "Attach", onAttach, rowShadow, secondary = true)
         Box(rowShadow.weight(1f)) { chatBar() }
-        ShifaIconButton(Res.drawable.ic_arrow_up_24, "Send", onSend, rowShadow)
+        ShifaIconButton(Res.drawable.ic_arrow_up_24, "Send", onSend, rowShadow, enabled = sendEnabled)
     }
 }
 

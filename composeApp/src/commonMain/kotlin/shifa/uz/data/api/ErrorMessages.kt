@@ -38,6 +38,7 @@ const val FAILED_TO_SEARCH_DOCTORS = "Failed to search doctors" // No l10n key: 
 const val FAILED_TO_CANCEL_APPOINTMENT = "Error cancelling appointment"
 const val FAILED_TO_LOAD_SLOTS = "Error loading slots"
 const val FAILED_TO_BOOK_APPOINTMENT = "Failed to book appointment"
+const val COPILOT_FAILED = "Co-pilot failed" // No l10n key: shows as errorSomethingWentWrong.
 private const val INVALID_CREDENTIALS = "Invalid credentials"
 private const val NO_ACCOUNT_FOUND = "No account found"
 const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."

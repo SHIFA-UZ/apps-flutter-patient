@@ -27,6 +27,7 @@ object ApiConfig {
         const val NOTIFICATIONS_READ_ALL = "notifications/read-all"
         const val DOCUMENTS = "patients/me/documents"
         const val DOCTORS = "public/doctors"
+        const val COPILOT_STREAM = "patients/me/copilot/stream"
 
         fun doctor(id: String) = "public/doctors/$id"
 

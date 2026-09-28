@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import shifa.composeapp.generated.resources.Res
@@ -121,6 +122,7 @@ fun ShifaChatBubble(
         Modifier.lineBox(style),
         style = style,
         color = if (type == ShifaChatBubbleType.Received) ShifaColors.Text.Inverse else ShifaColors.Text.Primary,
+        textAlign = if (type == ShifaChatBubbleType.Sent) TextAlign.End else TextAlign.Start,
     )
 }
 

@@ -58,6 +58,9 @@ import shifa.uz.ui.notifications.NotificationLink
 import shifa.uz.ui.notifications.NotificationsScreen
 import shifa.uz.ui.notifications.PushViewModel
 import shifa.uz.ui.profile.ProfileScreen
+import shifa.uz.ui.shifaai.ShifaAiChatScreen
+import shifa.uz.ui.shifaai.ShifaAiScreen
+import shifa.uz.ui.shifaai.ShifaAiViewModel
 import shifa.uz.ui.tasks.TaskCheckInScreen
 import shifa.uz.ui.tasks.TasksScreen
 import shifa.uz.ui.tasks.TasksViewModel
@@ -83,7 +86,9 @@ fun MainScreen(
         val bookings = viewModel { BookingsViewModel() }
         val tasks = viewModel { TasksViewModel() }
         val push = viewModel { PushViewModel() }
+        val shifaAi = viewModel { ShifaAiViewModel() }
         val homeState by home.state.collectAsState()
+        val aiState by shifaAi.state.collectAsState()
         val nearMe = bookings.state.collectAsState().value.location
         var tab by rememberSaveable { mutableStateOf(ShifaTab.Home) }
         var page by rememberSaveable { mutableStateOf<Page?>(null) }
@@ -121,14 +126,22 @@ fun MainScreen(
                 doctor = null
                 booking = null
                 viewing = null
+                shifaAi.close()
                 link?.let(follow) ?: run { page = Page.Notifications }
             }
         }
         BackHandler(
             enabled =
                 page == null && list == null && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
-                    doctor == null && booking == null && tab != ShifaTab.Home,
+                    doctor == null && booking == null && aiState.chat == null && tab != ShifaTab.Home,
         ) { tab = ShifaTab.Home }
+        // 09 §7: the tab goes when the profile shuts Shifa AI out.
+        LaunchedEffect(homeState.shifaAi) {
+            if (!homeState.shifaAi) {
+                if (tab == ShifaTab.ShifaAi) tab = ShifaTab.Home
+                shifaAi.close()
+            }
+        }
         CompositionLocalProvider(LocalDeviceLocation provides nearMe) {
             Box(Modifier.fillMaxSize()) {
                 tabs.SaveableStateProvider(tab) {
@@ -171,6 +184,15 @@ fun MainScreen(
                                 contentPadding = navPadding,
                                 viewModel = bookings,
                             )
+                        ShifaTab.ShifaAi ->
+                            ShifaAiScreen(
+                                shifaAi,
+                                avatarUrl = homeState.photoUrl,
+                                notificationCount = homeState.unreadNotifications,
+                                onNotifications = { page = Page.Notifications },
+                                onAccount = { page = Page.Account },
+                                contentPadding = navPadding,
+                            )
                         else -> ComingSoon(stringResource(tab.label))
                     }
                 }
@@ -182,8 +204,13 @@ fun MainScreen(
                         .onSizeChanged { navPadding = PaddingValues(bottom = with(density) { it.height.toDp() }) }
                         .navigationBarsPadding()
                         .padding(ShifaSpacing.Inset.Md),
+                    ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
                 )
-                // Overlays, later ones on top: a full list → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
+                // Overlays, later ones on top: a Shifa AI chat → a full list → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
+                if (aiState.chat != null) {
+                    BackHandler { shifaAi.close() }
+                    ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
+                }
                 list?.let {
                     BackHandler { list = null }
                     BookingsListScreen(

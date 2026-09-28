@@ -64,6 +64,7 @@ fun ShifaNavBar(
     selected: ShifaTab,
     onSelect: (ShifaTab) -> Unit,
     modifier: Modifier = Modifier,
+    tabs: List<ShifaTab> = ShifaTab.entries,
 ) {
     Row(
         modifier
@@ -74,7 +75,7 @@ fun ShifaNavBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom,
     ) {
-        ShifaTab.entries.forEach { tab ->
+        tabs.forEach { tab ->
             val isSelected = tab == selected
             val color = if (isSelected) ShifaColors.Text.Brand else ShifaColors.Text.Primary
             Column(

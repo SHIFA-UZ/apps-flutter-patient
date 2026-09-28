@@ -46,6 +46,7 @@ import shifa.uz.data.model.SendEmailOtpRequest
 import shifa.uz.data.model.SendSmsOtpRequest
 import shifa.uz.data.model.SendSmsOtpResponse
 import shifa.uz.data.model.TokenResponse
+import shifa.uz.data.storage.CopilotStorage
 import shifa.uz.data.storage.TokenStorage
 
 private const val KEY_HAS_LAUNCHED = "has_launched_before"
@@ -54,6 +55,7 @@ class AuthRepository(
     private val client: HttpClient = httpClient,
     private val tokenStorage: TokenStorage = TokenStorage(),
     private val settings: Settings = Settings(),
+    private val copilot: CopilotStorage = CopilotStorage(),
 ) {
     /** A1. Saves the token on success. */
     suspend fun login(
@@ -181,11 +183,15 @@ class AuthRepository(
                 // The iOS Keychain survives a reinstall; drop its token on the first launch.
                 if (!settings.getBoolean(KEY_HAS_LAUNCHED, false)) {
                     tokenStorage.clear()
+                    copilot.clear()
                     settings[KEY_HAS_LAUNCHED] = true
                 }
                 if (tokenStorage.token == null) return@withContext false
                 val rejected = apiCall<Unit>("") { client.get(ApiConfig.Endpoints.PROFILE) }.exceptionOrNull()
-                if (rejected is ApiException.Unauthorized) tokenStorage.clear()
+                if (rejected is ApiException.Unauthorized) {
+                    tokenStorage.clear()
+                    copilot.clear()
+                }
                 rejected !is ApiException.Unauthorized
             } catch (e: CancellationException) {
                 throw e
@@ -194,7 +200,7 @@ class AuthRepository(
             }
         }
 
-    /** 05 §2.8: unregisters push (P7 with "", errors ignored), then drops the token. No logout endpoint. */
+    /** 05 §2.8: unregisters push (P7 with "", errors ignored), then drops the token and the Shifa AI chats. No logout endpoint. */
     suspend fun logout() {
         apiCall<String>("") {
             client.put(ApiConfig.Endpoints.FCM_TOKEN) {
@@ -203,6 +209,7 @@ class AuthRepository(
             }
         }
         tokenStorage.clear()
+        copilot.clear()
     }
 }
 

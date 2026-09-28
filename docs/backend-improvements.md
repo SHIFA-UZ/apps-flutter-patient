@@ -16,6 +16,7 @@ Endpoint ids (P7, D1, B5…) are from `docs/kmp-spec/15-api-reference.md`. App l
 | 8 | Delete account for phone-only patients | Low | Small |
 | 9 | Doctor search cleanups | Low | None |
 | 10 | Google sign-in | Later | Medium |
+| 11 | Shifa AI: error codes, attachments, chat sync | Medium | Small to medium |
 
 ## 1. Push text in the patient's language
 
@@ -87,6 +88,16 @@ Keep P7 working for old app versions until they're gone.
 **Now:** the login screen's "Continue with Google" is hidden, because the backend has no endpoint for it.
 
 **Change (when product wants it):** an endpoint that takes a Google ID token, checks it, and returns the same response as login (or creates the patient). The app then adds the Google sign-in SDK on both platforms.
+
+## 11. Shifa AI: error codes, attachments, chat sync
+
+**Now:** X1 (`POST /patients/me/copilot/stream`) streams the reply over SSE and keeps nothing. The app saves chats on the device only, so they're lost on logout, on a reinstall, and on another device. An SSE `event: error` carries a `code`, but only `RATE_LIMIT` is documented. Figma's "Add to chat" (Camera, Photo, File) has no API.
+
+**Change:**
+- Document every SSE error `code` (safety refusal, model down, too long…). The app then shows a message for each; now all but `RATE_LIMIT` show one generic error.
+- Send the daily limit and when it resets (e.g. `X-RateLimit-Remaining`, `resetAt` in the error), so the app can say when to try again.
+- An attachment field on X1 (an uploaded document id, or an image), if the product wants Add to chat.
+- Optional: chat history on the server (list, get, delete), so chats follow the patient across devices.
 
 ## Questions to confirm (15 §6.4)
 

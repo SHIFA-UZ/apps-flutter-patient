@@ -17,6 +17,7 @@
     <string name="addedByYou">Siz qo'shgansiz</string>
     <string name="additionalNotesOptional">Qo'shimcha izohlar (ixtiyoriy)</string>
     <string name="address">Manzil</string>
+    <string name="addToChat">Suhbatga qo'shish</string>
     <string name="all">Barchasi</string>
     <string name="allAvailability">Har qanday mavjudlik</string>
     <string name="allConsultationTypes">Har qanday konsultatsiya</string>
@@ -45,6 +46,7 @@
     <string name="appointmentSummaryPreview">Qabul xulosasi</string>
     <string name="approve">Tasdiqlash</string>
     <string name="areYouSureCancel">Ushbu uchrashuvni bekor qilishni xohlaysizmi?</string>
+    <string name="askAnything">Istalgan savolni bering</string>
     <string name="attachDocumentsHint">Shifokor tashrifdan oldin tayyorlanishi uchun PDF yuboring. Ko'pi bilan 5 ta PDF.</string>
     <string name="attachDocumentsOptional">Hujjatlarni biriktirish (ixtiyoriy)</string>
     <string name="attachFile">Fayl biriktirish</string>
@@ -89,6 +91,7 @@
     <string name="chatImage">Chat rasmi</string>
     <string name="chatNewMessageMessage">Parvarish jamoangizdan yangi xabar bor.</string>
     <string name="chatNewMessageTitle">Yangi xabar</string>
+    <string name="chats">Suhbatlar</string>
     <string name="checkInEnterGenericValue">Qiymatni kiriting</string>
     <string name="checkInEnterLabeledValue">%1$s maydonini kiriting</string>
     <string name="checkInNotesRequired">Izoh kiritish majburiy</string>
@@ -165,6 +168,7 @@
     <string name="copilotConfirmBookFromChatTitle">Chatdan bronni tasdiqlash</string>
     <string name="copilotConsentAutoBook">Shifaning mening nomimdan bron qilishiga ruxsat beraman</string>
     <string name="copilotContinueToBooking">Keyingi sahifada sana va vaqtni tanlaysiz. Davom etasizmi?</string>
+    <string name="copilotDailyLimit">Shifa AI kunlik limitiga yetdingiz. Ertaga qayta urinib ko'ring.</string>
     <string name="copilotInputHint">Xabar yozing…</string>
     <string name="copilotNextSlot">Keyingi slot:</string>
     <string name="copilotNoProviderOnPlatform">Hozircha Shifa platformasida ushbu simptomlarga mos shifokor profili yo'q. Barcha shifokorlarni «Shifokorlar» bo'limidan ko'rishingiz yoki keyinroq qayta urinishingiz mumkin. Ahvol og'irlashsa, tez tibbiy yordam yoki favqulodda xizmatga murojaat qiling.</string>
@@ -209,6 +213,8 @@
     <string name="deleteAccountOtpSubtitle">Elektron pochtangizga yuborilgan 6 xonali kodni kiriting.</string>
     <string name="deleteAccountVerifyTitle">Akkauntni o'chirishni tasdiqlash</string>
     <string name="deleteAccountWarning">Bu amalni qaytarib bo'lmaydi. Shaxsiy identifikatorlaringiz (telefon/email/ism) o'chirib tashlanadi. Ba'zi tibbiy ma'lumotlar qonun talabiga ko'ra saqlanishi mumkin, ammo yangi akkauntdan ko'rinmaydi.</string>
+    <string name="deleteChatMessage">Bu suhbat va uning xabarlari ushbu qurilmadan o'chiriladi.</string>
+    <string name="deleteChatTitle">Suhbat o'chirilsinmi?</string>
     <string name="deleteDocumentConfirmation">Ushbu hujjatni o'chirmoqchimisiz?</string>
     <string name="dentist">Tish shifokori</string>
     <string name="dermatologist">Dermatolog</string>
@@ -514,6 +520,7 @@
     <string name="newAppointmentBookedButFailedToCancelOld">Yangi uchrashuv band qilindi, lekin eskisini bekor qilish muvaffaqiyatsiz</string>
     <string name="newAppointmentScheduled">Yangi qabul rejalashtirildi</string>
     <string name="newAppointmentScheduledTitle">Yangi qabul rejalashtirildi</string>
+    <string name="newChat">Yangi suhbat</string>
     <string name="newDocumentMessage">Yozuvlaringizga yangi hujjat qo'shildi. Ko'rish uchun bosing.</string>
     <string name="newDocumentTitle">Yangi hujjat</string>
     <string name="newPassword">Yangi parol</string>

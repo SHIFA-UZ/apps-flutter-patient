@@ -23,8 +23,10 @@ import shifa.uz.data.api.NO_TOKEN_RECEIVED
 import shifa.uz.data.api.SMS_COULD_NOT_BE_SENT
 import shifa.uz.data.api.createHttpClient
 import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.CopilotChat
 import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.model.RegisterPatientRequest
+import shifa.uz.data.storage.CopilotStorage
 import shifa.uz.data.storage.TokenStorage
 import java.io.IOException
 
@@ -34,7 +36,8 @@ class AuthRepositoryTest {
     private var reply: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { respondOk() }
     private val engine = MockEngine { reply(it) }
     private val client = createHttpClient(tokens, engine)
-    private val classToTest = AuthRepository(client, tokens, settings)
+    private val chats = CopilotStorage(MapSettings()).apply { save(listOf(CopilotChat("1"))) }
+    private val classToTest = AuthRepository(client, tokens, settings, chats)
 
     private fun replyJson(
         status: HttpStatusCode,
@@ -289,7 +292,7 @@ class AuthRepositoryTest {
         }
 
     @Test
-    fun `logout clears the push token, then the session, even when that call fails`() =
+    fun `logout clears the push token, then the session and the Shifa AI chats, even when that call fails`() =
         runTest {
             tokens.token = "t"
             replyJson(HttpStatusCode.InternalServerError, "{}")
@@ -301,6 +304,7 @@ class AuthRepositoryTest {
             assertThat(request.headers[HttpHeaders.Authorization]).isEqualTo("Bearer t")
             assertThat(requestJson).isEqualTo(Json.parseToJsonElement("""{"fcmToken":""}"""))
             assertThat(tokens.token).isNull()
+            assertThat(chats.load()).isEmpty()
         }
 
     @Test
@@ -309,8 +313,9 @@ class AuthRepositoryTest {
             val fresh = MapSettings()
             tokens.token = "t"
 
-            assertThat(AuthRepository(client, tokens, fresh).restoreSession()).isFalse()
+            assertThat(AuthRepository(client, tokens, fresh, chats).restoreSession()).isFalse()
             assertThat(tokens.token).isNull()
+            assertThat(chats.load()).isEmpty()
             assertThat(fresh.getBoolean("has_launched_before", false)).isTrue()
             assertThat(engine.requestHistory).isEmpty()
         }
@@ -333,13 +338,14 @@ class AuthRepositoryTest {
         }
 
     @Test
-    fun `a 401 on restore signs out and clears the token`() =
+    fun `a 401 on restore signs out and clears the token and the chats`() =
         runTest {
             tokens.token = "t"
             replyJson(HttpStatusCode.Unauthorized, "{}")
 
             assertThat(classToTest.restoreSession()).isFalse()
             assertThat(tokens.token).isNull()
+            assertThat(chats.load()).isEmpty()
         }
 
     @Test

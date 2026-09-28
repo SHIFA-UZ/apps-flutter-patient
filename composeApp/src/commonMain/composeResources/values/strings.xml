@@ -17,6 +17,7 @@
     <string name="addedByYou">Added by you</string>
     <string name="additionalNotesOptional">Additional notes (optional)</string>
     <string name="address">Address</string>
+    <string name="addToChat">Add to chat</string>
     <string name="all">All</string>
     <string name="allAvailability">Any availability</string>
     <string name="allConsultationTypes">Any consultation type</string>
@@ -45,6 +46,7 @@
     <string name="appointmentSummaryPreview">Appointment Summary</string>
     <string name="approve">Approve</string>
     <string name="areYouSureCancel">Are you sure you want to cancel this appointment?</string>
+    <string name="askAnything">Ask Anything</string>
     <string name="attachDocumentsHint">Share PDFs so your doctor can prepare before the visit. Up to 5 PDFs.</string>
     <string name="attachDocumentsOptional">Attach documents (optional)</string>
     <string name="attachFile">Attach file</string>
@@ -89,6 +91,7 @@
     <string name="chatImage">Chat Image</string>
     <string name="chatNewMessageMessage">You have a new message from your care team.</string>
     <string name="chatNewMessageTitle">New message</string>
+    <string name="chats">Chats</string>
     <string name="checkInEnterGenericValue">Enter a value</string>
     <string name="checkInEnterLabeledValue">Enter %1$s</string>
     <string name="checkInNotesRequired">Notes are required</string>
@@ -165,6 +168,7 @@
     <string name="copilotConfirmBookFromChatTitle">Confirm booking from chat</string>
     <string name="copilotConsentAutoBook">I allow Shifa to book this appointment on my behalf</string>
     <string name="copilotContinueToBooking">You will choose date and time on the next screen. Continue?</string>
+    <string name="copilotDailyLimit">You've reached your daily Shifa AI limit. Try again tomorrow.</string>
     <string name="copilotInputHint">Type a message…</string>
     <string name="copilotNextSlot">Next slot:</string>
     <string name="copilotNoProviderOnPlatform">Shifa does not list a doctor on the platform who matches these symptoms yet. You can browse all doctors in the Doctors tab or try again later as more providers join. If you feel very unwell, seek urgent in-person care or emergency services.</string>
@@ -209,6 +213,8 @@
     <string name="deleteAccountOtpSubtitle">Enter the 6-digit code sent to your email.</string>
     <string name="deleteAccountVerifyTitle">Verify to delete account</string>
     <string name="deleteAccountWarning">This action is irreversible. Your personal identifiers (phone/email/name) will be removed. Some medical data may be retained as required by law, but it will not be accessible from a new account.</string>
+    <string name="deleteChatMessage">This chat and its messages will be removed from this device.</string>
+    <string name="deleteChatTitle">Delete chat?</string>
     <string name="deleteDocumentConfirmation">Are you sure you want to delete this document?</string>
     <string name="dentist">Dentist</string>
     <string name="dermatologist">Dermatologist</string>
@@ -514,6 +520,7 @@
     <string name="newAppointmentBookedButFailedToCancelOld">New appointment booked, but failed to cancel old one</string>
     <string name="newAppointmentScheduled">New appointment scheduled</string>
     <string name="newAppointmentScheduledTitle">New Appointment Scheduled</string>
+    <string name="newChat">New Chat</string>
     <string name="newDocumentMessage">A new document was added to your records. Tap to view it.</string>
     <string name="newDocumentTitle">New document</string>
     <string name="newPassword">New Password</string>

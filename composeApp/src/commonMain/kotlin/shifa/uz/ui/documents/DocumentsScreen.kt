@@ -493,14 +493,15 @@ private fun UploadTraySheet(
     }
 }
 
-/** Figma tray (its title, "Add to chat", is a copy of the chat tray's). */
+/** Figma tray; Shifa AI's "Add to chat" is the same one. */
 @Composable
 internal fun UploadTray(
     onClose: () -> Unit,
     onCamera: () -> Unit = {},
     onPhoto: () -> Unit = {},
     onFile: () -> Unit = {},
-) = ShifaTray(stringResource(Res.string.upload), onClose) {
+    title: StringResource = Res.string.upload,
+) = ShifaTray(stringResource(title), onClose) {
     ShifaSecondaryButton(
         stringResource(Res.string.camera),
         onCamera,

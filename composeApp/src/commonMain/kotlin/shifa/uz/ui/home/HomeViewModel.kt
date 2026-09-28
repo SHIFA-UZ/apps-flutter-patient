@@ -21,6 +21,7 @@ import shifa.uz.data.doctors.doctorsOf
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.RemoteCareTask
+import shifa.uz.data.model.canUseShifaAi
 import shifa.uz.data.notifications.NotificationsRepository
 import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.data.tasks.TasksRepository
@@ -80,6 +81,7 @@ class HomeViewModel(
                         firstName = firstName,
                         fullName = it.fullName.trim().ifEmpty { null },
                         photoUrl = it.photoUrl,
+                        shifaAi = it.canUseShifaAi,
                     )
                 }
             },
