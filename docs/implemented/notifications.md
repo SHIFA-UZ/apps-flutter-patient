@@ -31,7 +31,7 @@
 - Background and closed: the OS draws the backend's English text (13 §3.2). On Android the manifest sets the channel, the "S" icon and the brand color. Foreground: Android posts a notification on the channel (tray id = server id), and iOS shows the banner. Both use the backend's text and refresh the bell.
 - Tap: the data (`AppNotification.fromPush`, with `entityId` mapped by type, 13 §6.2) is marked read with N3 when the id is a number. Then it routes like the tray's button, and everything open is closed first, like Flutter's `go`. Types without a route open the inbox. Taps that cold-start the app wait for sign-in. Android reads the data from the launch intent's extras (`singleTop`, so a tap on a running app arrives in `onNewIntent`).
 - Not built:
-  - Localized foreground text (Flutter had it); localized background text needs the backend (13 §11.5).
+  - Localized foreground text (Flutter had it); localized background text needs the backend ([backend-improvements.md](../backend-improvements.md) #1).
   - Cancelling the tray notification on mark read (13 §11.8).
   - The read-id dedupe set (13 §8.2).
   - Marking read for string ids.

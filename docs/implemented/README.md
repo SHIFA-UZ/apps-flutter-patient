@@ -4,6 +4,7 @@ Read this before starting a task. Update it at the end of every job, in the same
 the status table, the file for the area you touched, and one line in the log.
 
 Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
+What we need from the backend team: [../backend-improvements.md](../backend-improvements.md).
 
 | Area | File |
 |---|---|
@@ -86,3 +87,4 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 - 2026-09-28: Built My Tasks (TASK-01, Figma 1655:17107, 1662:18016) from Home's task cards and arrow, and the task check-in (TASK-02, Figma 1662:18317) with T3 and T4. `ShifaCheckInCard` takes its form as a slot; Home's task card can show the progress bar.
 - 2026-09-28: Built the notification center (NOTIF-01, NOTIF-04 in part, Figma 1703:15201, 1703:15698, 1703:16143, 1703:16483): N1 inbox with filters and date groups, the details tray with the linked card, N3 on tap, N4 mark all. The bell opens it instead of the placeholder. Cards take `LocalCardOnSurface` for the in-tray look.
 - 2026-09-28: Notifications: a Payments filter chip and brand titles on unread cards (neither in Figma). Built push (NOTIF-03, NOTIF-04 for pushes): Firebase Messaging on Android and iOS, P7 after login, the permission prompt, the channel, foreground display, and push taps routed like the inbox tray, cold start included.
+- 2026-09-28: Added `docs/backend-improvements.md`: what the app needs from the backend team (localized push text, per-device push tokens, a staging backend, error codes and more).
