@@ -104,6 +104,7 @@ Keep P7 working for old app versions until they're gone.
 - Whether the error shape is the same across all controllers (see #4).
 - Whether P4 `/profile/photo` exists.
 - Whether B1 `day` uses the device time zone or the profile `timeZone`.
+- Which zone T3 `scheduledDate` / `scheduledTime` are in. The app reads them on the device clock, so outside Tashkent a check-in opens hours early or late.
 - All values of `paymentStatus`, payment `status`, AI summary `status` and appointment `status` (e.g. `REQUESTED`).
 - Whether P5 sends the deletion code itself, and how the A4 `purpose=ACCOUNT_DELETION` code is tied to `challengeId`.
 - Whether the server enforces the video join window and the task check-in window.

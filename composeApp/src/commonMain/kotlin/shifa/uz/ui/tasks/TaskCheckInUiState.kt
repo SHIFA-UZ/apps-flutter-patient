@@ -5,11 +5,15 @@ import org.jetbrains.compose.resources.StringResource
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.data.model.TaskCheckIn
 
-/** [slots]: the PENDING check-ins due within 10 minutes, null until T3 first loads. The form is for [selected]. */
+/**
+ * [slots]: the PENDING check-ins due within 10 minutes, null until T3 first loads. The form is for [selected].
+ * [upcoming]: the next PENDING ones not due yet, soonest first, shown greyed so the patient sees when they open.
+ */
 @Stable
 data class TaskCheckInUiState(
     val task: RemoteCareTask,
     val slots: List<TaskCheckIn>? = null,
+    val upcoming: List<TaskCheckIn> = emptyList(),
     val waiting: Boolean = false, // some are PENDING, none due yet
     val isLoading: Boolean = false,
     val selected: Long? = null,
@@ -32,5 +36,6 @@ data class TaskCheckInUiState(
         const val NUMERIC = "NUMERIC"
         const val BOOLEAN = "BOOLEAN"
         const val TEXT = "TEXT"
+        const val UPCOMING_SLOTS = 3
     }
 }

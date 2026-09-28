@@ -24,6 +24,7 @@ import shifa.uz.data.tasks.TasksRepository
 import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.BOOLEAN
 import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.NUMERIC
 import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.TEXT
+import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.UPCOMING_SLOTS
 import shifa.uz.utils.getCurrentInstant
 import kotlin.time.Duration.Companion.minutes
 
@@ -66,10 +67,20 @@ class TaskCheckInViewModel(
                 onSuccess = { all ->
                     val pending = all.filter { it.isPending }
                     val due = clock() + 10.minutes
-                    val slots = pending.filter { it.scheduledAt(zone)?.let { at -> at <= due } == true }
+                    val (slots, later) =
+                        pending
+                            .mapNotNull { slot -> slot.scheduledAt(zone)?.let { slot to it } }
+                            .partition { it.second <= due }
+                    val upcoming = later.sortedBy { it.second }.take(UPCOMING_SLOTS).map { it.first }
                     update {
-                        val kept = if (slots.any { it.id == selected }) this else copy(selected = null).cleared()
-                        kept.copy(slots = slots, waiting = pending.isNotEmpty(), isLoading = false, error = null)
+                        val kept = if (slots.any { it.first.id == selected }) this else copy(selected = null).cleared()
+                        kept.copy(
+                            slots = slots.map { it.first },
+                            upcoming = upcoming,
+                            waiting = pending.isNotEmpty(),
+                            isLoading = false,
+                            error = null,
+                        )
                     }
                 },
                 onFailure = {

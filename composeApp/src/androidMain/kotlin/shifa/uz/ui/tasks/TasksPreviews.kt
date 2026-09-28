@@ -80,4 +80,14 @@ internal fun TaskCheckInSelectedPreview() =
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
 internal fun TaskCheckInWaitingPreview() =
-    PreviewTheme { TaskCheckInContent(TaskCheckInUiState(pressure, slots = emptyList(), waiting = true), now) }
+    PreviewTheme {
+        TaskCheckInContent(
+            TaskCheckInUiState(
+                pressure,
+                slots = emptyList(),
+                upcoming = listOf(TaskCheckIn(3, "2026-09-28", "20:00:00"), TaskCheckIn(4, "2026-09-29", "08:00:00")),
+                waiting = true,
+            ),
+            now,
+        )
+    }

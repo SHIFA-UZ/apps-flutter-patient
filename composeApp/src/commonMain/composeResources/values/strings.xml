@@ -15,7 +15,7 @@
     <string name="addedBy">Added by %1$s</string>
     <string name="addedByDoctor">Added by doctor</string>
     <string name="addedByYou">Added by you</string>
-    <string name="additionalNotesOptional">Additional notes (optional)</string>
+    <string name="additionalNotes">Additional notes</string>
     <string name="address">Address</string>
     <string name="addToChat">Add to chat</string>
     <string name="all">All</string>

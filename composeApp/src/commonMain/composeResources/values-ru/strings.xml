@@ -15,7 +15,7 @@
     <string name="addedBy">Добавил(а) %1$s</string>
     <string name="addedByDoctor">Добавлено врачом</string>
     <string name="addedByYou">Добавлено вами</string>
-    <string name="additionalNotesOptional">Дополнительные заметки (необязательно)</string>
+    <string name="additionalNotes">Дополнительные заметки</string>
     <string name="address">Адрес</string>
     <string name="addToChat">Добавить в чат</string>
     <string name="all">Все</string>

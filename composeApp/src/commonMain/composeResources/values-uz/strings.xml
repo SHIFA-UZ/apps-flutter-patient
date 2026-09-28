@@ -15,7 +15,7 @@
     <string name="addedBy">%1$s qo'shgan</string>
     <string name="addedByDoctor">Shifokor qo'shgan</string>
     <string name="addedByYou">Siz qo'shgansiz</string>
-    <string name="additionalNotesOptional">Qo'shimcha izohlar (ixtiyoriy)</string>
+    <string name="additionalNotes">Qo'shimcha izohlar</string>
     <string name="address">Manzil</string>
     <string name="addToChat">Suhbatga qo'shish</string>
     <string name="all">Barchasi</string>

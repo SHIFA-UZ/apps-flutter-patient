@@ -244,7 +244,10 @@ fun ShifaDoctorServiceCard(
     CardBody(price, ShifaColors.Text.Link, MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
 }
 
-/** Figma display-card, types check-in (unchecked) and check-if-fill (checked: [form], the input + submit). */
+/**
+ * Figma display-card, types check-in (unchecked) and check-if-fill (checked: [form], the input + submit).
+ * Not in Figma: a greyed, untickable card when not [enabled].
+ */
 @Composable
 fun ShifaCheckInCard(
     title: String,
@@ -252,22 +255,30 @@ fun ShifaCheckInCard(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     form: @Composable ColumnScope.() -> Unit = {},
 ) {
     CardChrome(modifier, onClick = null, gap = ShifaDimens.CheckInCardGap) {
         Row(
-            Modifier.fillMaxWidth().toggleable(checked, role = Role.Checkbox, onValueChange = onCheckedChange),
+            Modifier
+                .fillMaxWidth()
+                .toggleable(checked, enabled = enabled, role = Role.Checkbox, onValueChange = onCheckedChange),
             horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painterResource(if (checked) Res.drawable.ic_checkbox_checked_24 else Res.drawable.ic_checkbox_24),
                 null,
-                tint = if (checked) ShifaColors.Icon.Brand else ShifaColors.Icon.Primary,
+                tint =
+                    when {
+                        !enabled -> ShifaColors.Icon.Disabled
+                        checked -> ShifaColors.Icon.Brand
+                        else -> ShifaColors.Icon.Primary
+                    },
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSize.S2)) {
-                CardTitle(title)
-                subtitle?.let { CardBody(it, ShifaColors.Text.Tertiary) }
+                CardTitle(title, color = if (enabled) ShifaColors.Text.Primary else ShifaColors.Text.Disabled)
+                subtitle?.let { CardBody(it, if (enabled) ShifaColors.Text.Tertiary else ShifaColors.Text.Disabled) }
             }
         }
         if (checked) form()

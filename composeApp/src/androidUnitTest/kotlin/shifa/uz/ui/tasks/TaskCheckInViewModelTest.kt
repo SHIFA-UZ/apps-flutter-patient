@@ -76,7 +76,22 @@ class TaskCheckInViewModelTest {
             open()
 
             assertThat(state.slots).containsExactly(past, soon).inOrder()
+            assertThat(state.upcoming).containsExactly(later)
             assertThat(state.waiting).isTrue()
+        }
+
+    @Test
+    fun `the next 3 PENDING slots not due yet are shown soonest first`() =
+        runTest {
+            val slots =
+                listOf("2026-09-30", "2026-09-29", "2026-10-01", "2026-10-02").mapIndexed { i, day ->
+                    TaskCheckIn(10L + i, day, "08:00:00")
+                }
+            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(slots + later + done)
+            open()
+
+            assertThat(state.slots).isEmpty()
+            assertThat(state.upcoming).containsExactly(later, slots[1], slots[0]).inOrder()
         }
 
     @Test

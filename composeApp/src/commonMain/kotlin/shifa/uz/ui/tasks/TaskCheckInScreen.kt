@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -23,11 +24,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
-import shifa.composeapp.generated.resources.additionalNotesOptional
+import shifa.composeapp.generated.resources.additionalNotes
 import shifa.composeapp.generated.resources.checkInEnterGenericValue
 import shifa.composeapp.generated.resources.checkInEnterLabeledValue
 import shifa.composeapp.generated.resources.no
@@ -112,9 +114,11 @@ internal fun TaskCheckInContent(
                 TaskCard(state.task, now, null, progress = true)
                 // With a slot open, the error shows above its Submit instead.
                 Banners(state.error.takeIf { state.selected == null })
+                // The due slots, then the next ones greyed; with none due, the 10-minute rule is spelled out under them.
+                val nothingDue = state.slots?.isEmpty() == true && state.upcoming.isNotEmpty()
                 HomeSection(
                     Res.string.selectCheckIn,
-                    state.slots,
+                    state.slots?.let { it + state.upcoming },
                     state.isLoading,
                     if (state.waiting) Res.string.taskCheckInNotYetAvailable else Res.string.noPendingCheckIns,
                     limit = Int.MAX_VALUE,
@@ -124,7 +128,17 @@ internal fun TaskCheckInContent(
                         slot.scheduledTime?.take(5),
                         slot.id == state.selected,
                         { onSelect(slot.id, it) },
+                        enabled = slot !in state.upcoming,
                     ) { CheckInForm(state, onValueChange, onAnswer, onNotesChange, onSubmit) }
+                }
+                if (nothingDue) {
+                    Text(
+                        stringResource(Res.string.taskCheckInNotYetAvailable),
+                        Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ShifaColors.Text.Tertiary,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
         }
@@ -176,7 +190,7 @@ private fun ColumnScope.CheckInForm(
         ShifaInputField(
             state.notes,
             onNotesChange,
-            state.task.notesLabel ?: stringResource(Res.string.additionalNotesOptional),
+            state.task.notesLabel ?: stringResource(Res.string.additionalNotes),
             Modifier.fillMaxWidth(),
             supportingText = notesError,
             isError = notesError != null,
