@@ -37,4 +37,9 @@ class HomeScreenshotTest {
     fun error() {
         captureRoboImage("screenshots/Home_error.png") { HomeErrorPreview() }
     }
+
+    @Test
+    fun upcoming() {
+        captureRoboImage("screenshots/Upcoming_list.png") { UpcomingPreview() }
+    }
 }

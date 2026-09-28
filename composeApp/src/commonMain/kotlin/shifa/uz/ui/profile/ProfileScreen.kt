@@ -108,7 +108,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onLogOut: () -> Unit,
     onAccountDeleted: () -> Unit,
-    onProfileChanged: () -> Unit,
+    onProfileChanged: (PatientProfile) -> Unit,
     viewModel: ProfileViewModel = viewModel { ProfileViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
@@ -118,7 +118,7 @@ fun ProfileScreen(
         viewModel.events.collect {
             when (it) {
                 ProfileEvent.SignedOut -> logOut()
-                ProfileEvent.Changed -> changed()
+                ProfileEvent.Changed -> viewModel.state.value.profile?.let(changed)
             }
         }
     }

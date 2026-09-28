@@ -87,3 +87,24 @@ internal fun HomeErrorPreview() =
     Home(
         loaded.copy(upcoming = null, doctors = null, error = Res.string.errorNetworkConnection),
     )
+
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun UpcomingPreview() =
+    PreviewTheme {
+        UpcomingContent(
+            loaded.copy(
+                upcoming =
+                    loaded.upcoming.orEmpty() +
+                        List(3) {
+                            Appointment(
+                                doctorName = "Dilnoza Yusupova",
+                                doctorProfession = "Therapist",
+                                doctorClinic = clinic,
+                                startAt = "2026-10-0${it + 1}T06:30:00Z",
+                            )
+                        },
+            ),
+            now,
+        )
+    }

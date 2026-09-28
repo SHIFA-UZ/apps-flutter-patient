@@ -3,6 +3,7 @@ package shifa.uz.ui.bookings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -67,7 +68,6 @@ fun BookingsListScreen(
     BookingsListContent(list, state, getCurrentInstant(), onBack, onDoctor, onAppointment)
 }
 
-// ponytail: a plain Column, fine for the tens B2 and D1 give; LazyColumn if a list grows to hundreds.
 @Composable
 internal fun BookingsListContent(
     list: BookingsList,
@@ -77,9 +77,61 @@ internal fun BookingsListContent(
     onDoctor: (Doctor) -> Unit = {},
     onAppointment: (Appointment) -> Unit = {},
 ) {
+    ListPage(list.title, state.error, onBack) {
+        when (list) {
+            BookingsList.Recommended ->
+                HomeSection(
+                    null,
+                    state.recommended,
+                    state.isLoading,
+                    Res.string.noDoctorsFound,
+                    limit = Int.MAX_VALUE,
+                ) {
+                    DoctorCard(it, now, onDoctor, shadow = false)
+                }
+            BookingsList.MyDoctors ->
+                HomeSection(
+                    null,
+                    state.myDoctors,
+                    state.isLoading,
+                    Res.string.noDoctorsFound,
+                    limit = Int.MAX_VALUE,
+                ) {
+                    val visit = state.lastVisit(it)?.toLocalDateTime(TimeZone.currentSystemDefault())?.date
+                    DoctorCard(
+                        it,
+                        now,
+                        onDoctor,
+                        visit?.let { "${stringResource(Res.string.lastVisit)} ${formatDate(it)}" },
+                        shadow = false,
+                    )
+                }
+            BookingsList.Past ->
+                HomeSection(
+                    null,
+                    state.past,
+                    state.isLoading,
+                    Res.string.noAppointmentsFound,
+                    limit = Int.MAX_VALUE,
+                ) {
+                    PastCard(it, onAppointment, shadow = false)
+                }
+        }
+    }
+}
+
+/** A full-page list behind a section's arrow: the sub header, then the scrolling [content]. */
+// ponytail: a plain Column, fine for the tens B2 and D1 give; LazyColumn if a list grows to hundreds.
+@Composable
+internal fun ListPage(
+    title: StringResource,
+    error: StringResource?,
+    onBack: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaPageElement(ShifaPageElementType.Header) {
-            ShifaSubHeader(stringResource(list.title), onBack = onBack)
+            ShifaSubHeader(stringResource(title), onBack = onBack)
         }
         Column(
             Modifier
@@ -90,46 +142,8 @@ internal fun BookingsListContent(
                 .padding(horizontal = ShifaSpacing.Inset.Md),
             verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
         ) {
-            Banners(state.error)
-            when (list) {
-                BookingsList.Recommended ->
-                    HomeSection(
-                        null,
-                        state.recommended,
-                        state.isLoading,
-                        Res.string.noDoctorsFound,
-                        limit = Int.MAX_VALUE,
-                    ) {
-                        DoctorCard(it, now, onDoctor, shadow = false)
-                    }
-                BookingsList.MyDoctors ->
-                    HomeSection(
-                        null,
-                        state.myDoctors,
-                        state.isLoading,
-                        Res.string.noDoctorsFound,
-                        limit = Int.MAX_VALUE,
-                    ) {
-                        val visit = state.lastVisit(it)?.toLocalDateTime(TimeZone.currentSystemDefault())?.date
-                        DoctorCard(
-                            it,
-                            now,
-                            onDoctor,
-                            visit?.let { "${stringResource(Res.string.lastVisit)} ${formatDate(it)}" },
-                            shadow = false,
-                        )
-                    }
-                BookingsList.Past ->
-                    HomeSection(
-                        null,
-                        state.past,
-                        state.isLoading,
-                        Res.string.noAppointmentsFound,
-                        limit = Int.MAX_VALUE,
-                    ) {
-                        PastCard(it, onAppointment, shadow = false)
-                    }
-            }
+            Banners(error)
+            content()
         }
     }
 }

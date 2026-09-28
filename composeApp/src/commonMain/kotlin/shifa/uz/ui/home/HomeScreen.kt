@@ -80,7 +80,7 @@ import shifa.uz.utils.parseInstant
 fun HomeScreen(
     onNotifications: () -> Unit,
     onAccount: () -> Unit,
-    onBookings: () -> Unit,
+    onUpcoming: () -> Unit,
     onAppointment: (Appointment) -> Unit,
     onTasks: () -> Unit,
     onDoctors: () -> Unit,
@@ -92,20 +92,14 @@ fun HomeScreen(
     val state by viewModel.state.collectAsState()
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
-    // "Now" and Join follow the clock between loads.
-    val now by produceState(getCurrentInstant()) {
-        while (true) {
-            delay(30_000)
-            value = getCurrentInstant()
-        }
-    }
+    val now by rememberNow()
     HomeContent(
         state = state,
         now = now,
         onRefresh = viewModel::refresh,
         onNotifications = onNotifications,
         onAccount = onAccount,
-        onBookings = onBookings,
+        onUpcoming = onUpcoming,
         onAppointment = onAppointment,
         onTasks = onTasks,
         onDoctors = onDoctors,
@@ -113,6 +107,16 @@ fun HomeScreen(
         contentPadding = contentPadding,
     )
 }
+
+/** "Now" and Join follow the clock between loads. */
+@Composable
+internal fun rememberNow() =
+    produceState(getCurrentInstant()) {
+        while (true) {
+            delay(30_000)
+            value = getCurrentInstant()
+        }
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +126,7 @@ internal fun HomeContent(
     onRefresh: () -> Unit = {},
     onNotifications: () -> Unit = {},
     onAccount: () -> Unit = {},
-    onBookings: () -> Unit = {},
+    onUpcoming: () -> Unit = {},
     onAppointment: (Appointment) -> Unit = {},
     onTasks: () -> Unit = {},
     onDoctors: () -> Unit = {},
@@ -147,14 +151,14 @@ internal fun HomeContent(
                         state.error?.let {
                             ShifaBanner(stringResource(it), Res.drawable.ic_alert_circle_16, ShifaBannerType.Error)
                         }
-                        // Figma hides this arrow; it shows when there are more than fit, like Flutter's button (10 §3.4).
+                        // Figma hides this arrow; it shows when there are more than fit, like My Tasks and My Doctors.
                         HomeSection(
                             Res.string.upcomingAppointments,
                             state.upcoming,
                             state.isLoading,
                             Res.string.noUpcomingAppointments,
                             ShifaSectionType.CardOnWhite,
-                            onMore = onBookings.takeIf { state.upcoming.orEmpty().size > HOME_ITEMS },
+                            onMore = onUpcoming.takeIf { state.upcoming.orEmpty().size > HOME_ITEMS },
                         ) { UpcomingCard(it, now, onAppointment) }
                         HomeSection(
                             Res.string.myTasks,
@@ -221,6 +225,7 @@ internal fun UpcomingCard(
     appointment: Appointment,
     now: Instant,
     onClick: (Appointment) -> Unit,
+    shadow: Boolean = true,
 ) {
     val live = appointment.isNow(now)
     val place = if (appointment.isVideo) stringResource(Res.string.videoConsultation) else appointment.doctorClinic
@@ -232,6 +237,7 @@ internal fun UpcomingCard(
         video = appointment.isVideo,
         joinText = stringResource(Res.string.join).takeIf { live && appointment.isVideo },
         onJoin = { onClick(appointment) },
+        shadow = shadow,
         onClick = { onClick(appointment) },
     )
 }

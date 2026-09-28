@@ -208,4 +208,18 @@ class HomeViewModelTest {
                 awaitItem()
             }
         }
+
+    @Test
+    fun `a saved profile change shows in the greeting without a refetch`() =
+        runTest {
+            create()
+            advanceUntilIdle()
+
+            classToTest.onProfileChanged(PatientProfile(fullName = "Sardor Aliyev", photoUrl = "https://x/p.jpg"))
+
+            assertThat(state.firstName).isEqualTo("Sardor")
+            assertThat(state.fullName).isEqualTo("Sardor Aliyev")
+            assertThat(state.photoUrl).isEqualTo("https://x/p.jpg")
+            verifyBlocking(profile) { getProfile() }
+        }
 }

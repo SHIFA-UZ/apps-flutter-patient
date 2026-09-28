@@ -7,7 +7,7 @@
 - App Lock (LOCK-02) and Privacy are "Coming soon" placeholders. Privacy did nothing in Flutter; it needs the real policy URL.
 - The dialogs have no Figma frame and use the pop-up widget. Language is a radio list, Log out and Delete my account are confirms.
 - Language (CORE-04): the choice is saved locally (`app_language`, `LanguageStorage`), then P2 `{language}` tells the backend (errors ignored). The saved choice wins, then the system language, then English. The server's language never overrides the local one, which differs from Flutter (14 §3.1). `ProvideAppLocale` switches the resources at runtime: `Locale.setDefault` + configuration on Android, `AppleLanguages` on iOS. The iOS switch hasn't been tried on a device.
-- Avatar (PROF-02): the picker uploads P3 and saves the URL with P2, from the profile card or Edit profile. Home's header refreshes after the change. No cache-buster, and the app lock isn't suspended (no LOCK-01 yet).
+- Avatar (PROF-02): the picker uploads P3 and saves the URL with P2, from the profile card or Edit profile. Home's header takes the saved profile (P2's reply) after this or an Edit profile save. No cache-buster, and the app lock isn't suspended (no LOCK-01 yet).
 - Log out (PROF-07, AUTH-08): confirm → P7 with `""` → the token is wiped → Login. The logout is awaited (Flutter didn't wait). Every screen's ViewModel lives in the signed-in session's store, so no profile state survives. No PIN to clear yet (LOCK-01). The global 401 path (CORE-05) is still not built.
 
 ## Edit profile (`EditProfileScreen.kt`, PROF-03)

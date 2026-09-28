@@ -20,6 +20,7 @@ import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.doctors.doctorsOf
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
+import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.data.model.canUseShifaAi
 import shifa.uz.data.notifications.NotificationsRepository
@@ -51,6 +52,9 @@ class HomeViewModel(
     /** Pull to refresh: the lists stay on screen meanwhile. */
     fun refresh() = load(refreshing = true)
 
+    /** Profile saved a change (P2 or a photo): the greeting and avatar follow it without a refetch. */
+    fun onProfileChanged(updated: PatientProfile) = show(updated)
+
     private fun update(transform: HomeUiState.() -> HomeUiState) {
         _state.value = _state.value.transform()
     }
@@ -74,20 +78,22 @@ class HomeViewModel(
     // A failed P1 only costs the name in the greeting (10 §3.3.1).
     private suspend fun loadProfile(): StringResource? {
         profile.getProfile().fold(
-            onSuccess = {
-                val firstName = it.fullName.trim().split(Regex("\\s+")).first().ifEmpty { null }
-                update {
-                    copy(
-                        firstName = firstName,
-                        fullName = it.fullName.trim().ifEmpty { null },
-                        photoUrl = it.photoUrl,
-                        shifaAi = it.canUseShifaAi,
-                    )
-                }
-            },
+            onSuccess = ::show,
             onFailure = { if (it is ApiException.Unauthorized) _signedOut.send(Unit) },
         )
         return null
+    }
+
+    private fun show(patient: PatientProfile) {
+        val fullName = patient.fullName.trim()
+        update {
+            copy(
+                firstName = fullName.split(Regex("\\s+")).first().ifEmpty { null },
+                fullName = fullName.ifEmpty { null },
+                photoUrl = patient.photoUrl,
+                shifaAi = patient.canUseShifaAi,
+            )
+        }
     }
 
     // N2: no badge when the count fails.

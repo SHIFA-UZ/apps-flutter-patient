@@ -65,7 +65,7 @@ import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.theme.lineBox
 
-/** Figma upcoming-appointment-card. [joinText] shows the Join action-button (Now variants). */
+/** Figma upcoming-appointment-card. [joinText] shows the Join action-button (Now variants); no [shadow] on a full-page list. */
 @Composable
 fun ShifaUpcomingAppointmentCard(
     doctorName: String,
@@ -76,8 +76,9 @@ fun ShifaUpcomingAppointmentCard(
     video: Boolean = false,
     joinText: String? = null,
     onJoin: () -> Unit = {},
+    shadow: Boolean = true,
     onClick: (() -> Unit)? = null,
-) = AppointmentCard(doctorName, subtitle, time, avatarUrl, video, modifier, onClick) {
+) = AppointmentCard(doctorName, subtitle, time, avatarUrl, video, modifier, onClick, shadow) {
     joinText?.let {
         Box(Modifier.height(ShifaDimens.AppointmentActionHeight), contentAlignment = Alignment.Center) {
             ShifaActionButton(onClick = onJoin, text = it)

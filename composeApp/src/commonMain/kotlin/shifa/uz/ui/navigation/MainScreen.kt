@@ -54,6 +54,7 @@ import shifa.uz.ui.documents.DocumentsScreen
 import shifa.uz.ui.documents.DocumentsViewModel
 import shifa.uz.ui.home.HomeScreen
 import shifa.uz.ui.home.HomeViewModel
+import shifa.uz.ui.home.UpcomingScreen
 import shifa.uz.ui.notifications.NotificationLink
 import shifa.uz.ui.notifications.NotificationsScreen
 import shifa.uz.ui.notifications.PushViewModel
@@ -94,6 +95,7 @@ fun MainScreen(
         var page by rememberSaveable { mutableStateOf<Page?>(null) }
         var list by rememberSaveable { mutableStateOf<BookingsList?>(null) }
         var tasksOpen by rememberSaveable { mutableStateOf(false) }
+        var upcomingOpen by rememberSaveable { mutableStateOf(false) }
         // ponytail: not saved, so the viewer closes on process death; a nav library restores it (deferred).
         var viewing by remember { mutableStateOf<PatientDocument?>(null) }
         var checkIn by remember { mutableStateOf<RemoteCareTask?>(null) }
@@ -120,6 +122,7 @@ fun MainScreen(
             push.open.collect { link ->
                 // 13 §3.3: like Flutter's go, the target replaces whatever is open.
                 list = null
+                upcomingOpen = false
                 tasksOpen = false
                 checkIn = null
                 appointment = null
@@ -132,7 +135,7 @@ fun MainScreen(
         }
         BackHandler(
             enabled =
-                page == null && list == null && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
+                page == null && list == null && !upcomingOpen && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
                     doctor == null && booking == null && aiState.chat == null && tab != ShifaTab.Home,
         ) { tab = ShifaTab.Home }
         // 09 §7: the tab goes when the profile shuts Shifa AI out.
@@ -150,7 +153,7 @@ fun MainScreen(
                             HomeScreen(
                                 onNotifications = { page = Page.Notifications },
                                 onAccount = { page = Page.Account },
-                                onBookings = { tab = ShifaTab.Bookings },
+                                onUpcoming = { upcomingOpen = true },
                                 onAppointment = { appointment = it },
                                 onTasks = { tasksOpen = true },
                                 onDoctors = { list = BookingsList.MyDoctors },
@@ -206,7 +209,7 @@ fun MainScreen(
                         .padding(ShifaSpacing.Inset.Md),
                     ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
                 )
-                // Overlays, later ones on top: a Shifa AI chat → a full list → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
+                // Overlays, later ones on top: a Shifa AI chat → a full list → Upcoming → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
                 if (aiState.chat != null) {
                     BackHandler { shifaAi.close() }
                     ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
@@ -221,6 +224,10 @@ fun MainScreen(
                         onAppointment = { appointment = it },
                         onSignedOut = onLogOut,
                     )
+                }
+                if (upcomingOpen) {
+                    BackHandler { upcomingOpen = false }
+                    UpcomingScreen(home, onBack = { upcomingOpen = false }, onAppointment = { appointment = it })
                 }
                 if (tasksOpen) {
                     BackHandler { tasksOpen = false }
@@ -313,7 +320,7 @@ fun MainScreen(
                                         onBack = { page = null },
                                         onLogOut = onLogOut,
                                         onAccountDeleted = onAccountDeleted,
-                                        onProfileChanged = home::refresh,
+                                        onProfileChanged = home::onProfileChanged,
                                     )
                                 Page.Notifications ->
                                     NotificationsScreen(
