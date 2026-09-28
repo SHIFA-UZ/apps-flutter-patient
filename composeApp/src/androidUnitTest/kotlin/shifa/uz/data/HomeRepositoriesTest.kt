@@ -25,12 +25,13 @@ import shifa.uz.data.doctors.DoctorsQuery
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.BookingRequest
+import shifa.uz.data.model.CheckInRequest
 import shifa.uz.data.notifications.NotificationsRepository
 import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.data.storage.TokenStorage
 import shifa.uz.data.tasks.TasksRepository
 
-/** The Home and booking calls: B1, B2, B3, T1, N2, D1, D2, D3, P1. */
+/** The Home, booking and task calls: B1, B2, B3, T1, T3, T4, N2, D1, D2, D3, P1. */
 class HomeRepositoriesTest {
     private var reply: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { respondOk() }
     private val engine = MockEngine { reply(it) }
@@ -82,6 +83,35 @@ class HomeRepositoriesTest {
             )
             assertThat(TasksRepository(client).getMyTasks().getOrThrow().map { it.isOpen }).containsExactly(true, false)
             assertThat(path).isEqualTo("/api/tasks/my-tasks")
+        }
+
+    @Test
+    fun `T3 skips slots that don't decode, and an unknown status is pending`() =
+        runTest {
+            replyJson(
+                """[{"id":1,"scheduledDate":"2026-09-28","scheduledTime":"08:00:00","status":"SKIPPED"},""" +
+                    """{"id":"bad"},{"id":2,"scheduledDate":"2026-09-28","status":"MISSED"}]""",
+            )
+
+            val slots = TasksRepository(client).getCheckIns("7").getOrThrow()
+
+            assertThat(slots.map { it.id }).containsExactly(1L, 2L).inOrder()
+            assertThat(slots.map { it.isPending }).containsExactly(true, false).inOrder()
+            assertThat(path).isEqualTo("/api/tasks/my-tasks/7/check-ins")
+        }
+
+    @Test
+    fun `T4 posts only what is set`() =
+        runTest {
+            TasksRepository(
+                client,
+            ).submitCheckIn("7", CheckInRequest(9012, numericValue = 128.0, notes = "x")).getOrThrow()
+
+            val request = engine.requestHistory.last()
+            assertThat(request.method).isEqualTo(HttpMethod.Post)
+            assertThat(path).isEqualTo("/api/tasks/my-tasks/7/check-in")
+            assertThat(Json.parseToJsonElement((request.body as TextContent).text))
+                .isEqualTo(Json.parseToJsonElement("""{"checkInId":9012,"numericValue":128.0,"notes":"x"}"""))
         }
 
     @Test

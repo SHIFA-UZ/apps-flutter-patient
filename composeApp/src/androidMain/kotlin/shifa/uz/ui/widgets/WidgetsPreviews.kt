@@ -165,8 +165,11 @@ internal fun CardsPreview() =
         ShifaDocumentCard("abc.pdf", "Added by Dr Azamat Rakhimov", "15.07.2026", onClick = {})
         ShifaCertificateCard("Certificate name", "15.07.2026", onClick = {})
         ShifaDoctorServiceCard("Setting Page", "300000.00 UZS", onClick = {})
-        ShifaCheckInCard("Date", "Time", false, {}, "", {}, "Enter ‘task’", "Submit Check In", {})
-        ShifaCheckInCard("Date", "Time", true, {}, "", {}, "Enter ‘task’", "Submit Check In", {})
+        ShifaCheckInCard("Date", "Time", false, {})
+        ShifaCheckInCard("Date", "Time", true, {}) {
+            ShifaInputField("", {}, "Enter ‘task’", Modifier.fillMaxWidth(), clearable = false)
+            ShifaActionButton({}, Modifier.fillMaxWidth(), text = "Submit Check In")
+        }
         ShifaTaskCard("Running", "Description text", "Due today", type = ShifaTaskType.Exercise, tag = "Exercise")
         ShifaTaskCard(
             "Running",

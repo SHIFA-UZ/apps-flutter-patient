@@ -242,19 +242,15 @@ fun ShifaDoctorServiceCard(
     CardBody(price, ShifaColors.Text.Link, MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
 }
 
-/** Figma display-card, types check-in (unchecked) and check-if-fill (checked: input + submit). */
+/** Figma display-card, types check-in (unchecked) and check-if-fill (checked: [form], the input + submit). */
 @Composable
 fun ShifaCheckInCard(
     title: String,
-    subtitle: String,
+    subtitle: String?,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    value: String,
-    onValueChange: (String) -> Unit,
-    inputLabel: String,
-    submitText: String,
-    onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
+    form: @Composable ColumnScope.() -> Unit = {},
 ) {
     CardChrome(modifier, onClick = null, gap = ShifaDimens.CheckInCardGap) {
         Row(
@@ -269,13 +265,10 @@ fun ShifaCheckInCard(
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSize.S2)) {
                 CardTitle(title)
-                CardBody(subtitle, ShifaColors.Text.Tertiary)
+                subtitle?.let { CardBody(it, ShifaColors.Text.Tertiary) }
             }
         }
-        if (checked) {
-            ShifaInputField(value, onValueChange, inputLabel, Modifier.fillMaxWidth(), clearable = false)
-            ShifaActionButton(onSubmit, Modifier.fillMaxWidth(), text = submitText)
-        }
+        if (checked) form()
     }
 }
 

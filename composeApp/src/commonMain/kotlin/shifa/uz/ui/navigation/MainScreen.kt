@@ -36,12 +36,12 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.comingSoon
-import shifa.composeapp.generated.resources.myTasks
 import shifa.composeapp.generated.resources.notifications
 import shifa.composeapp.generated.resources.profile
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.PatientDocument
+import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.ui.bookings.AppointmentDetailsScreen
 import shifa.uz.ui.bookings.BookingsList
 import shifa.uz.ui.bookings.BookingsListScreen
@@ -56,6 +56,9 @@ import shifa.uz.ui.documents.DocumentsViewModel
 import shifa.uz.ui.home.HomeScreen
 import shifa.uz.ui.home.HomeViewModel
 import shifa.uz.ui.profile.ProfileScreen
+import shifa.uz.ui.tasks.TaskCheckInScreen
+import shifa.uz.ui.tasks.TasksScreen
+import shifa.uz.ui.tasks.TasksViewModel
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaSubHeader
@@ -64,7 +67,6 @@ import shifa.uz.ui.widgets.ShifaSubHeader
 private enum class Page(val title: StringResource) {
     Account(Res.string.profile), // PROF-01
     Notifications(Res.string.notifications), // NOTIF-01
-    Tasks(Res.string.myTasks), // TASK-01
 }
 
 /** The signed-in shell (02): tabs under the floating nav bar, pages over it. */
@@ -79,13 +81,16 @@ fun MainScreen(
         val home = viewModel { HomeViewModel() }
         val documents = viewModel { DocumentsViewModel() }
         val bookings = viewModel { BookingsViewModel() }
+        val tasks = viewModel { TasksViewModel() }
         val homeState by home.state.collectAsState()
         val nearMe = bookings.state.collectAsState().value.location
         var tab by rememberSaveable { mutableStateOf(ShifaTab.Home) }
         var page by rememberSaveable { mutableStateOf<Page?>(null) }
         var list by rememberSaveable { mutableStateOf<BookingsList?>(null) }
+        var tasksOpen by rememberSaveable { mutableStateOf(false) }
         // ponytail: not saved, so the viewer closes on process death; a nav library restores it (deferred).
         var viewing by remember { mutableStateOf<PatientDocument?>(null) }
+        var checkIn by remember { mutableStateOf<RemoteCareTask?>(null) }
         var appointment by remember { mutableStateOf<Appointment?>(null) }
         var doctor by remember { mutableStateOf<Doctor?>(null) }
         var booking by remember { mutableStateOf<Doctor?>(null) }
@@ -94,8 +99,8 @@ fun MainScreen(
         var navPadding by remember { mutableStateOf(PaddingValues()) }
         BackHandler(
             enabled =
-                page == null && list == null && viewing == null && appointment == null && doctor == null && booking == null &&
-                    tab != ShifaTab.Home,
+                page == null && list == null && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
+                    doctor == null && booking == null && tab != ShifaTab.Home,
         ) { tab = ShifaTab.Home }
         CompositionLocalProvider(LocalDeviceLocation provides nearMe) {
             Box(Modifier.fillMaxSize()) {
@@ -107,7 +112,7 @@ fun MainScreen(
                                 onAccount = { page = Page.Account },
                                 onBookings = { tab = ShifaTab.Bookings },
                                 onAppointment = { appointment = it },
-                                onTasks = { page = Page.Tasks },
+                                onTasks = { tasksOpen = true },
                                 onDoctors = { list = BookingsList.MyDoctors },
                                 onDoctor = { doctor = it },
                                 onSignedOut = onLogOut,
@@ -151,7 +156,7 @@ fun MainScreen(
                         .navigationBarsPadding()
                         .padding(ShifaSpacing.Inset.Md),
                 )
-                // Overlays, later ones on top: a full list → details → its doctor → Create Booking → a page → a certificate / document.
+                // Overlays, later ones on top: a full list → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
                 list?.let {
                     BackHandler { list = null }
                     BookingsListScreen(
@@ -162,6 +167,32 @@ fun MainScreen(
                         onAppointment = { appointment = it },
                         onSignedOut = onLogOut,
                     )
+                }
+                if (tasksOpen) {
+                    BackHandler { tasksOpen = false }
+                    TasksScreen(
+                        tasks,
+                        onBack = { tasksOpen = false },
+                        onTask = { checkIn = it },
+                        onSignedOut = onLogOut,
+                    )
+                }
+                checkIn?.let {
+                    BackHandler { checkIn = null }
+                    key(it) {
+                        ScopedViewModels {
+                            TaskCheckInScreen(
+                                it,
+                                onBack = { checkIn = null },
+                                onSubmitted = {
+                                    checkIn = null
+                                    tasks.onSubmitted()
+                                    home.refresh()
+                                },
+                                onSignedOut = onLogOut,
+                            )
+                        }
+                    }
                 }
                 appointment?.let {
                     BackHandler { appointment = null }

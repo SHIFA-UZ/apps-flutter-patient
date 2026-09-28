@@ -13,6 +13,7 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 | Profile and account | [profile.md](profile.md) |
 | Documents | [documents.md](documents.md) |
 | Bookings, appointment details and doctor profile | [bookings.md](bookings.md) |
+| My Tasks and check-in | [tasks.md](tasks.md) |
 
 ## Status
 
@@ -30,10 +31,10 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 | AUTH-03 Create account | Mostly done | Figma 3-step wizard (account → info → photo), password checklist, check-identifier dialogs, the email/SMS choice with the email fallback. Not built: `PhoneInputField` with a country picker (a plain phone field instead, so the 04 parsing bug can't happen). |
 | AUTH-04 Register OTP verify | Mostly done | Code screen, masked destination, 300 s resend, `register-patient`, then the photo (P3) and step 2 (P2) are saved. Not built: the PIN setup prompt (needs LOCK-01). Not yet tried against the backend. |
 | AUTH-05 Doctor → patient | Mostly done | The step-1 "existing doctor" dialog replaces the confirm screen, then the email code and `create-patient-for-doctor`. Phone-only matches stop with "email required" (Q7). No PIN prompt (LOCK-01). |
-| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar; Home, Bookings and Documents are built, the rest and Home's links are "Coming soon" placeholders. Back goes page → Home tab → exit. The centre Shifa AI tab is shown (Figma). |
+| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar; Home, Bookings and Documents are built, the rest and Notifications are "Coming soon" placeholders. Back goes page → Home tab → exit. The centre Shifa AI tab is shown (Figma). |
 | SHELL-03 App header | Done | Avatar → Profile, bell → Notifications placeholder, with the N2 unread badge. No chat icon (not in the Figma header). |
 | HOME-01 Home + Upcoming | Done | P1 greeting, pull to refresh, B2 upcoming (confirmed, until the join window closes), "Now" + Join, error banner. Cards and Join open the appointment details (BOOK-06). |
-| HOME-02 My Tasks | Done | T1, open tasks, up to 3. Opens the Tasks placeholder (TASK-01). |
+| HOME-02 My Tasks | Done | T1, open tasks, up to 3. The cards and the arrow open My Tasks (TASK-01). |
 | HOME-03 My Doctors | Done (per Figma) | Figma replaces "Doctors near me" with "My Doctors": the doctors of the latest bookings, via D2. No location flow. Cards open the doctor profile; the arrow opens the full My Doctors page. |
 | HOME-04 Shared-state check | Done | Home has its own state. |
 | PROF-01 Profile + language dialog | Mostly done | Figma card, settings and account sections, pull to refresh, the language dialog (local + P2). App Lock and Privacy are placeholders. No version footer (not in Figma). |
@@ -56,6 +57,8 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 | BOOK-03 Confirm & create booking | Mostly done | The video checks, the double-booking check, then B3. On success, back to the Bookings tab with a notice. PENDING only shows the pending notice (BOOK-04 not built). Not pressed on a device (production). |
 | BOOK-05 Bookings list | Partly done | The Figma tab: Recommended doctors, My Doctors, Past Appointments on All (other chips: doctors only), each arrow opening its full page. No status tabs, upcoming list or pay later (not in Figma; BOOK-04 not built). |
 | BOOK-06 Appointment details, cancel, reschedule | Mostly done | Figma details, Contact (tel / mailto), cancel with confirm ≥ 48 h (B5) that refreshes the list and Home, the < 48 h warning. No reschedule yet. Not tried on a device (no appointments). |
+| TASK-01 Tasks list | Mostly done | Figma Open / Completed tabs over T1, progress bars on Open, pull to refresh. EXPIRED with nothing pending shows in both tabs (quirk 1). No ⋮ menu (not in Figma), no reload on resume. |
+| TASK-02 Task check-in | Mostly done | Figma page: T3 slots due within 10 minutes, the form in the ticked card for NUMERIC / TEXT / BOOLEAN with notes, T4, then My Tasks reloads with a notice and Home refreshes. No T2 (deep links), no ticker. Not submitted on a device (production). |
 
 ## Log
 
@@ -76,3 +79,4 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 - 2026-09-28: Near me: the device location (permission, one fix, last known on a timeout) sends D1 lat/lon within 50 km, and the profile shows Nearby. Recommended's arrow lists every doctor; D1 reads every page. A `null` in a list field (D1 now sends `certificates: null`) no longer drops the whole item.
 - 2026-09-28: Bookings: the sections show only on All, other chips list just doctors. The section arrows (Recommended, My Doctors, Past, and Home's My Doctors) open full list pages (Figma 1655:15670, 1655:15892) instead of expanding; My Doctors shows each doctor's last visit. Cards can drop their shadow. Figma's "Find Doctors near you" row is hidden.
 - 2026-09-28: Built Create Booking (BOOK-01/02/03, Figma 1662:18783, 1662:19457) from the doctor profile: video + service, date, the 30-day slot scan, time chips, reason, PDF attachments and B3 with the double-booking check. A booking goes back to the Bookings tab with a notice. `ShifaSection` takes a header action, and `ShifaActionButton` can put its icon after the text.
+- 2026-09-28: Built My Tasks (TASK-01, Figma 1655:17107, 1662:18016) from Home's task cards and arrow, and the task check-in (TASK-02, Figma 1662:18317) with T3 and T4. `ShifaCheckInCard` takes its form as a slot; Home's task card can show the progress bar.

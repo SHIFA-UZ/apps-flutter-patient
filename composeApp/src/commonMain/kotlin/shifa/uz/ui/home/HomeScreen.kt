@@ -236,11 +236,13 @@ private fun UpcomingCard(
     )
 }
 
+/** Home's compact card; the tasks pages add the [progress] bar (Figma 1655:17107). */
 @Composable
-private fun TaskCard(
+internal fun TaskCard(
     task: RemoteCareTask,
     now: Instant,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
+    progress: Boolean = false,
 ) {
     val (type, category) =
         when (task.category) {
@@ -262,6 +264,8 @@ private fun TaskCard(
         due = due.orEmpty(),
         type = type,
         tag = stringResource(category),
+        completed = task.progress?.completedCheckIns?.takeIf { progress } ?: 0,
+        total = task.progress?.totalCheckIns?.takeIf { progress } ?: 0,
         onClick = onClick,
     )
 }

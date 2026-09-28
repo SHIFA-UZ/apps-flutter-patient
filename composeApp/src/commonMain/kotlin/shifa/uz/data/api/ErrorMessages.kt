@@ -26,6 +26,8 @@ const val FAILED_TO_DELETE_ACCOUNT = "Failed to delete account" // No l10n key: 
 const val FAILED_TO_LOAD_APPOINTMENTS = "Failed to load appointments"
 const val FAILED_TO_LOAD_DOCTOR = "Failed to load doctor"
 const val FAILED_TO_LOAD_TASKS = "Failed to load tasks"
+const val FAILED_TO_LOAD_CHECK_INS = "Failed to load check-ins" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_SUBMIT_CHECK_IN = "Failed to submit check-in" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_NOTIFICATIONS = "Error loading notifications"
 const val FAILED_TO_LOAD_DOCUMENTS = "Failed to load documents" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_UPLOAD_DOCUMENT = "Failed to upload document"
@@ -108,6 +110,10 @@ private val MESSAGES: Map<String, StringResource> =
         FAILED_TO_BOOK_APPOINTMENT to Res.string.failedToBookAppointment,
         // B3, special-cased in 06 §3.1.
         "serviceId is required for video consultation" to Res.string.bookingSelectServiceForVideo,
+        // T4 (12 §4.4).
+        "Boolean value required" to Res.string.checkInPleaseSelectYesOrNo,
+        "Numeric value required" to Res.string.checkInValueRequired,
+        "Text value required" to Res.string.checkInValueRequired,
         NO_TOKEN_RECEIVED to Res.string.errorNoTokenReceivedFromServer,
         NETWORK_ERROR to Res.string.errorNetworkConnection,
         CONNECTION_TIMED_OUT to Res.string.errorConnectionTimedOut,

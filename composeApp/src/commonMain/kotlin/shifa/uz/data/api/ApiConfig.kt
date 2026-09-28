@@ -35,6 +35,10 @@ object ApiConfig {
         fun doctorLocations(id: String) = "public/doctors/$id/locations"
 
         fun availableSlots(doctorId: String) = "patients/me/schedule/doctors/$doctorId/available"
+
+        fun taskCheckIns(taskId: String) = "tasks/my-tasks/$taskId/check-ins"
+
+        fun taskCheckIn(taskId: String) = "tasks/my-tasks/$taskId/check-in"
     }
 
     // 01 §4.2: sent without a token. A request matches when its path ends with one of these.
