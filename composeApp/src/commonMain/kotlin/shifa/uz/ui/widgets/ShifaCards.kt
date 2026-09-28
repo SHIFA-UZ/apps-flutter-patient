@@ -198,9 +198,17 @@ fun ShifaDocumentCard(
     date: String,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    // Not in Figma: the document's category, next to the date.
+    tag: String? = null,
 ) = DisplayCard(title, modifier, onClick, { Thumb(Res.drawable.img_documents) }) {
     CardBody(subtitle)
-    CardBody(date, ShifaColors.Text.Tertiary)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CardBody(date, ShifaColors.Text.Tertiary)
+        tag?.let { ShifaTag(it, Modifier.weight(1f, fill = false), ShifaTagType.Primary) }
+    }
 }
 
 /** Figma display-card, type certificate. */

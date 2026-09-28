@@ -34,4 +34,17 @@ class DatesTest {
     fun `dates are dd MM yyyy`() {
         assertThat(formatDate(LocalDate(2026, 1, 5))).isEqualTo("05.01.2026")
     }
+
+    @Test
+    fun `days read a date or an instant in local time, and keep anything else`() {
+        assertThat(formatDay("2026-09-27", tashkent)).isEqualTo("27.09.2026")
+        assertThat(formatDay("2026-09-27T20:00:00Z", tashkent)).isEqualTo("28.09.2026")
+        assertThat(formatDay("soon", tashkent)).isEqualTo("soon")
+    }
+
+    @Test
+    fun `file names lose path and reserved characters`() {
+        assertThat(safeFileName(" a/b:c*?.pdf ")).isEqualTo("a_b_c__.pdf")
+        assertThat(safeFileName("  ")).isEqualTo("document")
+    }
 }

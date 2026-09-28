@@ -27,7 +27,7 @@ actual class FileSaver {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 saveFileMediaStore(ctx, fileName, fileBytes)
             } else {
-                saveFileLegacy(fileName, fileBytes)
+                saveFileLegacy(ctx, fileName, fileBytes)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -64,11 +64,16 @@ actual class FileSaver {
         return Result.success(uri.toString())
     }
 
+    // Android 9 and below: the app's own Downloads folder, which needs no storage permission.
     private fun saveFileLegacy(
+        context: Context,
         fileName: String,
         fileBytes: ByteArray,
     ): Result<String> {
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val downloadsDir =
+            context.getExternalFilesDir(
+                Environment.DIRECTORY_DOWNLOADS,
+            ) ?: return Result.failure(Exception("No storage"))
         val file = File(downloadsDir, fileName)
 
         FileOutputStream(file).use { outputStream ->
@@ -83,6 +88,7 @@ actual class FileSaver {
             "pdf" -> "application/pdf"
             "jpg", "jpeg" -> "image/jpeg"
             "png" -> "image/png"
+            "webp" -> "image/webp"
             "doc" -> "application/msword"
             "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             else -> "application/octet-stream"

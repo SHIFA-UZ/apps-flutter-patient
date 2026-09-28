@@ -47,5 +47,5 @@ actual fun rememberDocumentPickerLauncher(onDocumentSelected: (DocumentPickerRes
             }
         }
 
-    return { launcher.launch("*/*") }
+    return { launcher.launch("application/pdf") }
 }

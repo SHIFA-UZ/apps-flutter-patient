@@ -11,10 +11,12 @@
     <string name="addPhotoLater">Вы можете добавить фото позже в настройках профиля</string>
     <string name="addProfilePhoto">Добавить фото профиля (Необязательно)</string>
     <string name="addProfilePhotoOptional">Добавить фото профиля (необязательно)</string>
+    <string name="addedBy">Добавил(а) %1$s</string>
     <string name="addedByDoctor">Добавлено врачом</string>
     <string name="addedByYou">Добавлено вами</string>
     <string name="additionalNotesOptional">Дополнительные заметки (необязательно)</string>
     <string name="address">Адрес</string>
+    <string name="all">Все</string>
     <string name="allAvailability">Любая доступность</string>
     <string name="allConsultationTypes">Любой тип консультации</string>
     <string name="allCountries">Все страны</string>
@@ -66,6 +68,7 @@
     <string name="callDoctor">Позвонить врачу</string>
     <string name="callDuration">Длительность звонка</string>
     <string name="callErrorOccurred">Произошла ошибка звонка</string>
+    <string name="camera">Камера</string>
     <string name="cameraPermissionDenied">Доступ к камере нужен для фотографий.</string>
     <string name="cancel">Отмена</string>
     <string name="cancelAppointment">Отменить запись</string>
@@ -76,6 +79,7 @@
     <string name="cardiologist">Кардиолог</string>
     <string name="certificate">Сертификат</string>
     <string name="certificates">Сертификаты</string>
+    <string name="change">Изменить</string>
     <string name="changeBooking">Изменить запись</string>
     <string name="changePassword">Изменить пароль</string>
     <string name="changePin">Изменить PIN</string>
@@ -244,6 +248,7 @@
     <string name="documentCategory_OTHER_MEDICAL">Другой медицинский результат</string>
     <string name="documentCategory_PATHOLOGY">Патология</string>
     <string name="documentCategory_PRESCRIPTION">Рецепт</string>
+    <string name="documentCategory_PRE_APPOINTMENT">Перед приёмом</string>
     <string name="documentCategory_REFERRAL">Направление</string>
     <string name="documentCategory_STOOL_TEST">Анализ кала</string>
     <string name="documentCategory_ULTRASOUND">УЗИ</string>
@@ -251,7 +256,10 @@
     <string name="documentCategory_VACCINATION_RECORD">Запись о вакцинации</string>
     <string name="documentCategory_XRAY">Рентген</string>
     <string name="documentDeleted">Документ удалён</string>
+    <string name="documentName">Название документа</string>
+    <string name="documentSaved">Документ сохранён</string>
     <string name="documentTitle">Название документа</string>
+    <string name="documentUpload">Загрузка документа</string>
     <string name="documentUploadedSuccessfully">Документ успешно загружен</string>
     <string name="documents">Документы</string>
     <string name="download">Скачать</string>
@@ -383,6 +391,7 @@
     <string name="existingDoctorTitle">Найден аккаунт врача</string>
     <string name="existingPatientMessage">Аккаунт с этим email или телефоном уже существует. Используйте «Забыли пароль» для входа или укажите другие данные.</string>
     <string name="failedToBookAppointment">Не удалось записаться</string>
+    <string name="failedToDeleteDocument">Не удалось удалить документ</string>
     <string name="failedToGetPhotoUrl">Не удалось получить URL фото с сервера</string>
     <string name="failedToLoadDoctor">Не удалось загрузить врача</string>
     <string name="failedToSend">Не удалось отправить</string>
@@ -393,6 +402,7 @@
     <string name="failedToUploadImage">Не удалось загрузить изображение</string>
     <string name="failedToUploadPhoto">Не удалось загрузить фото</string>
     <string name="female">Женский</string>
+    <string name="file">Файл</string>
     <string name="filterAvailability">Доступность</string>
     <string name="filterBy">Фильтр</string>
     <string name="filterByCountry">Страна</string>

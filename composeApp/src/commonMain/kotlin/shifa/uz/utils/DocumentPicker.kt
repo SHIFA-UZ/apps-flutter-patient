@@ -8,5 +8,6 @@ data class DocumentPickerResult(
     val fileBytes: ByteArray,
 )
 
+/** A PDF (11: the picker takes nothing else). */
 @Composable
 expect fun rememberDocumentPickerLauncher(onDocumentSelected: (DocumentPickerResult?) -> Unit): () -> Unit

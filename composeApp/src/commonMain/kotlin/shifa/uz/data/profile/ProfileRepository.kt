@@ -9,10 +9,7 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
-import io.ktor.http.defaultForFilePath
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -23,6 +20,7 @@ import shifa.uz.data.api.FAILED_TO_LOAD_PROFILE
 import shifa.uz.data.api.FAILED_TO_UPDATE_PROFILE
 import shifa.uz.data.api.FAILED_TO_UPLOAD_PHOTO
 import shifa.uz.data.api.apiCall
+import shifa.uz.data.api.appendFile
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.DeleteAccountChallenge
@@ -78,16 +76,7 @@ class ProfileRepository(
         apiCall<String>(FAILED_TO_UPLOAD_PHOTO) {
             client.submitFormWithBinaryData(
                 ApiConfig.Endpoints.PATIENT_PHOTO,
-                formData {
-                    append(
-                        "file",
-                        bytes,
-                        Headers.build {
-                            append(HttpHeaders.ContentType, ContentType.defaultForFilePath(fileName).toString())
-                            append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
-                        },
-                    )
-                },
+                formData { appendFile("file", bytes, fileName) },
             )
         }.mapCatching { photoUrl(it) ?: throw ApiException.ServerError(FAILED_TO_UPLOAD_PHOTO) }
 

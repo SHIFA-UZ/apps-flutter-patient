@@ -11,10 +11,12 @@
     <string name="addPhotoLater">Rasmni keyinroq profil sozlamalaridan qo'shishingiz mumkin</string>
     <string name="addProfilePhoto">Profil rasmini qo'shish (Ixtiyoriy)</string>
     <string name="addProfilePhotoOptional">Profil rasmini qo'shish (ixtiyoriy)</string>
+    <string name="addedBy">%1$s qo'shgan</string>
     <string name="addedByDoctor">Shifokor qo'shgan</string>
     <string name="addedByYou">Siz qo'shgansiz</string>
     <string name="additionalNotesOptional">Qo'shimcha izohlar (ixtiyoriy)</string>
     <string name="address">Manzil</string>
+    <string name="all">Barchasi</string>
     <string name="allAvailability">Har qanday mavjudlik</string>
     <string name="allConsultationTypes">Har qanday konsultatsiya</string>
     <string name="allCountries">Barcha mamlakatlar</string>
@@ -66,6 +68,7 @@
     <string name="callDoctor">Shifokorni qo'ng'iroq qilish</string>
     <string name="callDuration">Qo'ng'iroq davomiyligi</string>
     <string name="callErrorOccurred">Qo'ng'iroqda xatolik</string>
+    <string name="camera">Kamera</string>
     <string name="cameraPermissionDenied">Fotosuratlar uchun kamera kerak.</string>
     <string name="cancel">Bekor qilish</string>
     <string name="cancelAppointment">Uchrashuvni bekor qilish</string>
@@ -76,6 +79,7 @@
     <string name="cardiologist">Kardiolog</string>
     <string name="certificate">Sertifikat</string>
     <string name="certificates">Sertifikatlar</string>
+    <string name="change">O'zgartirish</string>
     <string name="changeBooking">Uchrashuvni o'zgartirish</string>
     <string name="changePassword">Parolni o'zgartirish</string>
     <string name="changePin">PIN-kodni o'zgartirish</string>
@@ -244,6 +248,7 @@
     <string name="documentCategory_OTHER_MEDICAL">Boshqa tibbiy natija</string>
     <string name="documentCategory_PATHOLOGY">Patologiya</string>
     <string name="documentCategory_PRESCRIPTION">Retsept</string>
+    <string name="documentCategory_PRE_APPOINTMENT">Qabuldan oldin</string>
     <string name="documentCategory_REFERRAL">Yo'llanma</string>
     <string name="documentCategory_STOOL_TEST">Najas tahlili</string>
     <string name="documentCategory_ULTRASOUND">UTT</string>
@@ -251,7 +256,10 @@
     <string name="documentCategory_VACCINATION_RECORD">Emlash hujjati</string>
     <string name="documentCategory_XRAY">Rentgen</string>
     <string name="documentDeleted">Hujjat o'chirildi</string>
+    <string name="documentName">Hujjat nomi</string>
+    <string name="documentSaved">Hujjat saqlandi</string>
     <string name="documentTitle">Hujjat nomi</string>
+    <string name="documentUpload">Hujjat yuklash</string>
     <string name="documentUploadedSuccessfully">Hujjat muvaffaqiyatli yuklandi</string>
     <string name="documents">Hujjatlar</string>
     <string name="download">Yuklab olish</string>
@@ -383,6 +391,7 @@
     <string name="existingDoctorTitle">Mavjud shifokor hisobi topildi</string>
     <string name="existingPatientMessage">Ushbu email yoki telefon raqami bilan hisob mavjud. Kirish uchun Parolni unutdingizmi? dan foydalaning yoki boshqa email va telefon raqamini kiriting.</string>
     <string name="failedToBookAppointment">Uchrashuvni bron qilishda xatolik</string>
+    <string name="failedToDeleteDocument">Hujjatni o'chirishda xatolik</string>
     <string name="failedToGetPhotoUrl">Serverdan rasm URL manzilini olishda xatolik</string>
     <string name="failedToLoadDoctor">Shifokor ma'lumotlarini yuklashda xatolik</string>
     <string name="failedToSend">Yuborishda xatolik</string>
@@ -393,6 +402,7 @@
     <string name="failedToUploadImage">Rasm yuklashda xatolik</string>
     <string name="failedToUploadPhoto">Rasmni yuklashda xatolik</string>
     <string name="female">Ayol</string>
+    <string name="file">Fayl</string>
     <string name="filterAvailability">Mavjudlik</string>
     <string name="filterBy">Filtr</string>
     <string name="filterByCountry">Mamlakat</string>

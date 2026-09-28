@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,10 @@ import shifa.composeapp.generated.resources.myDoctors
 import shifa.composeapp.generated.resources.myTasks
 import shifa.composeapp.generated.resources.notifications
 import shifa.composeapp.generated.resources.profile
+import shifa.uz.data.model.PatientDocument
+import shifa.uz.ui.documents.DocumentViewerScreen
+import shifa.uz.ui.documents.DocumentsScreen
+import shifa.uz.ui.documents.DocumentsViewModel
 import shifa.uz.ui.home.HomeScreen
 import shifa.uz.ui.home.HomeViewModel
 import shifa.uz.ui.profile.ProfileScreen
@@ -66,12 +71,16 @@ fun MainScreen(
     // ViewModels live as long as this session, so nothing of it outlives a logout.
     ScopedViewModels {
         val home = viewModel { HomeViewModel() }
+        val documents = viewModel { DocumentsViewModel() }
+        val homeState by home.state.collectAsState()
         var tab by rememberSaveable { mutableStateOf(ShifaTab.Home) }
         var page by rememberSaveable { mutableStateOf<Page?>(null) }
+        // ponytail: not saved, so the viewer closes on process death; a nav library restores it (deferred).
+        var viewing by remember { mutableStateOf<PatientDocument?>(null) }
         val tabs = rememberSaveableStateHolder()
         val density = LocalDensity.current
         var navPadding by remember { mutableStateOf(PaddingValues()) }
-        BackHandler(enabled = page == null && tab != ShifaTab.Home) { tab = ShifaTab.Home }
+        BackHandler(enabled = page == null && viewing == null && tab != ShifaTab.Home) { tab = ShifaTab.Home }
         Box(Modifier.fillMaxSize()) {
             tabs.SaveableStateProvider(tab) {
                 when (tab) {
@@ -88,6 +97,18 @@ fun MainScreen(
                             contentPadding = navPadding,
                             viewModel = home,
                         )
+                    ShifaTab.Documents ->
+                        DocumentsScreen(
+                            avatarUrl = homeState.photoUrl,
+                            patientName = homeState.fullName,
+                            notificationCount = homeState.unreadNotifications,
+                            onNotifications = { page = Page.Notifications },
+                            onAccount = { page = Page.Account },
+                            onOpen = { viewing = it },
+                            onSignedOut = onLogOut,
+                            contentPadding = navPadding,
+                            viewModel = documents,
+                        )
                     else -> ComingSoon(stringResource(tab.label))
                 }
             }
@@ -100,6 +121,17 @@ fun MainScreen(
                     .navigationBarsPadding()
                     .padding(ShifaSpacing.Inset.Md),
             )
+            viewing?.let {
+                BackHandler { viewing = null }
+                key(it) {
+                    ScopedViewModels {
+                        DocumentViewerScreen(it, homeState.fullName, onBack = { viewing = null }, onDeleted = {
+                            viewing = null
+                            documents.onDeleted(it.id)
+                        })
+                    }
+                }
+            }
             page?.let {
                 BackHandler { page = null }
                 // Each page gets fresh ViewModels, cleared when it closes.

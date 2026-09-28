@@ -13,6 +13,7 @@ internal const val HOME_ITEMS = 3
 @Stable
 data class HomeUiState(
     val firstName: String? = null,
+    val fullName: String? = null, // tells Documents which uploads are the patient's
     val photoUrl: String? = null,
     val unreadNotifications: Int = 0,
     val upcoming: List<Appointment>? = null,

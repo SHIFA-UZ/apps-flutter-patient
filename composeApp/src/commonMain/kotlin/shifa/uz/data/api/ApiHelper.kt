@@ -4,8 +4,13 @@ import io.ktor.client.call.body
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.request.forms.FormBuilder
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import io.ktor.http.defaultForFilePath
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonArray
@@ -72,4 +77,21 @@ internal suspend fun errorText(response: HttpResponse): String? {
 internal inline fun <reified T> JsonElement.items(key: String? = null): List<T> {
     val array = this as? JsonArray ?: key?.let { (this as? JsonObject)?.get(it) } as? JsonArray ?: return emptyList()
     return array.mapNotNull { runCatching { apiJson.decodeFromJsonElement<T>(it) }.getOrNull() }
+}
+
+/** A multipart file part with a real Content-Type (11 §9). Quotes and line breaks can't break out of the header. */
+internal fun FormBuilder.appendFile(
+    key: String,
+    bytes: ByteArray,
+    fileName: String,
+) {
+    val name = fileName.replace(Regex("[\"\\\\/\r\n]"), "_")
+    append(
+        key,
+        bytes,
+        Headers.build {
+            append(HttpHeaders.ContentType, ContentType.defaultForFilePath(name).toString())
+            append(HttpHeaders.ContentDisposition, "filename=\"$name\"")
+        },
+    )
 }

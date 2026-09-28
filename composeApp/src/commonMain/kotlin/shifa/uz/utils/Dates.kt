@@ -20,6 +20,18 @@ fun parseInstant(value: String?): Instant? {
 /** dd.MM.yyyy */
 fun formatDate(date: LocalDate) = "${date.dayOfMonth.twoDigits()}.${date.monthNumber.twoDigits()}.${date.year}"
 
+/** A `yyyy-MM-dd` or an instant (in local time, 11 quirk 15) as dd.MM.yyyy. Anything else is shown as sent. */
+fun formatDay(
+    value: String,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+): String {
+    val date =
+        runCatching { LocalDate.parse(value.trim()) }.getOrNull()
+            ?: parseInstant(value)?.toLocalDateTime(zone)?.date
+            ?: return value
+    return formatDate(date)
+}
+
 /**
  * 07 next-slot text: "{today} · HH:mm", "{tomorrow} · HH:mm", else "dd.MM · HH:mm". Flutter showed only a
  * weekday there, which can't tell this week from next (07 quirk 18).

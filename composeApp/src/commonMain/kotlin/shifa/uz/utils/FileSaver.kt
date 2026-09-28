@@ -11,3 +11,6 @@ expect class FileSaver() {
 
 @Composable
 expect fun rememberFileSaver(): FileSaver
+
+/** A file name any file system takes. */
+fun safeFileName(name: String) = name.replace(Regex("[\\\\/:*?\"<>|\r\n]"), "_").trim().ifEmpty { "document" }

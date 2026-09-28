@@ -30,3 +30,7 @@ data class ImagePickerResult(
 
 @Composable
 expect fun rememberImagePickerLauncher(onImageSelected: (ImagePickerResult?) -> Unit): () -> Unit
+
+/** A JPEG from the camera, upright. Null when cancelled or there's no camera. */
+@Composable
+expect fun rememberCameraLauncher(onPhotoTaken: (ImagePickerResult?) -> Unit): () -> Unit

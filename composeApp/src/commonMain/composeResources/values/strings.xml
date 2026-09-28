@@ -11,10 +11,12 @@
     <string name="addPhotoLater">You can add a photo later from your profile settings</string>
     <string name="addProfilePhoto">Add Profile Photo (Optional)</string>
     <string name="addProfilePhotoOptional">Add Profile Photo (Optional)</string>
+    <string name="addedBy">Added by %1$s</string>
     <string name="addedByDoctor">Added by doctor</string>
     <string name="addedByYou">Added by you</string>
     <string name="additionalNotesOptional">Additional notes (optional)</string>
     <string name="address">Address</string>
+    <string name="all">All</string>
     <string name="allAvailability">Any availability</string>
     <string name="allConsultationTypes">Any consultation type</string>
     <string name="allCountries">All countries</string>
@@ -66,6 +68,7 @@
     <string name="callDoctor">Call Doctor</string>
     <string name="callDuration">Call Duration</string>
     <string name="callErrorOccurred">Call error occurred</string>
+    <string name="camera">Camera</string>
     <string name="cameraPermissionDenied">Camera access is needed to take photos.</string>
     <string name="cancel">Cancel</string>
     <string name="cancelAppointment">Cancel Appointment</string>
@@ -76,6 +79,7 @@
     <string name="cardiologist">Cardiologist</string>
     <string name="certificate">Certificate</string>
     <string name="certificates">Certificates</string>
+    <string name="change">Change</string>
     <string name="changeBooking">Change Booking</string>
     <string name="changePassword">Change Password</string>
     <string name="changePin">Change PIN</string>
@@ -244,6 +248,7 @@
     <string name="documentCategory_OTHER_MEDICAL">Other medical result</string>
     <string name="documentCategory_PATHOLOGY">Pathology</string>
     <string name="documentCategory_PRESCRIPTION">Prescription</string>
+    <string name="documentCategory_PRE_APPOINTMENT">Pre-appointment</string>
     <string name="documentCategory_REFERRAL">Referral</string>
     <string name="documentCategory_STOOL_TEST">Stool test</string>
     <string name="documentCategory_ULTRASOUND">Ultrasound</string>
@@ -251,7 +256,10 @@
     <string name="documentCategory_VACCINATION_RECORD">Vaccination record</string>
     <string name="documentCategory_XRAY">X-ray</string>
     <string name="documentDeleted">Document deleted</string>
+    <string name="documentName">Document name</string>
+    <string name="documentSaved">Document saved</string>
     <string name="documentTitle">Document Title</string>
+    <string name="documentUpload">Document upload</string>
     <string name="documentUploadedSuccessfully">Document uploaded successfully</string>
     <string name="documents">Documents</string>
     <string name="download">Download</string>
@@ -383,6 +391,7 @@
     <string name="existingDoctorTitle">Existing doctor account found</string>
     <string name="existingPatientMessage">An account with this email or phone already exists. Use Forgot Password to sign in, or enter a different email and phone number.</string>
     <string name="failedToBookAppointment">Failed to book appointment</string>
+    <string name="failedToDeleteDocument">Failed to delete document</string>
     <string name="failedToGetPhotoUrl">Failed to get photo URL from server</string>
     <string name="failedToLoadDoctor">Failed to load doctor</string>
     <string name="failedToSend">Failed to send</string>
@@ -393,6 +402,7 @@
     <string name="failedToUploadImage">Failed to upload image</string>
     <string name="failedToUploadPhoto">Failed to upload photo</string>
     <string name="female">Female</string>
+    <string name="file">File</string>
     <string name="filterAvailability">Availability</string>
     <string name="filterBy">Filter</string>
     <string name="filterByCountry">Country</string>

@@ -27,6 +27,10 @@ const val FAILED_TO_LOAD_APPOINTMENTS = "Failed to load appointments"
 const val FAILED_TO_LOAD_DOCTOR = "Failed to load doctor"
 const val FAILED_TO_LOAD_TASKS = "Failed to load tasks"
 const val FAILED_TO_LOAD_NOTIFICATIONS = "Error loading notifications"
+const val FAILED_TO_LOAD_DOCUMENTS = "Failed to load documents" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_UPLOAD_DOCUMENT = "Failed to upload document"
+const val FAILED_TO_DELETE_DOCUMENT = "Failed to delete document"
+const val FAILED_TO_LOAD_DOCUMENT = "Failed to load document"
 private const val INVALID_CREDENTIALS = "Invalid credentials"
 private const val NO_ACCOUNT_FOUND = "No account found"
 const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
@@ -92,6 +96,9 @@ private val MESSAGES: Map<String, StringResource> =
         FAILED_TO_CHANGE_PASSWORD to Res.string.errorFailedToChangePassword,
         FAILED_TO_LOAD_DOCTOR to Res.string.failedToLoadDoctor,
         FAILED_TO_LOAD_NOTIFICATIONS to Res.string.errorLoadingNotifications,
+        FAILED_TO_UPLOAD_DOCUMENT to Res.string.uploadFailed,
+        FAILED_TO_DELETE_DOCUMENT to Res.string.failedToDeleteDocument,
+        FAILED_TO_LOAD_DOCUMENT to Res.string.errorOpeningDocument,
         NO_TOKEN_RECEIVED to Res.string.errorNoTokenReceivedFromServer,
         NETWORK_ERROR to Res.string.errorNetworkConnection,
         CONNECTION_TIMED_OUT to Res.string.errorConnectionTimedOut,

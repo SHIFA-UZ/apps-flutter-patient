@@ -75,7 +75,13 @@ class HomeViewModel(
         profile.getProfile().fold(
             onSuccess = {
                 val firstName = it.fullName.trim().split(Regex("\\s+")).first().ifEmpty { null }
-                update { copy(firstName = firstName, photoUrl = it.photoUrl) }
+                update {
+                    copy(
+                        firstName = firstName,
+                        fullName = it.fullName.trim().ifEmpty { null },
+                        photoUrl = it.photoUrl,
+                    )
+                }
             },
             onFailure = { if (it is ApiException.Unauthorized) _signedOut.send(Unit) },
         )
