@@ -28,13 +28,17 @@ enum class ShifaSectionType(internal val bg: Color, internal val border: Color? 
     CardTransparent(Color.Transparent),
 }
 
-/** Figma section: header ("Upcoming Appointment", "My Tasks") with an optional arrow, then [content]. */
+/**
+ * Figma section: header ("Upcoming Appointment", "My Tasks") with an optional arrow or [action], then [content].
+ * No [title], no header.
+ */
 @Composable
 fun ShifaSection(
-    title: String,
+    title: String?,
     modifier: Modifier = Modifier,
     type: ShifaSectionType = ShifaSectionType.CardOnColor,
     onMore: (() -> Unit)? = null,
+    action: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -58,20 +62,23 @@ fun ShifaSection(
         verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                title,
-                Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
-                color = ShifaColors.Text.Primary,
-            )
-            onMore?.let {
-                ShifaActionButton(
-                    it,
-                    icon = Res.drawable.ic_arrow_right_16,
-                    contentDescription = "See all",
-                    secondary = true,
+        if (title != null) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title,
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ShifaColors.Text.Primary,
                 )
+                onMore?.let {
+                    ShifaActionButton(
+                        it,
+                        icon = Res.drawable.ic_arrow_right_16,
+                        contentDescription = "See all",
+                        secondary = true,
+                    )
+                }
+                action?.invoke()
             }
         }
         content()

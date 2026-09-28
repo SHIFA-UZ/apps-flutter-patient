@@ -37,3 +37,27 @@ data class Appointment(
 
     fun isOver(now: Instant) = window?.let { now > it.endInclusive } ?: true
 }
+
+/** B1 item. Only in-person slots carry `locationId`. */
+@Serializable
+data class AvailableSlot(
+    val startAt: String,
+    val endAt: String = "",
+    val slotMinutes: Int = 30,
+    val locationId: Int? = null,
+) {
+    val start get() = parseInstant(startAt)
+}
+
+/** B3 body; nulls are left out (15 B3). */
+@Serializable
+data class BookingRequest(
+    val doctorId: Long,
+    val startAt: String,
+    val slotMinutes: Int,
+    val isVideo: Boolean,
+    val reason: String? = null,
+    val serviceId: Long? = null,
+    val locationId: Int? = null,
+    val documentIds: List<Long>? = null,
+)

@@ -6,7 +6,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +17,7 @@ import org.jetbrains.compose.resources.StringResource
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
+import shifa.uz.data.doctors.doctorsOf
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.RemoteCareTask
@@ -104,20 +104,11 @@ class HomeViewModel(
         return loadDoctors(all)
     }
 
-    // Figma "My Doctors": the doctors of the latest bookings, one D2 each. One that fails is left out.
-    private suspend fun loadDoctors(all: List<Appointment>): StringResource? =
-        coroutineScope {
-            val ids =
-                all.sortedByDescending { it.start }
-                    .mapNotNull { it.doctorId?.ifBlank { null } }
-                    .distinct()
-                    .take(HOME_ITEMS)
-            val results = ids.map { async { doctors.getDoctor(it) } }.awaitAll()
-            val found = results.mapNotNull { it.getOrNull() }
-            if (ids.isNotEmpty() && found.isEmpty()) return@coroutineScope results.first().exceptionOrNull()!!.toUserMessage()
-            update { copy(doctors = found) }
-            null
-        }
+    private suspend fun loadDoctors(all: List<Appointment>): StringResource? {
+        val found = doctors.doctorsOf(all, HOME_ITEMS).getOrElse { return it.toUserMessage() }
+        update { copy(doctors = found) }
+        return null
+    }
 
     private suspend fun loadTasks(): StringResource? {
         val all = tasks.getMyTasks().getOrElse { return it.toUserMessage() }

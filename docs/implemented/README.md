@@ -12,6 +12,7 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 | Tab shell and Home | [home.md](home.md) |
 | Profile and account | [profile.md](profile.md) |
 | Documents | [documents.md](documents.md) |
+| Bookings, appointment details and doctor profile | [bookings.md](bookings.md) |
 
 ## Status
 
@@ -29,11 +30,11 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 | AUTH-03 Create account | Mostly done | Figma 3-step wizard (account → info → photo), password checklist, check-identifier dialogs, the email/SMS choice with the email fallback. Not built: `PhoneInputField` with a country picker (a plain phone field instead, so the 04 parsing bug can't happen). |
 | AUTH-04 Register OTP verify | Mostly done | Code screen, masked destination, 300 s resend, `register-patient`, then the photo (P3) and step 2 (P2) are saved. Not built: the PIN setup prompt (needs LOCK-01). Not yet tried against the backend. |
 | AUTH-05 Doctor → patient | Mostly done | The step-1 "existing doctor" dialog replaces the confirm screen, then the email code and `create-patient-for-doctor`. Phone-only matches stop with "email required" (Q7). No PIN prompt (LOCK-01). |
-| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar; only Home and Documents are built, the rest and Home's links are "Coming soon" placeholders. Back goes page → Home tab → exit. The centre Shifa AI tab is shown (Figma). |
+| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar; Home, Bookings and Documents are built, the rest and Home's links are "Coming soon" placeholders. Back goes page → Home tab → exit. The centre Shifa AI tab is shown (Figma). |
 | SHELL-03 App header | Done | Avatar → Profile, bell → Notifications placeholder, with the N2 unread badge. No chat icon (not in the Figma header). |
-| HOME-01 Home + Upcoming | Done | P1 greeting, pull to refresh, B2 upcoming (confirmed, until the join window closes), "Now" + Join, error banner. Cards open a placeholder until BOOK-02. |
+| HOME-01 Home + Upcoming | Done | P1 greeting, pull to refresh, B2 upcoming (confirmed, until the join window closes), "Now" + Join, error banner. Cards and Join open the appointment details (BOOK-06). |
 | HOME-02 My Tasks | Done | T1, open tasks, up to 3. Opens the Tasks placeholder (TASK-01). |
-| HOME-03 My Doctors | Done (per Figma) | Figma replaces "Doctors near me" with "My Doctors": the doctors of the latest bookings, via D2. No location flow. |
+| HOME-03 My Doctors | Done (per Figma) | Figma replaces "Doctors near me" with "My Doctors": the doctors of the latest bookings, via D2. No location flow. Cards open the doctor profile; the arrow opens the full My Doctors page. |
 | HOME-04 Shared-state check | Done | Home has its own state. |
 | PROF-01 Profile + language dialog | Mostly done | Figma card, settings and account sections, pull to refresh, the language dialog (local + P2). App Lock and Privacy are placeholders. No version footer (not in Figma). |
 | PROF-02 Avatar upload | Mostly done | P3 then P2, from Profile and Edit profile. No cache-buster; the app lock isn't suspended (no LOCK-01). |
@@ -47,6 +48,14 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 | DOCS-01 Documents list | Done | Figma list with title search, pull to refresh and local dates. Category filter chips, a category tag on cards and swipe-left delete for own uploads (none of them in Figma). |
 | DOCS-02 Upload document | Mostly done | Camera / photo / PDF tray, the Figma upload pop-up with title and optional type, F2 multipart. No date field (not in Figma), no camera rationale, the app lock isn't suspended (no LOCK-01). |
 | DOCS-03 Viewer, download, delete | Mostly done | PdfRenderer / PDFKit and a zoomable image, real download, delete with confirm for own uploads. No details screen (deep links only). Not yet tried against the backend. |
+| DOC-01 Doctors list | Partly done | Only as the Bookings tab's Recommended doctors (Figma): debounced D1 search, the quick chips (Near me with the device location) and a See all arrow to the full Recommended page. No filters sheet, scroll pagination or availability enrichment. |
+| DOC-02 Doctor profile + reviews | Partly done | Figma profile: header card (Nearby tag after a Near me fix), About / Services / Certificates / Clinic tabs, contact links. Create Booking opens the booking page (BOOK-01). No reviews, service sheet or open in maps. |
+| DOC-03 Certificate viewer | Done | Certificates open in the documents viewer. |
+| BOOK-01 Booking flow | Mostly done | Figma page over the profile: video switch + service, date picker (today to +90 days), the 30-day slot scan from today, time chips, reason. No location step (not in Figma): the primary location, else the first. |
+| BOOK-02 Booking attachments | Mostly done | Up to 5 PDFs, each uploaded as `PRE_APPOINTMENT` when picked. They can't be removed once attached (not in Figma). |
+| BOOK-03 Confirm & create booking | Mostly done | The video checks, the double-booking check, then B3. On success, back to the Bookings tab with a notice. PENDING only shows the pending notice (BOOK-04 not built). Not pressed on a device (production). |
+| BOOK-05 Bookings list | Partly done | The Figma tab: Recommended doctors, My Doctors, Past Appointments on All (other chips: doctors only), each arrow opening its full page. No status tabs, upcoming list or pay later (not in Figma; BOOK-04 not built). |
+| BOOK-06 Appointment details, cancel, reschedule | Mostly done | Figma details, Contact (tel / mailto), cancel with confirm ≥ 48 h (B5) that refreshes the list and Home, the < 48 h warning. No reschedule yet. Not tried on a device (no appointments). |
 
 ## Log
 
@@ -63,3 +72,7 @@ Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 - 2026-09-27: Fixed backend error messages being dropped: the backend sends `error` as a number, which broke decoding, so every screen showed its generic error. Change password now says when the current password is wrong.
 - 2026-09-28: Built Documents (DOCS-01/02/03): the tab list with search, upload from camera, gallery or PDF, the PDF/image viewer with download and delete. The multipart file helper is shared with the avatar upload, which now sends a sanitized file name. Android saves pre-10 downloads without the storage permission.
 - 2026-09-28: Documents list: category filter chips and a category tag on cards, and swipe-left delete of the patient's own uploads with a spinner, then a success or error banner. Banners now sit above the list. Own uploads are matched by the profile name, since the backend sends the uploader's name in `creatorLabel` instead of "Patient".
+- 2026-09-28: Built the Bookings tab (BOOK-05, DOC-01 in part): doctor search with filter chips, recommended doctors, my doctors, past appointments. Built appointment details with contact and cancel (BOOK-06) and the doctor profile with its four tabs and certificates in the documents viewer (DOC-02/03). Home's cards now open them. `ShifaDoctorCard` can drop its shadow.
+- 2026-09-28: Near me: the device location (permission, one fix, last known on a timeout) sends D1 lat/lon within 50 km, and the profile shows Nearby. Recommended's arrow lists every doctor; D1 reads every page. A `null` in a list field (D1 now sends `certificates: null`) no longer drops the whole item.
+- 2026-09-28: Bookings: the sections show only on All, other chips list just doctors. The section arrows (Recommended, My Doctors, Past, and Home's My Doctors) open full list pages (Figma 1655:15670, 1655:15892) instead of expanding; My Doctors shows each doctor's last visit. Cards can drop their shadow. Figma's "Find Doctors near you" row is hidden.
+- 2026-09-28: Built Create Booking (BOOK-01/02/03, Figma 1662:18783, 1662:19457) from the doctor profile: video + service, date, the 30-day slot scan, time chips, reason, PDF attachments and B3 with the double-booking check. A booking goes back to the Bookings tab with a notice. `ShifaSection` takes a header action, and `ShifaActionButton` can put its icon after the text.

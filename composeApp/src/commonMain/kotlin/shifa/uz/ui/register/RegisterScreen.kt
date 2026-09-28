@@ -583,7 +583,6 @@ internal fun PasswordChecklist(password: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BirthDatePicker(
     selected: LocalDate?,
@@ -591,15 +590,28 @@ internal fun BirthDatePicker(
     onDismiss: () -> Unit,
 ) {
     val today = remember { getCurrentInstant().toLocalDateTime(TimeZone.currentSystemDefault()).date }
-    val todayMillis = today.toEpochMillis()
+    DayPicker(selected, LocalDate(1900, 1, 1)..today, selected ?: today.minus(25, DateTimeUnit.YEAR), onPick, onDismiss)
+}
+
+/** Material date picker over [range]; [shown] is the month it opens on. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun DayPicker(
+    selected: LocalDate?,
+    range: ClosedRange<LocalDate>,
+    shown: LocalDate,
+    onPick: (LocalDate) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val millis = range.start.toEpochMillis()..range.endInclusive.toEpochMillis()
     val picker =
         rememberDatePickerState(
             initialSelectedDateMillis = selected?.toEpochMillis(),
-            initialDisplayedMonthMillis = (selected ?: today.minus(25, DateTimeUnit.YEAR)).toEpochMillis(),
-            yearRange = 1900..today.year,
+            initialDisplayedMonthMillis = shown.toEpochMillis(),
+            yearRange = range.start.year..range.endInclusive.year,
             selectableDates =
                 object : SelectableDates {
-                    override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= todayMillis
+                    override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis in millis
                 },
         )
     DatePickerDialog(

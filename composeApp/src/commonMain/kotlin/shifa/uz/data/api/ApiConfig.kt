@@ -24,10 +24,17 @@ object ApiConfig {
         const val MY_TASKS = "tasks/my-tasks"
         const val UNREAD_NOTIFICATIONS_COUNT = "notifications/unread/count"
         const val DOCUMENTS = "patients/me/documents"
+        const val DOCTORS = "public/doctors"
 
         fun doctor(id: String) = "public/doctors/$id"
 
         fun document(id: String) = "patients/me/documents/$id"
+
+        fun appointment(id: String) = "patients/me/appointments/$id"
+
+        fun doctorLocations(id: String) = "public/doctors/$id/locations"
+
+        fun availableSlots(doctorId: String) = "patients/me/schedule/doctors/$doctorId/available"
     }
 
     // 01 §4.2: sent without a token. A request matches when its path ends with one of these.

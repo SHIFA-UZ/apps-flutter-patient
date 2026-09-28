@@ -94,7 +94,7 @@ enum class ShifaAppointmentStatus(
     Error(ShifaColors.Bg.ErrorSubtle, Res.drawable.ic_alert_circle_16, ShifaColors.Icon.Error),
 }
 
-/** Figma past-appointment-card. */
+/** Figma past-appointment-card. Figma drops the [shadow] on a full-page list. */
 @Composable
 fun ShifaPastAppointmentCard(
     doctorName: String,
@@ -104,8 +104,9 @@ fun ShifaPastAppointmentCard(
     avatarUrl: String? = null,
     status: ShifaAppointmentStatus = ShifaAppointmentStatus.Successful,
     video: Boolean = false,
+    shadow: Boolean = true,
     onClick: (() -> Unit)? = null,
-) = AppointmentCard(doctorName, subtitle, time, avatarUrl, video, modifier, onClick) {
+) = AppointmentCard(doctorName, subtitle, time, avatarUrl, video, modifier, onClick, shadow) {
     Box(
         Modifier.size(ShifaSize.S28).background(status.bg, ShifaRadius.Full),
         contentAlignment = Alignment.Center,
@@ -123,6 +124,7 @@ enum class ShifaDoctorCardType(internal val avatar: Dp, internal val badge: Dp) 
 /**
  * Figma doctor-card. Rows show when their param is set: Figma has rating + availability on
  * Full / Compact, tags on Full / In. [In] has a fixed width. [rating] is preformatted, e.g. "5.0(760)".
+ * Figma drops the [shadow] where the card is a page's flex header or on a full-page list.
  */
 @Composable
 fun ShifaDoctorCard(
@@ -135,11 +137,13 @@ fun ShifaDoctorCard(
     rating: String? = null,
     availability: String? = null,
     tags: (@Composable RowScope.() -> Unit)? = null,
+    shadow: Boolean = true,
     onClick: (() -> Unit)? = null,
 ) {
     CardChrome(
         if (type == ShifaDoctorCardType.In) modifier.width(ShifaDimens.DoctorCardInWidth) else modifier,
         onClick,
+        shadow = shadow,
     ) {
         Row(
             Modifier.fillMaxWidth(),
@@ -370,9 +374,10 @@ private fun AppointmentCard(
     video: Boolean,
     modifier: Modifier,
     onClick: (() -> Unit)?,
+    shadow: Boolean = true,
     trailing: @Composable () -> Unit,
 ) {
-    CardChrome(modifier, onClick) {
+    CardChrome(modifier, onClick, shadow = shadow) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             ShifaAvatar(avatarUrl, ShifaDimens.AppointmentAvatar)
             Spacer(Modifier.width(ShifaSpacing.Gap.Md))
@@ -462,12 +467,13 @@ internal fun CardChrome(
     modifier: Modifier,
     onClick: (() -> Unit)?,
     gap: Dp = ShifaSpacing.Gap.Sm,
+    shadow: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
         modifier
             .fillMaxWidth()
-            .dropShadow(ShifaRadius.ControlMd, ShifaShadow.Card)
+            .then(if (shadow) Modifier.dropShadow(ShifaRadius.ControlMd, ShifaShadow.Card) else Modifier)
             .clip(ShifaRadius.ControlMd)
             .background(ShifaColors.Bg.Surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)

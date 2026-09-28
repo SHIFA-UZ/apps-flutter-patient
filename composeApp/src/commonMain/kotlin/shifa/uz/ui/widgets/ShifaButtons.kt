@@ -149,6 +149,7 @@ fun ShifaActionButton(
     secondary: Boolean = false,
     enabled: Boolean = true,
     destructive: Boolean = false,
+    iconAfter: Boolean = false, // Create Booking: "Add PDF 📎"
 ) {
     val (bg, content) =
         when {
@@ -173,7 +174,7 @@ fun ShifaActionButton(
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        icon?.let { Icon(painterResource(it), contentDescription, tint = content) }
+        if (!iconAfter) icon?.let { Icon(painterResource(it), contentDescription, tint = content) }
         text?.let {
             val style = MaterialTheme.typography.labelMedium
             Text(
@@ -185,6 +186,7 @@ fun ShifaActionButton(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        if (iconAfter) icon?.let { Icon(painterResource(it), contentDescription, tint = content) }
     }
 }
 

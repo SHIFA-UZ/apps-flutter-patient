@@ -9,22 +9,28 @@ import io.ktor.client.engine.mock.respondOk
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.json.Json
 import org.junit.Test
 import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
 import shifa.uz.data.api.createHttpClient
 import shifa.uz.data.bookings.BookingsRepository
+import shifa.uz.data.doctors.DoctorsQuery
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.BookingRequest
 import shifa.uz.data.notifications.NotificationsRepository
 import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.data.storage.TokenStorage
 import shifa.uz.data.tasks.TasksRepository
 
-/** The Home calls: B2, T1, N2, D2, P1. */
+/** The Home and booking calls: B1, B2, B3, T1, N2, D1, D2, D3, P1. */
 class HomeRepositoriesTest {
     private var reply: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { respondOk() }
     private val engine = MockEngine { reply(it) }
@@ -103,6 +109,30 @@ class HomeRepositoriesTest {
         }
 
     @Test
+    fun `D1 reads every page, with the near me params`() =
+        runTest {
+            reply = {
+                val body =
+                    if (it.url.parameters["page"] == null) {
+                        """{"doctors":[{"id":1},{"id":2}],"totalCount":3}"""
+                    } else {
+                        """{"doctors":[{"id":3,"certificates":null}],"totalCount":3}"""
+                    }
+                respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+
+            val query = DoctorsQuery(latitude = 40.5, longitude = 72.0, radiusKm = 50.0)
+            val found = DoctorsRepository(client).searchDoctors(query).getOrThrow()
+
+            assertThat(found.map { it.id }).containsExactly("1", "2", "3").inOrder()
+            assertThat(engine.requestHistory).hasSize(2)
+            val last = engine.requestHistory.last().url.parameters
+            assertThat(last["page"]).isEqualTo("2")
+            assertThat(last["latitude"]).isEqualTo("40.5")
+            assertThat(last["radiusKm"]).isEqualTo("50.0")
+        }
+
+    @Test
     fun `a missing doctor isn't reported as a missing account`() =
         runTest {
             replyJson("{}", HttpStatusCode.NotFound)
@@ -123,5 +153,66 @@ class HomeRepositoriesTest {
             assertThat(profile.fullName).isEqualTo("Aziz Karimov")
             assertThat(profile.photoUrl).isEqualTo("https://x/p.jpg")
             assertThat(path).isEqualTo("/api/patients/me/profile")
+        }
+
+    @Test
+    fun `B1 sends the local day and the location only when set`() =
+        runTest {
+            replyJson(
+                """[{"startAt":"2026-09-30T05:00:00Z","endAt":"2026-09-30T05:30:00Z","slotMinutes":30,"locationId":3}]""",
+            )
+
+            val slots = BookingsRepository(client).getSlots("42", LocalDate(2026, 9, 30), 3).getOrThrow()
+
+            assertThat(slots.single().locationId).isEqualTo(3)
+            assertThat(path).isEqualTo("/api/patients/me/schedule/doctors/42/available")
+            val url = engine.requestHistory.last().url
+            assertThat(url.parameters["day"]).isEqualTo("2026-09-30")
+            assertThat(url.parameters["locationId"]).isEqualTo("3")
+
+            BookingsRepository(client).getSlots("42", LocalDate(2026, 9, 30), null)
+            assertThat(engine.requestHistory.last().url.parameters.names()).containsExactly("day")
+        }
+
+    @Test
+    fun `D3 drops placeholders, and an error is no locations`() =
+        runTest {
+            replyJson("""[{"id":0},{"id":4,"isPrimary":true}]""")
+            assertThat(DoctorsRepository(client).getLocations("42").map { it.id }).containsExactly(4)
+            assertThat(path).isEqualTo("/api/public/doctors/42/locations")
+
+            replyJson("{}", HttpStatusCode.InternalServerError)
+            assertThat(DoctorsRepository(client).getLocations("42")).isEmpty()
+        }
+
+    @Test
+    fun `B3 sends ids as numbers and leaves out what isn't set`() =
+        runTest {
+            replyJson("""{"id":9,"startAt":"2026-09-30T05:00:00Z","paymentStatus":"PENDING"}""")
+
+            val booked =
+                BookingsRepository(client)
+                    .book(
+                        BookingRequest(
+                            42,
+                            "2026-09-30T05:00:00Z",
+                            30,
+                            false,
+                            locationId = 3,
+                            documentIds = listOf(101),
+                        ),
+                    )
+                    .getOrThrow()
+
+            assertThat(booked.paymentStatus).isEqualTo("PENDING")
+            val request = engine.requestHistory.last()
+            assertThat(request.method).isEqualTo(HttpMethod.Post)
+            assertThat(path).isEqualTo("/api/patients/me/appointments")
+            assertThat(Json.parseToJsonElement((request.body as TextContent).text)).isEqualTo(
+                Json.parseToJsonElement(
+                    """{"doctorId":42,"startAt":"2026-09-30T05:00:00Z","slotMinutes":30,"isVideo":false,""" +
+                        """"locationId":3,"documentIds":[101]}""",
+                ),
+            )
         }
 }

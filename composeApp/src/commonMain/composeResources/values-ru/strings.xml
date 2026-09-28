@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">О приложении</string>
+    <string name="aboutDoctor">О враче</string>
     <string name="accountAlreadyExists">Аккаунт уже существует</string>
     <string name="accountCreated">Аккаунт успешно создан!</string>
     <string name="accountDeletedSuccess">Ваш аккаунт успешно удалён</string>
@@ -134,6 +135,7 @@
     <string name="consultationPaymentReminderMessage">Врач ждёт — оплатите сейчас, чтобы подтвердить видеоконсультацию.</string>
     <string name="consultationPaymentReminderTitle">Завершите оплату</string>
     <string name="consultationServiceFreeBadge">Бесплатно</string>
+    <string name="contact">Связаться</string>
     <string name="contactDoctor">Связаться с врачом</string>
     <string name="contactDoctorDirectly">Чтобы изменить эту запись, пожалуйста, свяжитесь с врачом напрямую.</string>
     <string name="contactInformation">Контактная информация</string>
@@ -216,6 +218,7 @@
     <string name="doctor">Врач</string>
     <string name="doctorHasScheduled">Врач запланировал для вас приём</string>
     <string name="doctorPatientAccountMessage">Для входа используйте пароль аккаунта врача. Код подтверждения будет отправлен на телефон и email.</string>
+    <string name="doctorProfile">Профиль врача</string>
     <string name="doctors">Врачи</string>
     <string name="doctorsCount">%1$s проверенных врачей</string>
     <string name="doctorsNearMe">Врачи рядом со мной</string>
@@ -409,15 +412,18 @@
     <string name="filterByRegion">Регион</string>
     <string name="filterBySpecialty">Специальность</string>
     <string name="filterConsultationType">Консультация</string>
+    <string name="filterEmergency">Срочно</string>
     <string name="filterMinRating">Рейтинг</string>
     <string name="filterNearMe">Рядом</string>
     <string name="filterOnline">Онлайн</string>
     <string name="filterPrice">Цена</string>
+    <string name="filterRemote">Онлайн</string>
     <string name="filterThisWeek">На этой неделе</string>
     <string name="filterToday">Сегодня</string>
     <string name="filterTopRated">Лучшие</string>
     <string name="filterVerified">Проверенные</string>
     <string name="findADoctor">Найти врача</string>
+    <string name="findDoctorsNearYou">Найдите врача рядом</string>
     <string name="firstName">Имя</string>
     <string name="forgotPassword">Забыли пароль?</string>
     <string name="forgotPasswordEnterEmail">Введите ваш email. Мы отправим вам код для сброса пароля.</string>
@@ -473,6 +479,7 @@
     <string name="language">Язык</string>
     <string name="languageChanged">Язык изменен на</string>
     <string name="lastName">Фамилия</string>
+    <string name="lastVisit">Последний визит</string>
     <string name="latitude">Широта</string>
     <string name="leaveReview">Оставить отзыв</string>
     <string name="loading">Загрузка...</string>
@@ -502,6 +509,7 @@
     <string name="myTasks">Мои задачи</string>
     <string name="name">Имя</string>
     <string name="navigationError">Ошибка навигации</string>
+    <string name="nearby">Рядом</string>
     <string name="neurologist">Невролог</string>
     <string name="newAppointmentBookedButFailedToCancelOld">Новый приём забронирован, но не удалось отменить старый</string>
     <string name="newAppointmentScheduled">Назначен новый приём</string>
@@ -597,6 +605,7 @@
     <string name="passwordTooShort">Пароль должен содержать не менее 6 символов</string>
     <string name="passwordsDoNotMatch">Пароли не совпадают</string>
     <string name="past">Прошедшие</string>
+    <string name="pastAppointments">Прошедшие приёмы</string>
     <string name="patient">Пациент</string>
     <string name="payNow">Оплатить сейчас</string>
     <string name="paymentCompletedAppointmentConfirmed">Оплата завершена. Запись подтверждена.</string>
@@ -649,6 +658,7 @@
     <string name="pulmonologist">Пульмонолог</string>
     <string name="pushNewNotification">Новое уведомление</string>
     <string name="rating">Рейтинг</string>
+    <string name="recommendedDoctors">Рекомендуемые врачи</string>
     <string name="reEnterPin">Введите PIN ещё раз</string>
     <string name="reason">Причина</string>
     <string name="reasonForVisit">Причина визита</string>
@@ -672,6 +682,7 @@
     <string name="save">Сохранить</string>
     <string name="saveChanges">Сохранить изменения</string>
     <string name="savePassword">Сохранить и продолжить</string>
+    <string name="search">Поиск</string>
     <string name="searchCountry">Поиск страны...</string>
     <string name="searchDoctors">Поиск врачей...</string>
     <string name="searchDoctorsHint">Поиск врача, клиники или специальности...</string>
@@ -856,4 +867,50 @@
     <string name="youCanAddPhotoLater">Фото можно добавить позже в настройках профиля</string>
     <string name="yourRating">Ваша оценка</string>
     <string name="yourSignature">Ваша подпись</string>
+    <string name="bookingSlotTaken">У вас уже есть запись на это время. Пожалуйста, выберите другое время.</string>
+    <string name="completeBooking">Завершить запись</string>
+    <string name="select">Выбрать</string>
+    <plurals name="documentsAttached">
+        <item quantity="one">%1$d документ прикреплён</item>
+        <item quantity="few">%1$d документа прикреплено</item>
+        <item quantity="many">%1$d документов прикреплено</item>
+        <item quantity="other">%1$d документа прикреплено</item>
+    </plurals>
+    <string-array name="months">
+        <item>января</item>
+        <item>февраля</item>
+        <item>марта</item>
+        <item>апреля</item>
+        <item>мая</item>
+        <item>июня</item>
+        <item>июля</item>
+        <item>августа</item>
+        <item>сентября</item>
+        <item>октября</item>
+        <item>ноября</item>
+        <item>декабря</item>
+    </string-array>
+    <string-array name="monthsShort">
+        <item>янв</item>
+        <item>фев</item>
+        <item>мар</item>
+        <item>апр</item>
+        <item>мая</item>
+        <item>июн</item>
+        <item>июл</item>
+        <item>авг</item>
+        <item>сен</item>
+        <item>окт</item>
+        <item>ноя</item>
+        <item>дек</item>
+    </string-array>
+    <string-array name="weekdays">
+        <item>понедельник</item>
+        <item>вторник</item>
+        <item>среда</item>
+        <item>четверг</item>
+        <item>пятница</item>
+        <item>суббота</item>
+        <item>воскресенье</item>
+    </string-array>
 </resources>

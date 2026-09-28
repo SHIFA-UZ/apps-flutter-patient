@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="aboutDoctor">Über</string>
     <string name="accountCreated">Konto erfolgreich erstellt!</string>
     <string name="accountDeletedSuccess">Ihr Konto wurde erfolgreich gelöscht</string>
     <string name="accountInformation">Kontoinformationen</string>
@@ -76,6 +77,7 @@
     <string name="consultationPaymentDue6hMessage">Ihre Videosprechstunde ist in 6 Stunden. Bitte schließen Sie die Zahlung ab, um die Buchung zu bestätigen.</string>
     <string name="consultationPaymentReminderMessage">Ihr Arzt wartet — bitte bezahlen Sie jetzt, um die Videosprechstunde zu bestätigen.</string>
     <string name="consultationPaymentReminderTitle">Zahlung abschließen</string>
+    <string name="contact">Kontakt</string>
     <string name="contactDoctor">Arzt kontaktieren</string>
     <string name="contactDoctorDirectly">Um diesen Termin zu ändern, kontaktieren Sie bitte den Arzt direkt.</string>
     <string name="contactInformation">Kontaktinformationen</string>
@@ -138,6 +140,7 @@
     <string name="deleteAccountWarning">Diese Aktion ist irreversibel. Ihre persönlichen Identifikatoren (Telefon/E-Mail/Name) werden entfernt. Einige medizinische Daten können gesetzlich vorgeschrieben gespeichert bleiben, sind aber von einem neuen Konto aus nicht zugänglich.</string>
     <string name="deleteDocumentConfirmation">Möchten Sie dieses Dokument wirklich löschen?</string>
     <string name="doctor">Arzt</string>
+    <string name="doctorProfile">Arztprofil</string>
     <string name="doctors">Ärzte</string>
     <string name="doctorsCount">%1$s verifizierte Ärzte</string>
     <string name="doctorsNearMe">Ärzte in meiner Nähe</string>
@@ -234,15 +237,18 @@
     <string name="filterByRegion">Region</string>
     <string name="filterBySpecialty">Fachgebiet</string>
     <string name="filterConsultationType">Konsultation</string>
+    <string name="filterEmergency">Notfall</string>
     <string name="filterMinRating">Bewertung</string>
     <string name="filterNearMe">In der Nähe</string>
     <string name="filterOnline">Online</string>
     <string name="filterPrice">Preis</string>
+    <string name="filterRemote">Online</string>
     <string name="filterThisWeek">Diese Woche</string>
     <string name="filterToday">Heute</string>
     <string name="filterTopRated">Top bewertet</string>
     <string name="filterVerified">Verifiziert</string>
     <string name="findADoctor">Arzt finden</string>
+    <string name="findDoctorsNearYou">Ärzte in Ihrer Nähe</string>
     <string name="forgotPassword">Passwort vergessen?</string>
     <string name="forgotPasswordEnterEmail">Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Bestätigungscode zum Zurücksetzen des Passworts.</string>
     <string name="form0252ConfirmSigning">Ich habe dieses Formular gelesen und stimme der Unterschrift zu.</string>
@@ -276,6 +282,7 @@
     <string name="language">Sprache</string>
     <string name="languageChanged">Sprache geändert zu</string>
     <string name="leaveReview">Bewertung abgeben</string>
+    <string name="lastVisit">Letzter Besuch</string>
     <string name="loading">Lädt...</string>
     <string name="location">Standort</string>
     <string name="locationAndLanguage">Standort &amp; Sprache</string>
@@ -292,6 +299,7 @@
     <string name="moreFilters">Filter</string>
     <string name="myDoctors">Meine Ärzte</string>
     <string name="name">Vorname</string>
+    <string name="nearby">In der Nähe</string>
     <string name="newAppointmentScheduledTitle">Neuer Termin geplant</string>
     <string name="newDocumentMessage">Ein neues Dokument wurde Ihrer Akte hinzugefügt. Tippen Sie zum Ansehen.</string>
     <string name="newDocumentTitle">Neues Dokument</string>
@@ -354,6 +362,7 @@
     <string name="passwordTooShort">Passwort muss mindestens 6 Zeichen lang sein</string>
     <string name="passwordsDoNotMatch">Passwörter stimmen nicht überein</string>
     <string name="past">Vergangen</string>
+    <string name="pastAppointments">Vergangene Termine</string>
     <string name="patient">Patient</string>
     <string name="payNow">Jetzt bezahlen</string>
     <string name="paymentCompletedAppointmentConfirmed">Zahlung abgeschlossen. Termin ist bestätigt.</string>
@@ -388,6 +397,7 @@
     <string name="reasonForVisit">Grund für den Besuch</string>
     <string name="recentDoctors">Zuletzt</string>
     <string name="recommended">Empfohlen</string>
+    <string name="recommendedDoctors">Empfohlene Ärzte</string>
     <string name="registrationFailed">Registrierung fehlgeschlagen</string>
     <string name="remindMe">Erinnere mich</string>
     <string name="removePhoto">Foto entfernen</string>
@@ -397,6 +407,7 @@
     <string name="retry">Wiederholen</string>
     <string name="reviews">Bewertungen</string>
     <string name="save">Speichern</string>
+    <string name="search">Suche</string>
     <string name="searchCountry">Land suchen...</string>
     <string name="searchDoctors">Ärzte suchen...</string>
     <string name="searchDoctorsHint">Arzt, Klinik oder Fachgebiet suchen...</string>
@@ -510,4 +521,48 @@
     <string name="yes">Ja</string>
     <string name="yesterday">Gestern</string>
     <string name="yourRating">Ihre Bewertung</string>
+    <string name="bookingSlotTaken">Sie haben zu diesem Datum und dieser Uhrzeit bereits einen Termin. Bitte wählen Sie eine andere Uhrzeit.</string>
+    <string name="completeBooking">Buchung abschließen</string>
+    <string name="select">Auswählen</string>
+    <plurals name="documentsAttached">
+        <item quantity="one">%1$d Dokument angehängt</item>
+        <item quantity="other">%1$d Dokumente angehängt</item>
+    </plurals>
+    <string-array name="months">
+        <item>Januar</item>
+        <item>Februar</item>
+        <item>März</item>
+        <item>April</item>
+        <item>Mai</item>
+        <item>Juni</item>
+        <item>Juli</item>
+        <item>August</item>
+        <item>September</item>
+        <item>Oktober</item>
+        <item>November</item>
+        <item>Dezember</item>
+    </string-array>
+    <string-array name="monthsShort">
+        <item>Jan.</item>
+        <item>Feb.</item>
+        <item>März</item>
+        <item>Apr.</item>
+        <item>Mai</item>
+        <item>Juni</item>
+        <item>Juli</item>
+        <item>Aug.</item>
+        <item>Sep.</item>
+        <item>Okt.</item>
+        <item>Nov.</item>
+        <item>Dez.</item>
+    </string-array>
+    <string-array name="weekdays">
+        <item>Montag</item>
+        <item>Dienstag</item>
+        <item>Mittwoch</item>
+        <item>Donnerstag</item>
+        <item>Freitag</item>
+        <item>Samstag</item>
+        <item>Sonntag</item>
+    </string-array>
 </resources>

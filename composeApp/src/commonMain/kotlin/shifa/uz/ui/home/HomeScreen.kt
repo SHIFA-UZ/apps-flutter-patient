@@ -60,6 +60,7 @@ import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaBanner
 import shifa.uz.ui.widgets.ShifaBannerType
+import shifa.uz.ui.widgets.ShifaCarousel
 import shifa.uz.ui.widgets.ShifaDoctorCard
 import shifa.uz.ui.widgets.ShifaDoctorCardType
 import shifa.uz.ui.widgets.ShifaMainHeader
@@ -176,19 +177,21 @@ internal fun HomeContent(
     }
 }
 
-/** A spinner until the first load, the empty text, or up to [HOME_ITEMS] cards. Hidden when a first load failed. */
+/** A spinner until the first load, the empty text, or up to [limit] cards. Hidden when a first load failed. No [title], no header. */
 @Composable
-private fun <T> HomeSection(
-    title: StringResource,
+internal fun <T> HomeSection(
+    title: StringResource?,
     items: List<T>?,
     isLoading: Boolean,
     empty: StringResource,
     type: ShifaSectionType = ShifaSectionType.CardTransparent,
     onMore: (() -> Unit)? = null,
+    limit: Int = HOME_ITEMS,
+    carousel: Boolean = false,
     card: @Composable (T) -> Unit,
 ) {
     if (items == null && !isLoading) return
-    ShifaSection(stringResource(title), type = type, onMore = onMore) {
+    ShifaSection(title?.let { stringResource(it) }, type = type, onMore = onMore) {
         when {
             items == null -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
             items.isEmpty() ->
@@ -199,9 +202,14 @@ private fun <T> HomeSection(
                     color = ShifaColors.Text.Tertiary,
                     textAlign = TextAlign.Center,
                 )
+            carousel ->
+                ShifaCarousel(
+                    Modifier.fillMaxWidth(),
+                    ShifaSpacing.Gap.Sm,
+                ) { items.take(limit).forEach { card(it) } }
             else ->
                 Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
-                    items.take(HOME_ITEMS).forEach { card(it) }
+                    items.take(limit).forEach { card(it) }
                 }
         }
     }
@@ -259,10 +267,12 @@ private fun TaskCard(
 }
 
 @Composable
-private fun DoctorCard(
+internal fun DoctorCard(
     doctor: Doctor,
     now: Instant,
     onClick: (Doctor) -> Unit,
+    availability: String? = parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now) },
+    shadow: Boolean = true,
 ) = ShifaDoctorCard(
     name = doctor.name,
     specialty = listOfNotNull(doctor.profession, doctor.clinic).filter(String::isNotBlank).joinToString(" - "),
@@ -270,12 +280,13 @@ private fun DoctorCard(
     avatarUrl = doctor.photoUrl,
     verified = doctor.isVerified,
     rating = doctor.ratingText,
-    availability = parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now) },
+    availability = availability,
+    shadow = shadow,
     onClick = { onClick(doctor) },
 )
 
 @Composable
-private fun slot(
+internal fun slot(
     at: Instant,
     now: Instant,
 ) = formatSlot(at, now, stringResource(Res.string.availabilityToday), stringResource(Res.string.availabilityTomorrow))

@@ -12,6 +12,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Shifa needs camera access to take profile photos and photos for documents or chat.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Shifa uses your location to show doctors near you.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

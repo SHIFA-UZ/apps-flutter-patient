@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Haqida</string>
+    <string name="aboutDoctor">Haqida</string>
     <string name="accountAlreadyExists">Hisob allaqachon mavjud</string>
     <string name="accountCreated">Hisob muvaffaqiyatli yaratildi!</string>
     <string name="accountDeletedSuccess">Akkauntingiz muvaffaqiyatli o'chirildi</string>
@@ -134,6 +135,7 @@
     <string name="consultationPaymentReminderMessage">Shifokoringiz kutmoqda — video maslahatni tasdiqlash uchun hozir to'lang.</string>
     <string name="consultationPaymentReminderTitle">To'lovni yakunlang</string>
     <string name="consultationServiceFreeBadge">Bepul</string>
+    <string name="contact">Bog'lanish</string>
     <string name="contactDoctor">Shifokor bilan bog'lanish</string>
     <string name="contactDoctorDirectly">Uchrashuvni o'zgartirish uchun shifokor bilan to'g'ridan-to'g'ri bog'laning.</string>
     <string name="contactInformation">Aloqa ma'lumotlari</string>
@@ -216,6 +218,7 @@
     <string name="doctor">Shifokor</string>
     <string name="doctorHasScheduled">Shifokor siz uchun qabul belgiladi</string>
     <string name="doctorPatientAccountMessage">Shifokor hisobi parolingiz bilan kirasiz. Telefoningiz va emailingizga tasdiqlash kodi yuboriladi.</string>
+    <string name="doctorProfile">Shifokor profili</string>
     <string name="doctors">Shifokorlar</string>
     <string name="doctorsCount">%1$s tasdiqlangan shifokor</string>
     <string name="doctorsNearMe">Yaqinimdagi shifokorlar</string>
@@ -409,15 +412,18 @@
     <string name="filterByRegion">Viloyat</string>
     <string name="filterBySpecialty">Mutaxassislik</string>
     <string name="filterConsultationType">Konsultatsiya</string>
+    <string name="filterEmergency">Shoshilinch</string>
     <string name="filterMinRating">Reyting</string>
     <string name="filterNearMe">Yaqinimda</string>
     <string name="filterOnline">Onlayn</string>
     <string name="filterPrice">Narx</string>
+    <string name="filterRemote">Masofaviy</string>
     <string name="filterThisWeek">Bu hafta</string>
     <string name="filterToday">Bugun</string>
     <string name="filterTopRated">Eng yuqori reyting</string>
     <string name="filterVerified">Tasdiqlangan</string>
     <string name="findADoctor">Shifokor topish</string>
+    <string name="findDoctorsNearYou">Yaqiningizdagi shifokorlar</string>
     <string name="firstName">Ism</string>
     <string name="forgotPassword">Parolni unutdingizmi?</string>
     <string name="forgotPasswordEnterEmail">Email manzilingizni kiriting. Parolni tiklash uchun tasdiqlash kodi yuboramiz.</string>
@@ -473,6 +479,7 @@
     <string name="language">Til</string>
     <string name="languageChanged">Til o'zgartirildi</string>
     <string name="lastName">Familiya</string>
+    <string name="lastVisit">Oxirgi tashrif</string>
     <string name="latitude">Kenglik</string>
     <string name="leaveReview">Sharh qoldirish</string>
     <string name="loading">Yuklanmoqda...</string>
@@ -502,6 +509,7 @@
     <string name="myTasks">Mening vazifalarim</string>
     <string name="name">Ism</string>
     <string name="navigationError">Navigatsiya xatosi</string>
+    <string name="nearby">Yaqin</string>
     <string name="neurologist">Nevrolog</string>
     <string name="newAppointmentBookedButFailedToCancelOld">Yangi uchrashuv band qilindi, lekin eskisini bekor qilish muvaffaqiyatsiz</string>
     <string name="newAppointmentScheduled">Yangi qabul rejalashtirildi</string>
@@ -597,6 +605,7 @@
     <string name="passwordTooShort">Parol kamida 8 belgidan iborat bo'lishi kerak</string>
     <string name="passwordsDoNotMatch">Parollar mos kelmaydi</string>
     <string name="past">O'tgan</string>
+    <string name="pastAppointments">O'tgan qabullar</string>
     <string name="patient">Bemor</string>
     <string name="payNow">Hozir to'lash</string>
     <string name="paymentCompletedAppointmentConfirmed">To'lov yakunlandi. Uchrashuv tasdiqlandi.</string>
@@ -649,6 +658,7 @@
     <string name="pulmonologist">Pulmonolog</string>
     <string name="pushNewNotification">Yangi bildirishnoma</string>
     <string name="rating">Baholash</string>
+    <string name="recommendedDoctors">Tavsiya etilgan shifokorlar</string>
     <string name="reEnterPin">PIN-kodingizni qayta kiriting</string>
     <string name="reason">Sabab</string>
     <string name="reasonForVisit">Tashrif sababi</string>
@@ -672,6 +682,7 @@
     <string name="save">Saqlash</string>
     <string name="saveChanges">O'zgarishlarni saqlash</string>
     <string name="savePassword">Saqlash va davom etish</string>
+    <string name="search">Qidirish</string>
     <string name="searchCountry">Mamlakatni qidirish...</string>
     <string name="searchDoctors">Shifokorlarni qidirish...</string>
     <string name="searchDoctorsHint">Shifokor, klinika yoki mutaxassislik qidirish...</string>
@@ -856,4 +867,48 @@
     <string name="youCanAddPhotoLater">Profil sozlamalaridan keyinroq rasm qo'shishingiz mumkin</string>
     <string name="yourRating">Sizning bahoingiz</string>
     <string name="yourSignature">Sizning imzoingiz</string>
+    <string name="bookingSlotTaken">Sizda bu sana va vaqtga allaqachon uchrashuv bor. Iltimos, boshqa vaqtni tanlang.</string>
+    <string name="completeBooking">Bronni yakunlash</string>
+    <string name="select">Tanlash</string>
+    <plurals name="documentsAttached">
+        <item quantity="one">%1$d ta hujjat biriktirildi</item>
+        <item quantity="other">%1$d ta hujjat biriktirildi</item>
+    </plurals>
+    <string-array name="months">
+        <item>yanvar</item>
+        <item>fevral</item>
+        <item>mart</item>
+        <item>aprel</item>
+        <item>may</item>
+        <item>iyun</item>
+        <item>iyul</item>
+        <item>avgust</item>
+        <item>sentabr</item>
+        <item>oktabr</item>
+        <item>noyabr</item>
+        <item>dekabr</item>
+    </string-array>
+    <string-array name="monthsShort">
+        <item>yan</item>
+        <item>fev</item>
+        <item>mar</item>
+        <item>apr</item>
+        <item>may</item>
+        <item>iyn</item>
+        <item>iyl</item>
+        <item>avg</item>
+        <item>sen</item>
+        <item>okt</item>
+        <item>noy</item>
+        <item>dek</item>
+    </string-array>
+    <string-array name="weekdays">
+        <item>dushanba</item>
+        <item>seshanba</item>
+        <item>chorshanba</item>
+        <item>payshanba</item>
+        <item>juma</item>
+        <item>shanba</item>
+        <item>yakshanba</item>
+    </string-array>
 </resources>
