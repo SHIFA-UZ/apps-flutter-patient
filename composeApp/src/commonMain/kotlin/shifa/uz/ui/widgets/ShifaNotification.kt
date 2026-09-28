@@ -44,7 +44,7 @@ enum class ShifaNotificationType(
     Feedback(Res.drawable.ic_info_16, ShifaColors.Icon.Warning),
 }
 
-/** Figma notification, every type but message. Feedback has no [time] in Figma. */
+/** Figma notification, every type but message. Feedback has no [time] in Figma. [unread] titles are brand (not in Figma). */
 @Composable
 fun ShifaNotification(
     title: String,
@@ -52,6 +52,7 @@ fun ShifaNotification(
     type: ShifaNotificationType,
     modifier: Modifier = Modifier,
     time: String? = null,
+    unread: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val feedback = type == ShifaNotificationType.Feedback
@@ -72,7 +73,7 @@ fun ShifaNotification(
             .padding(ShifaSpacing.Inset.Sm),
         verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
     ) {
-        TitleBar(title, time, type)
+        TitleBar(title, time, type, unread)
         NotificationBody(body)
     }
 }
@@ -113,6 +114,7 @@ private fun TitleBar(
     title: String,
     time: String?,
     type: ShifaNotificationType?,
+    unread: Boolean = false,
 ) {
     Row(
         Modifier.fillMaxWidth(),
@@ -130,7 +132,7 @@ private fun TitleBar(
                 title,
                 Modifier.lineBox(style),
                 style = style,
-                color = ShifaColors.Text.Primary,
+                color = if (unread) ShifaColors.Text.Brand else ShifaColors.Text.Primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

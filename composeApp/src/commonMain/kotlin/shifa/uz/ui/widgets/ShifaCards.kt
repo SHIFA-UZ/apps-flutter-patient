@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -384,6 +385,9 @@ private fun AppointmentCard(
     }
 }
 
+/** Cards on a white surface, as in Figma's notification trays: canvas fill, no shadow, no chevron. */
+val LocalCardOnSurface = staticCompositionLocalOf { false }
+
 @Composable
 private fun DisplayCard(
     title: String,
@@ -403,7 +407,7 @@ private fun DisplayCard(
                 CardTitle(title)
                 lines()
             }
-            if (onClick != null) Chevron()
+            if (onClick != null && !LocalCardOnSurface.current) Chevron()
         }
     }
 }
@@ -441,7 +445,7 @@ internal fun ShifaAvatar(
     url: String?,
     size: Dp,
     modifier: Modifier = Modifier,
-    placeholder: Color = ShifaColors.Bg.Canvas,
+    placeholder: Color = if (LocalCardOnSurface.current) ShifaColors.Bg.Surface else ShifaColors.Bg.Canvas,
 ) {
     Box(modifier.size(size).clip(ShifaRadius.Full).background(placeholder)) {
         if (url != null) {
@@ -463,12 +467,13 @@ internal fun CardChrome(
     shadow: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val onSurface = LocalCardOnSurface.current
     Column(
         modifier
             .fillMaxWidth()
-            .then(if (shadow) Modifier.dropShadow(ShifaRadius.ControlMd, ShifaShadow.Card) else Modifier)
+            .then(if (shadow && !onSurface) Modifier.dropShadow(ShifaRadius.ControlMd, ShifaShadow.Card) else Modifier)
             .clip(ShifaRadius.ControlMd)
-            .background(ShifaColors.Bg.Surface)
+            .background(if (onSurface) ShifaColors.Bg.Canvas else ShifaColors.Bg.Surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(ShifaSpacing.Inset.Sm),
         verticalArrangement = Arrangement.spacedBy(gap),

@@ -31,7 +31,7 @@ import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.data.storage.TokenStorage
 import shifa.uz.data.tasks.TasksRepository
 
-/** The Home, booking and task calls: B1, B2, B3, T1, T3, T4, N2, D1, D2, D3, P1. */
+/** The Home, booking and task calls: B1, B2, B3, T1, T3, T4, N1-N4, D1, D2, D3, P1, P7. */
 class HomeRepositoriesTest {
     private var reply: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { respondOk() }
     private val engine = MockEngine { reply(it) }
@@ -120,6 +120,45 @@ class HomeRepositoriesTest {
             replyJson("""{"count":12}""")
             assertThat(NotificationsRepository(client).unreadCount().getOrThrow()).isEqualTo(12)
             assertThat(path).isEqualTo("/api/notifications/unread/count")
+        }
+
+    @Test
+    fun `N1 reads linked ids from any spot, and skips items without a date`() =
+        runTest {
+            replyJson(
+                """[{"id":1,"title":"t","message":"m","type":"TASK_ASSIGNED","createdAt":"2026-09-28T08:00:00Z",""" +
+                    """"data":{"task_id":7}},{"id":2,"title":"t","message":"m","type":"X","createdAt":"soon"},""" +
+                    """{"id":3,"title":"t","message":"m","type":"NEW_DOCUMENT","createdAt":"2026-09-28T09:00:00Z",""" +
+                    """"document_id":"d","readAt":"2026-09-28T10:00:00Z"}]""",
+            )
+
+            val list = NotificationsRepository(client).getNotifications().getOrThrow()
+
+            assertThat(list.map { it.id }).containsExactly(1, 3).inOrder()
+            assertThat(list[0].task).isEqualTo("7")
+            assertThat(list[0].createdAt).isEqualTo(Instant.parse("2026-09-28T08:00:00Z"))
+            assertThat(list[1].document).isEqualTo("d")
+            assertThat(list.map { it.isRead }).containsExactly(false, true).inOrder()
+            assertThat(path).isEqualTo("/api/notifications")
+        }
+
+    @Test
+    fun `N3, N4 and P7 are PUTs`() =
+        runTest {
+            NotificationsRepository(client).markRead(5).getOrThrow()
+            assertThat(engine.requestHistory.last().method).isEqualTo(HttpMethod.Put)
+            assertThat(path).isEqualTo("/api/notifications/5/read")
+
+            NotificationsRepository(client).markAllRead().getOrThrow()
+            assertThat(engine.requestHistory.last().method).isEqualTo(HttpMethod.Put)
+            assertThat(path).isEqualTo("/api/notifications/read-all")
+
+            NotificationsRepository(client).registerPushToken("fcm").getOrThrow()
+            val request = engine.requestHistory.last()
+            assertThat(request.method).isEqualTo(HttpMethod.Put)
+            assertThat(path).isEqualTo("/api/patients/me/fcm-token")
+            assertThat(Json.parseToJsonElement((request.body as TextContent).text))
+                .isEqualTo(Json.parseToJsonElement("""{"fcmToken":"fcm"}"""))
         }
 
     @Test

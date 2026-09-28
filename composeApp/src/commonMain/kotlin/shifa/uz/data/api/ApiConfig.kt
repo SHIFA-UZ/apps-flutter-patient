@@ -22,7 +22,9 @@ object ApiConfig {
         const val FCM_TOKEN = "patients/me/fcm-token"
         const val APPOINTMENTS = "patients/me/appointments"
         const val MY_TASKS = "tasks/my-tasks"
+        const val NOTIFICATIONS = "notifications"
         const val UNREAD_NOTIFICATIONS_COUNT = "notifications/unread/count"
+        const val NOTIFICATIONS_READ_ALL = "notifications/read-all"
         const val DOCUMENTS = "patients/me/documents"
         const val DOCTORS = "public/doctors"
 
@@ -31,6 +33,8 @@ object ApiConfig {
         fun document(id: String) = "patients/me/documents/$id"
 
         fun appointment(id: String) = "patients/me/appointments/$id"
+
+        fun notificationRead(id: Int) = "notifications/$id/read"
 
         fun doctorLocations(id: String) = "public/doctors/$id/locations"
 

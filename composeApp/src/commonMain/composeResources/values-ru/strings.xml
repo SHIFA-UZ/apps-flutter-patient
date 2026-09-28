@@ -563,6 +563,7 @@
     <string name="notificationFilterAll">Все</string>
     <string name="notificationFilterAppointments">Приёмы</string>
     <string name="notificationFilterDocuments">Документы</string>
+    <string name="notificationFilterPayments">Платежи</string>
     <string name="notificationFilterTasks">Задачи</string>
     <string name="notificationInstallmentDueSoonMessage">Через несколько дней срок платежа по плану лечения. Откройте для подробностей.</string>
     <string name="notificationInstallmentDueSoonTitle">Скоро платёж по плану</string>

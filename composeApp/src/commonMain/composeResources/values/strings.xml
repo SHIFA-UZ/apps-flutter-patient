@@ -563,6 +563,7 @@
     <string name="notificationFilterAll">All</string>
     <string name="notificationFilterAppointments">Appointments</string>
     <string name="notificationFilterDocuments">Documents</string>
+    <string name="notificationFilterPayments">Payments</string>
     <string name="notificationFilterTasks">Tasks</string>
     <string name="notificationInstallmentDueSoonMessage">A treatment plan installment is due in a few days. Open to view details.</string>
     <string name="notificationInstallmentDueSoonTitle">Installment due soon</string>

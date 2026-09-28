@@ -29,6 +29,7 @@ const val FAILED_TO_LOAD_TASKS = "Failed to load tasks"
 const val FAILED_TO_LOAD_CHECK_INS = "Failed to load check-ins" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_SUBMIT_CHECK_IN = "Failed to submit check-in" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_NOTIFICATIONS = "Error loading notifications"
+const val FAILED_TO_MARK_READ = "Failed to mark notifications as read" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_DOCUMENTS = "Failed to load documents" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_UPLOAD_DOCUMENT = "Failed to upload document"
 const val FAILED_TO_DELETE_DOCUMENT = "Failed to delete document"

@@ -217,7 +217,7 @@ internal fun <T> HomeSection(
 
 // ponytail: professions show as the API sends them; the translated catalog comes with the doctors list (DOC-01).
 @Composable
-private fun UpcomingCard(
+internal fun UpcomingCard(
     appointment: Appointment,
     now: Instant,
     onClick: (Appointment) -> Unit,

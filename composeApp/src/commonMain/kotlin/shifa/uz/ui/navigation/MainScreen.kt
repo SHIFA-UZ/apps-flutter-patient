@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -32,12 +33,10 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import org.jetbrains.compose.resources.StringResource
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.comingSoon
-import shifa.composeapp.generated.resources.notifications
-import shifa.composeapp.generated.resources.profile
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.PatientDocument
@@ -55,6 +54,9 @@ import shifa.uz.ui.documents.DocumentsScreen
 import shifa.uz.ui.documents.DocumentsViewModel
 import shifa.uz.ui.home.HomeScreen
 import shifa.uz.ui.home.HomeViewModel
+import shifa.uz.ui.notifications.NotificationLink
+import shifa.uz.ui.notifications.NotificationsScreen
+import shifa.uz.ui.notifications.PushViewModel
 import shifa.uz.ui.profile.ProfileScreen
 import shifa.uz.ui.tasks.TaskCheckInScreen
 import shifa.uz.ui.tasks.TasksScreen
@@ -62,12 +64,10 @@ import shifa.uz.ui.tasks.TasksViewModel
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.utils.PushSetup
 
-// Pages over the tabs. ponytail: all but Account are placeholders, each becomes a real screen with its ticket.
-private enum class Page(val title: StringResource) {
-    Account(Res.string.profile), // PROF-01
-    Notifications(Res.string.notifications), // NOTIF-01
-}
+// Pages over the tabs.
+private enum class Page { Account, Notifications }
 
 /** The signed-in shell (02): tabs under the floating nav bar, pages over it. */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -82,6 +82,7 @@ fun MainScreen(
         val documents = viewModel { DocumentsViewModel() }
         val bookings = viewModel { BookingsViewModel() }
         val tasks = viewModel { TasksViewModel() }
+        val push = viewModel { PushViewModel() }
         val homeState by home.state.collectAsState()
         val nearMe = bookings.state.collectAsState().value.location
         var tab by rememberSaveable { mutableStateOf(ShifaTab.Home) }
@@ -97,6 +98,32 @@ fun MainScreen(
         val tabs = rememberSaveableStateHolder()
         val density = LocalDensity.current
         var navPadding by remember { mutableStateOf(PaddingValues()) }
+        val follow = { link: NotificationLink ->
+            page = null
+            when (link) {
+                is NotificationLink.ToAppointment -> appointment = link.appointment
+                is NotificationLink.ToDocument -> viewing = link.document
+                is NotificationLink.ToTask -> checkIn = link.task
+                NotificationLink.ToBookings -> tab = ShifaTab.Bookings
+                NotificationLink.ToDocuments -> tab = ShifaTab.Documents
+                NotificationLink.ToTasks -> tasksOpen = true
+            }
+        }
+        PushSetup()
+        LaunchedEffect(push) {
+            launch { push.stale.collect { home.refresh() } }
+            push.open.collect { link ->
+                // 13 §3.3: like Flutter's go, the target replaces whatever is open.
+                list = null
+                tasksOpen = false
+                checkIn = null
+                appointment = null
+                doctor = null
+                booking = null
+                viewing = null
+                link?.let(follow) ?: run { page = Page.Notifications }
+            }
+        }
         BackHandler(
             enabled =
                 page == null && list == null && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
@@ -253,15 +280,22 @@ fun MainScreen(
                     // Each page gets fresh ViewModels, cleared when it closes.
                     key(it) {
                         ScopedViewModels {
-                            if (it == Page.Account) {
-                                ProfileScreen(
-                                    onBack = { page = null },
-                                    onLogOut = onLogOut,
-                                    onAccountDeleted = onAccountDeleted,
-                                    onProfileChanged = home::refresh,
-                                )
-                            } else {
-                                ComingSoon(stringResource(it.title), onBack = { page = null })
+                            when (it) {
+                                Page.Account ->
+                                    ProfileScreen(
+                                        onBack = { page = null },
+                                        onLogOut = onLogOut,
+                                        onAccountDeleted = onAccountDeleted,
+                                        onProfileChanged = home::refresh,
+                                    )
+                                Page.Notifications ->
+                                    NotificationsScreen(
+                                        homeState.fullName,
+                                        onBack = { page = null },
+                                        onLink = follow,
+                                        onRead = home::refresh,
+                                        onSignedOut = onLogOut,
+                                    )
                             }
                         }
                     }

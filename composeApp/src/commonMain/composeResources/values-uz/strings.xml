@@ -563,6 +563,7 @@
     <string name="notificationFilterAll">Barchasi</string>
     <string name="notificationFilterAppointments">Qabullar</string>
     <string name="notificationFilterDocuments">Hujjatlar</string>
+    <string name="notificationFilterPayments">To'lovlar</string>
     <string name="notificationFilterTasks">Vazifalar</string>
     <string name="notificationInstallmentDueSoonMessage">Davolash rejasi bo'yicha to'lov muddati bir necha kun ichida. Batafsilni oching.</string>
     <string name="notificationInstallmentDueSoonTitle">To'lov muddati yaqinlashmoqda</string>

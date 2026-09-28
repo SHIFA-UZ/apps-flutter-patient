@@ -338,6 +338,7 @@
     <string name="notificationFilterAll">Alle</string>
     <string name="notificationFilterAppointments">Termine</string>
     <string name="notificationFilterDocuments">Dokumente</string>
+    <string name="notificationFilterPayments">Zahlungen</string>
     <string name="notificationFilterTasks">Aufgaben</string>
     <string name="notificationInstallmentDueSoonMessage">Eine Rate Ihres Behandlungsplans ist in wenigen Tagen fällig. Öffnen Sie die Details.</string>
     <string name="notificationInstallmentDueSoonTitle">Rate bald fällig</string>

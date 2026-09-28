@@ -351,26 +351,7 @@ private fun DocumentCard(
     onOpen: (PatientDocument) -> Unit,
     onDelete: (PatientDocument) -> Unit,
 ) {
-    // The backend sends the uploader's name (11 expects "Doctor" / "Patient"). Figma: "Added by Dr. X".
-    val uploader =
-        when {
-            own -> stringResource(Res.string.addedByYou)
-            document.creatorLabel == "Doctor" ->
-                document.doctorName?.ifBlank { null }?.let { stringResource(Res.string.addedBy, it) }
-                    ?: stringResource(Res.string.addedByDoctor)
-            else ->
-                document.creatorLabel?.takeIf { it.isNotBlank() && it != "Unknown" }
-                    ?.let { stringResource(Res.string.addedBy, it) }.orEmpty()
-        }
-    val card = @Composable {
-        ShifaDocumentCard(
-            title = document.title.ifBlank { stringResource(Res.string.document) },
-            subtitle = uploader,
-            date = document.displayDate?.let(::formatDay).orEmpty(),
-            onClick = document.file?.let { { onOpen(document) } },
-            tag = document.category?.let(CATEGORY_LABELS::get)?.let { stringResource(it) },
-        )
-    }
+    val card = @Composable { DocumentDisplayCard(document, own, document.file?.let { { onOpen(document) } }) }
     // F3 only takes the patient's own uploads.
     if (!own || document.id.isBlank()) return card()
     val swipe = rememberSwipeToDismissBoxState()
@@ -403,6 +384,33 @@ private fun DocumentCard(
         enableDismissFromStartToEnd = false,
         onDismiss = { onDelete(document) },
     ) { card() }
+}
+
+/** The list's card, also in the notification tray. */
+@Composable
+internal fun DocumentDisplayCard(
+    document: PatientDocument,
+    own: Boolean,
+    onClick: (() -> Unit)?,
+) {
+    // The backend sends the uploader's name (11 expects "Doctor" / "Patient"). Figma: "Added by Dr. X".
+    val uploader =
+        when {
+            own -> stringResource(Res.string.addedByYou)
+            document.creatorLabel == "Doctor" ->
+                document.doctorName?.ifBlank { null }?.let { stringResource(Res.string.addedBy, it) }
+                    ?: stringResource(Res.string.addedByDoctor)
+            else ->
+                document.creatorLabel?.takeIf { it.isNotBlank() && it != "Unknown" }
+                    ?.let { stringResource(Res.string.addedBy, it) }.orEmpty()
+        }
+    ShifaDocumentCard(
+        title = document.title.ifBlank { stringResource(Res.string.document) },
+        subtitle = uploader,
+        date = document.displayDate?.let(::formatDay).orEmpty(),
+        onClick = onClick,
+        tag = document.category?.let(CATEGORY_LABELS::get)?.let { stringResource(it) },
+    )
 }
 
 /** Figma popup "Document Upload". */
