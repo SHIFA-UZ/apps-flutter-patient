@@ -410,9 +410,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                           final planId = state.pathParameters['planId']!;
                           final installmentItemId =
                               state.uri.queryParameters['installmentItemId'];
+                          final gateway = state.uri.queryParameters['gateway'];
                           return TreatmentPlanPaymentScreen(
                             planId: planId,
                             installmentItemId: installmentItemId,
+                            gateway: gateway,
                           );
                         },
                       ),
@@ -464,7 +466,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                         path: 'pay',
                         builder: (context, state) {
                           final id = state.pathParameters['id']!;
-                          return ConsultationPaymentScreen(appointmentId: id);
+                          final gateway = state.uri.queryParameters['gateway'];
+                          return ConsultationPaymentScreen(
+                            appointmentId: id,
+                            gateway: gateway,
+                          );
                         },
                       ),
                     ],

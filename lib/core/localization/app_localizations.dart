@@ -293,6 +293,10 @@ class AppLocalizations {
       'paymentCompletedAppointmentConfirmed':
           'Payment completed. Appointment is confirmed.',
       'completePayment': 'Complete payment',
+      'choosePaymentMethod': 'Choose how to pay',
+      'choosePaymentMethodHint': 'Pay with Click or Stripe. The payment window opens after you choose.',
+      'payWithClick': 'Pay with Click',
+      'payWithStripe': 'Pay with Stripe',
       'paymentPendingTitle': 'Payment pending',
       'paymentPendingMessage':
           'Your appointment is created and waiting for payment confirmation.',
@@ -1201,6 +1205,10 @@ class AppLocalizations {
       'paymentCompletedAppointmentConfirmed':
           'Zahlung abgeschlossen. Termin ist bestätigt.',
       'completePayment': 'Zahlung abschließen',
+      'choosePaymentMethod': 'Zahlungsart wählen',
+      'choosePaymentMethodHint': 'Mit Click oder Stripe bezahlen. Das Zahlungsfenster öffnet sich nach Ihrer Auswahl.',
+      'payWithClick': 'Mit Click bezahlen',
+      'payWithStripe': 'Mit Stripe bezahlen',
       'paymentPendingTitle': 'Zahlung ausstehend',
       'paymentPendingMessage':
           'Ihr Termin wurde erstellt und wartet auf Zahlungsbestätigung.',
@@ -1910,6 +1918,10 @@ class AppLocalizations {
       'paymentCompletedAppointmentConfirmed':
           'To\'lov yakunlandi. Uchrashuv tasdiqlandi.',
       'completePayment': 'To\'lovni yakunlash',
+      'choosePaymentMethod': 'To\'lov usulini tanlang',
+      'choosePaymentMethodHint': 'Click yoki Stripe orqali to\'lang. Tanlaganingizdan so\'ng to\'lov oynasi ochiladi.',
+      'payWithClick': 'Click orqali to\'lash',
+      'payWithStripe': 'Stripe orqali to\'lash',
       'paymentPendingTitle': 'To\'lov kutilmoqda',
       'paymentPendingMessage':
           'Uchrashuv yaratildi va to\'lov tasdiqlanishini kutmoqda.',
@@ -2860,6 +2872,10 @@ class AppLocalizations {
       'paymentCompletedAppointmentConfirmed':
           'Оплата завершена. Запись подтверждена.',
       'completePayment': 'Завершить оплату',
+      'choosePaymentMethod': 'Выберите способ оплаты',
+      'choosePaymentMethodHint': 'Оплатите через Click или Stripe. Окно оплаты откроется после выбора.',
+      'payWithClick': 'Оплатить через Click',
+      'payWithStripe': 'Оплатить через Stripe',
       'paymentPendingTitle': 'Ожидание оплаты',
       'paymentPendingMessage':
           'Ваша запись создана и ожидает подтверждения оплаты.',

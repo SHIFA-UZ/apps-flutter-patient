@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/features/bookings/data/bookings_repository.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/widgets/payment_gateway_chooser.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// Opens Click checkout for a treatment-plan bill (full outstanding or one installment).
@@ -14,10 +15,12 @@ class TreatmentPlanPaymentScreen extends ConsumerStatefulWidget {
     super.key,
     required this.planId,
     this.installmentItemId,
+    this.gateway,
   });
 
   final String planId;
   final String? installmentItemId;
+  final String? gateway;
 
   @override
   ConsumerState<TreatmentPlanPaymentScreen> createState() =>
@@ -30,14 +33,24 @@ class _TreatmentPlanPaymentScreenState
   String? _paymentId;
   String? _error;
   bool _loading = true;
+  String? _chosenGateway;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startCheckout());
+    _chosenGateway = widget.gateway?.toUpperCase();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chosenGateway == null) {
+        if (mounted) setState(() => _loading = false);
+      } else {
+        _startCheckout();
+      }
+    });
   }
 
   Future<void> _startCheckout() async {
+    final gateway = _chosenGateway;
+    if (gateway == null) return;
     final l10n = AppLocalizations.of(context)!;
     setState(() {
       _loading = true;
@@ -50,6 +63,7 @@ class _TreatmentPlanPaymentScreenState
           await ref.read(bookingsRepositoryProvider).createTreatmentPlanCheckout(
                 treatmentPlanId: widget.planId,
                 installmentItemId: widget.installmentItemId,
+                gateway: gateway,
               );
       final paymentId = checkout['paymentId']?.toString();
       final checkoutUrl = checkout['checkoutUrl']?.toString();
@@ -80,6 +94,20 @@ class _TreatmentPlanPaymentScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    if (_chosenGateway == null && !_loading && _error == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.translate('completePayment'))),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: PaymentGatewayChooser(
+            onSelected: (gateway) {
+              setState(() => _chosenGateway = gateway);
+              _startCheckout();
+            },
+          ),
+        ),
+      );
+    }
     if (_loading) {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.translate('completePayment'))),

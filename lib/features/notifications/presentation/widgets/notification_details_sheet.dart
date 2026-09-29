@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/core/models/notification_model.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/widgets/payment_gateway_chooser.dart';
 import 'package:shifa_patient_app_v1/features/notifications/presentation/notification_ui_helpers.dart';
 import 'package:shifa_patient_app_v1/features/notifications/services/notification_tap_handler.dart';
 import 'package:shifa_patient_app_v1/features/notifications/utils/notification_localization.dart';
@@ -103,45 +104,121 @@ class NotificationDetailsSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.translate('close')),
-                  ),
+            if (_offersPaymentChoice(notification)) ...[
+              PaymentGatewayChooser(
+                onSelected: (gateway) {
+                  final router = GoRouter.of(context);
+                  final route = _paymentRoute(notification, gateway);
+                  Navigator.of(context).pop();
+                  if (route != null) router.go(route);
+                },
+              ),
+              if (canOpen) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    final router = GoRouter.of(context);
+                    final details = _detailsRoute(notification);
+                    Navigator.of(context).pop();
+                    if (details != null) router.go(details);
+                  },
+                  child: Text(_detailsLabel(notification, l10n)),
                 ),
-                if (canOpen) ...[
-                  const SizedBox(width: 12),
+              ],
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.translate('close')),
+                ),
+              ),
+            ] else
+              Row(
+                children: [
                   Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _openRoute(context, notification, actionRoute);
-                      },
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                      label: Text(actionLabel),
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.translate('close')),
                     ),
                   ),
+                  if (canOpen) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          final router = GoRouter.of(context);
+                          Navigator.of(context).pop();
+                          if (actionRoute == AppRoutes.chat &&
+                              (notification.chatId ?? '').isNotEmpty) {
+                            router.go(actionRoute, extra: {'chatId': notification.chatId});
+                          } else {
+                            router.go(actionRoute);
+                          }
+                        },
+                        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                        label: Text(actionLabel),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  void _openRoute(
-    BuildContext context,
-    NotificationModel n,
-    String route,
-  ) {
-    if (route == AppRoutes.chat && (n.chatId ?? '').isNotEmpty) {
-      context.go(route, extra: {'chatId': n.chatId});
-    } else {
-      context.go(route);
+  static bool _offersPaymentChoice(NotificationModel n) {
+    final u = n.type.toUpperCase();
+    if (u == 'CONSULTATION_PAYMENT_REMINDER' ||
+        u == 'CONSULTATION_PAYMENT_DUE_24H' ||
+        u == 'CONSULTATION_PAYMENT_DUE_6H' ||
+        u == 'CONSULTATION_PAYMENT_DUE_1H') {
+      return n.appointmentId != null;
     }
+    if (u == 'TREATMENT_PLAN_PAYMENT_REMINDER' ||
+        u == 'INSTALLMENT_DUE_SOON' ||
+        u == 'INSTALLMENT_DUE_TODAY' ||
+        u == 'INSTALLMENT_OVERDUE' ||
+        u == 'INSTALLMENT_SCHEDULE_CREATED') {
+      return n.treatmentPlanId != null;
+    }
+    return false;
+  }
+
+  static String? _paymentRoute(NotificationModel n, String gateway) {
+    final u = n.type.toUpperCase();
+    if (u == 'CONSULTATION_PAYMENT_REMINDER' ||
+        u == 'CONSULTATION_PAYMENT_DUE_24H' ||
+        u == 'CONSULTATION_PAYMENT_DUE_6H' ||
+        u == 'CONSULTATION_PAYMENT_DUE_1H') {
+      final id = n.appointmentId;
+      if (id == null) return null;
+      return '${AppRoutes.bookings}/$id/pay?gateway=$gateway';
+    }
+    final planId = n.treatmentPlanId;
+    if (planId == null) return null;
+    return '${AppRoutes.bookings}/treatment-plan/$planId/pay?gateway=$gateway';
+  }
+
+  static String? _detailsRoute(NotificationModel n) {
+    final u = n.type.toUpperCase();
+    if (u.startsWith('CONSULTATION_PAYMENT') && n.appointmentId != null) {
+      return '${AppRoutes.bookings}/${n.appointmentId}';
+    }
+    if (n.treatmentPlanId != null) {
+      return '${AppRoutes.bookings}/treatment-plan/${n.treatmentPlanId}';
+    }
+    return null;
+  }
+
+  static String _detailsLabel(NotificationModel n, AppLocalizations l10n) {
+    final u = n.type.toUpperCase();
+    if (u.startsWith('CONSULTATION_PAYMENT')) {
+      return l10n.translate('notificationActionOpenAppointment');
+    }
+    return l10n.translate('notificationActionOpenTreatmentPlan');
   }
 
   static String _absoluteDate(DateTime dt) {

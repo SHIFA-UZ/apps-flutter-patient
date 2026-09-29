@@ -15,6 +15,7 @@ import 'package:shifa_patient_app_v1/core/widgets/shifa_button.dart';
 import 'package:shifa_patient_app_v1/core/widgets/empty_state.dart';
 import 'package:shifa_patient_app_v1/core/widgets/segmented_control.dart';
 import 'package:shifa_patient_app_v1/features/bookings/data/bookings_repository.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/widgets/payment_gateway_chooser.dart';
 import 'package:shifa_patient_app_v1/features/bookings/providers/bookings_provider.dart';
 import 'package:shifa_patient_app_v1/features/profile/providers/profile_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -61,10 +62,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   Future<void> _handlePayNow(String appointmentId) async {
     final l10n = AppLocalizations.of(context)!;
     if (_payingAppointmentId != null) return;
+    final gateway = await pickPaymentGateway(context);
+    if (gateway == null || !mounted) return;
     setState(() => _payingAppointmentId = appointmentId);
     try {
       final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
         appointmentId: appointmentId,
+        gateway: gateway,
       );
       final paymentId = checkout['paymentId']?.toString();
       final checkoutUrl = checkout['checkoutUrl']?.toString();
@@ -289,7 +293,6 @@ class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPayment
   late String _pollPaymentId;
   Timer? _pollingTimer;
   bool _checkingStatus = false;
-  bool _stripeReloadTried = false;
 
   @override
   void initState() {
@@ -311,9 +314,6 @@ class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPayment
             }
             return NavigationDecision.navigate;
           },
-          onWebResourceError: (WebResourceError error) {
-            unawaited(_maybeStripeFallbackAfterMainFrameFailure(error));
-          },
         ),
       )
       ..loadRequest(Uri.parse(widget.checkoutUrl));
@@ -322,29 +322,6 @@ class _BookingsPaymentCheckoutScreenState extends ConsumerState<_BookingsPayment
       const Duration(seconds: 3),
       (_) => _checkPaymentStatus(forceCloseOnPaid: true),
     );
-  }
-
-  Future<void> _maybeStripeFallbackAfterMainFrameFailure(WebResourceError error) async {
-    if (_stripeReloadTried ||
-        !mounted ||
-        error.isForMainFrame != true ||
-        widget.checkoutGateway != 'CLICK') {
-      return;
-    }
-    _stripeReloadTried = true;
-    try {
-      final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
-            appointmentId: widget.appointmentId,
-            gateway: 'STRIPE',
-          );
-      final url = checkout['checkoutUrl']?.toString();
-      final newId = checkout['paymentId']?.toString();
-      if (!mounted || url == null || url.isEmpty || newId == null) return;
-      setState(() => _pollPaymentId = newId);
-      await _controller.loadRequest(Uri.parse(url));
-    } catch (_) {
-      // Backend usually falls back automatically; silent here.
-    }
   }
 
   Future<void> _checkPaymentStatus({bool forceCloseOnPaid = false}) async {

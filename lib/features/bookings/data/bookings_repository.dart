@@ -169,12 +169,14 @@ class BookingsRepository {
   Future<Map<String, dynamic>> createTreatmentPlanCheckout({
     required String treatmentPlanId,
     String? installmentItemId,
+    String? gateway,
   }) async {
     final response = await _apiClient.post(
       '/payments/treatment-plan/checkout',
       data: {
         'treatmentPlanId': int.parse(treatmentPlanId),
         if (installmentItemId != null) 'installmentItemId': int.parse(installmentItemId),
+        if (gateway != null) 'gateway': gateway,
       },
     );
     return response.data as Map<String, dynamic>;

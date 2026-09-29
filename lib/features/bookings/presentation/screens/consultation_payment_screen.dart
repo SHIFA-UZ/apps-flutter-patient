@@ -6,14 +6,20 @@ import 'package:go_router/go_router.dart';
 import 'package:shifa_patient_app_v1/app/router.dart';
 import 'package:shifa_patient_app_v1/core/localization/app_localizations.dart';
 import 'package:shifa_patient_app_v1/features/bookings/data/bookings_repository.dart';
+import 'package:shifa_patient_app_v1/features/bookings/presentation/widgets/payment_gateway_chooser.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// Opens Stripe (or other gateway) checkout for a single consultation payment.
 /// Used from deep link `/bookings/:id/pay` (e.g. doctor "remind to pay" notification).
 class ConsultationPaymentScreen extends ConsumerStatefulWidget {
-  const ConsultationPaymentScreen({super.key, required this.appointmentId});
+  const ConsultationPaymentScreen({
+    super.key,
+    required this.appointmentId,
+    this.gateway,
+  });
 
   final String appointmentId;
+  final String? gateway;
 
   @override
   ConsumerState<ConsultationPaymentScreen> createState() =>
@@ -26,14 +32,24 @@ class _ConsultationPaymentScreenState extends ConsumerState<ConsultationPaymentS
   String? _checkoutGateway;
   String? _error;
   bool _loading = true;
+  String? _chosenGateway;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startCheckout());
+    _chosenGateway = widget.gateway?.toUpperCase();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chosenGateway == null) {
+        if (mounted) setState(() => _loading = false);
+      } else {
+        _startCheckout();
+      }
+    });
   }
 
   Future<void> _startCheckout() async {
+    final gateway = _chosenGateway;
+    if (gateway == null) return;
     final l10n = AppLocalizations.of(context)!;
     setState(() {
       _loading = true;
@@ -45,6 +61,7 @@ class _ConsultationPaymentScreenState extends ConsumerState<ConsultationPaymentS
     try {
       final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
             appointmentId: widget.appointmentId,
+            gateway: gateway,
           );
       final paymentId = checkout['paymentId']?.toString();
       final checkoutUrl = checkout['checkoutUrl']?.toString();
@@ -79,6 +96,20 @@ class _ConsultationPaymentScreenState extends ConsumerState<ConsultationPaymentS
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    if (_chosenGateway == null && !_loading && _error == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.translate('completePayment'))),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: PaymentGatewayChooser(
+            onSelected: (gateway) {
+              setState(() => _chosenGateway = gateway);
+              _startCheckout();
+            },
+          ),
+        ),
+      );
+    }
     if (_loading) {
       return Scaffold(
         appBar: AppBar(
@@ -148,7 +179,6 @@ class _ConsultationPaymentWebViewState
   late String _pollPaymentId;
   Timer? _pollingTimer;
   bool _checkingStatus = false;
-  bool _stripeReloadTried = false;
 
   @override
   void initState() {
@@ -170,9 +200,6 @@ class _ConsultationPaymentWebViewState
             }
             return NavigationDecision.navigate;
           },
-          onWebResourceError: (WebResourceError error) {
-            unawaited(_maybeStripeFallbackAfterMainFrameFailure(error));
-          },
         ),
       )
       ..loadRequest(Uri.parse(widget.checkoutUrl));
@@ -181,27 +208,6 @@ class _ConsultationPaymentWebViewState
       const Duration(seconds: 3),
       (_) => _checkPaymentStatus(forceCloseOnPaid: true),
     );
-  }
-
-  Future<void> _maybeStripeFallbackAfterMainFrameFailure(WebResourceError error) async {
-    if (_stripeReloadTried ||
-        !mounted ||
-        error.isForMainFrame != true ||
-        widget.checkoutGateway != 'CLICK') {
-      return;
-    }
-    _stripeReloadTried = true;
-    try {
-      final checkout = await ref.read(bookingsRepositoryProvider).createConsultationCheckout(
-            appointmentId: widget.appointmentId,
-            gateway: 'STRIPE',
-          );
-      final url = checkout['checkoutUrl']?.toString();
-      final newId = checkout['paymentId']?.toString();
-      if (!mounted || url == null || url.isEmpty || newId == null) return;
-      setState(() => _pollPaymentId = newId);
-      await _controller.loadRequest(Uri.parse(url));
-    } catch (_) {}
   }
 
   Future<void> _checkPaymentStatus({bool forceCloseOnPaid = false}) async {
