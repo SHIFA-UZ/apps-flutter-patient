@@ -158,13 +158,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// After forgot-password flow: backend returned JWT; update auth state so user is logged in.
-  void completeForgotPassword(LoginResult result) {
+  Future<void> completeForgotPassword(LoginResult result) async {
+    // Clear client-side lockout so the next login is not blocked after a successful reset.
+    await _ref.read(loginAttemptServiceProvider).clearAttempts();
     state = state.copyWith(
       isLoading: false,
       isAuthenticated: true,
       token: result.token,
       error: null,
       forcePasswordReset: result.forcePasswordReset,
+      loginLockedUntilMinutes: null,
+      loginAttemptsRemaining: null,
     );
   }
 

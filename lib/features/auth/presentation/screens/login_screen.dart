@@ -45,7 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String get _usernameValue {
     final raw = _emailController.text.trim();
-    if (raw.contains('@')) return raw;
+    if (raw.contains('@')) return raw.toLowerCase();
     final normalized = normalizePhoneForSms(raw);
     return normalized.isNotEmpty ? normalized : raw;
   }

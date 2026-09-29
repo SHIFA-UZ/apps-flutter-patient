@@ -64,7 +64,8 @@ class _ForgotPasswordNewPasswordScreenState extends ConsumerState<ForgotPassword
     }
 
     final l10n = AppLocalizations.of(context)!;
-    final newPassword = _newPasswordController.text.trim();
+    // Do not trim: login sends the password as typed, so the stored hash must match.
+    final newPassword = _newPasswordController.text;
     setState(() => _isLoading = true);
     try {
       final repository = ref.read(authRepositoryProvider);
@@ -90,7 +91,7 @@ class _ForgotPasswordNewPasswordScreenState extends ConsumerState<ForgotPassword
         throw Exception(l10n.translate('errorSessionExpiredPleaseStartAgain'));
       }
       ref.read(forgotPasswordFlowProvider.notifier).state = null;
-      ref.read(authStateProvider.notifier).completeForgotPassword(result);
+      await ref.read(authStateProvider.notifier).completeForgotPassword(result);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
