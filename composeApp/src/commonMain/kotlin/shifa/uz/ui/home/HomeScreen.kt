@@ -23,6 +23,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
@@ -152,14 +153,17 @@ internal fun HomeContent(
                             ShifaBanner(stringResource(it), Res.drawable.ic_alert_circle_16, ShifaBannerType.Error)
                         }
                         // Figma hides this arrow; it shows when there are more than fit, like My Tasks and My Doctors.
-                        HomeSection(
-                            Res.string.upcomingAppointments,
-                            state.upcoming,
-                            state.isLoading,
-                            Res.string.noUpcomingAppointments,
-                            ShifaSectionType.CardOnWhite,
-                            onMore = onUpcoming.takeIf { state.upcoming.orEmpty().size > HOME_ITEMS },
-                        ) { UpcomingCard(it, now, onAppointment) }
+                        // Gone when there are none.
+                        if (state.upcoming?.isEmpty() != true) {
+                            HomeSection(
+                                Res.string.upcomingAppointments,
+                                state.upcoming,
+                                state.isLoading,
+                                Res.string.noUpcomingAppointments,
+                                ShifaSectionType.CardOnWhite,
+                                onMore = onUpcoming.takeIf { state.upcoming.orEmpty().size > HOME_ITEMS },
+                            ) { UpcomingCard(it, now, onAppointment) }
+                        }
                         HomeSection(
                             Res.string.myTasks,
                             state.tasks,
@@ -192,6 +196,7 @@ internal fun <T> HomeSection(
     onMore: (() -> Unit)? = null,
     limit: Int = HOME_ITEMS,
     carousel: Boolean = false,
+    gap: Dp = ShifaSpacing.Gap.Sm,
     card: @Composable (T) -> Unit,
 ) {
     if (items == null && !isLoading) return
@@ -212,7 +217,7 @@ internal fun <T> HomeSection(
                     ShifaSpacing.Gap.Sm,
                 ) { items.take(limit).forEach { card(it) } }
             else ->
-                Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
+                Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                     items.take(limit).forEach { card(it) }
                 }
         }

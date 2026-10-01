@@ -2,18 +2,18 @@
 
 ## Bookings tab (`ui/bookings/BookingsScreen.kt`, BOOK-05 + DOC-01 in part)
 
-- Figma: `1648:11080`. Home's header (avatar → Profile, bell → Notifications), a doctor search, filter chips, then, on All, three sections: Recommended doctors (a carousel), My Doctors and Past Appointments. Any other chip shows only its doctors, as a plain list. The first open loads everything; pull to refresh reloads it. A 401 logs out. The ViewModel lives in the tab shell, so the tab keeps its state across tab switches. Figma's "Find Doctors near you" row is hidden for now (the user's call).
+- Figma: `1648:11080`. Home's header (avatar → Profile, bell → Notifications), a doctor search, filter chips, then, on All, three sections: Recommended doctors (a carousel), My Doctors and Past Appointments. Any other chip shows only its doctors, as full cards with the Clinic / Online / Nearby tags (Figma `1653:12376`). The first open loads everything; pull to refresh reloads it. A 401 logs out. The ViewModel lives in the tab shell, so the tab keeps its state across tab switches. Figma's "Find Doctors near you" row is hidden for now (the user's call).
 - Figma has no upcoming list and no 06 §4.2 status tabs, so the Bookings tab shows none. Upcoming confirmed visits are on Home; future pending (REQUESTED) visits show nowhere yet.
 - Recommended doctors: D1 with the search (350 ms debounce, 07) and the chip's params. All: none. Remote: `consultationType=online`. Today: `availableWithin=today`. Emergency: `sortBy=availability` (the spec has no emergency filter). The card shows the next free slot. D1 reads every page (50 each, the backend's cap, up to 20 pages). Not built: the filters sheet, scroll pagination and the availability enrichment (07 §3.8).
 - Near me (07 §2.1): asks for the location permission when needed, then takes one medium-accuracy fix (Android: `fused`, else network, else GPS; on the 30 s timeout the freshest last known fix; iOS: `CLLocationManager.requestLocation`). D1 gets `sortBy=distance`, `latitude`, `longitude` and `radiusKm=50`. The backend appends every doctor without coordinates after the near ones, so the app drops those. Services off, a denial, "don't ask again" or no fix go back to All with a banner. The fix is kept for the session. No fallback to the profile's coordinates: the profile has none yet (PROF-04 map picker).
-- Recommended shows 10 in the carousel. With more, the arrow opens the Recommended page.
+- Recommended shows 10 in the carousel. With more, the arrow opens the Recommended page. With none it is hidden, unless a search is typed, so "No doctors found" still answers it.
 - My Doctors: the doctors of the most recent bookings, loaded with D2, as on Home ([home.md](home.md)). With more than 3, the arrow opens the My Doctors page.
 - Past Appointments: one unfiltered B2, over or cancelled, newest first. The badge is red for cancelled, green for confirmed or completed, yellow for anything else. Cancelled cards don't open. With more than 3, the arrow opens the Past page.
 - Doctor cards open the doctor profile, appointment cards open the details.
 
 ## List pages (`BookingsListScreen.kt`, DOC-01 in part)
 
-- Figma: `1655:15670` (My Doctors), `1655:15892` (Past); Recommended follows the same pattern. An overlay above the tabs with a back header and every item of the section, as flat cards (Figma). The page shares the tab's ViewModel, so Home's My Doctors arrow opens the same page and it loads B2 and D1 if the tab never did.
+- Figma: `1655:15670` (My Doctors), `1655:15892` (Past); Recommended follows the same pattern. An overlay above the tabs with a back header and every item of the section, as flat cards (Figma). Recommended's are full cards with tags, like the chip lists. The page shares the tab's ViewModel, so Home's My Doctors arrow opens the same page and it loads B2 and D1 if the tab never did.
 - My Doctors cards show "Last Visit dd.MM.yyyy": the doctor's latest confirmed or completed past visit, else no line.
 - Not built: the ⋮ menu (no Figma for it), the nav bar Figma shows under Past, pull to refresh and lazy loading (a plain column).
 

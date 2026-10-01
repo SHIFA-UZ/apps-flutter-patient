@@ -67,10 +67,11 @@ object ShifaDimens {
     // cards
     val AppointmentAvatar = 42.dp
     val AppointmentActionHeight = 38.dp
-    val DoctorAvatar = 70.dp
-    val DoctorAvatarCompact = 44.dp
-    val DoctorAvatarIn = 56.dp
-    val DoctorCardInWidth = 250.dp
+    val DoctorAvatar = 84.dp
+    val DoctorAvatarCompact = 48.dp
+    val DoctorAvatarIn = 68.dp
+    val DoctorBadgeCompact = 17.45.dp
+    val DoctorBadgeIn = 19.43.dp
     val DocumentThumbWidth = 55.dp
     val DocumentThumbHeight = 48.dp
     val TaskIcon = 48.dp

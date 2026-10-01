@@ -79,7 +79,7 @@ internal fun BookingsLoadedPreview() =
         )
     }
 
-// Any chip but All: only the doctors.
+// Any chip but All: only the doctors, as full cards with tags (Figma 1653:12376).
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
 internal fun BookingsFilteredPreview() =
@@ -87,7 +87,11 @@ internal fun BookingsFilteredPreview() =
         BookingsContent(
             BookingsUiState(
                 filter = DoctorFilter.Remote,
-                recommended = listOf(previewDoctor, previewDoctor.copy(id = "d2", firstName = "Malika")),
+                recommended =
+                    listOf(
+                        previewDoctor,
+                        previewDoctor.copy(id = "d2", firstName = "Malika", clinic = null, locationCity = null),
+                    ),
                 past = past,
             ),
             now,

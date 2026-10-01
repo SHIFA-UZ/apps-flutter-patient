@@ -22,14 +22,15 @@ import shifa.uz.utils.parseInstant
 internal val LocalDeviceLocation = compositionLocalOf<DeviceLocation.Found?> { null }
 
 /**
- * The flex header of Appointment Details and Doctor Profile: the full doctor card with its Clinic / Online tags (07 §4.1),
- * and Nearby within [NEARBY_KM] of the Near me fix.
+ * The full doctor card with its Clinic / Online tags (07 §4.1), and Nearby within [NEARBY_KM] of the Near me fix.
+ * The flex header of Appointment Details and Doctor Profile (no shadow), and the Bookings tab's search results (Figma 1653:12376).
  */
 @Composable
 internal fun DoctorHeaderCard(
     doctor: Doctor,
     now: Instant,
     onClick: (() -> Unit)? = null,
+    shadow: Boolean = false,
 ) {
     val inPerson = doctor.offersInPerson
     val online = doctor.offersOnline
@@ -51,7 +52,7 @@ internal fun DoctorHeaderCard(
             } else {
                 null
             },
-        shadow = false,
+        shadow = shadow,
         onClick = onClick,
     )
 }

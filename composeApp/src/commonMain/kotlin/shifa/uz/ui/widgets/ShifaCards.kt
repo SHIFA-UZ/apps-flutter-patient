@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -63,6 +64,7 @@ import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaShadow
 import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
+import shifa.uz.ui.theme.ShifaTextStyles
 import shifa.uz.ui.theme.lineBox
 
 /** Figma upcoming-appointment-card. [joinText] shows the Join action-button (Now variants); no [shadow] on a full-page list. */
@@ -118,14 +120,14 @@ fun ShifaPastAppointmentCard(
 }
 
 enum class ShifaDoctorCardType(internal val avatar: Dp, internal val badge: Dp) {
-    Full(ShifaDimens.DoctorAvatar, ShifaSize.S20),
-    Compact(ShifaDimens.DoctorAvatarCompact, ShifaSize.S16),
-    In(ShifaDimens.DoctorAvatarIn, ShifaSize.S16),
+    Full(ShifaDimens.DoctorAvatar, ShifaSize.S24),
+    Compact(ShifaDimens.DoctorAvatarCompact, ShifaDimens.DoctorBadgeCompact),
+    In(ShifaDimens.DoctorAvatarIn, ShifaDimens.DoctorBadgeIn),
 }
 
 /**
  * Figma doctor-card. Rows show when their param is set: Figma has rating + availability on
- * Full / Compact, tags on Full / In. [In] has a fixed width. [rating] is preformatted, e.g. "5.0(760)".
+ * Full / Compact, tags on Full / In. [In] hugs its content. [rating] is preformatted, e.g. "5.0(760)".
  * Figma drops the [shadow] where the card is a page's flex header or on a full-page list.
  */
 @Composable
@@ -143,7 +145,7 @@ fun ShifaDoctorCard(
     onClick: (() -> Unit)? = null,
 ) {
     CardChrome(
-        if (type == ShifaDoctorCardType.In) modifier.width(ShifaDimens.DoctorCardInWidth) else modifier,
+        if (type == ShifaDoctorCardType.In) modifier.width(IntrinsicSize.Max) else modifier,
         onClick,
         shadow = shadow,
     ) {
@@ -162,20 +164,20 @@ fun ShifaDoctorCard(
                     )
                 }
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSize.S2)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs)) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    CardTitle(name, Modifier.weight(1f, fill = false))
+                    CardTitle(name, Modifier.weight(1f, fill = false), style = ShifaTextStyles.profileName())
                     rating?.let {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(painterResource(Res.drawable.ic_star_12), null, tint = ShifaColors.Icon.Warning)
-                            val style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)
+                            val style = MaterialTheme.typography.bodyMedium
                             Text(it, Modifier.lineBox(style), style = style, color = ShifaColors.Text.Primary)
                         }
                     }
@@ -186,7 +188,7 @@ fun ShifaDoctorCard(
                 }
                 tags?.let {
                     Row(
-                        Modifier.padding(top = ShifaSpacing.Stack.Xs),
+                        Modifier.padding(top = ShifaSize.S4),
                         Arrangement.spacedBy(ShifaSpacing.Gap.Xs),
                         content = it,
                     )
@@ -498,10 +500,11 @@ internal fun CardTitle(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = ShifaColors.Text.Primary,
+    style: TextStyle = MaterialTheme.typography.titleSmall,
 ) = Text(
     text,
-    modifier.lineBox(MaterialTheme.typography.titleSmall),
-    style = MaterialTheme.typography.titleSmall,
+    modifier.lineBox(style),
+    style = style,
     color = color,
     maxLines = 1,
     overflow = TextOverflow.Ellipsis,

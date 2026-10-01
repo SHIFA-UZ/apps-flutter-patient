@@ -31,6 +31,7 @@ import shifa.composeapp.generated.resources.pastAppointments
 import shifa.composeapp.generated.resources.recommendedDoctors
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.ui.doctors.DoctorHeaderCard
 import shifa.uz.ui.home.DoctorCard
 import shifa.uz.ui.home.HomeSection
 import shifa.uz.ui.register.Banners
@@ -87,7 +88,7 @@ internal fun BookingsListContent(
                     Res.string.noDoctorsFound,
                     limit = Int.MAX_VALUE,
                 ) {
-                    DoctorCard(it, now, onDoctor, shadow = false)
+                    DoctorHeaderCard(it, now, { onDoctor(it) })
                 }
             BookingsList.MyDoctors ->
                 HomeSection(

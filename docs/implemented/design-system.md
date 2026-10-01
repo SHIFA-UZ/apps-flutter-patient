@@ -1,6 +1,6 @@
 # Design system
 
-Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `1572:11699`. Light mode only.
+Figma file `B7f95gNrRt8HYYzlGZdk9N` (a copy of `o0MqTfUEfhBX49VljFhp70` with the same node IDs; newer designs are only in the copy): tokens page `1572:13099`, Components page `1572:11699`. Light mode only.
 
 ## Tokens (`ui/theme/`)
 
@@ -19,8 +19,8 @@ Figma file `o0MqTfUEfhBX49VljFhp70`: tokens page `1572:13099`, Components page `
 | ShifaInputField | `ShifaInputField` (`clearable` hides the X; `trailingIcon` replaces it, e.g. the password eye) |
 | ShifaSearchField, ShifaDropdown, ShifaSwitch | `ShifaSearchField`, `ShifaDropdown` (opens inline), `ShifaSwitch` |
 | ShifaChips | `ShifaChip` (filter / slot), `ShifaChipGrid` (4 columns), `ShifaCarousel` |
-| ShifaTag | `ShifaTag` (primary / secondary / tertiary) |
-| ShifaCards | upcoming (`1572:13984`) and past (`1573:12114`) appointment cards, `ShifaDoctorCard` full / compact / in (`1590:9994`), document, certificate (`1592:9994`), doctor service (`1670:13024`), check-in (`1662:18576`, the ticked card takes its form as a slot), task (optional progress bar), `ShifaSettingsItem` (optional icon, destructive red for Delete my Account). Under `LocalCardOnSurface` the cards take the on-white look of the notification trays: canvas fill, no shadow, no chevron |
+| ShifaTag | `ShifaTag` (primary / secondary / tertiary, `1585:12637`): Bold 12/12, padding 12 × 8 |
+| ShifaCards | upcoming (`1572:13984`) and past (`1573:12114`) appointment cards, `ShifaDoctorCard` full / compact / in (`1590:9994`; avatars 84 / 48 / 68, name Bold 16, the in card hugs its content), document, certificate (`1592:9994`), doctor service (`1670:13024`), check-in (`1662:18576`, the ticked card takes its form as a slot), task (optional progress bar), `ShifaSettingsItem` (optional icon, destructive red for Delete my Account). Under `LocalCardOnSurface` the cards take the on-white look of the notification trays: canvas fill, no shadow, no chevron |
 | ShifaSection | `ShifaSection`: header with an optional arrow; background type card-on-color / on-white / transparent |
 | ShifaPageHeader | `ShifaMainHeader`, `ShifaSubHeader` |
 | ShifaNavBar | `ShifaNavBar`, `ShifaTab` (`1572:13574`) |

@@ -72,7 +72,7 @@ fun shifaTypography(): Typography {
         labelLarge = manrope(family, FontWeight.Bold, 16, 22),
         // action-button (pill)
         labelMedium = manrope(family, FontWeight.Bold, 12, 16),
-        // tag
+        // notification time, attachment count
         labelSmall = manrope(family, FontWeight.Bold, 10, 12),
     )
 }
@@ -91,9 +91,13 @@ object ShifaTextStyles {
     @Composable
     fun chatInput() = manrope(manropeFontFamily(), FontWeight.SemiBold, 14, 16)
 
-    // profile name (Bold "Input text")
+    // profile name (Bold "Input text"), doctor-card name
     @Composable
     fun profileName() = manrope(manropeFontFamily(), FontWeight.Bold, 16, 16)
+
+    // tag
+    @Composable
+    fun tag() = manrope(manropeFontFamily(), FontWeight.Bold, 12, 12)
 
     // interactive-chip, Type=filter / Type=slot (Bold when active)
     @Composable

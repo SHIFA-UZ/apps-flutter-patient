@@ -35,6 +35,7 @@ import shifa.composeapp.generated.resources.unknownDoctor
 import shifa.composeapp.generated.resources.videoConsultation
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.ui.doctors.DoctorHeaderCard
 import shifa.uz.ui.home.DoctorCard
 import shifa.uz.ui.home.HOME_ITEMS
 import shifa.uz.ui.home.HomeSection
@@ -152,18 +153,21 @@ internal fun BookingsContent(
                     Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md)) {
                         Banners(state.error, state.notice)
                         if (state.filter == DoctorFilter.All) {
-                            HomeSection(
-                                Res.string.recommendedDoctors,
-                                state.recommended,
-                                state.isLoading || state.isLocating,
-                                Res.string.noDoctorsFound,
-                                ShifaSectionType.CardOnWhite,
-                                onMore =
-                                    { onList(BookingsList.Recommended) }
-                                        .takeIf { state.recommended.orEmpty().size > RECOMMENDED_ITEMS },
-                                limit = RECOMMENDED_ITEMS,
-                                carousel = true,
-                            ) { RecommendedCard(it, now, onDoctor) }
+                            // Gone when D1 has none, unless that's a search's answer.
+                            if (state.recommended?.isEmpty() != true || state.query.isNotBlank()) {
+                                HomeSection(
+                                    Res.string.recommendedDoctors,
+                                    state.recommended,
+                                    state.isLoading || state.isLocating,
+                                    Res.string.noDoctorsFound,
+                                    ShifaSectionType.CardOnWhite,
+                                    onMore =
+                                        { onList(BookingsList.Recommended) }
+                                            .takeIf { state.recommended.orEmpty().size > RECOMMENDED_ITEMS },
+                                    limit = RECOMMENDED_ITEMS,
+                                    carousel = true,
+                                ) { RecommendedCard(it, now, onDoctor) }
+                            }
                             HomeSection(
                                 Res.string.myDoctors,
                                 state.myDoctors,
@@ -189,14 +193,15 @@ internal fun BookingsContent(
                                     }.takeIf { state.past.orEmpty().size > HOME_ITEMS },
                             ) { PastCard(it, onAppointment) }
                         } else {
-                            // Any other chip: just its doctors.
+                            // Any other chip: just its doctors, as full cards (Figma 1653:12376).
                             HomeSection(
                                 null,
                                 state.recommended,
                                 state.isLoading || state.isLocating,
                                 Res.string.noDoctorsFound,
                                 limit = Int.MAX_VALUE,
-                            ) { DoctorCard(it, now, onDoctor) }
+                                gap = ShifaSpacing.Gap.Md,
+                            ) { DoctorHeaderCard(it, now, { onDoctor(it) }, shadow = true) }
                         }
                     }
                 }
