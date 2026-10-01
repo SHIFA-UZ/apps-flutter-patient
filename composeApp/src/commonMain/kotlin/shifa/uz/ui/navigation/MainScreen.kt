@@ -55,6 +55,10 @@ import shifa.uz.ui.documents.DocumentsViewModel
 import shifa.uz.ui.home.HomeScreen
 import shifa.uz.ui.home.HomeViewModel
 import shifa.uz.ui.home.UpcomingScreen
+import shifa.uz.ui.messages.ChatTarget
+import shifa.uz.ui.messages.ConversationScreen
+import shifa.uz.ui.messages.MessagesScreen
+import shifa.uz.ui.messages.MessagesViewModel
 import shifa.uz.ui.notifications.NotificationLink
 import shifa.uz.ui.notifications.NotificationsScreen
 import shifa.uz.ui.notifications.PushViewModel
@@ -88,6 +92,7 @@ fun MainScreen(
         val tasks = viewModel { TasksViewModel() }
         val push = viewModel { PushViewModel() }
         val shifaAi = viewModel { ShifaAiViewModel() }
+        val messages = viewModel { MessagesViewModel() }
         val homeState by home.state.collectAsState()
         val aiState by shifaAi.state.collectAsState()
         val nearMe = bookings.state.collectAsState().value.location
@@ -102,6 +107,7 @@ fun MainScreen(
         var appointment by remember { mutableStateOf<Appointment?>(null) }
         var doctor by remember { mutableStateOf<Doctor?>(null) }
         var booking by remember { mutableStateOf<Doctor?>(null) }
+        var chat by remember { mutableStateOf<ChatTarget?>(null) }
         val tabs = rememberSaveableStateHolder()
         val density = LocalDensity.current
         var navPadding by remember { mutableStateOf(PaddingValues()) }
@@ -114,11 +120,18 @@ fun MainScreen(
                 NotificationLink.ToBookings -> tab = ShifaTab.Bookings
                 NotificationLink.ToDocuments -> tab = ShifaTab.Documents
                 NotificationLink.ToTasks -> tasksOpen = true
+                is NotificationLink.ToChat -> chat = ChatTarget(link.chatId)
+                NotificationLink.ToMessages -> tab = ShifaTab.Messages
             }
         }
         PushSetup()
         LaunchedEffect(push) {
-            launch { push.stale.collect { home.refresh() } }
+            launch {
+                push.stale.collect {
+                    home.refresh()
+                    messages.load()
+                }
+            }
             push.open.collect { link ->
                 // 13 §3.3: like Flutter's go, the target replaces whatever is open.
                 list = null
@@ -129,6 +142,7 @@ fun MainScreen(
                 doctor = null
                 booking = null
                 viewing = null
+                chat = null
                 shifaAi.close()
                 link?.let(follow) ?: run { page = Page.Notifications }
             }
@@ -136,7 +150,7 @@ fun MainScreen(
         BackHandler(
             enabled =
                 page == null && list == null && !upcomingOpen && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
-                    doctor == null && booking == null && aiState.chat == null && tab != ShifaTab.Home,
+                    doctor == null && booking == null && aiState.chat == null && chat == null && tab != ShifaTab.Home,
         ) { tab = ShifaTab.Home }
         // 09 §7: the tab goes when the profile shuts Shifa AI out.
         LaunchedEffect(homeState.shifaAi) {
@@ -196,6 +210,17 @@ fun MainScreen(
                                 onAccount = { page = Page.Account },
                                 contentPadding = navPadding,
                             )
+                        ShifaTab.Messages ->
+                            MessagesScreen(
+                                avatarUrl = homeState.photoUrl,
+                                notificationCount = homeState.unreadNotifications,
+                                onNotifications = { page = Page.Notifications },
+                                onAccount = { page = Page.Account },
+                                onOpen = { chat = it },
+                                onSignedOut = onLogOut,
+                                contentPadding = navPadding,
+                                viewModel = messages,
+                            )
                         else -> ComingSoon(stringResource(tab.label))
                     }
                 }
@@ -209,10 +234,19 @@ fun MainScreen(
                         .padding(ShifaSpacing.Inset.Md),
                     ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
                 )
-                // Overlays, later ones on top: a Shifa AI chat → a full list → Upcoming → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
+                // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
                 if (aiState.chat != null) {
                     BackHandler { shifaAi.close() }
                     ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
+                }
+                chat?.let {
+                    // Back on the list, its unread counts and last messages are refetched.
+                    val close = {
+                        chat = null
+                        messages.load()
+                    }
+                    BackHandler { close() }
+                    key(it) { ScopedViewModels { ConversationScreen(it, onBack = close, onSignedOut = onLogOut) } }
                 }
                 list?.let {
                     BackHandler { list = null }

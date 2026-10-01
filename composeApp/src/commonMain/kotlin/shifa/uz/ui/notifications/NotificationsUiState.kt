@@ -39,6 +39,12 @@ sealed interface NotificationLink {
     data object ToDocuments : NotificationLink
 
     data object ToTasks : NotificationLink
+
+    data class ToChat(
+        val chatId: String,
+    ) : NotificationLink
+
+    data object ToMessages : NotificationLink
 }
 
 /** [notifications] is null until the first load; a failed reload keeps the previous list. */
@@ -119,5 +125,6 @@ internal fun actionLabel(kind: String) =
         "APPOINTMENT" in kind -> Res.string.notificationActionOpenAppointment
         "DOCUMENT" in kind -> Res.string.notificationActionViewDocument
         "TASK" in kind -> Res.string.notificationActionOpenTask
+        "MESSAGE" in kind -> Res.string.notificationActionOpenChat
         else -> Res.string.notificationActionOpenDetails
     }

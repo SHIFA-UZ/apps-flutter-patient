@@ -17,6 +17,7 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 | My Tasks and check-in | [tasks.md](tasks.md) |
 | Notifications | [notifications.md](notifications.md) |
 | Shifa AI | [shifa-ai.md](shifa-ai.md) |
+| Messages (doctor chat) | [messages.md](messages.md) |
 
 ## Status
 
@@ -34,7 +35,7 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 | AUTH-03 Create account | Mostly done | Figma 3-step wizard (account → info → photo), password checklist, check-identifier dialogs, the email/SMS choice with the email fallback. Not built: `PhoneInputField` with a country picker (a plain phone field instead, so the 04 parsing bug can't happen). |
 | AUTH-04 Register OTP verify | Mostly done | Code screen, masked destination, 300 s resend, `register-patient`, then the photo (P3) and step 2 (P2) are saved. Not built: the PIN setup prompt (needs LOCK-01). Not yet tried against the backend. |
 | AUTH-05 Doctor → patient | Mostly done | The step-1 "existing doctor" dialog replaces the confirm screen, then the email code and `create-patient-for-doctor`. Phone-only matches stop with "email required" (Q7). No PIN prompt (LOCK-01). |
-| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar; Home, Bookings, Shifa AI and Documents are built, Messages is a "Coming soon" placeholder. Back goes page → Home tab → exit. The centre Shifa AI tab is hidden for gated profiles (AI-01). |
+| SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar, all five tabs built. Back goes page → Home tab → exit. The centre Shifa AI tab is hidden for gated profiles (AI-01). |
 | SHELL-03 App header | Done | Avatar → Profile, bell → Notifications (NOTIF-01), with the N2 unread badge. No chat icon (not in the Figma header). |
 | HOME-01 Home + Upcoming | Done | P1 greeting, pull to refresh, B2 upcoming (confirmed, until the join window closes), "Now" + Join, error banner. Cards and Join open the appointment details (BOOK-06). The arrow (more than 3) opens the Upcoming appointments page. |
 | HOME-02 My Tasks | Done | T1, open tasks, up to 3. The cards and the arrow open My Tasks (TASK-01). |
@@ -64,7 +65,9 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 | TASK-02 Task check-in | Mostly done | Figma page: T3 slots due within 10 minutes plus the next 3 greyed, the form in the ticked card for NUMERIC / TEXT / BOOLEAN with notes, T4, then My Tasks reloads with a notice and Home refreshes. No T2 (deep links), no ticker. Not submitted on a device (production). |
 | NOTIF-01 Inbox, details sheet, badge | Mostly done | Figma inbox with filter chips, date groups and the 13 §6.3 texts, pull to refresh, N3 on tap, N4 from the header, the bell refreshes. The details tray shows the linked appointment, document or task card with its button. Unread titles are brand (Figma has no unread look). No ⋮ menu (not in Figma). |
 | NOTIF-03 FCM token & push display | Done, not tried on a device | Firebase Messaging on Android and iOS (SPM). P7 after login and on each token refresh; logout sends `""`. The permission is asked after login. `shifa_patient_channel` is the manifest default, so background pushes use it too. Foreground pushes show as notifications with the backend's text, and they refresh the bell. |
-| NOTIF-04 Tap routing | Partly done | Inbox trays and push taps (background and cold start, after sign-in) open appointment details, the document viewer, the check-in, or the Bookings / Documents / My Tasks list when the item isn't found. Other push types open the inbox. No routes to screens that don't exist yet. |
+| NOTIF-04 Tap routing | Partly done | Inbox trays and push taps (background and cold start, after sign-in) open appointment details, the document viewer, the check-in, or the Bookings / Documents / My Tasks list when the item isn't found. Chat pushes open the chat (or the Messages tab without a `chatId`). Other push types open the inbox. No routes to screens that don't exist yet. |
+| CHAT-01 Conversation list + start a chat | Done | Figma list grouped by day with the last message, time and unread count, pull to refresh. The search finds doctors (C5) and opens their chat or a new one. Not tried against the backend. |
+| CHAT-02 Conversation: text, polling, read | Mostly done | Figma chat over C2, polled every 5 s while shown, C4 on open and on new messages, C3 with the text kept on failure. A new chat switches to its `chatId` after the first send. Received image, document, voice and system messages show; photos can be sent (CHAT-03 without the viewer). No times, read ticks or link detection. Not sent on a device (production). |
 | AI-01 Gating, entry, streaming chat | Mostly done | Figma chats list with search and the chat with streamed X1 replies, saved on the device (20 chats, cleared on logout). Gated by `features`, else the tier. Rate limit latch, delete chat with confirm. Voice (AI-02), attachments and suggestions (AI-03) aren't built. Not tried against the backend. |
 
 ## Log
@@ -93,3 +96,5 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 - 2026-09-28: Built Shifa AI (AI-01, Figma 1655:16752, 1673:14621, 1673:14790, 1681:13859): the chats tab with search and New Chat, the chat with streamed X1 replies, local chats cleared on logout, the rate limit, delete chat, and the tab gating. Documents' upload tray takes a title; sent chat bubbles align their text to the end.
 - 2026-09-28: Home: the Upcoming arrow (more than 3 visits) opens an Upcoming appointments page instead of the Bookings tab; the full-list pages share `ListPage`. The greeting and avatar take the saved profile from P2's reply, so a name change shows without a refetch.
 - 2026-09-28: Task check-in: the next 3 PENDING slots not due yet show greyed under the due ones, so a task whose check-ins are all later no longer looks empty. `ShifaCheckInCard` takes `enabled`. Required notes no longer say "(optional)".
+- 2026-10-01: Built Messages (CHAT-01, CHAT-02, Figma 1772:16842, 1772:17206): the chats tab with doctor search, the chat with 5 s polling, mark read, text and photo sending, and image, document, voice and system bubbles. Chat pushes and inbox items open the chat. `ShifaMessageNotification` takes a photo, unread count and tap; `ShifaChatImageBubble` takes a side and caption.
+- 2026-10-01: Android keyboard: MainActivity is `adjustResize`. The screens pad for the keyboard themselves (`imePadding`), and the system pan added to that left a keyboard-high gap above the chat composer. Check-in and New booking now pad too. iOS was already right.

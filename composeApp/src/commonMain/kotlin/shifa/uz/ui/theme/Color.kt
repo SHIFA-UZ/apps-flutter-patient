@@ -73,6 +73,7 @@ object ShifaColors {
         val White70 = Color(0xB3FFFFFF)
         val White90 = Color(0xE6FFFFFF)
         val Teal75 = Color(0xBF00BBB0)
+        val Teal25 = Color(0x4000BBB0)
         val Teal15 = Color(0x2600BBB0)
         val Black5 = Color(0x0D000000)
     }

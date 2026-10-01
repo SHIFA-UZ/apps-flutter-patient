@@ -88,14 +88,20 @@ object ShifaDimens {
     val SwitchWidth = 40.dp
     val SwitchKnob = 15.dp
 
-    // notification
-    val NotificationAvatar = 50.dp
+    // notification, type = message: the content's height (title-bar 22 + 8 + body 26)
+    val NotificationAvatar = 56.dp
+
+    // page-header, page = sub, with the chat's avatar
+    val SubHeaderAvatar = 32.dp
 
     // image-container
     val ImageContainerSize = 302.dp
 
     // chat-bubble
     val ChatBubbleMaxWidth = 360.dp
+
+    // chat-bubble, type = image: a received or sent photo. Figma's is a placeholder, so Flutter's square (08 §5.5.2).
+    val ChatImage = 280.dp
 
     // section
     val SectionBorder = 1.dp

@@ -81,7 +81,7 @@ fun ShifaMainHeader(
     }
 }
 
-/** Figma page-header, page = sub. Each action shows only when its callback is set. */
+/** Figma page-header, page = sub. Each action shows only when its callback is set; [avatar] puts a chat's photo before the title. */
 @Composable
 fun ShifaSubHeader(
     title: String,
@@ -89,6 +89,8 @@ fun ShifaSubHeader(
     onBack: (() -> Unit)? = null,
     onCheck: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+    avatar: Boolean = false,
+    avatarUrl: String? = null,
 ) {
     Row(
         modifier.fillMaxWidth().height(ShifaSize.S64).padding(horizontal = ShifaSpacing.Inset.Md),
@@ -98,7 +100,18 @@ fun ShifaSubHeader(
         onBack?.let {
             ShifaActionButton(it, icon = Res.drawable.ic_arrow_left_16, contentDescription = "Back", secondary = true)
         }
-        HeaderTitle(title, MaterialTheme.typography.headlineSmall, Modifier.weight(1f, fill = false))
+        if (avatar) {
+            Row(
+                Modifier.weight(1f, fill = false),
+                horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ShifaAvatar(avatarUrl, ShifaDimens.SubHeaderAvatar, placeholder = ShifaColors.Icon.Primary)
+                HeaderTitle(title, MaterialTheme.typography.headlineSmall, Modifier.weight(1f, fill = false))
+            }
+        } else {
+            HeaderTitle(title, MaterialTheme.typography.headlineSmall, Modifier.weight(1f, fill = false))
+        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
             verticalAlignment = Alignment.CenterVertically,

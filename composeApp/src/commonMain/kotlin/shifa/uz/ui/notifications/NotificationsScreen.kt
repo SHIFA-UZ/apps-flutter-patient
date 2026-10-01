@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
@@ -174,20 +175,9 @@ internal fun NotificationsContent(
                         }
                     else -> {
                         val zone = TimeZone.currentSystemDefault()
-                        val months = stringArrayResource(Res.array.monthsShort)
                         val today = now.toLocalDateTime(zone).date
                         shown.groupBy { it.createdAt.toLocalDateTime(zone).date }.forEach { (day, items) ->
-                            val style = ShifaTextStyles.profileName() // Figma: Bold 16/16
-                            Text(
-                                when (day.daysUntil(today)) {
-                                    0 -> stringResource(Res.string.today)
-                                    1 -> stringResource(Res.string.yesterday)
-                                    else -> "${months[day.monthNumber - 1]} ${day.dayOfMonth}"
-                                },
-                                Modifier.fillMaxWidth().lineBox(style),
-                                style = style,
-                                color = ShifaColors.Text.Primary,
-                            )
+                            DayHeader(day, today)
                             items.forEach {
                                 val (title, message) = texts(it)
                                 ShifaNotification(
@@ -206,6 +196,25 @@ internal fun NotificationsContent(
             }
         }
     }
+}
+
+/** A date group's title: "Today", "Yesterday", else "MMM d". */
+@Composable
+internal fun DayHeader(
+    day: LocalDate,
+    today: LocalDate,
+) {
+    val style = ShifaTextStyles.profileName() // Figma: Bold 16/16
+    Text(
+        when (day.daysUntil(today)) {
+            0 -> stringResource(Res.string.today)
+            1 -> stringResource(Res.string.yesterday)
+            else -> "${stringArrayResource(Res.array.monthsShort)[day.monthNumber - 1]} ${day.dayOfMonth}"
+        },
+        Modifier.fillMaxWidth().lineBox(style),
+        style = style,
+        color = ShifaColors.Text.Primary,
+    )
 }
 
 @Composable

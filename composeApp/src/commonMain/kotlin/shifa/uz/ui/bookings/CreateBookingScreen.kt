@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -148,7 +149,7 @@ internal fun CreateBookingContent(
     onAttach: () -> Unit = {},
     onBook: () -> Unit = {},
 ) {
-    Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
+    Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
         ShifaPageElement(ShifaPageElementType.Header) {
             ShifaSubHeader(stringResource(Res.string.createBooking), onBack = onBack)
         }

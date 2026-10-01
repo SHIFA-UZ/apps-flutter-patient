@@ -24,6 +24,7 @@ internal fun NotificationPreview() =
             ShifaNotification("${it.name} Title", BODY, it, time = if (feedback) null else "17:00")
         }
         ShifaMessageNotification("Sender Name", BODY, "17:00")
+        ShifaMessageNotification("Sender Name", BODY, "17:00", unreadCount = 2)
     }
 
 @Preview

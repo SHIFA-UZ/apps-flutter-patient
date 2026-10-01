@@ -20,8 +20,10 @@ import shifa.uz.data.notifications.NotificationsRepository
 import shifa.uz.data.tasks.TasksRepository
 import shifa.uz.ui.notifications.NotificationLink.ToAppointment
 import shifa.uz.ui.notifications.NotificationLink.ToBookings
+import shifa.uz.ui.notifications.NotificationLink.ToChat
 import shifa.uz.ui.notifications.NotificationLink.ToDocument
 import shifa.uz.ui.notifications.NotificationLink.ToDocuments
+import shifa.uz.ui.notifications.NotificationLink.ToMessages
 import shifa.uz.ui.notifications.NotificationLink.ToTask
 import shifa.uz.ui.notifications.NotificationLink.ToTasks
 
@@ -109,7 +111,7 @@ class NotificationsViewModel(
 /**
  * 13 §4.2's sheet routes that exist here, for the tray and for a tapped push. There's no get-by-id, so the linked
  * item is found in its list; when it isn't there (or the list fails) the list opens instead.
- * ponytail: payment, sign form, treatment plan, visit summary and chat aren't built, so those get no link.
+ * ponytail: payment, sign form, treatment plan and visit summary aren't built, so those get no link.
  */
 internal class NotificationLinks(
     private val bookings: BookingsRepository,
@@ -120,6 +122,8 @@ internal class NotificationLinks(
         val kind = n.kind
         return when {
             UNBUILT.any { kind.startsWith(it) } -> null
+            // 08 §5.1: Flutter opened the list whatever the id; with one, the chat opens here.
+            kind == "CHAT_MESSAGE" || kind == "NEW_MESSAGE" -> n.chat?.let(::ToChat) ?: ToMessages
             "TASK" in kind ->
                 n.task?.takeIf { kind != "TASK_COMPLETED" }
                     ?.let { id -> tasks.getMyTasks().getOrNull()?.find { it.id == id } }
@@ -145,8 +149,6 @@ internal class NotificationLinks(
                 "INSTALLMENT_",
                 "SIGNATURE_REQUESTED",
                 "AI_",
-                "CHAT_MESSAGE",
-                "NEW_MESSAGE",
                 "DOCUMENT_ACCESS_REQUEST",
             )
     }

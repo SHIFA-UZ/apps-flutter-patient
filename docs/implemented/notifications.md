@@ -18,7 +18,7 @@
 - There is no get-by-id endpoint, so the item is looked up in B2, F1 or T1. When it isn't found, or the list call fails, the button opens the list instead: the Bookings tab, the Documents tab or My Tasks. TASK_COMPLETED opens My Tasks. PROPHYLAXIS_REMINDER opens the Bookings tab. The button closes the page first, then opens the target.
 - Button labels come from 13 §6.3 ("View appointment", "View document", "Open task", "Open bookings"), not Figma's placeholder copy.
 - Not built:
-  - Buttons for payment, installment, treatment plan, sign form, visit summary and chat. Those screens don't exist yet, so the tray shows only the message.
+  - Buttons for payment, installment, treatment plan, sign form and visit summary. Those screens don't exist yet, so the tray shows only the message. Chat items open the chat (see messages.md).
   - Approve and reject for access requests (NOTIF-02).
   - The 280 max-height scroll for long messages.
 - Not tried on a device: mark read and mark all read (production data).

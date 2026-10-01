@@ -22,7 +22,7 @@ data class UnreadCount(
 /**
  * N1 item, the keys the app reads (15 §5.10). Without `id`, `title`, `message`, `type` or an ISO `createdAt` the
  * item is skipped (13 quirk 9). Linked ids come camelCase, snake_case or under `data`.
- * ponytail: no form, plan, chat or access-request ids; their screens aren't built.
+ * ponytail: no form, plan or access-request ids; their screens aren't built.
  */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -36,6 +36,7 @@ data class AppNotification(
     @JsonNames("appointment_id") private val appointmentId: String? = null,
     @JsonNames("document_id") private val documentId: String? = null,
     @JsonNames("task_id") private val taskId: String? = null,
+    @JsonNames("chat_id") private val chatId: String? = null,
     @JsonNames("doctor_name") private val doctorName: String? = null,
     private val data: JsonObject? = null,
 ) {
@@ -47,13 +48,14 @@ data class AppNotification(
     val appointment get() = appointmentId ?: data.string("appointmentId", "appointment_id")
     val document get() = documentId ?: data.string("documentId", "document_id")
     val task get() = taskId ?: data.string("taskId", "task_id")
+    val chat get() = chatId ?: data.string("chatId", "chat_id")
     val doctor get() = doctorName ?: data.string("doctorName", "doctor_name")
 
     companion object {
         /**
          * 13 §6.2: a push's data as an item, to route its tap. The id is `notificationId` or `id` (0 when it isn't a
          * number); `entityId` stands in for the type's own id, and `createdAt` defaults to now.
-         * ponytail: plan and chat ids aren't read; their screens aren't built.
+         * ponytail: plan ids aren't read; their screen isn't built.
          */
         fun fromPush(data: Map<String, String>): AppNotification {
             val type = data["type"]?.replace('-', '_') ?: "GENERAL"
@@ -72,7 +74,13 @@ data class AppNotification(
         }
 
         private val ENTITY_KEYS =
-            mapOf("APPOINTMENT" to "appointmentId", "DOCUMENT" to "documentId", "TASK" to "taskId")
+            mapOf(
+                "APPOINTMENT" to "appointmentId",
+                "DOCUMENT" to "documentId",
+                "TASK" to "taskId",
+                "MESSAGE" to "chatId",
+                "CHAT" to "chatId",
+            )
     }
 }
 

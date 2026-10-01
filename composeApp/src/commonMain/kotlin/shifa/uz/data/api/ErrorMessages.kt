@@ -39,6 +39,12 @@ const val FAILED_TO_CANCEL_APPOINTMENT = "Error cancelling appointment"
 const val FAILED_TO_LOAD_SLOTS = "Error loading slots"
 const val FAILED_TO_BOOK_APPOINTMENT = "Failed to book appointment"
 const val COPILOT_FAILED = "Co-pilot failed" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_LOAD_CONVERSATIONS = "Failed to fetch conversations" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_LOAD_CONVERSATION = "Failed to fetch conversation" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_SEND_MESSAGE = "Failed to send message"
+const val FAILED_TO_MARK_CONVERSATION_READ = "Failed to mark as read" // Swallowed (08 §2.4).
+const val FAILED_TO_SEARCH_USERS = "Failed to search users" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_UPLOAD_ATTACHMENT = "Failed to upload image"
 private const val INVALID_CREDENTIALS = "Invalid credentials"
 private const val NO_ACCOUNT_FOUND = "No account found"
 const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
@@ -110,6 +116,8 @@ private val MESSAGES: Map<String, StringResource> =
         FAILED_TO_CANCEL_APPOINTMENT to Res.string.errorCancellingAppointment,
         FAILED_TO_LOAD_SLOTS to Res.string.errorLoadingSlots,
         FAILED_TO_BOOK_APPOINTMENT to Res.string.failedToBookAppointment,
+        FAILED_TO_SEND_MESSAGE to Res.string.failedToSend,
+        FAILED_TO_UPLOAD_ATTACHMENT to Res.string.failedToUploadImage,
         // B3, special-cased in 06 §3.1.
         "serviceId is required for video consultation" to Res.string.bookingSelectServiceForVideo,
         // T4 (12 §4.4).

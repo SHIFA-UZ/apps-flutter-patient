@@ -7,10 +7,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -20,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.DrawableResource
@@ -116,24 +117,38 @@ fun ShifaChatBubble(
     type: ShifaChatBubbleType,
     modifier: Modifier = Modifier,
 ) = Bubble(type, modifier) {
-    val style = ShifaTextStyles.chatMessage()
-    Text(
-        text,
-        Modifier.lineBox(style),
-        style = style,
-        color = if (type == ShifaChatBubbleType.Received) ShifaColors.Text.Inverse else ShifaColors.Text.Primary,
-        textAlign = if (type == ShifaChatBubbleType.Sent) TextAlign.End else TextAlign.Start,
-    )
+    BubbleText(text, if (type == ShifaChatBubbleType.Sent) TextAlign.End else TextAlign.Start)
 }
 
-/** Figma chat-bubble, type = image: a sent bubble around [image], clipped to ShifaRadius.Sm. */
+/**
+ * Figma chat-bubble, type = image: [image] clipped to ShifaRadius.Sm, in a sent bubble unless [received].
+ * Not in Figma: a [caption] under it, and the received look.
+ */
 @Composable
 fun ShifaChatImageBubble(
     modifier: Modifier = Modifier,
+    received: Boolean = false,
+    caption: String? = null,
     image: @Composable () -> Unit,
-) = Bubble(ShifaChatBubbleType.Sent, modifier) {
-    Box(Modifier.clip(ShifaRadius.Sm)) { image() }
+) = Bubble(if (received) ShifaChatBubbleType.Received else ShifaChatBubbleType.Sent, modifier) {
+    Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
+        Box(Modifier.clip(ShifaRadius.Sm)) { image() }
+        caption?.let { BubbleText(it, if (received) TextAlign.Start else TextAlign.End) }
+    }
 }
+
+@Composable
+private fun BubbleText(
+    text: String,
+    align: TextAlign,
+) {
+    val style = ShifaTextStyles.chatBubble()
+    Text(text, Modifier.lineBox(style), style = style, color = ShifaColors.Text.Primary, textAlign = align)
+}
+
+// Figma: the corner at the sender's side is square.
+private val ReceivedShape = ShifaRadius.ControlLg.copy(topStart = ZeroCornerSize)
+private val SentShape = ShifaRadius.ControlLg.copy(topEnd = ZeroCornerSize)
 
 @Composable
 private fun Bubble(
@@ -147,13 +162,12 @@ private fun Bubble(
     Box(
         Modifier
             .widthIn(max = ShifaDimens.ChatBubbleMaxWidth)
-            .background(
+            .then(
                 when (type) {
-                    ShifaChatBubbleType.Received -> ShifaColors.Alpha.Teal75
-                    ShifaChatBubbleType.Sent -> ShifaColors.Alpha.Black5
-                    ShifaChatBubbleType.ShifaAi -> Color.Transparent
+                    ShifaChatBubbleType.Received -> Modifier.background(ShifaColors.Alpha.Teal25, ReceivedShape)
+                    ShifaChatBubbleType.Sent -> Modifier.background(ShifaColors.Alpha.Black5, SentShape)
+                    ShifaChatBubbleType.ShifaAi -> Modifier
                 },
-                ShifaRadius.ControlLg,
             ).padding(horizontal = ShifaSpacing.Inset.Md, vertical = ShifaSpacing.Stack.Md),
     ) { content() }
 }

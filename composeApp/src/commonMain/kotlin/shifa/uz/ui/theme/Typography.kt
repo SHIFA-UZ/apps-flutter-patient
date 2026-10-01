@@ -102,9 +102,17 @@ object ShifaTextStyles {
     @Composable
     fun chipSlot() = manrope(manropeFontFamily(), FontWeight.Medium, 14, 18)
 
-    // chat-bubble message
+    // doctor's notes and bio
     @Composable
     fun chatMessage() = manrope(manropeFontFamily(), FontWeight.Normal, 12, 14)
+
+    // chat-bubble message (semantic/type/input, Regular, line height 18)
+    @Composable
+    fun chatBubble() = manrope(manropeFontFamily(), FontWeight.Normal, 16, 18)
+
+    // notification body (Medium 12, line height 14)
+    @Composable
+    fun notificationBody() = manrope(manropeFontFamily(), FontWeight.Medium, 12, 14)
 }
 
 /**

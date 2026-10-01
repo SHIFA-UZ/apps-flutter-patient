@@ -95,10 +95,14 @@ class PushViewModelTest {
         }
 
     @Test
-    fun `an unbuilt or untyped push opens the inbox, and an arrival refreshes the bell`() =
+    fun `a chat push opens its chat, an unbuilt or untyped one the inbox, and an arrival refreshes the bell`() =
         runTest {
             classToTest.open.test {
                 opened.value = mapOf("id" to "uuid", "type" to "CHAT_MESSAGE", "entityId" to "c1")
+                assertThat(awaitItem()).isEqualTo(NotificationLink.ToChat("c1"))
+                opened.value = mapOf("id" to "uuid2", "type" to "NEW_MESSAGE")
+                assertThat(awaitItem()).isEqualTo(NotificationLink.ToMessages)
+                opened.value = mapOf("id" to "uuid3", "type" to "TREATMENT_PLAN_CREATED", "entityId" to "p1")
                 assertThat(awaitItem()).isNull()
                 opened.value = mapOf("title" to "Hi")
                 assertThat(awaitItem()).isNull()

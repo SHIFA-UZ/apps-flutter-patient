@@ -28,6 +28,10 @@ object ApiConfig {
         const val DOCUMENTS = "patients/me/documents"
         const val DOCTORS = "public/doctors"
         const val COPILOT_STREAM = "patients/me/copilot/stream"
+        const val CONVERSATIONS = "patients/me/messages/conversations"
+        const val SEND_MESSAGE = "patients/me/messages/send"
+        const val SEARCH_USERS = "patients/me/messages/search"
+        const val UPLOAD_ATTACHMENT = "messages/upload-attachment"
 
         fun doctor(id: String) = "public/doctors/$id"
 
@@ -44,6 +48,10 @@ object ApiConfig {
         fun taskCheckIns(taskId: String) = "tasks/my-tasks/$taskId/check-ins"
 
         fun taskCheckIn(taskId: String) = "tasks/my-tasks/$taskId/check-in"
+
+        fun conversation(id: String) = "patients/me/messages/conversations/$id"
+
+        fun conversationRead(id: String) = "patients/me/messages/conversations/$id/read"
     }
 
     // 01 §4.2: sent without a token. A request matches when its path ends with one of these.
