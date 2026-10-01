@@ -97,9 +97,12 @@ import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaSettingsItem
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.utils.rememberImagePickerLauncher
+import shifa.uz.utils.rememberInAppBrowser
 
-// ponytail: App Lock (03) and Privacy (a no-op in Flutter) are placeholders until their tickets.
-private enum class ProfilePage { Edit, ChangePassword, AppLock, Privacy }
+// ponytail: App Lock (03) is a placeholder until its ticket.
+private enum class ProfilePage { Edit, ChangePassword, AppLock }
+
+private const val PRIVACY_URL = "https://shifa.uz/#privacy"
 
 /** 14 §3.1: the menu, its dialogs, and the pages it opens. */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -123,6 +126,7 @@ fun ProfileScreen(
         }
     }
     val pickPhoto = rememberImagePickerLauncher(viewModel::uploadPhoto)
+    val openUrl = rememberInAppBrowser()
     var page by rememberSaveable { mutableStateOf<ProfilePage?>(null) }
     ProfileContent(
         state,
@@ -133,7 +137,7 @@ fun ProfileScreen(
         onLanguage = { viewModel.showDialog(ProfileDialog.Language) },
         onAppLock = { page = ProfilePage.AppLock },
         onChangePassword = { page = ProfilePage.ChangePassword },
-        onPrivacy = { page = ProfilePage.Privacy },
+        onPrivacy = { openUrl(PRIVACY_URL) },
         onLogOut = { viewModel.showDialog(ProfileDialog.LogOut) },
         onDeleteAccount = { viewModel.showDialog(ProfileDialog.DeleteAccount) },
     )
@@ -175,7 +179,6 @@ fun ProfileScreen(
                             close()
                         })
                     ProfilePage.AppLock -> ComingSoon(stringResource(Res.string.appLock), onBack = close)
-                    ProfilePage.Privacy -> ComingSoon(stringResource(Res.string.privacy), onBack = close)
                 }
             }
         }
