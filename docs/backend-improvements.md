@@ -17,6 +17,7 @@ Endpoint ids (P7, D1, B5…) are from `docs/kmp-spec/15-api-reference.md`. App l
 | 9 | Doctor search cleanups | Low | None |
 | 10 | Google sign-in | Later | Medium |
 | 11 | Shifa AI: error codes, attachments, chat sync | Medium | Small to medium |
+| 12 | Payments: statuses, idempotent checkout, return link, slot hold | High | Small to large |
 
 ## 1. Push text in the patient's language
 
@@ -98,6 +99,23 @@ Keep P7 working for old app versions until they're gone.
 - Send the daily limit and when it resets (e.g. `X-RateLimit-Remaining`, `resetAt` in the error), so the app can say when to try again.
 - An attachment field on X1 (an uploaded document id, or an image), if the product wants Add to chat.
 - Optional: chat history on the server (list, get, delete), so chats follow the patient across devices.
+
+## 12. Payments
+
+The full plan is in [payment-flow.md](payment-flow.md).
+
+**Now:** B3 creates the booking first, and a `PENDING` one is paid on a hosted Click or Stripe page ($1). The app learns the result only by polling $3 every 3 s, where only `PAID` is known. The page ends on `/api/payments/checkout/success|cancel` URLs, which the app can only catch in a WebView. There are no failed or expired states, refunds, receipts or saved cards, and nothing holds the slot while the patient pays.
+
+**Change (in priority order):**
+- Document every `paymentStatus` and payment `status`: PENDING, PROCESSING, PAID, FAILED (with a reason code), EXPIRED, REFUNDED.
+- Make $1 idempotent: one open checkout per appointment, so a second call returns the same `paymentId`.
+- Send a push on PAID and FAILED, and stop the payment reminders once paid.
+- Redirect the hosted page back to the app (`shifa://payment/return?paymentId=…`). The app can then use Custom Tabs / Safari view instead of a WebView.
+- Say whether unpaid bookings are cancelled automatically, and send a `paymentDueAt`. Better: hold the slot while the patient pays (reserve with `expiresAt`) and book only once it's paid.
+- Prices before booking for every visit type (in person too), with fees or tax and the total.
+- Later: refunds on cancel (with a status), fiscal receipts, a payment history endpoint, saved cards and Apple / Google Pay through Stripe, a payment that carries over on reschedule, and `paymentStatus` from X4 (AI booking).
+
+**Until then:** Flow A in [payment-flow.md](payment-flow.md): the WebView checkout with polling, the Stripe fallback, a pending screen, and Pay now on the appointment.
 
 ## Questions to confirm (15 §6.4)
 

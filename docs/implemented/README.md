@@ -5,6 +5,7 @@ the status table, the file for the area you touched, and one line in the log.
 
 Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 What we need from the backend team: [../backend-improvements.md](../backend-improvements.md).
+The payment plan (BOOK-04, BOOK-11): [../payment-flow.md](../payment-flow.md), with every flow drawn in [../payment-flow-diagrams.md](../payment-flow-diagrams.md).
 
 | Area | File |
 |---|---|
@@ -100,3 +101,4 @@ What we need from the backend team: [../backend-improvements.md](../backend-impr
 - 2026-10-01: Android keyboard: MainActivity is `adjustResize`. The screens pad for the keyboard themselves (`imePadding`), and the system pan added to that left a keyboard-high gap above the chat composer. Check-in and New booking now pad too. iOS was already right.
 - 2026-10-01: Home hides Upcoming when there are none, and Bookings hides Recommended when D1 sends none (not while searching). The chip lists and the Recommended page show full doctor cards with tags (Figma 1653:12376). Doctor cards and tags follow the new Figma copy `B7f95gNrRt8HYYzlGZdk9N`: bigger avatars, Bold 16 names, the in card hugs its content, tags are Bold 12 with 8dp vertical padding (so task and document cards' tags grow too).
 - 2026-10-01: Profile: Privacy opens `https://shifa.uz/#privacy` in an in-app browser (`rememberInAppBrowser`: a Custom Tab on Android, without `androidx.browser`; `SFSafariViewController` on iOS) instead of the placeholder.
+- 2026-10-05: Added `docs/payment-flow.md`: the payment flow we can build on today's API (every case, from booking to treatment plans) and the ideal one, mapped to Figma's Confirm and Pay frames (1772:17301, 1772:17500, 1773:18076, 1773:18395). `backend-improvements.md` §12 lists the payment asks, and `docs/payment-flow-diagrams.md` draws every flow (14 for today's API, 8 for the ideal one).
