@@ -156,6 +156,10 @@ android {
             signingConfig = signingConfigs.findByName("release")
         }
     }
+    // BuildConfig.DEBUG gates the HTTP logs (01 §7).
+    buildFeatures {
+        buildConfig = true
+    }
     // Robolectric only sees the merged manifest and assets (where Compose resources live) with this.
     testOptions {
         unitTests.isIncludeAndroidResources = true

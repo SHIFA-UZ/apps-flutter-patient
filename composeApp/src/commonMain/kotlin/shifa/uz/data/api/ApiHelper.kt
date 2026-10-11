@@ -35,20 +35,37 @@ suspend inline fun <reified T> apiCall(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            httpLogger.log("FAILED $defaultMessage, no response: $e")
             return Result.failure(ApiException.NetworkError(networkErrorMessage(e)))
         }
     val status = response.status.value
     if (!response.status.isSuccess()) {
         val auth = "/auth/" in response.call.request.url.encodedPath
-        return Result.failure(ApiException.of(status, sanitizeError(status, errorText(response), defaultMessage, auth)))
+        val raw = errorText(response)
+        logFailure(response, raw)
+        return Result.failure(ApiException.of(status, sanitizeError(status, raw, defaultMessage, auth)))
     }
     return try {
         Result.success(response.body<T>())
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
+        logFailure(response, "unreadable body: ${e.message}")
         Result.failure(ApiException.ServerError(defaultMessage))
     }
+}
+
+// The backend's own reason, as the UI shows only the sanitized text. 01 §7: 300 characters at most.
+// ponytail: the reason is logged as sent, not key-redacted; only debug builds log (httpLogger).
+@PublishedApi
+internal fun logFailure(
+    response: HttpResponse,
+    reason: String?,
+) {
+    val request = response.call.request
+    httpLogger.log(
+        "FAILED ${response.status.value} ${request.method.value} ${request.url.encodedPath}: ${reason?.take(300)}",
+    )
 }
 
 @PublishedApi

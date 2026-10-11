@@ -16,6 +16,8 @@ import shifa.uz.data.api.COPILOT_FAILED
 import shifa.uz.data.api.TOO_MANY_REQUESTS
 import shifa.uz.data.api.apiJson
 import shifa.uz.data.api.httpClient
+import shifa.uz.data.api.httpLogger
+import shifa.uz.data.api.logFailure
 import shifa.uz.data.api.networkErrorMessage
 import shifa.uz.data.api.sanitizeError
 import shifa.uz.data.model.ApiException
@@ -45,6 +47,7 @@ open class CopilotRepository(
                 if (status != 200) {
                     val text = response.bodyAsText()
                     val error = decode(text)
+                    logFailure(response, error?.message ?: text)
                     if (status == 429 || error?.code == RATE_LIMIT) throw ApiException.RateLimit(TOO_MANY_REQUESTS)
                     throw ApiException.of(
                         status,
@@ -63,6 +66,7 @@ open class CopilotRepository(
         } catch (e: ApiException) {
             Result.failure(e)
         } catch (e: Exception) {
+            httpLogger.log("FAILED $COPILOT_FAILED, no response: $e")
             Result.failure(ApiException.NetworkError(networkErrorMessage(e)))
         }
 
@@ -93,7 +97,11 @@ open class CopilotRepository(
 
     // Other codes (safety…) carry backend text, so they show as the generic error (01 §8).
     private fun sseError(data: String) =
-        when (decode(data)?.code) {
+        when (
+            decode(
+                data,
+            ).also { httpLogger.log("FAILED SSE error on ${ApiConfig.Endpoints.COPILOT_STREAM}: $data") }?.code
+        ) {
             RATE_LIMIT -> ApiException.RateLimit(TOO_MANY_REQUESTS)
             else -> ApiException.ServerError(COPILOT_FAILED)
         }

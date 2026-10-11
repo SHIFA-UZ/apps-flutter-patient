@@ -6,10 +6,7 @@ import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.logging.DEFAULT
-import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.bearerAuth
 import io.ktor.http.Url
@@ -20,6 +17,9 @@ import shifa.uz.data.storage.TokenStorage
 import shifa.uz.utils.getAdjustedBaseUrl
 
 expect fun createHttpEngine(): HttpClientEngine
+
+/** Where [apiCall] logs failed calls (only those). 01 §7: debug builds only; release builds log nothing. */
+expect val httpLogger: Logger
 
 // isLenient also reads numeric IDs into String fields (15 §1.9).
 internal val apiJson =
@@ -43,12 +43,6 @@ fun createHttpClient(
     val apiHost = Url(baseUrl).host
     return HttpClient(engine) {
         install(ContentNegotiation) { json(apiJson) }
-
-        // INFO logs the request line and status only, never headers or bodies (token, password).
-        install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.INFO
-        }
 
         // 01 §4.1: 30 s connect and receive, no send timeout.
         install(HttpTimeout) {

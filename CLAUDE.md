@@ -57,6 +57,7 @@ iosApp/                     # Xcode host app
 - `createHttpClient(tokenStorage, engine)` builds the Ktor client (engine defaults to `expect fun createHttpEngine()`); the app uses the shared `httpClient`. The token goes only to the backend host and never on `ApiConfig.PUBLIC_AUTH_PATHS`.
 - Calls go through `apiCall<T>(defaultMessage) { client.get(…) }` from `ApiHelper.kt`: returns `Result<T>`, non-2xx becomes an `ApiException` whose message is sanitized by `sanitizeError` (`ErrorMessages.kt`), no response becomes `NetworkError`. There is no refresh token; a 401 means logout.
 - Repositories take `HttpClient` (and `TokenStorage` if needed) via constructor and return `Result<T>`. Map HTTP errors to the sealed `ApiException` (ValidationError, Unauthorized, NotFound, Conflict, RateLimit, ServerError, NetworkError…).
+- Logging: errors only, never successes. Every failed backend call is logged through `httpLogger` (Logcat tag `HttpClient` on Android, the Xcode console on iOS). `apiCall` already does it: `FAILED <status> <method> <path>: <backend reason>`, `FAILED <message>, no response: <exception>`, or an unreadable body. Network code outside `apiCall` (e.g. the Shifa AI SSE stream) logs its failures the same way, with `logFailure(response, reason)` or `httpLogger.log("FAILED …")`. Debug builds only (release logs nothing); never log tokens, passwords, headers or request bodies.
 
 ### UI layer
 - One `XxxUiState` `@Stable data class` per screen with defaults; derived flags as properties (`isInputValid`).
