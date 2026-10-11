@@ -45,6 +45,8 @@ import shifa.composeapp.generated.resources.noTasksFound
 import shifa.composeapp.generated.resources.noUpcomingAppointments
 import shifa.composeapp.generated.resources.now
 import shifa.composeapp.generated.resources.patient
+import shifa.composeapp.generated.resources.paymentPendingTitle
+import shifa.composeapp.generated.resources.pending
 import shifa.composeapp.generated.resources.started
 import shifa.composeapp.generated.resources.starts
 import shifa.composeapp.generated.resources.taskCategoryExercise
@@ -234,13 +236,24 @@ internal fun UpcomingCard(
 ) {
     val live = appointment.isNow(now)
     val place = if (appointment.isVideo) stringResource(Res.string.videoConsultation) else appointment.doctorClinic
+    // Not in Figma: a visit the doctor hasn't confirmed, or not paid yet, says so after its time.
+    val note =
+        when {
+            appointment.paymentStatus.equals(
+                "PENDING",
+                ignoreCase = true,
+            ) -> stringResource(Res.string.paymentPendingTitle)
+            !appointment.isConfirmed -> stringResource(Res.string.pending)
+            else -> null
+        }
+    val time = if (live) stringResource(Res.string.now) else appointment.start?.let { slot(it, now) }
     ShifaUpcomingAppointmentCard(
         doctorName = appointment.doctorName?.ifBlank { null } ?: stringResource(Res.string.unknownDoctor),
         subtitle = listOfNotNull(appointment.doctorProfession, place).filter(String::isNotBlank).joinToString(" - "),
-        time = if (live) stringResource(Res.string.now) else appointment.start?.let { slot(it, now) }.orEmpty(),
+        time = listOfNotNull(time, note).joinToString(" · "),
         avatarUrl = appointment.doctorPhotoUrl,
         video = appointment.isVideo,
-        joinText = stringResource(Res.string.join).takeIf { live && appointment.isVideo },
+        joinText = stringResource(Res.string.join).takeIf { live && appointment.isVideo && appointment.isConfirmed },
         onJoin = { onClick(appointment) },
         shadow = shadow,
         onClick = { onClick(appointment) },

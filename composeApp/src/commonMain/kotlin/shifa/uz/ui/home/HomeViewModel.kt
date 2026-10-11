@@ -103,12 +103,12 @@ class HomeViewModel(
         return null
     }
 
-    // One unfiltered B2 feeds both sections. Unlike Flutter (start > now), a confirmed visit stays until its
-    // join window closes, so Home can show "Now" and Join (06).
+    // One unfiltered B2 feeds both sections. Unlike Flutter (start > now), a visit stays until its join window
+    // closes, so Home can show "Now" and Join (06). Requested ones too: Figma has no other upcoming list.
     private suspend fun loadAppointments(): StringResource? {
         val all = bookings.getAppointments().getOrElse { return it.toUserMessage() }
         val now = clock()
-        update { copy(upcoming = all.filter { it.isConfirmed && !it.isOver(now) }.sortedBy { it.start }) }
+        update { copy(upcoming = all.filter { it.isOpen && !it.isOver(now) }.sortedBy { it.start }) }
         return loadDoctors(all)
     }
 

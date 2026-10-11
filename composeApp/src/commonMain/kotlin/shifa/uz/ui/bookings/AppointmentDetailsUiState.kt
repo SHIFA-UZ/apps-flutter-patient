@@ -23,12 +23,9 @@ data class AppointmentDetailsUiState(
 
     val isPast get() = hoursUntil?.let { it < 0 } ?: true
 
-    // 06 quirk 12: Flutter ignored the status here.
-    private val isOpen get() = appointment.status != "CANCELLED" && appointment.status != "COMPLETED"
+    val canCancel get() = appointment.isOpen && !isPast && hoursUntil!! >= CANCEL_HOURS && appointment.id.isNotBlank()
 
-    val canCancel get() = isOpen && !isPast && hoursUntil!! >= CANCEL_HOURS && appointment.id.isNotBlank()
-
-    val showWarning get() = isOpen && !isPast && hoursUntil!! < CANCEL_HOURS
+    val showWarning get() = appointment.isOpen && !isPast && hoursUntil!! < CANCEL_HOURS
 
     val shownDoctor
         get() =

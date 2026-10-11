@@ -32,6 +32,7 @@ private val loaded =
                     doctorProfession = "Cardiologist",
                     doctorClinic = clinic,
                     startAt = "2026-09-28T05:00:00Z",
+                    status = "REQUESTED",
                 ),
             ),
         tasks =

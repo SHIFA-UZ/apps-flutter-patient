@@ -25,8 +25,12 @@ data class Appointment(
 ) {
     val isVideo get() = videoFlag == true || location == "Video Consultation"
 
-    // Null is CONFIRMED; unknown values (REQUESTED…) count as PENDING.
-    val isConfirmed get() = status == null || status == "CONFIRMED"
+    // Null is CONFIRMED, and IN_PROGRESS (the visit has started) is past it. REQUESTED waits for the doctor:
+    // B3 creates every booking as REQUESTED and nothing confirms it automatically.
+    val isConfirmed get() = status == null || status == "CONFIRMED" || status == "IN_PROGRESS"
+
+    // 06 quirk 12: Flutter ignored the status here. REQUESTED and PENDING are open (new bookings are either, 15 B2).
+    val isOpen get() = status != "CANCELLED" && status != "COMPLETED"
 
     val start get() = parseInstant(startAt)
 

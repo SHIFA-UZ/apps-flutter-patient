@@ -123,7 +123,8 @@ The full plan is in [payment-flow.md](payment-flow.md).
 - Whether P4 `/profile/photo` exists.
 - Whether B1 `day` uses the device time zone or the profile `timeZone`.
 - Which zone T3 `scheduledDate` / `scheduledTime` are in. The app reads them on the device clock, so outside Tashkent a check-in opens hours early or late.
-- All values of `paymentStatus`, payment `status`, AI summary `status` and appointment `status` (e.g. `REQUESTED`).
+- All values of `paymentStatus`, payment `status`, AI summary `status` and appointment `status`. Seen in B2 so far (2026-10-11): `REQUESTED`, `CONFIRMED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`; `paymentStatus` only `NOT_REQUIRED`.
+- Who confirms a booking. B3 creates every booking as `REQUESTED`, and only some later become `CONFIRMED`, so a doctor or clinic confirms them by hand. Unconfirmed ones stay `REQUESTED` after their date. If bookings should be accepted automatically (always, or per doctor), the backend has to do it; the app shows `REQUESTED` as Pending.
 - What `serviceItems[].prices[].locationId` means (not in the spec). The app reads `null` as "any place, video included" and offers a service for video only if it's free or has such a price, since B3 answers a clinic-only one with "Selected service has no price configured". Better: a per-service flag for video, or B3 taking the clinic price.
 - Whether P5 sends the deletion code itself, and how the A4 `purpose=ACCOUNT_DELETION` code is tied to `challengeId`.
 - Whether the server enforces the video join window and the task check-in window.

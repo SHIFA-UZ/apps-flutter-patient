@@ -100,25 +100,35 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `upcoming keeps confirmed visits until their join window closes, soonest first`() =
+    fun `upcoming keeps open visits, requested ones too, until their join window closes, soonest first`() =
         runTest {
             wheneverBlocking { bookings.getAppointments() } doReturn
                 Result.success(
                     listOf(
                         appointment("tomorrow", "2026-09-28T09:00:00Z"),
                         appointment("ended", "2026-09-27T08:00:00Z", endAt = "2026-09-27T08:40:00Z"),
-                        appointment("inProgress", "2026-09-27T08:30:00Z", endAt = "2026-09-27T08:50:00Z"),
+                        appointment(
+                            "inProgress",
+                            "2026-09-27T08:30:00Z",
+                            endAt = "2026-09-27T08:50:00Z",
+                            status = "IN_PROGRESS",
+                        ),
                         appointment("noStatus", "2026-09-27T12:00:00Z", status = null),
                         appointment("requested", "2026-09-27T11:00:00Z", status = "REQUESTED"),
                         appointment("cancelled", "2026-09-27T11:00:00Z", status = "CANCELLED"),
+                        appointment("completed", "2026-09-27T13:00:00Z", status = "COMPLETED"),
                         appointment("noDate", "soon"),
                     ),
                 )
             create()
             advanceUntilIdle()
 
-            assertThat(state.upcoming!!.map { it.id }).containsExactly("inProgress", "noStatus", "tomorrow").inOrder()
+            assertThat(
+                state.upcoming!!.map { it.id },
+            ).containsExactly("inProgress", "requested", "noStatus", "tomorrow").inOrder()
             assertThat(state.upcoming!!.first().isNow(now)).isTrue()
+            assertThat(state.upcoming!!.first().isConfirmed).isTrue() // IN_PROGRESS keeps Join
+            assertThat(state.upcoming!!.single { it.id == "requested" }.isConfirmed).isFalse()
         }
 
     @Test
