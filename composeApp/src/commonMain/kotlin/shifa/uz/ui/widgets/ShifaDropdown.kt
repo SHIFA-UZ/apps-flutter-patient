@@ -37,13 +37,14 @@ import shifa.uz.ui.theme.lineBox
 /**
  * Figma dropdown. Expands inline (the menu pushes content below). As in Figma, the header shows
  * [label] while expanded and the [selected] option once collapsed. Picking an option collapses it.
+ * [onSelect] gets the option's index, so two options may share a label.
  */
 @Composable
 fun ShifaDropdown(
     label: String,
     options: List<String>,
     selected: String?,
-    onSelect: (String) -> Unit,
+    onSelect: (index: Int) -> Unit,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -94,12 +95,12 @@ fun ShifaDropdown(
             )
         }
         if (expanded) {
-            options.forEach { option ->
+            options.forEachIndexed { i, option ->
                 Row(
                     Modifier
                         .fillMaxWidth()
                         .selectable(option == selected, role = Role.RadioButton) {
-                            onSelect(option)
+                            onSelect(i)
                             onExpandedChange(false)
                         }
                         // Gap above each option is part of its touch target.

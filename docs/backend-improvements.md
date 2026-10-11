@@ -124,6 +124,7 @@ The full plan is in [payment-flow.md](payment-flow.md).
 - Whether B1 `day` uses the device time zone or the profile `timeZone`.
 - Which zone T3 `scheduledDate` / `scheduledTime` are in. The app reads them on the device clock, so outside Tashkent a check-in opens hours early or late.
 - All values of `paymentStatus`, payment `status`, AI summary `status` and appointment `status` (e.g. `REQUESTED`).
+- What `serviceItems[].prices[].locationId` means (not in the spec). The app reads `null` as "any place, video included" and offers a service for video only if it's free or has such a price, since B3 answers a clinic-only one with "Selected service has no price configured". Better: a per-service flag for video, or B3 taking the clinic price.
 - Whether P5 sends the deletion code itself, and how the A4 `purpose=ACCOUNT_DELETION` code is tied to `challengeId`.
 - Whether the server enforces the video join window and the task check-in window.
 - Whether D5 (submit a review, under `/public`) needs the token.

@@ -36,6 +36,7 @@ import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.DoctorLocation
+import shifa.uz.data.model.DoctorPrice
 import shifa.uz.data.model.DoctorService
 import shifa.uz.data.model.PatientDocument
 
@@ -46,7 +47,15 @@ class CreateBookingViewModelTest {
     private val doctors = mock<DoctorsRepository>()
     private val documents = mock<DocumentsRepository>()
     private val card = Doctor(id = "42", fullName = "Ali")
-    private val full = card.copy(serviceItems = listOf(DoctorService("7", "Video visit")))
+    private val full =
+        card.copy(
+            serviceItems =
+                listOf(
+                    DoctorService("7", "Video visit", prices = listOf(DoctorPrice(100_000, "UZS"))),
+                    DoctorService("8", "Filling", prices = listOf(DoctorPrice(9_000_000, "UZS", locationId = 14))),
+                    DoctorService("3", "Free video visit", isFreeConsultation = true),
+                ),
+        )
 
     // 14:00 in Tashkent.
     private val now = Instant.parse("2026-09-28T09:00:00Z")
@@ -134,12 +143,14 @@ class CreateBookingViewModelTest {
         }
 
     @Test
-    fun `video needs a service, and a doctor who lists some`() =
+    fun `video offers only services with an online price or free, needs one, and a doctor who lists some`() =
         runTest {
             wheneverBlocking { bookings.getSlots(any(), any(), isNull()) } doReturn Result.success(listOf(first))
             open()
             classToTest.onVideoChange(true)
             advanceUntilIdle()
+            // The clinic-only one is what B3 rejects with "Selected service has no price configured".
+            assertThat(state.videoServices.map { it.id }).containsExactly("7", "3").inOrder()
             classToTest.book()
             assertThat(state.error).isEqualTo(Res.string.bookingSelectServiceForVideo)
 

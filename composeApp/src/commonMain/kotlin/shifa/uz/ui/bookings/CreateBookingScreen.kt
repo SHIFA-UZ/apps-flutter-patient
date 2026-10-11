@@ -286,7 +286,7 @@ private fun VideoSection(
         }
     }
     if (!state.isVideo) return@ShifaSection
-    val services = state.doctor.serviceItems
+    val services = state.videoServices
     if (services.isEmpty()) {
         ShifaBanner(
             stringResource(Res.string.bookingVideoNoServicesOffered),
@@ -302,7 +302,7 @@ private fun VideoSection(
         stringResource(Res.string.videoConsultationServiceLabel),
         labels,
         labels.getOrNull(services.indexOfFirst { it.id == state.serviceId }),
-        onSelect = { onServiceChange(services[labels.indexOf(it)].id) },
+        onSelect = { onServiceChange(services[it].id) },
         expanded = expanded,
         onExpandedChange = { expanded = it },
         modifier = Modifier.fillMaxWidth(),

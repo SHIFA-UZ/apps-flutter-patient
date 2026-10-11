@@ -111,7 +111,7 @@ class CreateBookingViewModel(
         val missing =
             when {
                 !state.isVideo -> null
-                state.doctor.serviceItems.isEmpty() -> Res.string.bookingVideoNoServicesOffered
+                state.videoServices.isEmpty() -> Res.string.bookingVideoNoServicesOffered
                 state.serviceId == null -> Res.string.bookingSelectServiceForVideo
                 else -> null
             }

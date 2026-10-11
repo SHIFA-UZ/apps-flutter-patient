@@ -454,7 +454,7 @@ internal fun UploadPopUp(
             stringResource(Res.string.documentCategorySelect),
             labels,
             DOCUMENT_CATEGORIES.indexOfFirst { it.first == draft.category }.let(labels::getOrNull),
-            onSelect = { onCategorySelect(DOCUMENT_CATEGORIES[labels.indexOf(it)].first) },
+            onSelect = { onCategorySelect(DOCUMENT_CATEGORIES[it].first) },
             expanded = expanded,
             onExpandedChange = { expanded = it && !isUploading },
             modifier = Modifier.fillMaxWidth(),

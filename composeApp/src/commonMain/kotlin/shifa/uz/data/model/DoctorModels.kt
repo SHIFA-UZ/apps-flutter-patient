@@ -79,12 +79,16 @@ data class DoctorService(
     val description: String? = null,
     val isFreeConsultation: Boolean = false,
     val prices: List<DoctorPrice> = emptyList(),
-)
+) {
+    // B3 rejects a video booking whose service has only clinic prices ("Selected service has no price configured").
+    val isOnline get() = isFreeConsultation || prices.any { it.locationId == null }
+}
 
 @Serializable
 data class DoctorPrice(
     val amountMinor: Long = 0,
     val currency: String = "",
+    val locationId: Int? = null, // the clinic this price is for; null: any, video included
 ) {
     /** 07 §4.3 profile price: always 2 decimals, e.g. "150000.00 UZS". */
     val text get() = "${amountMinor / 100}.${(amountMinor % 100).toString().padStart(2, '0')} $currency".trim()

@@ -24,6 +24,9 @@ data class CreateBookingUiState(
 ) {
     val canBook get() = slot != null && !isBooking && !isUploading
 
+    // Clinic-only services can't be booked as video.
+    val videoServices get() = doctor.serviceItems.filter { it.isOnline }
+
     val canAttach get() = documents.size < MAX_BOOKING_DOCUMENTS && !isUploading && !isBooking
 }
 
