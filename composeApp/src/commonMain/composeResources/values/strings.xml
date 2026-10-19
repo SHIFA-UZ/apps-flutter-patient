@@ -882,6 +882,11 @@
         <item quantity="one">%1$d Document Attached</item>
         <item quantity="other">%1$d Documents Attached</item>
     </plurals>
+    <string name="task">Task</string>
+    <string name="submitEntry">Submit Entry</string>
+    <string name="checkInAlreadySubmitted">Check in already submitted</string>
+    <string name="dueAt">Due %1$s</string>
+    <string name="checkInValue">Value</string>
     <string-array name="months">
         <item>January</item>
         <item>February</item>

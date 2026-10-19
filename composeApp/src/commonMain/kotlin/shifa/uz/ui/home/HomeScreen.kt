@@ -292,6 +292,7 @@ internal fun TaskCard(
     now: Instant,
     onClick: (() -> Unit)?,
     progress: Boolean = false,
+    due: String? = null, // instead of the start date
 ) {
     val (type, category) =
         when (task.category) {
@@ -303,14 +304,14 @@ internal fun TaskCard(
     // 12 §3: "Starts" for a future start date, else "Started".
     val start = runCatching { LocalDate.parse(task.startDate.take(10)) }.getOrNull()
     val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val due =
+    val started =
         start?.let {
-            "${stringResource(if (it > today) Res.string.starts else Res.string.started)}: ${formatDate(it)}"
+            "${stringResource(if (it > today) Res.string.starts else Res.string.started)} ${formatDate(it)}"
         }
     ShifaTaskCard(
         title = task.taskName,
         description = task.description.orEmpty(),
-        due = due.orEmpty(),
+        due = due ?: started.orEmpty(),
         type = type,
         tag = stringResource(category),
         completed = task.progress?.completedCheckIns?.takeIf { progress } ?: 0,

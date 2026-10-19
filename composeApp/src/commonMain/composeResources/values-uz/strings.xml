@@ -882,6 +882,11 @@
         <item quantity="one">%1$d ta hujjat biriktirildi</item>
         <item quantity="other">%1$d ta hujjat biriktirildi</item>
     </plurals>
+    <string name="task">Vazifa</string>
+    <string name="submitEntry">Yozuvni yuborish</string>
+    <string name="checkInAlreadySubmitted">Belgi allaqachon yuborilgan</string>
+    <string name="dueAt">Muddat: %1$s</string>
+    <string name="checkInValue">Qiymat</string>
     <string-array name="months">
         <item>yanvar</item>
         <item>fevral</item>

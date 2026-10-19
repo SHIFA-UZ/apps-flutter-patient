@@ -287,7 +287,6 @@ fun MainScreen(
                                 it,
                                 onBack = { checkIn = null },
                                 onSubmitted = {
-                                    checkIn = null
                                     tasks.onSubmitted()
                                     home.refresh()
                                 },

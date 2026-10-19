@@ -59,7 +59,7 @@ fun shifaTypography(): Typography {
         // page-header, other / sub page title
         headlineSmall = manrope(family, FontWeight.Bold, 24, 28, -1),
         // section header ("Upcoming Appointment", "My Tasks")
-        titleMedium = manrope(family, FontWeight.Bold, 16, 22, -1),
+        titleMedium = manrope(family, FontWeight.Bold, 20, 22, -1),
         // card title (doctor name, task name)
         titleSmall = manrope(family, FontWeight.Bold, 14, 16),
         // input-field value / placeholder
@@ -91,9 +91,13 @@ object ShifaTextStyles {
     @Composable
     fun chatInput() = manrope(manropeFontFamily(), FontWeight.SemiBold, 14, 16)
 
-    // profile name (Bold "Input text"), doctor-card name
+    // profile name (Bold "Input text"); doctor, appointment and task card titles
     @Composable
     fun profileName() = manrope(manropeFontFamily(), FontWeight.Bold, 16, 16)
+
+    // tray and pop-up title
+    @Composable
+    fun trayTitle() = manrope(manropeFontFamily(), FontWeight.Bold, 16, 22, -1)
 
     // tag
     @Composable

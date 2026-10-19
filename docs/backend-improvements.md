@@ -130,6 +130,16 @@ The full plan is in [payment-flow.md](payment-flow.md).
 
 **Until then:** the rows without data are hidden, End Appointment just leaves the page, and the tray shows the visit summary.
 
+## 14. Task entries
+
+**Now:** the task page (Figma 1662:18317, 1891:21727) has a "From Appointment" card and a Delete Entry button on a submitted check-in. T1 / T2 have no link from a task to the visit that set it, and there's no call to delete or change a submitted check-in (T4 only creates one).
+
+**Change:**
+- Add the visit the task came from to the task (`appointmentId`, or the doctor and time).
+- If patients may undo an entry: `DELETE /tasks/my-tasks/{taskId}/check-ins/{checkInId}` (or a PUT to change it), with a rule for how long after submitting it's allowed.
+
+**Until then:** no From Appointment card and no Delete Entry; a submitted day only shows what was sent.
+
 ## Questions to confirm (15 §6.4)
 
 - Whether the error shape is the same across all controllers (see #4).

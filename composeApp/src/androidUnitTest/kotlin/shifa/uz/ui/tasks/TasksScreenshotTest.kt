@@ -22,12 +22,17 @@ class TasksScreenshotTest {
     }
 
     @Test
-    fun checkInSelected() {
-        captureRoboImage("screenshots/TaskCheckIn_selected.png") { TaskCheckInSelectedPreview() }
+    fun calendar() {
+        captureRoboImage("screenshots/TaskCheckIn_calendar.png") { TaskCalendarPreview() }
     }
 
     @Test
-    fun checkInWaiting() {
-        captureRoboImage("screenshots/TaskCheckIn_waiting.png") { TaskCheckInWaitingPreview() }
+    fun submitTray() {
+        captureRoboImage("screenshots/TaskCheckIn_submit.png") { TaskSubmitTrayPreview() }
+    }
+
+    @Test
+    fun submittedTray() {
+        captureRoboImage("screenshots/TaskCheckIn_submitted.png") { TaskSubmittedTrayPreview() }
     }
 }

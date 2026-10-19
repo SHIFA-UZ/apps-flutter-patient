@@ -137,6 +137,23 @@ internal fun SignaturePadPreview() =
 
 @Preview
 @Composable
+internal fun CalendarPreview() =
+    Gallery {
+        // Every state: around the month, nothing to do / missed, PENDING, all submitted.
+        val states = listOf(ShifaDateState.Disabled, ShifaDateState.Default, ShifaDateState.Filled)
+        val days =
+            List(35) {
+                when (it) {
+                    0, 1, 33, 34 -> ShifaCalendarDay(if (it < 2) "${29 + it}" else "${it - 32}", ShifaDateState.NonMonth)
+                    else -> ShifaCalendarDay("${it - 1}", states[it % 3])
+                }
+            }
+        ShifaCalendarCard("October 2026", days, {}, onPrev = {}, onNext = {})
+        ShifaCalendarCard("October 2026", days, {})
+    }
+
+@Preview
+@Composable
 internal fun CardsPreview() =
     Gallery {
         val name = "Azamat Rakhimov"

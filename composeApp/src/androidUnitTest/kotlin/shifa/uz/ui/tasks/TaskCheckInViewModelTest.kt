@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
@@ -19,17 +20,20 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.checkInNotesRequired
 import shifa.composeapp.generated.resources.checkInPleaseSelectYesOrNo
+import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
 import shifa.composeapp.generated.resources.checkInValueInvalidNumber
 import shifa.composeapp.generated.resources.checkInValueRequired
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CheckInRequest
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.data.model.TaskCheckIn
+import shifa.uz.data.model.TaskProgress
 import shifa.uz.data.tasks.TasksRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -63,75 +67,77 @@ class TaskCheckInViewModelTest {
 
     private val state get() = classToTest.state.value
 
-    /** Opens the screen on slot 1, T3 loaded. */
+    /** Opens the screen on the 28th, T3 loaded: its first PENDING check-in is [past]. */
     private fun TestScope.open(task: RemoteCareTask = numeric) {
         classToTest = TaskCheckInViewModel(task, tasks, { now }, tashkent)
         advanceUntilIdle()
-        classToTest.select(1, true)
+        classToTest.openDay(LocalDate(2026, 9, 28))
     }
 
     @Test
-    fun `only PENDING slots due within 10 minutes are listed`() =
+    fun `a day opens its first PENDING check-in, due from 10 minutes before`() =
         runTest {
             open()
+            assertThat(state.entry).isEqualTo(past)
+            assertThat(state.entryDue).isTrue()
 
-            assertThat(state.slots).containsExactly(past, soon).inOrder()
-            assertThat(state.upcoming).containsExactly(later)
-            assertThat(state.waiting).isTrue()
+            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(later, done))
+            classToTest.load()
+            advanceUntilIdle()
+            classToTest.openDay(LocalDate(2026, 9, 28))
+            assertThat(state.entry).isEqualTo(later)
+            assertThat(state.entryDue).isFalse()
+            classToTest.onValueChange("12")
+            classToTest.submit()
+            verifyBlocking(tasks, never()) { submitCheckIn(any(), any()) }
         }
 
     @Test
-    fun `the next 3 PENDING slots not due yet are shown soonest first`() =
-        runTest {
-            val slots =
-                listOf("2026-09-30", "2026-09-29", "2026-10-01", "2026-10-02").mapIndexed { i, day ->
-                    TaskCheckIn(10L + i, day, "08:00:00")
-                }
-            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(slots + later + done)
-            open()
-
-            assertThat(state.slots).isEmpty()
-            assertThat(state.upcoming).containsExactly(later, slots[1], slots[0]).inOrder()
-        }
-
-    @Test
-    fun `with nothing PENDING it isn't waiting`() =
+    fun `a day with only submitted check-ins shows them, and one with nothing doesn't open`() =
         runTest {
             wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(done))
             open()
+            assertThat(state.day).isEqualTo(LocalDate(2026, 9, 28))
+            assertThat(state.entry).isNull()
+            assertThat(state.submitted).containsExactly(done)
 
-            assertThat(state.slots).isEmpty()
-            assertThat(state.waiting).isFalse()
+            classToTest.closeDay()
+            classToTest.openDay(LocalDate(2026, 9, 29))
+            assertThat(state.day).isNull()
         }
 
     @Test
-    fun `picking another slot starts an empty form, and unticking closes it`() =
+    fun `the calendar opens on this month, or the task's months, and progress comes from T3`() =
         runTest {
-            open()
-            classToTest.onValueChange("12")
-            classToTest.select(2, true)
-            assertThat(state.selected).isEqualTo(2)
-            assertThat(state.value).isEmpty()
+            wheneverBlocking { tasks.getCheckIns("7") } doReturn
+                Result.success(listOf(TaskCheckIn(9, "2026-11-02", "08:00:00"), done))
+            classToTest = TaskCheckInViewModel(numeric, tasks, { now }, tashkent)
+            assertThat(state.month).isEqualTo(LocalDate(2026, 9, 1))
+            advanceUntilIdle()
 
-            classToTest.select(2, false)
-            assertThat(state.selected).isNull()
+            assertThat(state.month).isEqualTo(LocalDate(2026, 9, 1))
+            assertThat(state.lastMonth).isEqualTo(LocalDate(2026, 11, 1))
+            assertThat(state.shownTask.progress).isEqualTo(TaskProgress(2, 1, 1))
+
+            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(done.copy(scheduledDate = "2026-07-30")))
+            classToTest = TaskCheckInViewModel(numeric, tasks, { now }, tashkent)
+            advanceUntilIdle()
+            assertThat(state.month).isEqualTo(LocalDate(2026, 7, 1))
         }
 
     @Test
-    fun `a reload keeps the selection while its slot is listed`() =
+    fun `a submit closes the day with a notice and reloads`() =
         runTest {
             open()
             classToTest.onValueChange("12")
-            classToTest.load()
-            advanceUntilIdle()
-            assertThat(state.selected).isEqualTo(1)
-            assertThat(state.value).isEqualTo("12")
-
-            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(soon))
-            classToTest.load()
-            advanceUntilIdle()
-            assertThat(state.selected).isNull()
-            assertThat(state.value).isEmpty()
+            classToTest.submitted.test {
+                classToTest.submit()
+                advanceUntilIdle()
+                awaitItem()
+            }
+            assertThat(state.day).isNull()
+            assertThat(state.notice).isEqualTo(Res.string.checkInSubmittedSuccessfully)
+            verifyBlocking(tasks, times(2)) { getCheckIns("7") }
         }
 
     @Test

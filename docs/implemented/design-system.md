@@ -19,6 +19,7 @@ Figma file `B7f95gNrRt8HYYzlGZdk9N` (a copy of `o0MqTfUEfhBX49VljFhp70` with the
 | ShifaInputField | `ShifaInputField` (`clearable` hides the X; `trailingIcon` replaces it, e.g. the password eye) |
 | ShifaSearchField, ShifaDropdown, ShifaSwitch | `ShifaSearchField`, `ShifaDropdown` (opens inline; `onSelect` gets the index, so labels may repeat), `ShifaSwitch` |
 | ShifaChips | `ShifaChip` (filter / slot), `ShifaChipGrid` (4 columns), `ShifaCarousel` |
+| ShifaCalendarCard | `ShifaCalendarCard` (`1662:18317`): calendar-card, a month toggle and date-bubbles (non-month / default / disabled / filled); a null arrow callback hides it |
 | ShifaSignaturePad | `ShifaSignaturePad` (`1919:23186`): the input-field box as a pad; the caller keeps the strokes, `signaturePng` makes the PNG |
 | ShifaTag | `ShifaTag` (primary / secondary / tertiary, `1585:12637`): Bold 12/12, padding 12 × 8 |
 | ShifaCards | upcoming (`1572:13984`) and past (`1573:12114`) appointment cards, `ShifaDoctorCard` full / compact / in (`1590:9994`; avatars 84 / 48 / 68, name Bold 16, the in card hugs its content), document, document with an action button (`ShifaDocumentActionCard`, Request to sign, `1918:22602`), certificate (`1592:9994`), doctor service (`1670:13024`), check-in (`1662:18576`, the ticked card takes its form as a slot), task (optional progress bar), `ShifaSettingsItem` (optional icon, destructive red for Delete my Account). Under `LocalCardOnSurface` the cards take the on-white look of the notification trays: canvas fill, no shadow, no chevron |
@@ -43,7 +44,7 @@ Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img
 - Section, tray and pop-up titles are raw black in Figma; they use `Text.Primary` (#272727) here.
 - Certificate illustration has no soft shadow (vector drawables can't blur). The doctor card "in" badge sits about 2px low.
 - Chat send button has no disabled state; the waveform is static.
-- Section titles are Bold 20/22 in the 2026-10 Figma (Home, Live Appointment); `ShifaSection` still uses `titleMedium` (16/22), and the gap between Home's sections is a little larger than Figma's. Left for one change across all screens.
+- Transparent sections keep 12dp of vertical padding that Figma's don't have, so the gap between Home's sections is a little larger than Figma's (12).
 - Open questions:
   - `ShifaImageContainer`: Fit or Crop? Currently Fit.
   - Dropdown: inline or popup? Currently inline.

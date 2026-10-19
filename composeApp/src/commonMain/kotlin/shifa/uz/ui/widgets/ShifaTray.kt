@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.ZeroCornerSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +24,7 @@ import shifa.composeapp.generated.resources.ic_arrow_up_24
 import shifa.composeapp.generated.resources.ic_plus_24
 import shifa.composeapp.generated.resources.ic_x_16
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaTextStyles
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaShadow
 import shifa.uz.ui.theme.ShifaSpacing
@@ -102,7 +102,7 @@ internal fun TrayHeader(
     Text(
         title,
         Modifier.weight(1f),
-        style = MaterialTheme.typography.titleMedium,
+        style = ShifaTextStyles.trayTitle(),
         color = ShifaColors.Text.Primary,
         textAlign = TextAlign.Center,
     )

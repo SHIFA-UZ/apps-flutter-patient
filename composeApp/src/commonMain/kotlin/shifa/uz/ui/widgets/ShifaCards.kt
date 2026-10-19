@@ -331,12 +331,12 @@ fun ShifaTaskCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconTile(type.icon, ShifaColors.Bg.InfoSubtle, ShifaColors.Icon.Info)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSize.S2)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CardTitle(title, Modifier.weight(1f))
+                    CardTitle(title, Modifier.weight(1f), style = ShifaTextStyles.profileName())
                     tag?.let { ShifaTag(it) }
                 }
-                CardBody(description)
+                if (description.isNotBlank()) CardBody(description)
                 MetaRow(
                     Res.drawable.ic_calendar_12,
                     due,
@@ -406,8 +406,8 @@ private fun AppointmentCard(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             ShifaAvatar(avatarUrl, ShifaDimens.AppointmentAvatar)
             Spacer(Modifier.width(ShifaSpacing.Gap.Md))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSize.S2)) {
-                CardTitle(doctorName)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs)) {
+                CardTitle(doctorName, style = ShifaTextStyles.profileName())
                 if (video) MetaRow(Res.drawable.ic_video_12, subtitle) else CardBody(subtitle)
                 MetaRow(Res.drawable.ic_clock_12, time)
             }

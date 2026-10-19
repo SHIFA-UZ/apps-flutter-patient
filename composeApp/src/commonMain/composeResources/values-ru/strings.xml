@@ -884,6 +884,11 @@
         <item quantity="many">%1$d документов прикреплено</item>
         <item quantity="other">%1$d документа прикреплено</item>
     </plurals>
+    <string name="task">Задача</string>
+    <string name="submitEntry">Отправить запись</string>
+    <string name="checkInAlreadySubmitted">Отметка уже отправлена</string>
+    <string name="dueAt">Срок: %1$s</string>
+    <string name="checkInValue">Значение</string>
     <string-array name="months">
         <item>января</item>
         <item>февраля</item>

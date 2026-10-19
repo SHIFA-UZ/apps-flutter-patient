@@ -479,24 +479,31 @@ class DemoBackend(
         val checkIns =
             mutableMapOf(
                 "9401" to dueNow(9501),
-                "9402" to dueNow(9511),
-                "9403" to dueNow(9521),
-                "9404" to mutableListOf(checkIn(9531, now - 1.days, "COMPLETED")),
+                "9402" to dueNow(9521),
+                "9403" to dueNow(9541),
+                "9404" to mutableListOf(checkIn(9561, now - 1.days, "COMPLETED")),
             )
 
-        // One done yesterday, one due now (due counts from 10 min before), two later.
+        // A week back (done with a note, one missed), one due now (due counts from 10 min before), then a week ahead.
         private fun dueNow(first: Long) =
-            mutableListOf(
-                checkIn(first, now - 1.days, "COMPLETED"),
-                checkIn(first + 1, now - 5.minutes),
-                checkIn(first + 2, now + 4.hours),
-                checkIn(first + 3, now + 1.days),
-            )
+            (
+                (1..6).map { back ->
+                    if (back == 3) {
+                        checkIn(first + back, now - back.days, "MISSED")
+                    } else {
+                        checkIn(first + back, now - back.days, "COMPLETED", "textValue" to "Done", "notes" to "Felt fine")
+                    }
+                } +
+                    checkIn(first, now - 5.minutes) +
+                    checkIn(first + 7, now + 4.hours) +
+                    (1..6).map { ahead -> checkIn(first + 7 + ahead, now + ahead.days) }
+            ).toMutableList()
 
         private fun checkIn(
             id: Long,
             at: Instant,
             status: String = "PENDING",
+            vararg values: Pair<String, Any?>,
         ): JsonObject {
             val local = at.toLocalDateTime(zone)
             return obj(
@@ -504,6 +511,7 @@ class DemoBackend(
                 "scheduledDate" to local.date.toString(),
                 "scheduledTime" to local.time.toString().take(5) + ":00",
                 "status" to status,
+                *values,
             )
         }
 
@@ -576,7 +584,17 @@ class DemoBackend(
             val list = checkIns[taskId] ?: return fail(HttpStatusCode.NotFound, "Task not found")
             val i = list.indexOfFirst { it.long("id") == request.checkInId }
             if (i < 0) return fail(HttpStatusCode.NotFound, "Check-in not found")
-            list[i] = JsonObject(list[i] + ("status" to JsonPrimitive("COMPLETED")))
+            list[i] =
+                JsonObject(
+                    list[i] +
+                        obj(
+                            "status" to "COMPLETED",
+                            "numericValue" to request.numericValue,
+                            "textValue" to request.textValue,
+                            "booleanValue" to request.booleanValue,
+                            "notes" to request.notes,
+                        ),
+                )
             return ok(JsonObject(emptyMap()))
         }
 

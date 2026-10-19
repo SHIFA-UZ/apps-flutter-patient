@@ -87,13 +87,17 @@ internal fun TasksContent(
             }
         }
         // The empty tab pulls to refresh too (12 quirk 2).
-        PullToRefreshBox(state.isLoading && state.tasks != null, onRefresh, Modifier.weight(1f)) {
+        PullToRefreshBox(
+            state.isLoading && state.tasks != null,
+            onRefresh,
+            Modifier.weight(1f).background(ShifaColors.Bg.Canvas),
+        ) {
             Column(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .navigationBarsPadding()
-                    .padding(horizontal = ShifaSpacing.Inset.Md, vertical = ShifaSpacing.Stack.Xs),
+                    .padding(ShifaSpacing.Inset.Md),
                 verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
             ) {
                 Banners(state.error, state.notice)

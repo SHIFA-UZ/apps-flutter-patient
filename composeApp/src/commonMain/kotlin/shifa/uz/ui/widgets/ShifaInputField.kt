@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -30,6 +31,7 @@ import org.jetbrains.compose.resources.painterResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_x_20
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
@@ -55,6 +57,7 @@ fun ShifaInputField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailingIcon: (@Composable () -> Unit)? = null,
+    multiline: Boolean = false, // the comment field: grows from Figma's 134, text from the top
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
@@ -71,7 +74,7 @@ fun ShifaInputField(
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             enabled = enabled,
-            singleLine = true,
+            singleLine = !multiline,
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = ShifaColors.Text.Primary),
             cursorBrush = SolidColor(ShifaColors.Border.Focus),
             keyboardOptions = keyboardOptions,
@@ -82,17 +85,21 @@ fun ShifaInputField(
                 Row(
                     modifier =
                         Modifier
+                            .then(if (multiline) Modifier.heightIn(min = ShifaDimens.TextAreaHeight) else Modifier)
                             .clip(ShifaRadius.ControlMd)
                             .background(if (enabled) ShifaColors.Bg.Surface else ShifaColors.Bg.Disabled)
                             .border(ShifaSize.S2, border, ShifaRadius.ControlMd)
                             .padding(horizontal = ShifaSpacing.Inset.Sm, vertical = ShifaSpacing.Inset.Xs),
                     horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = if (multiline) Alignment.Top else Alignment.CenterVertically,
                 ) {
-                    Column(Modifier.weight(1f).height(ShifaSize.S30), verticalArrangement = Arrangement.Center) {
+                    Column(
+                        Modifier.weight(1f).then(if (multiline) Modifier else Modifier.height(ShifaSize.S30)),
+                        verticalArrangement = Arrangement.Center,
+                    ) {
                         val floating = enabled && (focused || isError || value.isNotEmpty())
                         if (floating) Text(label, style = ShifaTextStyles.caption(), color = ShifaColors.Text.Tertiary)
-                        Box(Modifier.lineBox(MaterialTheme.typography.bodyLarge)) {
+                        Box(if (multiline) Modifier else Modifier.lineBox(MaterialTheme.typography.bodyLarge)) {
                             if (!floating && value.isEmpty()) {
                                 Text(
                                     label,

@@ -46,8 +46,17 @@ data class TaskCheckIn(
     val scheduledDate: String,
     val scheduledTime: String? = null,
     val status: String = "PENDING", // PENDING, COMPLETED, MISSED; anything else reads as PENDING (12 §5.1)
+    val numericValue: Double? = null,
+    val textValue: String? = null,
+    val booleanValue: Boolean? = null,
+    val notes: String? = null,
 ) {
     val isPending get() = status.uppercase() != "COMPLETED" && status.uppercase() != "MISSED"
+
+    val isCompleted get() = status.uppercase() == "COMPLETED"
+
+    /** Null if it doesn't parse. */
+    val date get() = runCatching { LocalDate.parse(scheduledDate.take(10)) }.getOrNull()
 
     /** The device's wall clock, as in Flutter (the server's zone is unverified). Null if it doesn't parse. */
     fun scheduledAt(zone: TimeZone): Instant? =

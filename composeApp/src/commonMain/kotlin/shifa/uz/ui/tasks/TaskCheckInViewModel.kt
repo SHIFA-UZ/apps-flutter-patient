@@ -10,10 +10,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.checkInNotesRequired
 import shifa.composeapp.generated.resources.checkInPleaseSelectYesOrNo
+import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
 import shifa.composeapp.generated.resources.checkInValueInvalidNumber
 import shifa.composeapp.generated.resources.checkInValueRequired
 import shifa.uz.data.api.toUserMessage
@@ -24,12 +27,11 @@ import shifa.uz.data.tasks.TasksRepository
 import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.BOOLEAN
 import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.NUMERIC
 import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.TEXT
-import shifa.uz.ui.tasks.TaskCheckInUiState.Companion.UPCOMING_SLOTS
 import shifa.uz.utils.getCurrentInstant
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * 12 §3.2 (TASK-02): the list's task and its T3 slots, submitted with T4.
+ * 12 §3.2 (TASK-02): the task page. Its T3 check-ins on a calendar; a day's PENDING one is submitted with T4.
  * ponytail: no T2 refetch (the list's copy is fresh); T2 comes with the notification deep links (NOTIF).
  */
 class TaskCheckInViewModel(
@@ -38,9 +40,11 @@ class TaskCheckInViewModel(
     private val clock: () -> Instant = ::getCurrentInstant,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
-    private val _state = MutableStateFlow(TaskCheckInUiState(task))
+    private val _state =
+        MutableStateFlow(TaskCheckInUiState(task, clock().toLocalDateTime(zone).date.firstOfMonth()))
     val state: StateFlow<TaskCheckInUiState> = _state.asStateFlow()
 
+    /** After each successful submit, so the list and Home reload. */
     private val _submitted = Channel<Unit>(Channel.BUFFERED)
     val submitted: Flow<Unit> = _submitted.receiveAsFlow()
 
@@ -55,32 +59,25 @@ class TaskCheckInViewModel(
         load()
     }
 
-    /**
-     * T3 on open and pull to refresh. What's due is worked out here, with no ticker (12 quirk 10). The
-     * selection survives a reload while its slot is still listed (quirk 8).
-     */
+    /** T3 on open and pull to refresh. The first load moves the calendar into the task's months. */
     fun load() {
         if (_state.value.isLoading) return
         update { copy(isLoading = true) }
         viewModelScope.launch {
             tasks.getCheckIns(_state.value.task.id).fold(
                 onSuccess = { all ->
-                    val pending = all.filter { it.isPending }
-                    val due = clock() + 10.minutes
-                    val (slots, later) =
-                        pending
-                            .mapNotNull { slot -> slot.scheduledAt(zone)?.let { slot to it } }
-                            .partition { it.second <= due }
-                    val upcoming = later.sortedBy { it.second }.take(UPCOMING_SLOTS).map { it.first }
                     update {
-                        val kept = if (slots.any { it.first.id == selected }) this else copy(selected = null).cleared()
-                        kept.copy(
-                            slots = slots.map { it.first },
-                            upcoming = upcoming,
-                            waiting = pending.isNotEmpty(),
-                            isLoading = false,
-                            error = null,
-                        )
+                        val loaded = copy(checkIns = all, isLoading = false, error = null)
+                        val first = loaded.firstMonth
+                        val last = loaded.lastMonth
+                        val month =
+                            when {
+                                checkIns != null || first == null || last == null -> month
+                                month < first -> first
+                                month > last -> last
+                                else -> month
+                            }
+                        loaded.copy(month = month)
                     }
                 },
                 onFailure = {
@@ -91,12 +88,22 @@ class TaskCheckInViewModel(
         }
     }
 
-    /** Picking a slot starts an empty form (12 §3.2). */
-    fun select(
-        id: Long,
-        checked: Boolean,
-    ) {
-        if (!_state.value.isSubmitting) update { copy(selected = id.takeIf { checked }, error = null).cleared() }
+    fun prevMonth() = update { copy(month = month.plusMonths(-1)) }
+
+    fun nextMonth() = update { copy(month = month.plusMonths(1)) }
+
+    /** A day with a PENDING check-in opens its form; one with only submitted ones shows them. */
+    fun openDay(date: LocalDate) {
+        val s = _state.value
+        val day = s.on(date)
+        val entry = day.firstOrNull { it.isPending }
+        if (entry == null && day.none { it.isCompleted }) return
+        val due = entry?.scheduledAt(zone)?.let { it <= clock() + 10.minutes } ?: false
+        update { copy(day = date, entry = entry, entryDue = due, error = null, notice = null).cleared() }
+    }
+
+    fun closeDay() {
+        if (!_state.value.isSubmitting) update { copy(day = null, entry = null, error = null).cleared() }
     }
 
     fun onValueChange(value: String) = update { copy(value = value, valueError = null) }
@@ -107,8 +114,8 @@ class TaskCheckInViewModel(
 
     fun submit() {
         val s = _state.value
-        val id = s.selected ?: return
-        if (s.isSubmitting) return
+        val id = s.entry?.id ?: return
+        if (s.isSubmitting || !s.entryDue) return
         // Trimmed, so whitespace isn't a value (12 quirk 7); a comma decimal is fine (quirk 6).
         val value = s.value.trim()
         val number = value.replace(',', '.').toDoubleOrNull()
@@ -140,7 +147,14 @@ class TaskCheckInViewModel(
             )
         viewModelScope.launch {
             tasks.submitCheckIn(s.task.id, request).fold(
-                onSuccess = { _submitted.send(Unit) },
+                onSuccess = {
+                    update {
+                        copy(day = null, entry = null, isSubmitting = false, notice = Res.string.checkInSubmittedSuccessfully)
+                            .cleared()
+                    }
+                    load()
+                    _submitted.send(Unit)
+                },
                 onFailure = {
                     update { copy(isSubmitting = false, error = it.toUserMessage()) }
                     if (it is ApiException.Unauthorized) _signedOut.send(Unit)
