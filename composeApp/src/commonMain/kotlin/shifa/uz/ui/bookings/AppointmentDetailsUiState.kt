@@ -5,6 +5,7 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.shownDoctor
 
 // 06 §3.5: cancel only 48 h or more ahead. Figma's copy says 24 h; the spec wins.
 private const val CANCEL_HOURS = 48
@@ -27,15 +28,7 @@ data class AppointmentDetailsUiState(
 
     val showWarning get() = appointment.isOpen && !isPast && hoursUntil!! < CANCEL_HOURS
 
-    val shownDoctor
-        get() =
-            doctor ?: Doctor(
-                id = appointment.doctorId.orEmpty(),
-                fullName = appointment.doctorName,
-                profession = appointment.doctorProfession,
-                clinic = appointment.doctorClinic,
-                photoUrl = appointment.doctorPhotoUrl,
-            )
+    val shownDoctor get() = appointment.shownDoctor(doctor)
 
     /** Contact: call, else email. D2 has them; Flutter read them from B2, which never sends them (06 quirk 13). */
     val contactUri

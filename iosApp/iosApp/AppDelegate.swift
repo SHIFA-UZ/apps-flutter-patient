@@ -16,6 +16,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Set before launch ends, so a tap that cold-starts the app still arrives.
         UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
+        // 06 §3.6: the shared call screens make their Daily calls through this.
+        VideoCalls.shared.factory = { DailyVideoCall() }
         return true
     }
 

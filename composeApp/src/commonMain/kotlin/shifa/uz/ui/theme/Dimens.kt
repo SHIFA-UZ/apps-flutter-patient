@@ -133,6 +133,15 @@ object ShifaDimens {
     // profile (1703:16707, 1703:17376)
     val ProfileAvatar = 52.dp
     val ProfileAvatarLarge = 125.dp
+
+    // live appointment, request to sign (1919:23186); the stroke is Flutter's (06 §10)
+    val SignaturePadHeight = 151.dp
+    val SignatureStroke = 2.5.dp
+
+    // video call (1791:19370, 1793:15925). Not in Figma: the patient's own picture once the doctor fills the tile.
+    val CallControlsHeight = 80.dp
+    val CallSelfViewWidth = 96.dp
+    val CallSelfViewHeight = 128.dp
 }
 
 // Figma: shifa/radius/* and semantic/radius/control-*. Full (999) = CircleShape.

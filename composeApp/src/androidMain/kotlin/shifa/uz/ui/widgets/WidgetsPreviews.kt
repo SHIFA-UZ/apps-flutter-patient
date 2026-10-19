@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
@@ -123,6 +124,15 @@ internal fun TagPreview() =
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             ShifaTagType.entries.forEach { ShifaTag("tag text", type = it) }
         }
+    }
+
+@Preview
+@Composable
+internal fun SignaturePadPreview() =
+    Gallery {
+        ShifaSignaturePad(emptyList(), {}, "Sign here")
+        val zigzag = listOf(Offset(60f, 200f), Offset(220f, 80f), Offset(380f, 220f), Offset(560f, 90f))
+        ShifaSignaturePad(listOf(zigzag, listOf(Offset(640f, 150f))), {}, "Sign here")
     }
 
 @Preview

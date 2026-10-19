@@ -38,6 +38,9 @@ const val FAILED_TO_SEARCH_DOCTORS = "Failed to search doctors" // No l10n key: 
 const val FAILED_TO_CANCEL_APPOINTMENT = "Error cancelling appointment"
 const val FAILED_TO_LOAD_SLOTS = "Error loading slots"
 const val FAILED_TO_BOOK_APPOINTMENT = "Failed to book appointment"
+const val FAILED_TO_LOAD_APPOINTMENT = "Failed to load appointment" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_SUBMIT_SIGNATURE = "Failed to submit signature"
+const val FAILED_TO_START_VIDEO_CALL = "Failed to start video call"
 const val COPILOT_FAILED = "Co-pilot failed" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_CONVERSATIONS = "Failed to fetch conversations" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_CONVERSATION = "Failed to fetch conversation" // No l10n key: shows as errorSomethingWentWrong.
@@ -116,6 +119,17 @@ private val MESSAGES: Map<String, StringResource> =
         FAILED_TO_CANCEL_APPOINTMENT to Res.string.errorCancellingAppointment,
         FAILED_TO_LOAD_SLOTS to Res.string.errorLoadingSlots,
         FAILED_TO_BOOK_APPOINTMENT to Res.string.failedToBookAppointment,
+        FAILED_TO_SUBMIT_SIGNATURE to Res.string.errorSaving,
+        FAILED_TO_START_VIDEO_CALL to Res.string.failedToStartVideoCall,
+        // V1 (06 §7.3): the join window and payment are checked on the server too.
+        "Video call is not yet available. You can join 5 minutes before the appointment start." to
+            Res.string.errorVideoCallNotYetAvailable,
+        "Video call has ended. The join window closes 15 minutes after the appointment end." to
+            Res.string.errorVideoCallHasEnded,
+        "Video call is not available. It may have ended, or the join window has closed (usually 15 minutes after the appointment end)." to
+            Res.string.errorVideoCallHasEnded,
+        "Payment is required before joining this video consultation." to Res.string.errorVideoCallPaymentRequired,
+        "Appointment does not belong to this patient" to Res.string.errorAppointmentDoesNotBelongToPatient,
         FAILED_TO_SEND_MESSAGE to Res.string.failedToSend,
         FAILED_TO_UPLOAD_ATTACHMENT to Res.string.failedToUploadImage,
         // B3, special-cased in 06 §3.1.

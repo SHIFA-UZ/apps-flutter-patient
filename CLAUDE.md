@@ -25,6 +25,7 @@ This repo is a template. API and UI come from new specs / Figma — the tech sta
 - Kamel for async image loading
 - JetBrains `lifecycle-viewmodel-compose` for ViewModels
 - Firebase (google-services, App Distribution for debug builds)
+- Daily for video calls: `co.daily:client` on Android, Daily's Swift package on iOS behind `iosApp/iosApp/DailyVideoCall.swift` (it implements the Kotlin `NativeVideoCall`)
 - Tests (`androidUnitTest`): JUnit4, Mockito-Kotlin, Turbine, Truth, kotlinx-coroutines-test, Roborazzi + Robolectric for screenshots
 - ktlint (`./gradlew ktlintFormat`)
 - All versions live in `gradle/libs.versions.toml`; add deps there, never inline

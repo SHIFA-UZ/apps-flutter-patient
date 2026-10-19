@@ -38,6 +38,7 @@ import shifa.composeapp.generated.resources.availabilityTomorrow
 import shifa.composeapp.generated.resources.hello
 import shifa.composeapp.generated.resources.ic_alert_circle_16
 import shifa.composeapp.generated.resources.join
+import shifa.composeapp.generated.resources.liveAppointment
 import shifa.composeapp.generated.resources.myDoctors
 import shifa.composeapp.generated.resources.myTasks
 import shifa.composeapp.generated.resources.noDoctorsFound
@@ -56,6 +57,7 @@ import shifa.composeapp.generated.resources.taskCategoryVital
 import shifa.composeapp.generated.resources.unknownDoctor
 import shifa.composeapp.generated.resources.upcomingAppointments
 import shifa.composeapp.generated.resources.videoConsultation
+import shifa.composeapp.generated.resources.view
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.RemoteCareTask
@@ -85,6 +87,7 @@ fun HomeScreen(
     onAccount: () -> Unit,
     onUpcoming: () -> Unit,
     onAppointment: (Appointment) -> Unit,
+    onLive: (Appointment) -> Unit,
     onTasks: () -> Unit,
     onDoctors: () -> Unit,
     onDoctor: (Doctor) -> Unit,
@@ -104,6 +107,7 @@ fun HomeScreen(
         onAccount = onAccount,
         onUpcoming = onUpcoming,
         onAppointment = onAppointment,
+        onLive = onLive,
         onTasks = onTasks,
         onDoctors = onDoctors,
         onDoctor = onDoctor,
@@ -131,6 +135,7 @@ internal fun HomeContent(
     onAccount: () -> Unit = {},
     onUpcoming: () -> Unit = {},
     onAppointment: (Appointment) -> Unit = {},
+    onLive: (Appointment) -> Unit = {},
     onTasks: () -> Unit = {},
     onDoctors: () -> Unit = {},
     onDoctor: (Doctor) -> Unit = {},
@@ -154,16 +159,28 @@ internal fun HomeContent(
                         state.error?.let {
                             ShifaBanner(stringResource(it), Res.drawable.ic_alert_circle_16, ShifaBannerType.Error)
                         }
-                        // Figma hides this arrow; it shows when there are more than fit, like My Tasks and My Doctors.
-                        // Gone when there are none.
-                        if (state.upcoming?.isEmpty() != true) {
+                        // Figma 1647:10075: a visit in its join window has its own section, and View opens it.
+                        val live = state.upcoming?.filter { it.isNow(now) }.orEmpty()
+                        val later = state.upcoming?.filterNot { it.isNow(now) }
+                        if (live.isNotEmpty()) {
                             HomeSection(
-                                Res.string.upcomingAppointments,
-                                state.upcoming,
-                                state.isLoading,
+                                Res.string.liveAppointment,
+                                live,
+                                false,
                                 Res.string.noUpcomingAppointments,
                                 ShifaSectionType.CardOnWhite,
-                                onMore = onUpcoming.takeIf { state.upcoming.orEmpty().size > HOME_ITEMS },
+                                limit = Int.MAX_VALUE,
+                            ) { UpcomingCard(it, now, onLive, shadow = false, live = true) }
+                        }
+                        // Figma hides this arrow; it shows when there are more than fit, like My Tasks and My Doctors.
+                        // Gone when there are none.
+                        if (later?.isEmpty() != true) {
+                            HomeSection(
+                                Res.string.upcomingAppointments,
+                                later,
+                                state.isLoading,
+                                Res.string.noUpcomingAppointments,
+                                onMore = onUpcoming.takeIf { later.orEmpty().size > HOME_ITEMS },
                             ) { UpcomingCard(it, now, onAppointment) }
                         }
                         HomeSection(
@@ -233,8 +250,10 @@ internal fun UpcomingCard(
     now: Instant,
     onClick: (Appointment) -> Unit,
     shadow: Boolean = true,
+    // Home's Live Appointment section: View instead of Join.
+    live: Boolean = false,
 ) {
-    val live = appointment.isNow(now)
+    val inWindow = appointment.isNow(now)
     val place = if (appointment.isVideo) stringResource(Res.string.videoConsultation) else appointment.doctorClinic
     // Not in Figma: a visit the doctor hasn't confirmed, or not paid yet, says so after its time.
     val note =
@@ -246,14 +265,20 @@ internal fun UpcomingCard(
             !appointment.isConfirmed -> stringResource(Res.string.pending)
             else -> null
         }
-    val time = if (live) stringResource(Res.string.now) else appointment.start?.let { slot(it, now) }
+    val time = if (inWindow) stringResource(Res.string.now) else appointment.start?.let { slot(it, now) }
+    val action =
+        when {
+            live -> stringResource(Res.string.view)
+            inWindow && appointment.isVideo && appointment.isConfirmed -> stringResource(Res.string.join)
+            else -> null
+        }
     ShifaUpcomingAppointmentCard(
         doctorName = appointment.doctorName?.ifBlank { null } ?: stringResource(Res.string.unknownDoctor),
         subtitle = listOfNotNull(appointment.doctorProfession, place).filter(String::isNotBlank).joinToString(" - "),
         time = listOfNotNull(time, note).joinToString(" · "),
         avatarUrl = appointment.doctorPhotoUrl,
         video = appointment.isVideo,
-        joinText = stringResource(Res.string.join).takeIf { live && appointment.isVideo && appointment.isConfirmed },
+        joinText = action,
         onJoin = { onClick(appointment) },
         shadow = shadow,
         onClick = { onClick(appointment) },

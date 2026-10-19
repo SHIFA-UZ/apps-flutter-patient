@@ -39,6 +39,7 @@ kotlin {
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.messaging)
             implementation(libs.androidx.core.ktx)
+            implementation(libs.daily.client) // video calls (06 §3.6)
         }
 
         androidUnitTest.dependencies {

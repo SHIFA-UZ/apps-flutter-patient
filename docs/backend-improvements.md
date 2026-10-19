@@ -18,6 +18,7 @@ Endpoint ids (P7, D1, B5…) are from `docs/kmp-spec/15-api-reference.md`. App l
 | 10 | Google sign-in | Later | Medium |
 | 11 | Shifa AI: error codes, attachments, chat sync | Medium | Small to medium |
 | 12 | Payments: statuses, idempotent checkout, return link, slot hold | High | Small to large |
+| 13 | Live visit: an end-visit call, the visit's service, notes and documents | Medium | Small |
 
 ## 1. Push text in the patient's language
 
@@ -116,6 +117,18 @@ The full plan is in [payment-flow.md](payment-flow.md).
 - Later: refunds on cancel (with a status), fiscal receipts, a payment history endpoint, saved cards and Apple / Google Pay through Stripe, a payment that carries over on reschedule, and `paymentStatus` from X4 (AI booking).
 
 **Until then:** Flow A in [payment-flow.md](payment-flow.md): the WebView checkout with polling, the Stripe fallback, a pending screen, and Pay now on the appointment.
+
+## 13. Live visit
+
+**Now:** the Live Appointment page (Figma 1918:22602) shows Service, Additional Notes and Documents attached, and an End Appointment button. B2 and B4 send no service, notes or documents for a visit, and there's no call to end one. B2 also leaves out `signatureRequested` / `alreadySigned` and once sent `paymentStatus: null` where B4 said `PENDING`, so the app loads B4 for every live visit. The signature tray's "Doctor's notes" has nothing to show for B6 (the visit summary): only 025-2 forms (B11) have complaints and a diagnosis.
+
+**Change:**
+- Add the booked service (id, title), the patient's notes and the attached document ids to the appointment (B2 and B4).
+- Send the same fields in B2 as in B4 (`signatureRequested`, `alreadySigned`, `paymentStatus`).
+- Say what ending a visit means for a patient, and add a call for it if it's more than leaving.
+- Give B6 the doctor's notes to show, or link the visit's 025-2 form, so the tray can show what's being signed.
+
+**Until then:** the rows without data are hidden, End Appointment just leaves the page, and the tray shows the visit summary.
 
 ## Questions to confirm (15 §6.4)
 

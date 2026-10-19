@@ -1,6 +1,8 @@
 package shifa.uz.utils
 
+import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -14,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,7 +72,8 @@ actual fun rememberImagePickerLauncher(onImageSelected: (ImagePickerResult?) -> 
 private const val CAMERA_JPEG_QUALITY = 85
 private const val CAMERA_MAX_SIDE = 4096
 
-// 11 §9: TakePicture into the cache (no CAMERA permission is declared, so none is needed), then JPEG 85, upright.
+// 11 §9: TakePicture into the cache, then JPEG 85, upright. The manifest declares CAMERA for video calls, and then
+// TakePicture throws unless it's granted, so it's asked for first; a denial is a cancel.
 @Composable
 actual fun rememberCameraLauncher(onPhotoTaken: (ImagePickerResult?) -> Unit): () -> Unit {
     val context = LocalContext.current
@@ -84,12 +88,27 @@ actual fun rememberCameraLauncher(onPhotoTaken: (ImagePickerResult?) -> Unit): (
                 onTaken(jpeg?.let { ImagePickerResult(Uri.fromFile(file).toString(), "photo.jpg", it) })
             }
         }
-    return {
+    val takePicture = {
         try {
             file.parentFile?.mkdirs()
             launcher.launch(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file))
         } catch (e: ActivityNotFoundException) {
             onTaken(null)
+        }
+    }
+    val permission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) takePicture() else onTaken(null)
+        }
+    return {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA,
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            takePicture()
+        } else {
+            permission.launch(Manifest.permission.CAMERA)
         }
     }
 }

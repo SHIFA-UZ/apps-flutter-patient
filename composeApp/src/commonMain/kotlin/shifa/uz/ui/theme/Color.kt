@@ -18,6 +18,7 @@ private val Blue = Color(0xFF1C75CF)
 object ShifaColors {
     object Text {
         val Primary = Charcoal
+        val Secondary = Grey600
         val Tertiary = Grey500
         val Disabled = Grey400
         val Inverse = Color.White
@@ -76,6 +77,7 @@ object ShifaColors {
         val Teal25 = Color(0x4000BBB0)
         val Teal15 = Color(0x2600BBB0)
         val Black5 = Color(0x0D000000)
+        val Black50 = Color(0x80000000)
     }
 
     // Colours Figma sets as raw values (no variable), named <component><Part>.

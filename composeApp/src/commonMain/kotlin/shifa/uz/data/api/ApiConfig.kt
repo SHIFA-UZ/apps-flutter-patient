@@ -32,12 +32,15 @@ object ApiConfig {
         const val SEND_MESSAGE = "patients/me/messages/send"
         const val SEARCH_USERS = "patients/me/messages/search"
         const val UPLOAD_ATTACHMENT = "messages/upload-attachment"
+        const val VIDEO_TOKEN = "video/token"
 
         fun doctor(id: String) = "public/doctors/$id"
 
         fun document(id: String) = "patients/me/documents/$id"
 
         fun appointment(id: String) = "patients/me/appointments/$id"
+
+        fun appointmentSignature(id: String) = "patients/me/appointments/$id/submit-signature"
 
         fun notificationRead(id: Int) = "notifications/$id/read"
 

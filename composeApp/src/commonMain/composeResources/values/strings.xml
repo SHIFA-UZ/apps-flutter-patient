@@ -919,4 +919,19 @@
         <item>Saturday</item>
         <item>Sunday</item>
     </string-array>
+    <string name="liveAppointment">Live Appointment</string>
+    <string name="requestToSign">Request to sign</string>
+    <string name="requestFromDoctor">by Dr %1$s</string>
+    <string name="signNow">Sign now</string>
+    <string name="endAppointment">End Appointment</string>
+    <string name="doctorsNotes">Doctor's notes</string>
+    <string name="signature">Signature</string>
+    <string name="signHere">Sign here</string>
+    <string name="completeSignOff">Complete Sign off</string>
+    <string name="videoAppointment">Video Appointment</string>
+    <string name="joinNow">Join Now</string>
+    <string name="waitingForDoctorToStart">Waiting for doctor to start appointment</string>
+    <string name="microphone">Microphone</string>
+    <string name="switchCamera">Switch camera</string>
+    <string name="endCall">End call</string>
 </resources>

@@ -146,6 +146,11 @@ class DemoBackend(
             request.method == HttpMethod.Put && path == Endpoints.FCM_TOKEN -> ok(JsonObject(emptyMap()))
             get && path == Endpoints.APPOINTMENTS -> ok(JsonArray(data.appointments))
             post && path == Endpoints.APPOINTMENTS -> data.book(body)
+            get && p.size == 4 && path.startsWith("${Endpoints.APPOINTMENTS}/") -> data.appointment(p[3])
+            post && p.size == 5 &&
+                path.startsWith(
+                    "${Endpoints.APPOINTMENTS}/",
+                ) && p[4] == "submit-signature" -> data.sign(p[3])
             request.method == HttpMethod.Delete &&
                 path.startsWith(
                     "${Endpoints.APPOINTMENTS}/",
@@ -431,6 +436,33 @@ class DemoBackend(
                 )
             appointments += booked
             return ok(booked)
+        }
+
+        // B4 adds the signing flags that B2 leaves out, as production does. The visit to join now asks for one.
+        private val signatures = mutableMapOf("9101" to false)
+
+        fun appointment(id: String): Reply {
+            val visit =
+                appointments.firstOrNull {
+                    it.str("id") == id
+                } ?: return fail(HttpStatusCode.NotFound, "Appointment not found")
+            val signed = signatures[id]
+            return ok(
+                JsonObject(
+                    visit + (
+                        "signatureRequested" to
+                            JsonPrimitive(
+                                signed != null,
+                            )
+                    ) + ("alreadySigned" to JsonPrimitive(signed == true)),
+                ),
+            )
+        }
+
+        fun sign(id: String): Reply {
+            if (signatures[id] == null) return fail(HttpStatusCode.BadRequest, "No signature requested")
+            signatures[id] = true
+            return ok(JsonObject(emptyMap()))
         }
 
         // B5 deletes, as production does.

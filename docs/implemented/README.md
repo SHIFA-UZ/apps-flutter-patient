@@ -19,6 +19,7 @@ The payment plan (BOOK-04, BOOK-11): [../payment-flow.md](../payment-flow.md), w
 | Notifications | [notifications.md](notifications.md) |
 | Shifa AI | [shifa-ai.md](shifa-ai.md) |
 | Messages (doctor chat) | [messages.md](messages.md) |
+| Live visit, signing and video call | [visit.md](visit.md) |
 
 ## Status
 
@@ -38,7 +39,7 @@ The payment plan (BOOK-04, BOOK-11): [../payment-flow.md](../payment-flow.md), w
 | AUTH-05 Doctor → patient | Mostly done | The step-1 "existing doctor" dialog replaces the confirm screen, then the email code and `create-patient-for-doctor`. Phone-only matches stop with "email required" (Q7). No PIN prompt (LOCK-01). |
 | SHELL-01 Tab shell & bottom bar | Partly done | Figma's 5-tab bar, all five tabs built. Back goes page → Home tab → exit. The centre Shifa AI tab is hidden for gated profiles (AI-01). |
 | SHELL-03 App header | Done | Avatar → Profile, bell → Notifications (NOTIF-01), with the N2 unread badge. No chat icon (not in the Figma header). |
-| HOME-01 Home + Upcoming | Done | P1 greeting, pull to refresh, B2 upcoming (every open visit, requested ones marked Pending, until the join window closes), "Now" + Join, error banner; hidden when empty. Cards and Join open the appointment details (BOOK-06). The arrow (more than 3) opens the Upcoming appointments page. |
+| HOME-01 Home + Upcoming | Done | P1 greeting, pull to refresh, B2 upcoming (every open visit, requested ones marked Pending, until the join window closes), "Now" + Join, error banner; hidden when empty. Cards and Join open the appointment details (BOOK-06); a visit in its window gets the Live Appointment section, whose View opens the live page (see visit.md). The arrow (more than 3) opens the Upcoming appointments page. |
 | HOME-02 My Tasks | Done | T1, open tasks, up to 3. The cards and the arrow open My Tasks (TASK-01). |
 | HOME-03 My Doctors | Done (per Figma) | Figma replaces "Doctors near me" with "My Doctors": the doctors of the latest bookings, via D2. No location flow. Cards open the doctor profile; the arrow opens the full My Doctors page. |
 | HOME-04 Shared-state check | Done | Home has its own state. |
@@ -62,6 +63,8 @@ The payment plan (BOOK-04, BOOK-11): [../payment-flow.md](../payment-flow.md), w
 | BOOK-03 Confirm & create booking | Mostly done | The video checks, the double-booking check, then B3. On success, back to the Bookings tab with a notice. PENDING only shows the pending notice (BOOK-04 not built). Not pressed on a device (production). |
 | BOOK-05 Bookings list | Partly done | The Figma tab: Recommended doctors, My Doctors, Past Appointments on All (other chips: doctors only, as full cards with tags; Recommended hidden when D1 sends none), each arrow opening its full page. No status tabs, upcoming list or pay later (not in Figma; BOOK-04 not built). |
 | BOOK-06 Appointment details, cancel, reschedule | Mostly done | Figma details, Contact (tel / mailto), cancel with confirm ≥ 48 h (B5) that refreshes the list and Home, the < 48 h warning. No reschedule yet. Not tried on a device (no appointments). |
+| BOOK-08 Waiting room + video call | Mostly done, not in a real call yet | Figma join and waiting room over Daily (Android SDK, iOS Swift package): permissions, preview, V1, the waiting room, the doctor's video with the patient's in a corner, camera / mic / switch / hang up. No join-timeout retry or app-lock pause. |
+| BOOK-10 E-signing | Partly done | The Live Appointment page's Request to sign: the signature pad and B6. No 025-2 form signing (B11 / B12). |
 | TASK-01 Tasks list | Mostly done | Figma Open / Completed tabs over T1, progress bars on Open, pull to refresh. EXPIRED with nothing pending shows in both tabs (quirk 1). No ⋮ menu (not in Figma), no reload on resume. |
 | TASK-02 Task check-in | Mostly done | Figma page: T3 slots due within 10 minutes plus the next 3 greyed, the form in the ticked card for NUMERIC / TEXT / BOOLEAN with notes, T4, then My Tasks reloads with a notice and Home refreshes. No T2 (deep links), no ticker. Not submitted on a device (production). |
 | NOTIF-01 Inbox, details sheet, badge | Mostly done | Figma inbox with filter chips, date groups and the 13 §6.3 texts, pull to refresh, N3 on tap, N4 from the header, the bell refreshes. The details tray shows the linked appointment, document or task card with its button. Unread titles are brand (Figma has no unread look). No ⋮ menu (not in Figma). |
@@ -107,3 +110,4 @@ The payment plan (BOOK-04, BOOK-11): [../payment-flow.md](../payment-flow.md), w
 - 2026-10-11: Home's Upcoming shows every open visit, so a new booking (REQUESTED or PENDING) no longer disappears: it says "· Pending" after its time, or "· Payment pending", until the doctor confirms it. Join stays for confirmed video visits.
 - 2026-10-11: B2 statuses seen on production: REQUESTED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED. Every new booking is REQUESTED until the doctor confirms it (nothing auto-confirms), so Home shows it as Pending. IN_PROGRESS now counts as confirmed, so a visit in progress keeps Join and isn't marked Pending.
 - 2026-10-11: Debug menu (debug builds only, Profile → Settings): demo data (a fake backend behind the shared client: a visit to join now, pending and unpaid visits, check-ins due now, unread notifications and chats; writes never reach production) and fake pushes of each type that route like real ones. See profile.md.
+- 2026-10-19: Built the live visit (Figma 1647:10075, 1918:22602, 1919:23186, 1791:19370, 1793:15925): Home's Live Appointment section with View, the Live Appointment page (details, Request to sign with B4 / B6 and a signature pad, Join Video Call, End Appointment), and the video call over Daily (Android `co.daily:client`, iOS Daily's Swift package behind a Swift `NativeVideoCall`) with the preview, Join Now (V1) and the waiting room. Upcoming on Home is a plain list now. Demo data fakes B4 and B6. Android's photo camera asks for CAMERA first.

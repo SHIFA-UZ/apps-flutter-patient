@@ -13,14 +13,19 @@ import kotlinx.serialization.json.JsonElement
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.FAILED_TO_BOOK_APPOINTMENT
 import shifa.uz.data.api.FAILED_TO_CANCEL_APPOINTMENT
+import shifa.uz.data.api.FAILED_TO_LOAD_APPOINTMENT
 import shifa.uz.data.api.FAILED_TO_LOAD_APPOINTMENTS
 import shifa.uz.data.api.FAILED_TO_LOAD_SLOTS
+import shifa.uz.data.api.FAILED_TO_SUBMIT_SIGNATURE
 import shifa.uz.data.api.apiCall
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.api.items
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
+import shifa.uz.data.model.SignatureRequest
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class BookingsRepository(
     private val client: HttpClient = httpClient,
@@ -29,6 +34,23 @@ class BookingsRepository(
     suspend fun getAppointments(): Result<List<Appointment>> =
         apiCall<JsonElement>(FAILED_TO_LOAD_APPOINTMENTS) { client.get(ApiConfig.Endpoints.APPOINTMENTS) }
             .map { it.items<Appointment>() }
+
+    /** B4: one appointment, with `signatureRequested` and `alreadySigned` (B2 has neither). */
+    suspend fun getAppointment(id: String): Result<Appointment> =
+        apiCall(FAILED_TO_LOAD_APPOINTMENT) { client.get(ApiConfig.Endpoints.appointment(id)) }
+
+    /** B6: signs the appointment summary with a PNG [signature]. The body is ignored. */
+    @OptIn(ExperimentalEncodingApi::class)
+    suspend fun submitSignature(
+        id: String,
+        signature: ByteArray,
+    ): Result<Unit> =
+        apiCall<String>(FAILED_TO_SUBMIT_SIGNATURE) {
+            client.post(ApiConfig.Endpoints.appointmentSignature(id)) {
+                contentType(ContentType.Application.Json)
+                setBody(SignatureRequest(Base64.encode(signature)))
+            }
+        }.map {}
 
     /** B5, a hard delete. The body is ignored. */
     suspend fun cancel(id: String): Result<Unit> =

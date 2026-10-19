@@ -140,6 +140,7 @@ fun ShifaDoctorCard(
     verified: Boolean = true,
     rating: String? = null,
     availability: String? = null,
+    availabilityIcon: DrawableResource = Res.drawable.ic_calendar_12, // the call's card: its time, with a clock
     tags: (@Composable RowScope.() -> Unit)? = null,
     shadow: Boolean = true,
     onClick: (() -> Unit)? = null,
@@ -184,7 +185,7 @@ fun ShifaDoctorCard(
                 }
                 CardBody(specialty)
                 availability?.let {
-                    MetaRow(Res.drawable.ic_calendar_12, it, style = MaterialTheme.typography.bodySmall)
+                    MetaRow(availabilityIcon, it, style = MaterialTheme.typography.bodySmall)
                 }
                 tags?.let {
                     Row(
@@ -218,6 +219,22 @@ fun ShifaDocumentCard(
         tag?.let { ShifaTag(it, Modifier.weight(1f, fill = false), ShifaTagType.Primary) }
     }
 }
+
+/** Figma display-card, type document, with an action button instead of the chevron (Request to sign, 1918:22602). */
+@Composable
+fun ShifaDocumentActionCard(
+    title: String,
+    subtitle: String,
+    action: String,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
+) = DisplayCard(
+    title,
+    modifier,
+    null,
+    { Thumb(Res.drawable.img_documents) },
+    { ShifaActionButton(onAction, text = action) },
+) { CardBody(subtitle) }
 
 /** Figma display-card, type certificate. */
 @Composable
@@ -408,6 +425,7 @@ private fun DisplayCard(
     modifier: Modifier,
     onClick: (() -> Unit)?,
     leading: @Composable () -> Unit,
+    trailing: (@Composable () -> Unit)? = null,
     lines: @Composable ColumnScope.() -> Unit,
 ) {
     CardChrome(modifier, onClick) {
@@ -421,7 +439,10 @@ private fun DisplayCard(
                 CardTitle(title)
                 lines()
             }
-            if (onClick != null && !LocalCardOnSurface.current) Chevron()
+            when {
+                trailing != null -> trailing()
+                onClick != null && !LocalCardOnSurface.current -> Chevron()
+            }
         }
     }
 }

@@ -114,6 +114,10 @@ object ShifaTextStyles {
     @Composable
     fun chatBubble() = manrope(manropeFontFamily(), FontWeight.Normal, 16, 18)
 
+    // video call: waiting for the doctor (Bold 18, line height 28)
+    @Composable
+    fun callStatus() = manrope(manropeFontFamily(), FontWeight.Bold, 18, 28, -1)
+
     // notification body (Medium 12, line height 14)
     @Composable
     fun notificationBody() = manrope(manropeFontFamily(), FontWeight.Medium, 12, 14)

@@ -11,7 +11,9 @@
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Shifa needs camera access to take profile photos and photos for documents or chat.</string>
+	<string>Shifa needs camera access for video consultations and to take profile photos and photos for documents or chat.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Shifa needs microphone access for video consultations.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Shifa uses your location to show doctors near you.</string>
 	<key>UIBackgroundModes</key>

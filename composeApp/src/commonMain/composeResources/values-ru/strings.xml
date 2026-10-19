@@ -921,4 +921,19 @@
         <item>суббота</item>
         <item>воскресенье</item>
     </string-array>
+    <string name="liveAppointment">Текущий приём</string>
+    <string name="requestToSign">Запрос на подпись</string>
+    <string name="requestFromDoctor">от врача %1$s</string>
+    <string name="signNow">Подписать</string>
+    <string name="endAppointment">Завершить приём</string>
+    <string name="doctorsNotes">Заметки врача</string>
+    <string name="signature">Подпись</string>
+    <string name="signHere">Распишитесь здесь</string>
+    <string name="completeSignOff">Завершить подписание</string>
+    <string name="videoAppointment">Видеоприём</string>
+    <string name="joinNow">Подключиться</string>
+    <string name="waitingForDoctorToStart">Ждём, когда врач начнёт приём</string>
+    <string name="microphone">Микрофон</string>
+    <string name="switchCamera">Сменить камеру</string>
+    <string name="endCall">Завершить звонок</string>
 </resources>

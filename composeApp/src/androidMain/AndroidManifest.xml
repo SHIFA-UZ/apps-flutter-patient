@@ -11,6 +11,10 @@
 
     <!-- Push (13 §10), asked for after login -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 06 §3.6 video calls (Daily). With CAMERA declared, the photo camera has to be granted it too. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:allowBackup="true"

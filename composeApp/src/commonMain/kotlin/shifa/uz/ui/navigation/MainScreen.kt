@@ -71,6 +71,8 @@ import shifa.uz.ui.tasks.TasksScreen
 import shifa.uz.ui.tasks.TasksViewModel
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
+import shifa.uz.ui.visit.LiveAppointmentScreen
+import shifa.uz.ui.visit.VideoCallScreen
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.utils.PushSetup
 
@@ -105,6 +107,8 @@ fun MainScreen(
         var viewing by remember { mutableStateOf<PatientDocument?>(null) }
         var checkIn by remember { mutableStateOf<RemoteCareTask?>(null) }
         var appointment by remember { mutableStateOf<Appointment?>(null) }
+        var live by remember { mutableStateOf<Appointment?>(null) }
+        var call by remember { mutableStateOf<Appointment?>(null) }
         var doctor by remember { mutableStateOf<Doctor?>(null) }
         var booking by remember { mutableStateOf<Doctor?>(null) }
         var chat by remember { mutableStateOf<ChatTarget?>(null) }
@@ -139,6 +143,8 @@ fun MainScreen(
                 tasksOpen = false
                 checkIn = null
                 appointment = null
+                live = null
+                call = null
                 doctor = null
                 booking = null
                 viewing = null
@@ -150,7 +156,7 @@ fun MainScreen(
         BackHandler(
             enabled =
                 page == null && list == null && !upcomingOpen && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
-                    doctor == null && booking == null && aiState.chat == null && chat == null && tab != ShifaTab.Home,
+                    live == null && call == null && doctor == null && booking == null && aiState.chat == null && chat == null && tab != ShifaTab.Home,
         ) { tab = ShifaTab.Home }
         // 09 §7: the tab goes when the profile shuts Shifa AI out.
         LaunchedEffect(homeState.shifaAi) {
@@ -169,6 +175,7 @@ fun MainScreen(
                                 onAccount = { page = Page.Account },
                                 onUpcoming = { upcomingOpen = true },
                                 onAppointment = { appointment = it },
+                                onLive = { live = it },
                                 onTasks = { tasksOpen = true },
                                 onDoctors = { list = BookingsList.MyDoctors },
                                 onDoctor = { doctor = it },
@@ -234,7 +241,7 @@ fun MainScreen(
                         .padding(ShifaSpacing.Inset.Md),
                     ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
                 )
-                // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → its doctor → Create Booking → a page → a certificate / document.
+                // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a call → a certificate / document.
                 if (aiState.chat != null) {
                     BackHandler { shifaAi.close() }
                     ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
@@ -307,6 +314,20 @@ fun MainScreen(
                         }
                     }
                 }
+                live?.let {
+                    BackHandler { live = null }
+                    key(it) {
+                        ScopedViewModels {
+                            LiveAppointmentScreen(
+                                it,
+                                onBack = { live = null },
+                                onDoctor = { doctor = it },
+                                onJoin = { call = it },
+                                onSignedOut = onLogOut,
+                            )
+                        }
+                    }
+                }
                 doctor?.let {
                     BackHandler { doctor = null }
                     key(it) {
@@ -367,6 +388,13 @@ fun MainScreen(
                             }
                         }
                     }
+                }
+                // Full screen, over everything: leaving it leaves the call.
+                call?.let {
+                    BackHandler { call = null }
+                    key(
+                        it,
+                    ) { ScopedViewModels { VideoCallScreen(it, onClose = { call = null }, onSignedOut = onLogOut) } }
                 }
                 viewing?.let {
                     BackHandler { viewing = null }

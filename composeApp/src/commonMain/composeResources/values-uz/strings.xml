@@ -919,4 +919,19 @@
         <item>shanba</item>
         <item>yakshanba</item>
     </string-array>
+    <string name="liveAppointment">Jonli qabul</string>
+    <string name="requestToSign">Imzolash so‘rovi</string>
+    <string name="requestFromDoctor">Shifokor %1$s tomonidan</string>
+    <string name="signNow">Imzolash</string>
+    <string name="endAppointment">Qabulni yakunlash</string>
+    <string name="doctorsNotes">Shifokor izohlari</string>
+    <string name="signature">Imzo</string>
+    <string name="signHere">Shu yerga imzo qo‘ying</string>
+    <string name="completeSignOff">Imzolashni yakunlash</string>
+    <string name="videoAppointment">Video qabul</string>
+    <string name="joinNow">Hozir qo‘shilish</string>
+    <string name="waitingForDoctorToStart">Shifokor qabulni boshlashini kutmoqdamiz</string>
+    <string name="microphone">Mikrofon</string>
+    <string name="switchCamera">Kamerani almashtirish</string>
+    <string name="endCall">Qo‘ng‘iroqni tugatish</string>
 </resources>
