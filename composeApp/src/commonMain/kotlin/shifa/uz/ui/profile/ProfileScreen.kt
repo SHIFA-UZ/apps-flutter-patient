@@ -44,7 +44,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.accountTitle
-import shifa.composeapp.generated.resources.appLock
 import shifa.composeapp.generated.resources.cancel
 import shifa.composeapp.generated.resources.changePassword
 import shifa.composeapp.generated.resources.delete
@@ -55,7 +54,6 @@ import shifa.composeapp.generated.resources.ic_camera_8
 import shifa.composeapp.generated.resources.ic_check_circle_16
 import shifa.composeapp.generated.resources.ic_clock_16
 import shifa.composeapp.generated.resources.ic_globe_24
-import shifa.composeapp.generated.resources.ic_lock_24
 import shifa.composeapp.generated.resources.ic_log_out_24
 import shifa.composeapp.generated.resources.ic_refresh_cw_24
 import shifa.composeapp.generated.resources.ic_shield_24
@@ -75,7 +73,6 @@ import shifa.composeapp.generated.resources.uploading
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.storage.AppLanguage
 import shifa.uz.ui.debug.DebugScreen
-import shifa.uz.ui.navigation.ComingSoon
 import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.MessagePopUp
@@ -101,8 +98,7 @@ import shifa.uz.utils.isDebugBuild
 import shifa.uz.utils.rememberImagePickerLauncher
 import shifa.uz.utils.rememberInAppBrowser
 
-// ponytail: App Lock (03) is a placeholder until its ticket.
-private enum class ProfilePage { Edit, ChangePassword, AppLock, Debug }
+private enum class ProfilePage { Edit, ChangePassword, Debug }
 
 private const val PRIVACY_URL = "https://shifa.uz/#privacy"
 
@@ -137,7 +133,6 @@ fun ProfileScreen(
         onChangePhoto = pickPhoto,
         onEdit = { page = ProfilePage.Edit },
         onLanguage = { viewModel.showDialog(ProfileDialog.Language) },
-        onAppLock = { page = ProfilePage.AppLock },
         onChangePassword = { page = ProfilePage.ChangePassword },
         onPrivacy = { openUrl(PRIVACY_URL) },
         onDebug = { page = ProfilePage.Debug }.takeIf { isDebugBuild },
@@ -181,7 +176,6 @@ fun ProfileScreen(
                             viewModel.onPasswordChanged()
                             close()
                         })
-                    ProfilePage.AppLock -> ComingSoon(stringResource(Res.string.appLock), onBack = close)
                     ProfilePage.Debug -> DebugScreen(onBack = close)
                 }
             }
@@ -207,7 +201,6 @@ internal fun ProfileContent(
     onChangePhoto: () -> Unit,
     onEdit: () -> Unit,
     onLanguage: () -> Unit,
-    onAppLock: () -> Unit,
     onChangePassword: () -> Unit,
     onPrivacy: () -> Unit,
     onLogOut: () -> Unit,
@@ -248,11 +241,6 @@ internal fun ProfileContent(
                                     stringResource(Res.string.language),
                                     onLanguage,
                                     icon = Res.drawable.ic_globe_24,
-                                )
-                                ShifaSettingsItem(
-                                    stringResource(Res.string.appLock),
-                                    onAppLock,
-                                    icon = Res.drawable.ic_lock_24,
                                 )
                                 ShifaSettingsItem(
                                     stringResource(Res.string.changePassword),

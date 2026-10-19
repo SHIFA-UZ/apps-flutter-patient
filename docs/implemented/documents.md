@@ -14,7 +14,7 @@
 - Upload opens a tray (Camera, Photo, File). The Figma tray is titled "Add to chat" (a copy of the chat tray's), so it says "Upload". File picks PDFs only. The camera photo is turned upright and re-encoded as JPEG (Android: FileProvider into the cache dir; iOS: `UIImagePickerController`).
 - The pick opens the Figma "Document Upload" pop-up: the file name with Change, the title (defaults to the file name without its extension) and an optional type. Change keeps a title the user typed. Picking the chosen type again clears it (11 quirk 8).
 - Save sends F2 multipart: `file` with a real Content-Type and a sanitized file name (11 quirk 10), `title`, `isChatAttachment=false`, and `category` only when chosen. An empty title shows an error instead of silently doing nothing (11 quirk 8). A failure keeps the pop-up and the list (11 quirk 6). Success puts the new document first.
-- Not built: the date field (not in Figma), the camera permission rationale, and the app-lock suspension while picking (needs LOCK-01).
+- Not built: the date field (not in Figma), the camera permission rationale.
 
 ## Viewer (`DocumentViewerScreen.kt`, DOCS-03)
 

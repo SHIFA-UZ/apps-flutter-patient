@@ -56,7 +56,7 @@
 - Code screen: 6 digits only (non-digits are dropped), the masked destination, a 300 s `m:ss` resend cooldown, and "code sent again" after a resend. Verify calls A7 with `emailOtp` or `smsOtp`, saves the token, then goes to Home.
 - After A7, the photo goes to P3 (`patients/me/photo`, field `file`) and step 2 goes to P2 (`PATCH patients/me/profile`, only the set keys). A7 has `birthDate`/`address` keys, but the Flutter UI never sent them, so they're unverified. Both saves are best effort: a failure is dropped silently. P4 is not used.
 - Doctor link (05 §2.5): "Create patient account" skips steps 2–3 and sends an email code to the typed email, then A6. A phone-only doctor match shows "email required" (Q7). The dialog copy still says the code goes "to your phone"; that's the spec string.
-- Not built: the PIN setup prompt after register (needs LOCK-01), and the `PhoneInputField` country picker. It's a plain phone field, which avoids bug #9.
+- Not built: the `PhoneInputField` country picker. No PIN setup prompt: app lock is dropped (the user's call, 2026-10-19). It's a plain phone field, which avoids bug #9.
 - Differences from Figma: the sub-logo glass tile is drawn as a surface tile with a faint teal border. "Continue with Google" is hidden.
 
 ## Forgot password (`ui/forgotpassword/`, AUTH-06)

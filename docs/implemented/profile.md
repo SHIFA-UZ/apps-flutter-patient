@@ -2,13 +2,13 @@
 
 ## Profile (`ui/profile/ProfileScreen.kt`, PROF-01/02/07)
 
-- Figma: `1703:16707`. Opened from the header avatar (the Account page). It shows the profile card (avatar with a camera badge, name, phone, email), Edit Profile, Settings (Language, App Lock, Change Password, Privacy) and Account (Log Out, Delete my Account). Pull to refresh reloads P1. A 401 on P1 logs out.
+- Figma: `1703:16707`. Opened from the header avatar (the Account page). It shows the profile card (avatar with a camera badge, name, phone, email), Edit Profile, Settings (Language, Change Password, Privacy) and Account (Log Out, Delete my Account). Pull to refresh reloads P1. A 401 on P1 logs out.
 - No version footer: Figma has none.
-- App Lock (LOCK-02) is a "Coming soon" placeholder. Privacy opens `https://shifa.uz/#privacy` in an in-app browser (`rememberInAppBrowser`: a Custom Tab on Android, `SFSafariViewController` on iOS); it did nothing in Flutter.
+- No App Lock row: app lock (LOCK-01..03) is dropped (the user's call, 2026-10-19), though Figma has the row. Privacy opens `https://shifa.uz/#privacy` in an in-app browser (`rememberInAppBrowser`: a Custom Tab on Android, `SFSafariViewController` on iOS); it did nothing in Flutter.
 - The dialogs have no Figma frame and use the pop-up widget. Language is a radio list, Log out and Delete my account are confirms.
 - Language (CORE-04): the choice is saved locally (`app_language`, `LanguageStorage`), then P2 `{language}` tells the backend (errors ignored). The saved choice wins, then the system language, then English. The server's language never overrides the local one, which differs from Flutter (14 §3.1). `ProvideAppLocale` switches the resources at runtime: `Locale.setDefault` + configuration on Android, `AppleLanguages` on iOS. The iOS switch hasn't been tried on a device.
-- Avatar (PROF-02): the picker uploads P3 and saves the URL with P2, from the profile card or Edit profile. Home's header takes the saved profile (P2's reply) after this or an Edit profile save. No cache-buster, and the app lock isn't suspended (no LOCK-01 yet).
-- Log out (PROF-07, AUTH-08): confirm → P7 with `""` → the token is wiped → Login. The logout is awaited (Flutter didn't wait). Every screen's ViewModel lives in the signed-in session's store, so no profile state survives. No PIN to clear yet (LOCK-01). The global 401 path (CORE-05) is still not built.
+- Avatar (PROF-02): the picker uploads P3 and saves the URL with P2, from the profile card or Edit profile. Home's header takes the saved profile (P2's reply) after this or an Edit profile save. No cache-buster.
+- Log out (PROF-07, AUTH-08): confirm → P7 with `""` → the token is wiped → Login. The logout is awaited (Flutter didn't wait). Every screen's ViewModel lives in the signed-in session's store, so no profile state survives. The global 401 path (CORE-05) is still not built.
 
 ## Edit profile (`EditProfileScreen.kt`, PROF-03)
 
