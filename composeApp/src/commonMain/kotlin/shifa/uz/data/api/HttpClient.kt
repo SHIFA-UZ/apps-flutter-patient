@@ -13,6 +13,8 @@ import io.ktor.http.Url
 import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import shifa.uz.data.debug.DemoBackend
+import shifa.uz.data.debug.DemoMode
 import shifa.uz.data.storage.TokenStorage
 import shifa.uz.utils.getAdjustedBaseUrl
 
@@ -32,8 +34,12 @@ internal val apiJson =
         prettyPrint = true
     }
 
-/** The app-wide client. */
-val httpClient: HttpClient by lazy { createHttpClient(TokenStorage()) }
+private val tokens by lazy { TokenStorage() }
+private val realClient by lazy { createHttpClient(tokens) }
+private val demoClient by lazy { createHttpClient(tokens, DemoBackend.shared.engine()) }
+
+/** The app-wide client; the demo backend's while Debug menu → Demo data is on. */
+val httpClient: HttpClient get() = if (DemoMode.enabled.value) demoClient else realClient
 
 fun createHttpClient(
     tokenStorage: TokenStorage,

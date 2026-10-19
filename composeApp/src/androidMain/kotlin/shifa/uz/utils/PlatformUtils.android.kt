@@ -1,6 +1,9 @@
 package shifa.uz.utils
 
 import android.os.Build
+import shifa.uz.BuildConfig
+
+actual val isDebugBuild: Boolean = BuildConfig.DEBUG
 
 actual fun isAndroidEmulator(): Boolean {
     return Build.FINGERPRINT.contains("generic") ||

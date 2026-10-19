@@ -2,6 +2,7 @@ package shifa.uz
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -20,37 +21,47 @@ class ShifaMessagingService : FirebaseMessagingService() {
         Push.token.value = token
     }
 
-    @SuppressLint("MissingPermission") // areNotificationsEnabled() is the check.
     override fun onMessageReceived(message: RemoteMessage) {
         Push.arrived.tryEmit(Unit)
         val data = message.data
         // Tray id = server id (13 §11.8).
         val id = (data["notificationId"] ?: data["id"])?.toIntOrNull() ?: System.currentTimeMillis().toInt()
-        val body = message.notification?.body ?: data["message"]
-        val tap =
-            PendingIntent.getActivity(
-                this,
-                id,
-                Intent(this, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    .apply { data.forEach { (key, value) -> putExtra(key, value) } },
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-        val manager = NotificationManagerCompat.from(this)
-        if (!manager.areNotificationsEnabled()) return
-        manager.notify(
-            id,
-            NotificationCompat
-                .Builder(this, PUSH_CHANNEL)
-                .setSmallIcon(R.drawable.splash_logo)
-                .setColor(getColor(R.color.ic_launcher_background))
-                .setContentTitle(message.notification?.title ?: data["title"])
-                .setContentText(body)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setContentIntent(tap)
-                .build(),
-        )
+        showPush(id, message.notification?.title ?: data["title"], message.notification?.body ?: data["message"], data)
     }
+}
+
+/** A tray notification whose tap opens MainActivity with [data], as a push's does. False when notifications are off. */
+@SuppressLint("MissingPermission") // areNotificationsEnabled() is the check.
+internal fun Context.showPush(
+    id: Int,
+    title: String?,
+    body: String?,
+    data: Map<String, String>,
+): Boolean {
+    val tap =
+        PendingIntent.getActivity(
+            this,
+            id,
+            Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .apply { data.forEach { (key, value) -> putExtra(key, value) } },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+    val manager = NotificationManagerCompat.from(this)
+    if (!manager.areNotificationsEnabled()) return false
+    manager.notify(
+        id,
+        NotificationCompat
+            .Builder(this, PUSH_CHANNEL)
+            .setSmallIcon(R.drawable.splash_logo)
+            .setColor(getColor(R.color.ic_launcher_background))
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(tap)
+            .build(),
+    )
+    return true
 }

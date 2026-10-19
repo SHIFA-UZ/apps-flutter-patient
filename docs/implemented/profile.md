@@ -31,3 +31,16 @@
 - The code page sends A4 (`purpose: ACCOUNT_DELETION`) when it opens and on resend. The resend cooldown is the challenge's `expiresInSeconds`, not Flutter's fixed 5 minutes (14 Q17).
 - Phone-only accounts can't delete: without an email the dialog stops with "email required" (14 Q16). The backend team needs to add a phone path.
 - The confirm button is the primary style, not destructive, because the page layout has no destructive option. Not tried against the backend.
+
+## Debug menu (`ui/debug/DebugScreen.kt`, debug builds only)
+
+- Profile → Settings → "Debug menu", shown only when `isDebugBuild` (`BuildConfig.DEBUG`, `Platform.isDebugBinary`). English only; release builds have no row and ignore the saved demo flag.
+- **Demo data** (`data/debug/DemoBackend.kt`): the shared `httpClient` switches to a Ktor `MockEngine` with in-memory data seeded around now:
+  - a video visit whose join window is open, a REQUESTED one, an unpaid one, a cancellable one, past ones;
+  - two demo doctors (a free video service, an online-priced one, a clinic-only one that B3 rejects for video, as production does), with slots 09:00 to 16:30;
+  - check-ins due now for three tasks, five notifications (four unread), two chats (the doctor answers each message 4 s later), two documents, and a canned Shifa AI reply.
+  - Booking, cancel, check-ins, mark read, chat, uploads and profile edits change only that data. A GET it doesn't fake goes to the real backend, and so does `auth/`; any other write gets 501 "Not available in demo mode". The data is reseeded on launch and by "Reset demo data".
+  - Switching it re-keys `App`, so every screen restarts from the splash on the other backend. The flag is kept across launches.
+- **Fake pushes**: a local notification with a push's data (type, title, message and the linked id; never `notificationId`, so the tap marks nothing read), for appointment confirmed and reminder, payment due, task check-in, new document, new chat message and treatment plan. The ids are the current backend's next open visit, open task, newest document and chat. Tapping one goes through `Push.opened` like a real push. Android shares `showPush` with `ShifaMessagingService`; iOS posts a `UNNotificationRequest`, which AppDelegate shows and routes.
+- ponytail: one fixed data set, and the upload's title and category are read from the multipart text. Not built: time travel and forced failures (offered, not picked).
+

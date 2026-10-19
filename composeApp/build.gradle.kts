@@ -50,7 +50,6 @@ kotlin {
             implementation(libs.truth)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
-            implementation(libs.ktor.client.mock)
             implementation(libs.multiplatform.settings.test)
         }
 
@@ -75,6 +74,7 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.mock) // the debug menu's demo backend
 
             // Kotlinx Serialization
             implementation(libs.kotlinx.serialization.json)

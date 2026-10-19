@@ -74,6 +74,7 @@ import shifa.composeapp.generated.resources.uploadPhoto
 import shifa.composeapp.generated.resources.uploading
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.storage.AppLanguage
+import shifa.uz.ui.debug.DebugScreen
 import shifa.uz.ui.navigation.ComingSoon
 import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.Banners
@@ -96,11 +97,12 @@ import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaSettingsItem
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.utils.isDebugBuild
 import shifa.uz.utils.rememberImagePickerLauncher
 import shifa.uz.utils.rememberInAppBrowser
 
 // ponytail: App Lock (03) is a placeholder until its ticket.
-private enum class ProfilePage { Edit, ChangePassword, AppLock }
+private enum class ProfilePage { Edit, ChangePassword, AppLock, Debug }
 
 private const val PRIVACY_URL = "https://shifa.uz/#privacy"
 
@@ -138,6 +140,7 @@ fun ProfileScreen(
         onAppLock = { page = ProfilePage.AppLock },
         onChangePassword = { page = ProfilePage.ChangePassword },
         onPrivacy = { openUrl(PRIVACY_URL) },
+        onDebug = { page = ProfilePage.Debug }.takeIf { isDebugBuild },
         onLogOut = { viewModel.showDialog(ProfileDialog.LogOut) },
         onDeleteAccount = { viewModel.showDialog(ProfileDialog.DeleteAccount) },
     )
@@ -179,6 +182,7 @@ fun ProfileScreen(
                             close()
                         })
                     ProfilePage.AppLock -> ComingSoon(stringResource(Res.string.appLock), onBack = close)
+                    ProfilePage.Debug -> DebugScreen(onBack = close)
                 }
             }
         }
@@ -208,6 +212,7 @@ internal fun ProfileContent(
     onPrivacy: () -> Unit,
     onLogOut: () -> Unit,
     onDeleteAccount: () -> Unit,
+    onDebug: (() -> Unit)? = null, // debug builds only
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaPageElement(ShifaPageElementType.Header) {
@@ -259,6 +264,7 @@ internal fun ProfileContent(
                                     onPrivacy,
                                     icon = Res.drawable.ic_shield_24,
                                 )
+                                onDebug?.let { ShifaSettingsItem("Debug menu", it) }
                             }
                         }
                         ShifaSection(stringResource(Res.string.accountTitle), type = ShifaSectionType.CardTransparent) {
