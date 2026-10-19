@@ -128,7 +128,14 @@ The full plan is in [payment-flow.md](payment-flow.md).
 - Say what ending a visit means for a patient, and add a call for it if it's more than leaving.
 - Give B6 the doctor's notes to show, or link the visit's 025-2 form, so the tray can show what's being signed.
 
-**Until then:** the rows without data are hidden, End Appointment just leaves the page, and the tray shows the visit summary.
+- For the appointment details (Figma 1921:25419, 1661:17567). Checked against the backend's own OpenAPI (`/v3/api-docs`, 2026-10-19): none of this exists yet.
+  - **Service:** add `serviceId` and `serviceTitle` to `AppointmentDto` (B2, B4 and B3's reply). B3 already takes `serviceId` but never returns it.
+  - **Attach Document after booking:** `POST /patients/me/appointments/{id}/documents` with `{ "documentIds": [101] }` (documents already uploaded with F2), and the attached ids as `documentIds` on `AppointmentDto`. Today documents can only be attached in B3.
+  - **Documents from the visit:** `appointmentId` on `PatientDocumentDto` (F1), set when the doctor uploads during or after the visit.
+  - **Tasks from the visit:** `appointmentId` (and the doctor's id and name) on `TaskDto` (T1, T2). It has no doctor today, so the app can't tell where a task came from.
+- Say what happens to the old visit on a reschedule (B3 with `rescheduleAppointmentId`).
+
+**Until then:** the rows without data are hidden, End Appointment just leaves the page, the tray shows the visit summary, and a reschedule asks for a video visit's service again.
 
 ## 14. Task entries
 

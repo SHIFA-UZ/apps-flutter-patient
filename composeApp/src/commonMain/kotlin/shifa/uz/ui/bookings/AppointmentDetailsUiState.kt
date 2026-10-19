@@ -5,6 +5,7 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.Review
 import shifa.uz.data.model.shownDoctor
 
 // 06 §3.5: cancel only 48 h or more ahead. Figma's copy says 24 h; the spec wins.
@@ -19,6 +20,15 @@ data class AppointmentDetailsUiState(
     val confirmCancel: Boolean = false,
     val isCancelling: Boolean = false,
     val error: StringResource? = null,
+    val detailsOpen: Boolean = true,
+    val review: Review? = null, // B7
+    val reviewChecked: Boolean = false,
+    val reviewOpen: Boolean = false,
+    val rating: Int = 0,
+    val comment: String = "",
+    val isReviewing: Boolean = false,
+    val reviewError: StringResource? = null,
+    val notice: StringResource? = null,
 ) {
     private val hoursUntil get() = appointment.start?.let { (it - now).inWholeHours }
 
@@ -27,6 +37,14 @@ data class AppointmentDetailsUiState(
     val canCancel get() = appointment.isOpen && !isPast && hoursUntil!! >= CANCEL_HOURS && appointment.id.isNotBlank()
 
     val showWarning get() = appointment.isOpen && !isPast && hoursUntil!! < CANCEL_HOURS
+
+    /** Upcoming has the info cards, Reschedule and Cancel; anything else is past: the summary card and a review. */
+    val isUpcoming get() = appointment.isOpen && !isPast
+
+    // 06 §3.9: a past visit that wasn't cancelled, with a doctor, once B7 found no review.
+    val canReview get() =
+        isPast && appointment.status != "CANCELLED" && !appointment.doctorId.isNullOrBlank() &&
+            reviewChecked && review == null
 
     val shownDoctor get() = appointment.shownDoctor(doctor)
 

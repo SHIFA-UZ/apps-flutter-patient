@@ -20,6 +20,8 @@ import org.mockito.kotlin.mock
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.comingSoon
 import shifa.composeapp.generated.resources.copilotDailyLimit
+import shifa.composeapp.generated.resources.copilotTranscribeError
+import shifa.composeapp.generated.resources.errorRecordingVoice
 import shifa.uz.data.copilot.CopilotRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CopilotChat
@@ -50,7 +52,17 @@ class ShifaAiViewModelTest {
                 onToken("lo")
                 return reply
             }
+
+            override suspend fun transcribe(
+                audio: ByteArray,
+                language: String,
+            ): Result<String> {
+                heard += language
+                return transcript
+            }
         }
+    private var transcript = Result.success("I have a headache")
+    private val heard = mutableListOf<String>()
     private val storage = CopilotStorage(MapSettings())
     private var clock = 1000L
     private val saved =
@@ -201,4 +213,31 @@ class ShifaAiViewModelTest {
         classToTest.search("ibuprofen")
         assertThat(state.shown).isEmpty()
     }
+
+    @Test
+    fun `a recording's transcript fills the input unsent, and a failure keeps the typed text`() =
+        runTest {
+            classToTest.open("1")
+            classToTest.onRecording()
+            assertThat(state.recording).isTrue()
+            assertThat(state.canSend).isFalse()
+
+            classToTest.transcribe(byteArrayOf(1))
+            assertThat(state.isTranscribing).isTrue()
+            advanceUntilIdle()
+            assertThat(heard).containsExactly("ru")
+            assertThat(state.input).isEqualTo("I have a headache")
+            assertThat(state.chat?.messages).isEqualTo(saved.messages)
+            assertThat(state.canSend).isTrue()
+
+            transcript = Result.failure(ApiException.ServerError("x"))
+            classToTest.transcribe(byteArrayOf(1))
+            advanceUntilIdle()
+            assertThat(state.input).isEqualTo("I have a headache")
+            assertThat(state.error).isEqualTo(Res.string.copilotTranscribeError)
+
+            classToTest.transcribe(null)
+            assertThat(state.error).isEqualTo(Res.string.errorRecordingVoice)
+            assertThat(heard).hasSize(2)
+        }
 }

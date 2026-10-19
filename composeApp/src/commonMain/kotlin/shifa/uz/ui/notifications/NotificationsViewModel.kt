@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.allNotificationsMarkedAsRead
+import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
@@ -79,6 +80,9 @@ class NotificationsViewModel(
     }
 
     fun close() = update { copy(selected = null, link = null) }
+
+    /** A task notification's check-in went through (T4 is the tray's own). */
+    fun onCheckInSubmitted() = update { copy(error = null, notice = Res.string.checkInSubmittedSuccessfully) }
 
     /** N4. */
     fun markAllRead() {

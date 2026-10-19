@@ -17,20 +17,27 @@
 - My Doctors cards show "Last Visit dd.MM.yyyy": the doctor's latest confirmed or completed past visit, else no line.
 - Not built: the ⋮ menu (no Figma for it), the nav bar Figma shows under Past, pull to refresh and lazy loading (a plain column).
 
-## Appointment details (`AppointmentDetailsScreen.kt`, BOOK-06)
+## Appointment details (`AppointmentDetailsScreen.kt`, BOOK-06, BOOK-12)
 
-- Figma: `1662:17723`. An overlay above the tabs, opened from Home and the Bookings tab. It shows the list's B2 appointment (no B4 refetch). The doctor card uses D2 when the appointment has a `doctorId`; if D2 fails, it keeps B2's name, profession and clinic. The card opens the doctor profile.
-- Sections: Date and Time (local, "Monday 12:00 - 12:30, 28 September 2026"), Location (video consultation, else the location, else the doctor's address, else the clinic) and Reason for visit ("check up" shows as "Check Up").
-- Cancel is enabled only for an open visit (not cancelled or completed) at least 48 h away. It needs a confirm, then B5, then back to the list with "Appointment cancelled successfully", and Home refreshes. A failure keeps the screen with the error. Figma says 24 h; 06 says 48 h, which is used. Under 48 h, Figma's warning shows instead.
-- Contact dials the doctor's phone, else emails them (06 quirk 13). It's disabled without either.
-- Not built: reschedule, the ⋮ menu, payment, the visit summary, signing, review and Join. They come with their flows. Not tried on a device: the test account has no appointments, and cancel is a hard delete on production.
+- Figma: `1921:25419` (upcoming), `1662:17723` (under 48 h), `1661:17567` (past). An overlay above the tabs, opened from Home and the Bookings tab. It shows the list's B2 appointment (no B4 refetch). The doctor card uses D2 when the appointment has a `doctorId`; if D2 fails, it keeps B2's name, profession and clinic. The card opens the doctor profile.
+- Upcoming (open, not started): one card per row, each when known: Clinic (B2's clinic, else D2's), Video Consultation (Yes / No), Date and Time (local, "Monday 12:00 - 12:30, 28 September 2026"), Location (in person only: the location label, else the location, else the doctor's address) and Additional Information (the reason; "check up" shows as "Check Up").
+- Reschedule and Cancel are enabled only 48 h or more ahead (06; Figma says 24 h). Cancel needs a confirm, then B5, then back to the list with "Appointment cancelled successfully", and Home refreshes. Under 48 h Figma's warning shows on top; Figma has no Contact button, so tapping the warning dials the doctor's phone, else emails them (06 quirk 13).
+- Past (started, over or cancelled): Figma's "Appointment Details" card with the same rows, collapsible with its chevron.
+- Review (06 §3.9): a past visit that isn't cancelled and has a doctor loads B7 (any error is no review). With none, Leave Review opens the tray (Figma `1887:19946`, `1891:20212`): "Please rate your experience visiting Dr {last name} at {clinic} on {dd.MM.yyyy}", the visit's card, 1 to 5 stars, a multi-line comment, and Submit once a star is picked. D5 sends the rating, the trimmed comment (or null) and the visit's id. Success closes the tray with "Thank you for your rating." and shows Your Review (stars and comment); so does a review B7 already has. A failure keeps the tray with the error; D5's 401 doesn't log out (15 §6.2).
+- Not built: Service, Attach Document and the past Documents / Tasks sections. The backend's OpenAPI (checked 2026-10-19) has no service on an appointment, no call to attach documents after booking, and no appointment on documents or tasks; the request is in backend-improvements §13. Kept hidden until then (the user's call). No View Summary button (the user's call; BOOK-09 has no design yet), payment or ⋮ menu. Not tried on a device: cancel, reschedule and reviews change production data.
+
+## Reschedule (`RescheduleScreen.kt`, BOOK-06)
+
+- Figma: `1921:25675`. An overlay above the details, from Reschedule. The header card is the doctor's, refreshed with D2, then the collapsible details card, Select New Date and Available Times as on Create Booking (the same ViewModel in reschedule mode).
+- It keeps the visit's kind (video or not), its reason and its location (B2's `locationId`, else the primary location). A video visit shows the service dropdown again: B2 doesn't say which service was booked, and B3 needs one.
+- Confirm sends B3 with the new slot and `rescheduleAppointmentId` (06 §3.5; production's handling of the old visit is unverified). The double-booking check skips the visit being moved. On success the overlays close and the Bookings tab shows "Appointment rescheduled successfully"; Home refreshes. Cancel just goes back.
 
 ## Doctor profile (`ui/doctors/DoctorProfileScreen.kt`, DOC-02 in part, DOC-03)
 
 - Figma: `1655:16298`. An overlay opened from any doctor card. It shows the card's copy at once, then loads D2; an error shows Retry. The header card has no shadow (Figma). Tags: Clinic when in person, Online when online (07 §4.1), Nearby within 50 km of the Near me fix (D1's `distanceKm`, else Haversine from the doctor's coordinates). No fix, no Nearby.
-- Tabs: About (biography, else further information), Services (Figma service cards: Free, the first price as "150000.00 UZS", else "Price not set"; old string services as text), Certificates (cards titled with the file name, opened in the documents viewer: DOC-03) and Clinic (address, clinic, phone, email, Telegram and Instagram; the links open the dialer, mail or the browser). Each tab has an empty text.
+- Tabs, in Figma's order: About (biography, else further information), Clinic, Reviews, Services (Figma service cards: Free, the first price as "150000.00 UZS", else "Price not set"; old string services as text), Certificates (cards titled with the file name, opened in the documents viewer: DOC-03) and Clinic (address, clinic, phone, email, Telegram and Instagram; the links open the dialer, mail or the browser). Reviews: D4, loaded with the page, as Figma review cards (the patient's photo and name, else "Patient", the date as dd.MM.yyyy, the stars, the comment); a failure shows only in that tab. Each tab has an empty text.
 - Create Booking opens the booking page.
-- Not built: reviews (D3/D4), the service detail sheet, open in maps, the ⋮ menu, experience and languages (not in Figma).
+- Not built: the service detail sheet, open in maps, the ⋮ menu, experience and languages (not in Figma).
 
 ## Create booking (`CreateBookingScreen.kt`, BOOK-01/02/03)
 
@@ -40,5 +47,5 @@
 - Video: the switch clears the service and rescans without a location. The service dropdown ("— Free" for free ones) shows only for video, and lists only services that are free or have a price with no `locationId`. A service priced only at a clinic is left out, because B3 rejects it for video ("Selected service has no price configured"). A doctor without such services shows the warning. The caption under the title is the chosen visit.
 - Attachments: PDFs only, up to 5, each uploaded with F2 `category=PRE_APPOINTMENT` when picked. An empty file is skipped with a banner.
 - Complete Booking checks, in order: video needs a service, then no open visit of yours at the same start (B2), then B3. Errors show above the button. On success all overlays close, the Bookings tab shows "slot booked", or the pending notice for `paymentStatus` PENDING, and Home refreshes.
-- Not built: the location step, the $1 checkout WebView (BOOK-04), removing an attachment, reschedule and the ⋮ menu. A new booking shows in Home's Upcoming, marked Pending until the doctor confirms it. Not pressed on a device (production).
+- Not built: the location step, the $1 checkout WebView (BOOK-04), removing an attachment and the ⋮ menu. Reschedule reuses this page's ViewModel (see Reschedule). A new booking shows in Home's Upcoming, marked Pending until the doctor confirms it. Not pressed on a device (production).
 - The switch keeps its 48 dp touch target, so the Video card is taller than Figma's.

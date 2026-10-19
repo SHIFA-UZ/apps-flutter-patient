@@ -47,6 +47,7 @@ import shifa.uz.ui.bookings.BookingsListScreen
 import shifa.uz.ui.bookings.BookingsScreen
 import shifa.uz.ui.bookings.BookingsViewModel
 import shifa.uz.ui.bookings.CreateBookingScreen
+import shifa.uz.ui.bookings.RescheduleScreen
 import shifa.uz.ui.doctors.DoctorProfileScreen
 import shifa.uz.ui.doctors.LocalDeviceLocation
 import shifa.uz.ui.documents.DocumentViewerScreen
@@ -109,8 +110,10 @@ fun MainScreen(
         var appointment by remember { mutableStateOf<Appointment?>(null) }
         var live by remember { mutableStateOf<Appointment?>(null) }
         var call by remember { mutableStateOf<Appointment?>(null) }
+        var callMinimized by remember { mutableStateOf(false) }
         var doctor by remember { mutableStateOf<Doctor?>(null) }
         var booking by remember { mutableStateOf<Doctor?>(null) }
+        var rescheduling by remember { mutableStateOf<Appointment?>(null) }
         var chat by remember { mutableStateOf<ChatTarget?>(null) }
         val tabs = rememberSaveableStateHolder()
         val density = LocalDensity.current
@@ -144,9 +147,11 @@ fun MainScreen(
                 checkIn = null
                 appointment = null
                 live = null
-                call = null
+                // A call goes on in its small window.
+                if (call != null) callMinimized = true
                 doctor = null
                 booking = null
+                rescheduling = null
                 viewing = null
                 chat = null
                 shifaAi.close()
@@ -156,7 +161,7 @@ fun MainScreen(
         BackHandler(
             enabled =
                 page == null && list == null && !upcomingOpen && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
-                    live == null && call == null && doctor == null && booking == null && aiState.chat == null && chat == null && tab != ShifaTab.Home,
+                    live == null && (call == null || callMinimized) && doctor == null && booking == null && rescheduling == null && aiState.chat == null && chat == null && tab != ShifaTab.Home,
         ) { tab = ShifaTab.Home }
         // 09 §7: the tab goes when the profile shuts Shifa AI out.
         LaunchedEffect(homeState.shifaAi) {
@@ -241,7 +246,7 @@ fun MainScreen(
                         .padding(ShifaSpacing.Inset.Md),
                     ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
                 )
-                // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a call → a certificate / document.
+                // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a certificate / document → a call.
                 if (aiState.chat != null) {
                     BackHandler { shifaAi.close() }
                     ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
@@ -303,9 +308,30 @@ fun MainScreen(
                                 it,
                                 onBack = { appointment = null },
                                 onDoctor = { doctor = it },
+                                onReschedule = { rescheduling = it },
                                 onCancelled = {
                                     appointment = null
                                     bookings.onCancelled()
+                                    home.refresh()
+                                },
+                                onSignedOut = onLogOut,
+                            )
+                        }
+                    }
+                }
+                rescheduling?.let {
+                    BackHandler { rescheduling = null }
+                    key(it) {
+                        ScopedViewModels {
+                            RescheduleScreen(
+                                it,
+                                onBack = { rescheduling = null },
+                                onRescheduled = {
+                                    rescheduling = null
+                                    appointment = null
+                                    list = null
+                                    tab = ShifaTab.Bookings
+                                    bookings.onRescheduled()
                                     home.refresh()
                                 },
                                 onSignedOut = onLogOut,
@@ -321,7 +347,10 @@ fun MainScreen(
                                 it,
                                 onBack = { live = null },
                                 onDoctor = { doctor = it },
-                                onJoin = { call = it },
+                                onJoin = {
+                                    call = it
+                                    callMinimized = false
+                                },
                                 onSignedOut = onLogOut,
                             )
                         }
@@ -382,18 +411,15 @@ fun MainScreen(
                                         onBack = { page = null },
                                         onLink = follow,
                                         onRead = home::refresh,
+                                        onCheckInSubmitted = {
+                                            tasks.onSubmitted()
+                                            home.refresh()
+                                        },
                                         onSignedOut = onLogOut,
                                     )
                             }
                         }
                     }
-                }
-                // Full screen, over everything: leaving it leaves the call.
-                call?.let {
-                    BackHandler { call = null }
-                    key(
-                        it,
-                    ) { ScopedViewModels { VideoCallScreen(it, onClose = { call = null }, onSignedOut = onLogOut) } }
                 }
                 viewing?.let {
                     BackHandler { viewing = null }
@@ -403,6 +429,24 @@ fun MainScreen(
                                 viewing = null
                                 documents.onDeleted(it.id)
                             })
+                        }
+                    }
+                }
+                // Over everything, full screen or in its small window; it handles its own Back.
+                call?.let {
+                    key(it) {
+                        ScopedViewModels {
+                            VideoCallScreen(
+                                it,
+                                minimized = callMinimized,
+                                onMinimize = { callMinimized = true },
+                                onExpand = { callMinimized = false },
+                                onClose = {
+                                    call = null
+                                    callMinimized = false
+                                },
+                                onSignedOut = onLogOut,
+                            )
                         }
                     }
                 }

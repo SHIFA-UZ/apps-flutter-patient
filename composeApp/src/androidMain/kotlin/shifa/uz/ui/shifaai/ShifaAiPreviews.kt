@@ -105,3 +105,8 @@ internal fun ShifaAiAddToChatPreview() =
     PreviewTheme {
         ShifaAiChatContent(ShifaAiUiState(chats, chat = headache), adding = true, onMore = {})
     }
+
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun ShifaAiRecordingPreview() =
+    PreviewTheme { ShifaAiChatContent(ShifaAiUiState(chats, chat = headache, recording = true), onMore = {}) }

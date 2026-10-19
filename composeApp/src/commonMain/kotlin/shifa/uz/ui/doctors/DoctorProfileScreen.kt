@@ -41,7 +41,9 @@ import shifa.composeapp.generated.resources.email
 import shifa.composeapp.generated.resources.noBiographyAvailable
 import shifa.composeapp.generated.resources.noCertificatesAvailable
 import shifa.composeapp.generated.resources.noContactInformationAvailable
+import shifa.composeapp.generated.resources.noReviews
 import shifa.composeapp.generated.resources.noServicesAvailable
+import shifa.composeapp.generated.resources.patient
 import shifa.composeapp.generated.resources.phoneNumber
 import shifa.composeapp.generated.resources.priceNotSet
 import shifa.composeapp.generated.resources.retry
@@ -59,14 +61,16 @@ import shifa.uz.ui.widgets.ShifaDoctorServiceCard
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
+import shifa.uz.ui.widgets.ShifaReviewCard
 import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.utils.formatDay
 import shifa.uz.utils.getCurrentInstant
 
 /**
  * 07 §4.3 (DOC-02), Figma 1655:16298. [doctor] is the tapped card's copy, shown until D2 loads.
- * ponytail: no reviews, service sheet, open-in-maps or ⋮ menu yet; Create Booking waits for the booking flow.
+ * ponytail: no service sheet, open-in-maps or ⋮ menu yet.
  */
 @Composable
 fun DoctorProfileScreen(
@@ -126,7 +130,7 @@ internal fun DoctorProfileContent(
         ) {
             val error = state.error
             when {
-                state.isLoaded -> TabContent(state.doctor, state.tab, onCertificate, onOpen)
+                state.isLoaded -> TabContent(state, onCertificate, onOpen)
                 error != null -> {
                     Empty(error)
                     ShifaSecondaryButton(stringResource(Res.string.retry), onRetry)
@@ -142,12 +146,31 @@ internal fun DoctorProfileContent(
 
 @Composable
 private fun ColumnScope.TabContent(
-    doctor: Doctor,
-    tab: DoctorTab,
+    state: DoctorProfileUiState,
     onCertificate: (PatientDocument) -> Unit,
     onOpen: (String) -> Unit,
 ) {
-    when (tab) {
+    val doctor = state.doctor
+    when (state.tab) {
+        DoctorTab.Reviews -> {
+            val reviews = state.reviews
+            val error = state.reviewsError
+            when {
+                reviews == null -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+                error != null -> Empty(error)
+                reviews.isEmpty() -> Empty(Res.string.noReviews)
+                else ->
+                    reviews.forEach {
+                        ShifaReviewCard(
+                            it.patientName?.ifBlank { null } ?: stringResource(Res.string.patient),
+                            it.rating,
+                            date = it.createdAt?.let(::formatDay),
+                            comment = it.comment,
+                            avatarUrl = it.patientPhotoUrl,
+                        )
+                    }
+            }
+        }
         DoctorTab.About -> InfoSection(null, doctor.about ?: stringResource(Res.string.noBiographyAvailable))
         DoctorTab.Services ->
             when {

@@ -3,6 +3,10 @@ package shifa.uz.data.doctors
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -12,13 +16,17 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
+import shifa.uz.data.api.FAILED_TO_LOAD_REVIEWS
 import shifa.uz.data.api.FAILED_TO_SEARCH_DOCTORS
+import shifa.uz.data.api.FAILED_TO_SUBMIT_REVIEW
 import shifa.uz.data.api.apiCall
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.api.items
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.DoctorLocation
+import shifa.uz.data.model.Review
+import shifa.uz.data.model.ReviewRequest
 
 /** D1 query keys, sent only when set (15 D1). */
 data class DoctorsQuery(
@@ -37,6 +45,23 @@ class DoctorsRepository(
     /** D2. */
     suspend fun getDoctor(id: String): Result<Doctor> =
         apiCall(FAILED_TO_LOAD_DOCTOR) { client.get(ApiConfig.Endpoints.doctor(id)) }
+
+    /** D4. A body that isn't an array is no reviews. */
+    suspend fun getReviews(id: String): Result<List<Review>> =
+        apiCall<JsonElement>(FAILED_TO_LOAD_REVIEWS) { client.get(ApiConfig.Endpoints.doctorReviews(id)) }
+            .map { it.items<Review>() }
+
+    /** D5, with the patient's token though it's under /public (15 §6.2); its 401 doesn't log out. */
+    suspend fun submitReview(
+        id: String,
+        request: ReviewRequest,
+    ): Result<Unit> =
+        apiCall<String>(FAILED_TO_SUBMIT_REVIEW) {
+            client.post(ApiConfig.Endpoints.doctorReviews(id)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+        }.map {}
 
     /** D3. `id <= 0` are legacy placeholders; an error is no locations and never blocks booking (15 D3). */
     suspend fun getLocations(id: String): List<DoctorLocation> =

@@ -100,3 +100,22 @@ data class DoctorLocation(
     val id: Int = 0,
     val isPrimary: Boolean = false,
 )
+
+/** D4 item and D5's reply (15 §5.5). B7 sends only rating, comment and createdAt. */
+@Serializable
+data class Review(
+    val id: String = "",
+    val patientName: String? = null,
+    val patientPhotoUrl: String? = null,
+    val rating: Int = 0,
+    val comment: String? = null,
+    val createdAt: String? = null,
+)
+
+/** D5 body. */
+@Serializable
+data class ReviewRequest(
+    val rating: Int,
+    val comment: String?,
+    val appointmentId: Long? = null,
+)

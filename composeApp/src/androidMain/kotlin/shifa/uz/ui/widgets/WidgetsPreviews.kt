@@ -144,7 +144,11 @@ internal fun CalendarPreview() =
         val days =
             List(35) {
                 when (it) {
-                    0, 1, 33, 34 -> ShifaCalendarDay(if (it < 2) "${29 + it}" else "${it - 32}", ShifaDateState.NonMonth)
+                    0, 1, 33, 34 ->
+                        ShifaCalendarDay(
+                            if (it < 2) "${29 + it}" else "${it - 32}",
+                            ShifaDateState.NonMonth,
+                        )
                     else -> ShifaCalendarDay("${it - 1}", states[it % 3])
                 }
             }
@@ -156,6 +160,7 @@ internal fun CalendarPreview() =
 @Composable
 internal fun CardsPreview() =
     Gallery {
+        ShifaReviewCard("Sarah Karimova", 3, date = "19.11.2026", comment = "Very attentive, explained everything.")
         val name = "Azamat Rakhimov"
         val clinic = "Dentist - Sog‘lom Hayot Klinikasi"
         val video = "Dentist - Video Consultation"

@@ -119,7 +119,11 @@ class TaskCheckInViewModelTest {
             assertThat(state.lastMonth).isEqualTo(LocalDate(2026, 11, 1))
             assertThat(state.shownTask.progress).isEqualTo(TaskProgress(2, 1, 1))
 
-            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(done.copy(scheduledDate = "2026-07-30")))
+            wheneverBlocking {
+                tasks.getCheckIns(
+                    "7",
+                )
+            } doReturn Result.success(listOf(done.copy(scheduledDate = "2026-07-30")))
             classToTest = TaskCheckInViewModel(numeric, tasks, { now }, tashkent)
             advanceUntilIdle()
             assertThat(state.month).isEqualTo(LocalDate(2026, 7, 1))
@@ -220,5 +224,24 @@ class TaskCheckInViewModelTest {
                 advanceUntilIdle()
                 awaitItem()
             }
+        }
+
+    @Test
+    fun `a notification's Submit Check in opens the due day, or says nothing is due`() =
+        runTest {
+            val next = TaskCheckIn(6, "2026-09-30", "09:00:00")
+            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(done, next, soon))
+            classToTest = TaskCheckInViewModel(numeric, tasks, { now }, tashkent, openDue = true)
+            advanceUntilIdle()
+            assertThat(state.day).isEqualTo(LocalDate(2026, 9, 28))
+            assertThat(state.entry).isEqualTo(soon)
+
+            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(done))
+            classToTest = TaskCheckInViewModel(numeric, tasks, { now }, tashkent, openDue = true)
+            classToTest.nothingDue.test {
+                advanceUntilIdle()
+                awaitItem()
+            }
+            assertThat(state.day).isNull()
         }
 }

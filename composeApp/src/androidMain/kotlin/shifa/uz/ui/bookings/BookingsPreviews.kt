@@ -1,10 +1,17 @@
 package shifa.uz.ui.bookings
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.datetime.Instant
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.thankYouForYourRating
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.Review
 import shifa.uz.ui.widgets.PreviewTheme
 
 private val now = Instant.parse("2026-09-27T09:00:00Z")
@@ -126,16 +133,19 @@ internal fun BookingsRecommendedPreview() =
 @Composable
 internal fun BookingsLoadingPreview() = PreviewTheme { BookingsContent(BookingsUiState(isLoading = true), now) }
 
-private val soon =
+internal val previewAppointment =
     Appointment(
         id = "1",
         doctorId = "d1",
         doctorName = "Azamat Rakhimov",
+        doctorClinic = clinic,
         startAt = "2026-09-28T07:00:00Z",
         endAt = "2026-09-28T07:30:00Z",
         location = "SEBAMED",
         reason = "check up",
     )
+
+private val soon = previewAppointment
 
 // Figma 1662:17723: less than 48 h away.
 @Preview(widthDp = 393, heightDp = 852)
@@ -150,4 +160,42 @@ internal fun AppointmentDetailsCancellablePreview() =
         AppointmentDetailsContent(
             AppointmentDetailsUiState(soon.copy(startAt = "2026-10-05T07:00:00Z", endAt = null, reason = null), now),
         )
+    }
+
+private val pastVisit =
+    previewAppointment.copy(startAt = "2026-09-15T05:00:00Z", endAt = "2026-09-15T05:30:00Z", status = "COMPLETED")
+
+// Figma 1661:17567: B7 found no review, so Leave Review shows.
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun AppointmentDetailsPastPreview() =
+    PreviewTheme {
+        AppointmentDetailsContent(AppointmentDetailsUiState(pastVisit, now, previewDoctor, reviewChecked = true))
+    }
+
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun AppointmentDetailsReviewedPreview() =
+    PreviewTheme {
+        AppointmentDetailsContent(
+            AppointmentDetailsUiState(
+                pastVisit,
+                now,
+                previewDoctor,
+                detailsOpen = false,
+                reviewChecked = true,
+                review = Review(rating = 4, comment = "Very attentive, explained everything."),
+                notice = Res.string.thankYouForYourRating,
+            ),
+        )
+    }
+
+// Figma 1891:20212: rated, so Submit is on.
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun ReviewTrayPreview() =
+    PreviewTheme {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            ReviewTray(AppointmentDetailsUiState(pastVisit, now, previewDoctor, reviewChecked = true, rating = 3))
+        }
     }

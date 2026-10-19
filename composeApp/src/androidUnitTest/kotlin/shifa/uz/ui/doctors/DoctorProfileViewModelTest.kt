@@ -19,6 +19,7 @@ import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.Review
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DoctorProfileViewModelTest {
@@ -32,6 +33,7 @@ class DoctorProfileViewModelTest {
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         wheneverBlocking { doctors.getDoctor("d1") } doReturn Result.success(full)
+        wheneverBlocking { doctors.getReviews("d1") } doReturn Result.success(listOf(Review("r1", rating = 4)))
     }
 
     @After
@@ -91,5 +93,20 @@ class DoctorProfileViewModelTest {
                 advanceUntilIdle()
                 awaitItem()
             }
+        }
+
+    @Test
+    fun `reviews load with the page, and a failure stays in the Reviews tab`() =
+        runTest {
+            assertThat(state.reviews).isNull()
+            advanceUntilIdle()
+            assertThat(state.reviews?.map { it.id }).containsExactly("r1")
+
+            wheneverBlocking { doctors.getReviews("d1") } doReturn Result.failure(Exception())
+            val failing = DoctorProfileViewModel(card, doctors)
+            advanceUntilIdle()
+            assertThat(failing.state.value.reviews).isEmpty()
+            assertThat(failing.state.value.reviewsError).isNotNull()
+            assertThat(failing.state.value.isLoaded).isTrue()
         }
 }

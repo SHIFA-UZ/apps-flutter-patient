@@ -23,6 +23,7 @@ import shifa.uz.data.api.items
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
+import shifa.uz.data.model.Review
 import shifa.uz.data.model.SignatureRequest
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -51,6 +52,12 @@ class BookingsRepository(
                 setBody(SignatureRequest(Base64.encode(signature)))
             }
         }.map {}
+
+    /** B7: my review of the visit. Any error, 404 included, is no review (15 B7). */
+    suspend fun getReview(id: String): Review? =
+        apiCall<Review>(FAILED_TO_LOAD_APPOINTMENT) { client.get(ApiConfig.Endpoints.appointmentReview(id)) }
+            .getOrNull()
+            ?.takeIf { it.rating > 0 }
 
     /** B5, a hard delete. The body is ignored. */
     suspend fun cancel(id: String): Result<Unit> =

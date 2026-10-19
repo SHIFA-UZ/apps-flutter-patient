@@ -1,5 +1,6 @@
 package shifa.uz.ui.visit
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,4 +80,15 @@ internal fun VideoCallWaitingPreview() =
     PreviewTheme {
         val call = VideoCallState(VideoCallState.Phase.Joined, micOn = false)
         VideoCallContent(VideoCallUiState(video, call), PreviewCall(call))
+    }
+
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun VideoCallMinimizedPreview() =
+    PreviewTheme {
+        val call = VideoCallState(VideoCallState.Phase.Joined, doctorJoined = true)
+        Box {
+            LiveAppointmentContent(LiveAppointmentUiState(visit, now, previewDoctor))
+            CallPip(VideoCallUiState(video, call), PreviewCall(call)) {}
+        }
     }

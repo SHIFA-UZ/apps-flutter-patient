@@ -37,4 +37,9 @@ class DoctorProfileScreenshotTest {
     fun error() {
         captureRoboImage("screenshots/DoctorProfile_error.png") { DoctorProfileErrorPreview() }
     }
+
+    @Test
+    fun reviews() {
+        captureRoboImage("screenshots/DoctorProfile_reviews.png") { DoctorProfileReviewsPreview() }
+    }
 }

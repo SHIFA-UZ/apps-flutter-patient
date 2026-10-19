@@ -17,8 +17,8 @@
 - ⋮ deletes the chat after a confirm (the plan's "Clear chat"). It's hidden on a new, empty chat.
 - The disclaimer (09 §6 item 5) sits above the first message. It isn't in Figma.
 - Gating (09 §7): the profile's `features` decide when the list is present (`PATIENT_SHIFA_AI`), else the tier (only PRO is shut out). It fails open while the profile loads. A gated user has no Shifa AI tab, and an open chat or tab closes when the profile shuts it.
+- Voice (AI-02, 09 §5.7): the mic asks for the microphone (denied: "Microphone access is needed…"), then records an AAC-LC .m4a, 32 kbps, 16 kHz, mono (`utils/VoiceRecorder.kt`: Android MediaRecorder, iOS AVAudioRecorder) while the bar shows Figma's recording look. Tapping the mic again stops it and sends X2 (`patients/me/copilot/transcribe`, the file and `languageHint` uz / ru / en from the app language) with "Transcribing…" in the bar. The transcript replaces the input and isn't sent. A failure shows "Could not transcribe audio"; a 429 sets the rate limit. The temp file is deleted after each recording, and leaving the chat drops an unfinished one. No transcription feedback (09 §2.6; Flutter's builds had it off). Not tried on a device or against the backend. Demo data answers X2 with a fixed transcript.
 - Not built:
-  - voice input (AI-02; the mic shows "Coming soon");
   - Add to chat's Camera / Photo / File (no copilot upload API; "Coming soon");
   - doctor suggestions, AI booking and Figma's "Suggested Message" chips (AI-03).
 - Not tried against the backend.

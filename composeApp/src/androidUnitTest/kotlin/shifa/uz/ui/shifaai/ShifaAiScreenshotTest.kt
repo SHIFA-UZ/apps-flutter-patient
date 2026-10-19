@@ -40,4 +40,9 @@ class ShifaAiScreenshotTest {
     fun addToChat() {
         captureRoboImage("screenshots/ShifaAiChat_addToChat.png") { ShifaAiAddToChatPreview() }
     }
+
+    @Test
+    fun recording() {
+        captureRoboImage("screenshots/ShifaAiChat_recording.png") { ShifaAiRecordingPreview() }
+    }
 }

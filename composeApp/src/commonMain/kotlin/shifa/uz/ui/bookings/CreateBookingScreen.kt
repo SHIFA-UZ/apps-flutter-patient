@@ -30,9 +30,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringArrayResource
@@ -94,7 +96,7 @@ import shifa.uz.utils.rememberDocumentPickerLauncher
 /**
  * 06 §3.1 (BOOK-01/03), Figma 1662:18783 and 1662:19457, over the doctor profile. Figma titles it "Doctor Profile"
  * (a copy-paste); this says Create Booking.
- * ponytail: no location step, reschedule, attachment removal or ⋮ menu; the $1 checkout comes with BOOK-04.
+ * ponytail: no location step, attachment removal or ⋮ menu; the $1 checkout comes with BOOK-04.
  */
 @Composable
 fun CreateBookingScreen(
@@ -124,16 +126,7 @@ fun CreateBookingScreen(
         onAttach = pickFile,
         onBook = viewModel::book,
     )
-    if (pickingDate) {
-        val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        // 06 §3.1 step 4: today to 90 days on.
-        DayPicker(
-            state.date,
-            today..today.plus(90, DateTimeUnit.DAY),
-            state.date ?: today,
-            viewModel::onDateChange,
-        ) { pickingDate = false }
-    }
+    if (pickingDate) BookingDayPicker(state, now, viewModel::onDateChange) { pickingDate = false }
 }
 
 @Composable
@@ -164,46 +157,8 @@ internal fun CreateBookingContent(
             verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
         ) {
             VideoSection(state, onVideoChange, onServiceChange)
-            ShifaSection(
-                stringResource(Res.string.selectDate),
-                action = {
-                    val date = state.date
-                    ShifaActionButton(
-                        onPickDate,
-                        text =
-                            date?.let { formatShortDate(it, stringArrayResource(Res.array.monthsShort)) }
-                                ?: stringResource(Res.string.select),
-                        icon = Res.drawable.ic_check_16.takeIf { date != null },
-                        secondary = date == null,
-                        iconAfter = true,
-                    )
-                },
-            ) {}
-            ShifaSection(stringResource(Res.string.availableTimes)) {
-                val slots = state.slots
-                when {
-                    slots == null -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
-                    slots.isEmpty() ->
-                        Text(
-                            stringResource(Res.string.noAvailableTimeSlots),
-                            Modifier.fillMaxWidth(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = ShifaColors.Text.Tertiary,
-                            textAlign = TextAlign.Center,
-                        )
-                    else ->
-                        ShifaChipGrid(slots, Modifier.fillMaxWidth()) {
-                            ShifaChip(
-                                it.start?.let {
-                                        start ->
-                                    formatTime(start)
-                                }.orEmpty(),
-                                it == state.slot,
-                                { onSlot(it) },
-                            )
-                        }
-                }
-            }
+            DateSection(state, Res.string.selectDate, onPickDate)
+            TimesSection(state, onSlot)
             ShifaSection(stringResource(Res.string.reasonForVisitOptional)) {
                 ShifaInputField(
                     state.reason,
@@ -263,6 +218,64 @@ internal fun CreateBookingContent(
     }
 }
 
+/** "Select Date" and its button: the picked day, else Select. Reschedule titles it "Select New Date". */
+@Composable
+internal fun DateSection(
+    state: CreateBookingUiState,
+    title: StringResource,
+    onPickDate: () -> Unit,
+) = ShifaSection(
+    stringResource(title),
+    action = {
+        val date = state.date
+        ShifaActionButton(
+            onPickDate,
+            text =
+                date?.let { formatShortDate(it, stringArrayResource(Res.array.monthsShort)) }
+                    ?: stringResource(Res.string.select),
+            icon = Res.drawable.ic_check_16.takeIf { date != null },
+            secondary = date == null,
+            iconAfter = true,
+        )
+    },
+) {}
+
+/** The day's free slots as chips; a spinner while B1 loads. */
+@Composable
+internal fun TimesSection(
+    state: CreateBookingUiState,
+    onSlot: (AvailableSlot) -> Unit,
+) = ShifaSection(stringResource(Res.string.availableTimes)) {
+    val slots = state.slots
+    when {
+        slots == null -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+        slots.isEmpty() ->
+            Text(
+                stringResource(Res.string.noAvailableTimeSlots),
+                Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = ShifaColors.Text.Tertiary,
+                textAlign = TextAlign.Center,
+            )
+        else ->
+            ShifaChipGrid(slots, Modifier.fillMaxWidth()) {
+                ShifaChip(it.start?.let { start -> formatTime(start) }.orEmpty(), it == state.slot, { onSlot(it) })
+            }
+    }
+}
+
+/** Remembers the date picker: today to 90 days on (06 §3.1 step 4). */
+@Composable
+internal fun BookingDayPicker(
+    state: CreateBookingUiState,
+    now: Instant,
+    onDate: (LocalDate) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    DayPicker(state.date, today..today.plus(90, DateTimeUnit.DAY), state.date ?: today, onDate, onDismiss)
+}
+
 /** The switch, the chosen visit, and for video the service (06 §3.1 step 7). */
 @Composable
 private fun VideoSection(
@@ -285,7 +298,15 @@ private fun VideoSection(
             Text(visit, Modifier.fillMaxWidth(), style = ShifaTextStyles.caption(), color = ShifaColors.Text.Primary)
         }
     }
-    if (!state.isVideo) return@ShifaSection
+    if (state.isVideo) ServiceDropdown(state, onServiceChange)
+}
+
+/** The video services (06 §3.1 step 7), or the warning when there are none. */
+@Composable
+internal fun ServiceDropdown(
+    state: CreateBookingUiState,
+    onServiceChange: (String) -> Unit,
+) {
     val services = state.videoServices
     if (services.isEmpty()) {
         ShifaBanner(
@@ -293,7 +314,7 @@ private fun VideoSection(
             Res.drawable.ic_info_16,
             ShifaBannerType.Warning,
         )
-        return@ShifaSection
+        return
     }
     val free = stringResource(Res.string.consultationServiceFreeBadge)
     val labels = services.map { if (it.isFreeConsultation) "${it.title} — $free" else it.title }

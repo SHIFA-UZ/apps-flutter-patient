@@ -32,6 +32,8 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * 12 §3.2 (TASK-02): the task page. Its T3 check-ins on a calendar; a day's PENDING one is submitted with T4.
+ * With [openDue] (a task notification's Submit Check in) the first load opens the due check-in's day, or says
+ * [nothingDue].
  * ponytail: no T2 refetch (the list's copy is fresh); T2 comes with the notification deep links (NOTIF).
  */
 class TaskCheckInViewModel(
@@ -39,6 +41,7 @@ class TaskCheckInViewModel(
     private val tasks: TasksRepository = TasksRepository(),
     private val clock: () -> Instant = ::getCurrentInstant,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    private val openDue: Boolean = false,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(TaskCheckInUiState(task, clock().toLocalDateTime(zone).date.firstOfMonth()))
@@ -50,6 +53,9 @@ class TaskCheckInViewModel(
 
     private val _signedOut = Channel<Unit>(Channel.BUFFERED)
     val signedOut: Flow<Unit> = _signedOut.receiveAsFlow()
+
+    private val _nothingDue = Channel<Unit>(Channel.CONFLATED)
+    val nothingDue: Flow<Unit> = _nothingDue.receiveAsFlow()
 
     private fun update(transform: TaskCheckInUiState.() -> TaskCheckInUiState) {
         _state.value = _state.value.transform()
@@ -66,6 +72,7 @@ class TaskCheckInViewModel(
         viewModelScope.launch {
             tasks.getCheckIns(_state.value.task.id).fold(
                 onSuccess = { all ->
+                    val first = _state.value.checkIns == null
                     update {
                         val loaded = copy(checkIns = all, isLoading = false, error = null)
                         val first = loaded.firstMonth
@@ -79,13 +86,26 @@ class TaskCheckInViewModel(
                             }
                         loaded.copy(month = month)
                     }
+                    if (openDue && first) openDueDay()
                 },
                 onFailure = {
                     update { copy(isLoading = false, error = it.toUserMessage()) }
-                    if (it is ApiException.Unauthorized) _signedOut.send(Unit)
+                    if (it is ApiException.Unauthorized) {
+                        _signedOut.send(Unit)
+                    } else if (openDue && _state.value.checkIns == null) {
+                        _nothingDue.send(Unit)
+                    }
                 },
             )
         }
+    }
+
+    /** Today's PENDING check-in, else the next one, else the latest. */
+    private fun openDueDay() {
+        val today = clock().toLocalDateTime(zone).date
+        val pending = _state.value.checkIns.orEmpty().filter { it.isPending }.mapNotNull { it.date }.sorted()
+        (pending.firstOrNull { it >= today } ?: pending.lastOrNull())?.let(::openDay)
+        if (_state.value.day == null) _nothingDue.trySend(Unit)
     }
 
     fun prevMonth() = update { copy(month = month.plusMonths(-1)) }
@@ -149,7 +169,12 @@ class TaskCheckInViewModel(
             tasks.submitCheckIn(s.task.id, request).fold(
                 onSuccess = {
                     update {
-                        copy(day = null, entry = null, isSubmitting = false, notice = Res.string.checkInSubmittedSuccessfully)
+                        copy(
+                            day = null,
+                            entry = null,
+                            isSubmitting = false,
+                            notice = Res.string.checkInSubmittedSuccessfully,
+                        )
                             .cleared()
                     }
                     load()

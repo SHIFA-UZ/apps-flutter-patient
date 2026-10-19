@@ -21,12 +21,15 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorCancellingAppointment
+import shifa.composeapp.generated.resources.thankYouForYourRating
 import shifa.uz.data.api.FAILED_TO_CANCEL_APPOINTMENT
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.Review
+import shifa.uz.data.model.ReviewRequest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppointmentDetailsViewModelTest {
@@ -146,5 +149,66 @@ class AppointmentDetailsViewModelTest {
                 advanceUntilIdle()
                 awaitItem()
             }
+        }
+
+    private val past = inThreeDays.copy(startAt = "2026-09-20T09:00:00Z", status = "COMPLETED")
+
+    @Test
+    fun `a past visit checks B7, then a rating is sent with D5 and shown`() =
+        runTest {
+            val request = ReviewRequest(4, "Great", 1)
+            wheneverBlocking { doctors.submitReview("d1", request) } doReturn Result.success(Unit)
+            create(past)
+            assertThat(state.isUpcoming).isFalse()
+            assertThat(state.canReview).isFalse()
+            advanceUntilIdle()
+            assertThat(state.canReview).isTrue()
+
+            classToTest.openReview()
+            classToTest.submitReview()
+            verifyBlocking(doctors, never()) { submitReview(any(), any()) }
+            classToTest.onRate(4)
+            classToTest.onCommentChange(" Great ")
+            classToTest.submitReview()
+            advanceUntilIdle()
+
+            verifyBlocking(doctors) { submitReview("d1", request) }
+            assertThat(state.review?.rating).isEqualTo(4)
+            assertThat(state.reviewOpen).isFalse()
+            assertThat(state.canReview).isFalse()
+            assertThat(state.notice).isEqualTo(Res.string.thankYouForYourRating)
+        }
+
+    @Test
+    fun `an existing review hides Leave Review, and a cancelled visit has none`() =
+        runTest {
+            wheneverBlocking { bookings.getReview("1") } doReturn Review(rating = 5)
+            create(past)
+            advanceUntilIdle()
+            assertThat(state.review?.rating).isEqualTo(5)
+            assertThat(state.canReview).isFalse()
+
+            create(past.copy(status = "CANCELLED"))
+            advanceUntilIdle()
+            assertThat(state.canReview).isFalse()
+        }
+
+    @Test
+    fun `a failed review keeps the tray open with the error, without signing out`() =
+        runTest {
+            wheneverBlocking { doctors.submitReview(any(), any()) } doReturn
+                Result.failure(ApiException.Unauthorized("Unauthorized"))
+            create(past)
+            advanceUntilIdle()
+            classToTest.openReview()
+            classToTest.onRate(2)
+
+            classToTest.signedOut.test {
+                classToTest.submitReview()
+                advanceUntilIdle()
+                expectNoEvents()
+            }
+            assertThat(state.reviewOpen).isTrue()
+            assertThat(state.reviewError).isNotNull()
         }
 }

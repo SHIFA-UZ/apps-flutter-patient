@@ -28,6 +28,7 @@ object ApiConfig {
         const val DOCUMENTS = "patients/me/documents"
         const val DOCTORS = "public/doctors"
         const val COPILOT_STREAM = "patients/me/copilot/stream"
+        const val COPILOT_TRANSCRIBE = "patients/me/copilot/transcribe"
         const val CONVERSATIONS = "patients/me/messages/conversations"
         const val SEND_MESSAGE = "patients/me/messages/send"
         const val SEARCH_USERS = "patients/me/messages/search"
@@ -41,6 +42,10 @@ object ApiConfig {
         fun appointment(id: String) = "patients/me/appointments/$id"
 
         fun appointmentSignature(id: String) = "patients/me/appointments/$id/submit-signature"
+
+        fun appointmentReview(id: String) = "patients/me/appointments/$id/review"
+
+        fun doctorReviews(id: String) = "public/doctors/$id/reviews"
 
         fun notificationRead(id: Int) = "notifications/$id/read"
 

@@ -14,7 +14,7 @@ import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Doctor
 
-/** 07 §4.3: a doctor's page, from D2. */
+/** 07 §4.3: a doctor's page, from D2, and its reviews (D4). */
 class DoctorProfileViewModel(
     doctor: Doctor,
     private val doctors: DoctorsRepository = DoctorsRepository(),
@@ -31,6 +31,13 @@ class DoctorProfileViewModel(
 
     init {
         load()
+        // D4 alongside; a failure shows in the Reviews tab only.
+        viewModelScope.launch {
+            doctors.getReviews(doctor.id).fold(
+                onSuccess = { update { copy(reviews = it, reviewsError = null) } },
+                onFailure = { update { copy(reviews = emptyList(), reviewsError = it.toUserMessage()) } },
+            )
+        }
     }
 
     fun load() {

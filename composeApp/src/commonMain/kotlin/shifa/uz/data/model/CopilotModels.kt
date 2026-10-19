@@ -36,6 +36,11 @@ data class CopilotStreamRequest(
 
 /** An X1 error: the non-200 body, or an SSE `error` event's data (09 §1.1). */
 @Serializable
+data class TranscribeResponse(
+    val text: String = "",
+)
+
+@Serializable
 data class CopilotError(
     val code: String? = null,
     val message: String? = null,

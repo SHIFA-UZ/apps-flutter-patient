@@ -30,12 +30,13 @@ import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
 import shifa.uz.data.model.Doctor
 import shifa.uz.utils.getCurrentInstant
 
-/** 06 §3.1 (BOOK-01/03): B1 slots, B3 to book. */
+/** 06 §3.1 (BOOK-01/03): B1 slots, B3 to book. With [reschedule], B3 books its new time (06 §3.5). */
 class CreateBookingViewModel(
     doctor: Doctor,
     private val bookings: BookingsRepository = BookingsRepository(),
@@ -43,8 +44,16 @@ class CreateBookingViewModel(
     private val documents: DocumentsRepository = DocumentsRepository(),
     private val clock: () -> Instant = ::getCurrentInstant,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    private val reschedule: Appointment? = null,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(CreateBookingUiState(doctor))
+    private val _state =
+        MutableStateFlow(
+            CreateBookingUiState(
+                doctor,
+                isVideo = reschedule?.isVideo == true,
+                reason = reschedule?.reason.orEmpty(),
+            ),
+        )
     val state: StateFlow<CreateBookingUiState> = _state.asStateFlow()
 
     // true: the payment is still PENDING.
@@ -66,7 +75,8 @@ class CreateBookingViewModel(
         // ponytail: no location step (not in Figma): the primary location, else the first. Add the picker with its design.
         viewModelScope.launch {
             val locations = doctors.getLocations(doctor.id)
-            update { copy(locationId = (locations.firstOrNull { it.isPrimary } ?: locations.firstOrNull())?.id) }
+            val primary = locations.firstOrNull { it.isPrimary } ?: locations.firstOrNull()
+            update { copy(locationId = reschedule?.locationId ?: primary?.id) }
             loadSlots(null)
         }
     }
@@ -127,7 +137,7 @@ class CreateBookingViewModel(
             // No second visit at the same start; if B2 fails, the backend decides.
             val taken =
                 bookings.getAppointments().getOrNull().orEmpty().any {
-                    it.status != "CANCELLED" && it.start != null && it.start == slot.start
+                    it.status != "CANCELLED" && it.start != null && it.start == slot.start && it.id != reschedule?.id
                 }
             if (taken) return@launch update { copy(isBooking = false, error = Res.string.bookingSlotTaken) }
             val request =
@@ -140,6 +150,7 @@ class CreateBookingViewModel(
                     serviceId = state.serviceId?.toLongOrNull()?.takeIf { state.isVideo },
                     locationId = if (state.isVideo) null else slot.locationId ?: state.locationId,
                     documentIds = state.documents.mapNotNull { it.id.toLongOrNull() }.ifEmpty { null },
+                    rescheduleAppointmentId = reschedule?.id?.toLongOrNull(),
                 )
             // ponytail: PENDING only tells the caller; the $1 checkout WebView comes with BOOK-04.
             bookings.book(request).fold(

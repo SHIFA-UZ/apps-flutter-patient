@@ -57,4 +57,19 @@ class BookingsScreenshotTest {
     fun detailsCancellable() {
         captureRoboImage("screenshots/AppointmentDetails_cancellable.png") { AppointmentDetailsCancellablePreview() }
     }
+
+    @Test
+    fun detailsPast() {
+        captureRoboImage("screenshots/AppointmentDetails_past.png") { AppointmentDetailsPastPreview() }
+    }
+
+    @Test
+    fun detailsReviewed() {
+        captureRoboImage("screenshots/AppointmentDetails_reviewed.png") { AppointmentDetailsReviewedPreview() }
+    }
+
+    @Test
+    fun reviewTray() {
+        captureRoboImage("screenshots/AppointmentDetails_reviewTray.png") { ReviewTrayPreview() }
+    }
 }

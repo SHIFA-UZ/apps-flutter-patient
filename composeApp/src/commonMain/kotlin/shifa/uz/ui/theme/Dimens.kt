@@ -142,10 +142,16 @@ object ShifaDimens {
     val CallControlsHeight = 80.dp
     val CallSelfViewWidth = 96.dp
     val CallSelfViewHeight = 128.dp
+    val CallPipWidth = 120.dp // not in Figma: the call shrunk by Back
+    val CallPipHeight = 160.dp
 
     // task calendar-card (1662:18317): the gap between its rows; check-in comment field (1891:21385)
     val CalendarRowGap = 9.dp
     val TextAreaHeight = 134.dp
+
+    // review tray (1887:19946): the tappable stars; review card (1655:16298) avatar
+    val RatingStar = 29.dp
+    val ReviewAvatar = 37.dp
 }
 
 // Figma: shifa/radius/* and semantic/radius/control-*. Full (999) = CircleShape.

@@ -889,6 +889,15 @@
     <string name="checkInAlreadySubmitted">Отметка уже отправлена</string>
     <string name="dueAt">Срок: %1$s</string>
     <string name="checkInValue">Значение</string>
+    <string name="additionalInformation">Дополнительная информация</string>
+    <string name="reschedule">Перенести</string>
+    <string name="rescheduleAppointment">Перенос приёма</string>
+    <string name="selectNewDate">Выберите новую дату</string>
+    <string name="yourReview">Ваш отзыв</string>
+    <string name="rateYourVisit">Пожалуйста, оцените визит к Dr %1$s в %2$s %3$s</string>
+    <string name="rateYourVisitNoClinic">Пожалуйста, оцените визит к Dr %1$s %2$s</string>
+    <string name="howDidYouFindYourExperience">Как вам визит?</string>
+    <string name="leaveAComment">Оставьте комментарий</string>
     <string-array name="months">
         <item>января</item>
         <item>февраля</item>
@@ -941,4 +950,5 @@
     <string name="microphone">Микрофон</string>
     <string name="switchCamera">Сменить камеру</string>
     <string name="endCall">Завершить звонок</string>
+    <string name="transcribing">Расшифровка…</string>
 </resources>

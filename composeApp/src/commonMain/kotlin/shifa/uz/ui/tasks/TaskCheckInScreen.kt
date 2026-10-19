@@ -125,6 +125,44 @@ fun TaskCheckInScreen(
     }
 }
 
+/**
+ * Figma 1891:22050: a task notification's Submit Check in, the due day's tray alone over the inbox. Nothing due (or
+ * T3 failed) calls [onNothingDue], so the caller can open the task page instead.
+ */
+@Composable
+fun TaskCheckInTray(
+    task: RemoteCareTask,
+    onClose: () -> Unit,
+    onSubmitted: () -> Unit,
+    onNothingDue: () -> Unit,
+    onSignedOut: () -> Unit,
+    viewModel: TaskCheckInViewModel = viewModel { TaskCheckInViewModel(task, openDue = true) },
+) {
+    val state by viewModel.state.collectAsState()
+    val submitted by rememberUpdatedState(onSubmitted)
+    val nothingDue by rememberUpdatedState(onNothingDue)
+    val signedOut by rememberUpdatedState(onSignedOut)
+    LaunchedEffect(viewModel) { viewModel.submitted.collect { submitted() } }
+    LaunchedEffect(viewModel) { viewModel.nothingDue.collect { nothingDue() } }
+    LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
+    if (state.day != null) {
+        val close = {
+            viewModel.closeDay()
+            if (!state.isSubmitting) onClose()
+        }
+        DaySheet(onClose = close) {
+            DayTray(
+                state,
+                onClose = close,
+                onValueChange = viewModel::onValueChange,
+                onAnswer = viewModel::onAnswer,
+                onNotesChange = viewModel::onNotesChange,
+                onSubmit = viewModel::submit,
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TaskCheckInContent(
@@ -169,7 +207,7 @@ internal fun TaskCheckInContent(
 /** Monday-first weeks covering [month], padded with the days around it. */
 private fun monthGrid(month: LocalDate): List<LocalDate> {
     val lead = month.dayOfWeek.isoDayNumber - 1
-    val days = month.plus(1, DateTimeUnit.MONTH).toEpochDays() - month.toEpochDays()
+    val days = (month.plus(1, DateTimeUnit.MONTH).toEpochDays() - month.toEpochDays()).toInt()
     val weeks = (lead + days + 6) / 7
     return List(weeks * 7) { month.plus(it - lead, DateTimeUnit.DAY) }
 }

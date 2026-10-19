@@ -42,4 +42,9 @@ class VisitScreenshotTest {
     fun waiting() {
         captureRoboImage("screenshots/VideoCall_waiting.png") { VideoCallWaitingPreview() }
     }
+
+    @Test
+    fun minimized() {
+        captureRoboImage("screenshots/VideoCall_minimized.png") { VideoCallMinimizedPreview() }
+    }
 }

@@ -48,6 +48,7 @@ import shifa.uz.data.api.createHttpEngine
 import shifa.uz.data.model.BookingRequest
 import shifa.uz.data.model.CheckInRequest
 import shifa.uz.data.model.ProfileUpdate
+import shifa.uz.data.model.ReviewRequest
 import shifa.uz.data.model.SendMessageRequest
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.isDebugBuild
@@ -147,6 +148,8 @@ class DemoBackend(
             get && path == Endpoints.APPOINTMENTS -> ok(JsonArray(data.appointments))
             post && path == Endpoints.APPOINTMENTS -> data.book(body)
             get && p.size == 4 && path.startsWith("${Endpoints.APPOINTMENTS}/") -> data.appointment(p[3])
+            get && p.size == 5 && path.startsWith("${Endpoints.APPOINTMENTS}/") && p[4] == "review" ->
+                data.myReviews[p[3]]?.let(::ok) ?: fail(HttpStatusCode.NotFound, "Review not found")
             post && p.size == 5 &&
                 path.startsWith(
                     "${Endpoints.APPOINTMENTS}/",
@@ -159,6 +162,9 @@ class DemoBackend(
             get && path.startsWith("patients/me/schedule/doctors/") ->
                 ok(data.slots(p[4], request.url.parameters["day"], request.url.parameters["locationId"]))
             get && path == Endpoints.DOCTORS -> ok(data.search(request.url.parameters["search"]))
+            get && p.size == 4 && path.startsWith(Endpoints.DOCTORS) && p[3] == "reviews" ->
+                ok(JsonArray(data.reviews[p[2]].orEmpty()))
+            post && p.size == 4 && path.startsWith(Endpoints.DOCTORS) && p[3] == "reviews" -> data.review(p[2], body)
             get && p.size == 4 && path.startsWith(Endpoints.DOCTORS) && p[3] == "locations" ->
                 data.locations[p[2]]?.let { ok(JsonArray(it)) }
             get && p.size == 3 && path.startsWith(Endpoints.DOCTORS) -> data.doctors[p[2]]?.let(::ok)
@@ -184,6 +190,7 @@ class DemoBackend(
             post && path == Endpoints.SEND_MESSAGE -> data.send(body)
             get && path == Endpoints.SEARCH_USERS -> ok(data.users(request.url.parameters["q"]))
             post && path == Endpoints.UPLOAD_ATTACHMENT -> ok(obj("url" to DEMO_PHOTO))
+            post && path == Endpoints.COPILOT_TRANSCRIBE -> ok(obj("text" to DEMO_TRANSCRIPT))
             post && path == Endpoints.COPILOT_STREAM ->
                 Reply(
                     HttpStatusCode.OK,
@@ -325,7 +332,51 @@ class DemoBackend(
                 visit(9104, "9002", at(5, 9, 30)),
                 visit(9105, "9001", at(-10, 11), status = "COMPLETED"),
                 visit(9106, "9002", at(-20, 14), status = "CANCELLED"),
+                visit(9107, "9002", at(-30, 10), status = "COMPLETED"),
             )
+
+        // D4 per doctor; B7 per visit. 9107 is reviewed already, 9105 can be.
+        val reviews =
+            mutableMapOf(
+                "9001" to
+                    mutableListOf(
+                        review(9701, "Sarah Karimova", 5, "Very attentive, explained everything.", -40),
+                    ),
+                "9002" to
+                    mutableListOf(
+                        review(9702, "Demo Patient", 4, "Good visit, a short wait.", -30),
+                        review(9703, "Bekzod Aliev", 3, null, -60),
+                    ),
+            )
+        val myReviews = mutableMapOf("9107" to reviews.getValue("9002").first())
+
+        private fun review(
+            id: Long,
+            name: String,
+            rating: Int,
+            comment: String?,
+            daysAgo: Int,
+        ) = obj(
+            "id" to id,
+            "patientName" to name,
+            "rating" to rating,
+            "comment" to comment,
+            "createdAt" to at(daysAgo, 12).toString(),
+        )
+
+        fun review(
+            doctorId: String,
+            body: String,
+        ): Reply {
+            val request = apiJson.decodeFromString(ReviewRequest.serializer(), body)
+            if (request.rating !in 1..5) return fail(HttpStatusCode.BadRequest, "Rating must be between 1 and 5")
+            val visit = request.appointmentId?.toString()
+            if (visit != null && visit in myReviews) return fail(HttpStatusCode.Conflict, "Already reviewed")
+            val made = review(id(), profile.str("fullName"), request.rating, request.comment, 0)
+            reviews.getOrPut(doctorId) { mutableListOf() }.add(0, made)
+            visit?.let { myReviews[it] = made }
+            return ok(made)
+        }
 
         private fun visit(
             id: Long,
@@ -423,6 +474,8 @@ class DemoBackend(
                     ) == request.startAt && it.str("status") != "CANCELLED"
                 }
             if (taken) return fail(HttpStatusCode.Conflict, "This slot is no longer available")
+            // ponytail: production's reschedule is unverified (06 §3.5); here the new visit replaces the old one.
+            request.rescheduleAppointmentId?.let { old -> appointments.removeAll { it.long("id") == old } }
             val start = Instant.parse(request.startAt)
             val booked =
                 visit(
@@ -491,7 +544,13 @@ class DemoBackend(
                     if (back == 3) {
                         checkIn(first + back, now - back.days, "MISSED")
                     } else {
-                        checkIn(first + back, now - back.days, "COMPLETED", "textValue" to "Done", "notes" to "Felt fine")
+                        checkIn(
+                            first + back,
+                            now - back.days,
+                            "COMPLETED",
+                            "textValue" to "Done",
+                            "notes" to "Felt fine",
+                        )
                     }
                 } +
                     checkIn(first, now - 5.minutes) +
@@ -877,6 +936,7 @@ class DemoBackend(
 
         // X1's SSE: tokens as `data:` lines, each event ended by a blank line (09 §8).
         private const val DEMO_AI_REPLY = "data: This is a demo reply.\n\ndata:  Demo mode doesn't ask the real Shifa AI.\n\n"
+        private const val DEMO_TRANSCRIPT = "This is a demo transcript of your voice message."
     }
 }
 

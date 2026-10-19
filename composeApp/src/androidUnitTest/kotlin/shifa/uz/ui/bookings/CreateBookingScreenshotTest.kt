@@ -28,4 +28,10 @@ class CreateBookingScreenshotTest {
     fun complete() {
         captureRoboImage("screenshots/CreateBooking_complete.png") { CreateBookingCompletePreview() }
     }
+
+    @Test
+    @Config(qualifiers = "w393dp-h1000dp-xhdpi")
+    fun reschedule() {
+        captureRoboImage("screenshots/Reschedule.png") { ReschedulePreview() }
+    }
 }

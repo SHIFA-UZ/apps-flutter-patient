@@ -17,6 +17,7 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.appointmentCancelledSuccessfully
+import shifa.composeapp.generated.resources.appointmentRescheduledSuccessfully
 import shifa.composeapp.generated.resources.appointmentSlotBooked
 import shifa.composeapp.generated.resources.errorGettingCurrentLocation
 import shifa.composeapp.generated.resources.locationPermissionDenied
@@ -107,6 +108,12 @@ class BookingsViewModel(
     /** Create Booking booked one (B3): reload, with a notice. [pending]: the payment is still due. */
     fun onBooked(pending: Boolean) {
         update { copy(notice = if (pending) Res.string.paymentPendingMessage else Res.string.appointmentSlotBooked) }
+        load()
+    }
+
+    /** Reschedule booked the new time (B3): reload, with a notice. */
+    fun onRescheduled() {
+        update { copy(notice = Res.string.appointmentRescheduledSuccessfully) }
         load()
     }
 

@@ -58,3 +58,16 @@ internal fun CreateBookingCompletePreview() =
             documents = listOf(PatientDocument("101", "blood-test.pdf")),
         ),
     )
+
+// Figma 1921:25675.
+@Preview(widthDp = 393, heightDp = 1000)
+@Composable
+internal fun ReschedulePreview() =
+    PreviewTheme {
+        RescheduleContent(
+            previewAppointment.copy(startAt = "2026-10-05T07:00:00Z", endAt = "2026-10-05T07:30:00Z"),
+            CreateBookingUiState(doctor, date = LocalDate(2026, 10, 20), slots = slots, slot = slots[2]),
+            now,
+            detailsOpen = true,
+        )
+    }

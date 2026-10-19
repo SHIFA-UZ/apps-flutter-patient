@@ -24,10 +24,10 @@ import shifa.composeapp.generated.resources.ic_arrow_up_24
 import shifa.composeapp.generated.resources.ic_plus_24
 import shifa.composeapp.generated.resources.ic_x_16
 import shifa.uz.ui.theme.ShifaColors
-import shifa.uz.ui.theme.ShifaTextStyles
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaShadow
 import shifa.uz.ui.theme.ShifaSpacing
+import shifa.uz.ui.theme.ShifaTextStyles
 
 // Trays are visual only. In a ModalBottomSheet pass shape = RectangleShape,
 // containerColor = Color.Transparent and dragHandle = null.

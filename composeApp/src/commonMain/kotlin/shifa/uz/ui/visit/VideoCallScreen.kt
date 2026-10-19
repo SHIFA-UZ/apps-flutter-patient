@@ -8,8 +8,10 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -27,14 +30,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -60,6 +73,7 @@ import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
+import shifa.uz.ui.theme.ShifaShadow
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.theme.ShifaTextStyles
 import shifa.uz.ui.widgets.ShifaDoctorCard
@@ -74,11 +88,20 @@ import shifa.uz.utils.formatTime
 import shifa.uz.utils.parseInstant
 import shifa.uz.utils.rememberCallPermissions
 import shifa.uz.utils.rememberVideoCallFactory
+import kotlin.math.roundToInt
 
-/** A video visit's call: the preview with Join Now, then the waiting room until the doctor joins, then the call. */
+/**
+ * A video visit's call: the preview with Join Now, then the waiting room until the doctor joins, then the call.
+ * Back during the call shrinks it to a small window over the app ([minimized], not in Figma), so the patient can sign;
+ * a tap brings it back. Back before joining, or hang up, leaves.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun VideoCallScreen(
     appointment: Appointment,
+    minimized: Boolean,
+    onMinimize: () -> Unit,
+    onExpand: () -> Unit,
     onClose: () -> Unit,
     onSignedOut: () -> Unit,
     viewModel: VideoCallViewModel =
@@ -91,15 +114,55 @@ fun VideoCallScreen(
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
     val askPermissions = rememberCallPermissions(viewModel::onPermissions)
     LaunchedEffect(Unit) { askPermissions() }
-    VideoCallContent(
-        state,
-        viewModel.call,
-        onBack = viewModel::leave,
-        onJoin = viewModel::join,
-        onCamera = viewModel::toggleCamera,
-        onMic = viewModel::toggleMic,
-        onFlip = viewModel::flipCamera,
-    )
+    val back = { if (state.inCall) onMinimize() else viewModel.leave() }
+    if (minimized) {
+        CallPip(state, viewModel.call, onExpand)
+    } else {
+        // Added on each expand, so it beats the pages opened while the call was small.
+        BackHandler { back() }
+        VideoCallContent(
+            state,
+            viewModel.call,
+            onBack = back,
+            onJoin = viewModel::join,
+            onCamera = viewModel::toggleCamera,
+            onMic = viewModel::toggleMic,
+            onFlip = viewModel::flipCamera,
+            onEnd = viewModel::leave,
+        )
+    }
+}
+
+/** The call in a corner, draggable within the screen; a tap opens it full screen again. */
+@Composable
+internal fun CallPip(
+    state: VideoCallUiState,
+    call: VideoCall,
+    onExpand: () -> Unit,
+) = BoxWithConstraints(
+    Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(ShifaSpacing.Inset.Md),
+    contentAlignment = Alignment.TopEnd,
+) {
+    val density = LocalDensity.current
+    val maxX = with(density) { (maxWidth - ShifaDimens.CallPipWidth).toPx() }
+    val maxY = with(density) { (maxHeight - ShifaDimens.CallPipHeight).toPx() }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    Box(
+        Modifier
+            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+            .size(ShifaDimens.CallPipWidth, ShifaDimens.CallPipHeight)
+            .dropShadow(ShifaRadius.ControlLg, ShifaShadow.Card)
+            .clip(ShifaRadius.ControlLg)
+            .background(ShifaColors.Alpha.Black50)
+            .pointerInput(maxX, maxY) {
+                detectDragGestures { change, drag ->
+                    change.consume()
+                    offset = Offset((offset.x + drag.x).coerceIn(-maxX, 0f), (offset.y + drag.y).coerceIn(0f, maxY))
+                }
+            }.clickable(onClick = onExpand),
+    ) {
+        VideoTile(call, remote = state.call.doctorJoined, Modifier.fillMaxSize())
+    }
 }
 
 @Composable
@@ -111,6 +174,7 @@ internal fun VideoCallContent(
     onCamera: () -> Unit = {},
     onMic: () -> Unit = {},
     onFlip: () -> Unit = {},
+    onEnd: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Canvas)) {
         ShifaPageElement(ShifaPageElementType.Header, Modifier.statusBarsPadding()) {
@@ -142,7 +206,7 @@ internal fun VideoCallContent(
                         )
                     }
                 }
-                Controls(state, onCamera, onMic, onFlip, onBack)
+                Controls(state, onCamera, onMic, onFlip, onEnd)
             } else {
                 CallCard(state.appointment)
                 Box(

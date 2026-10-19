@@ -25,6 +25,8 @@ const val FAILED_TO_CHANGE_PASSWORD = "Failed to change password"
 const val FAILED_TO_DELETE_ACCOUNT = "Failed to delete account" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_APPOINTMENTS = "Failed to load appointments"
 const val FAILED_TO_LOAD_DOCTOR = "Failed to load doctor"
+const val FAILED_TO_LOAD_REVIEWS = "Failed to load reviews"
+const val FAILED_TO_SUBMIT_REVIEW = "Failed to submit review" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_TASKS = "Failed to load tasks"
 const val FAILED_TO_LOAD_CHECK_INS = "Failed to load check-ins" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_SUBMIT_CHECK_IN = "Failed to submit check-in" // No l10n key: shows as errorSomethingWentWrong.
@@ -42,6 +44,7 @@ const val FAILED_TO_LOAD_APPOINTMENT = "Failed to load appointment" // No l10n k
 const val FAILED_TO_SUBMIT_SIGNATURE = "Failed to submit signature"
 const val FAILED_TO_START_VIDEO_CALL = "Failed to start video call"
 const val COPILOT_FAILED = "Co-pilot failed" // No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_TRANSCRIBE = "Could not transcribe audio"
 const val FAILED_TO_LOAD_CONVERSATIONS = "Failed to fetch conversations" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_LOAD_CONVERSATION = "Failed to fetch conversation" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_SEND_MESSAGE = "Failed to send message"
@@ -96,6 +99,7 @@ private val MESSAGES: Map<String, StringResource> =
         "Phone number not found" to Res.string.errorPhoneNumberNotFound,
         "User not found" to Res.string.errorUserNotFound,
         TOO_MANY_REQUESTS to Res.string.errorTooManyRequests,
+        FAILED_TO_TRANSCRIBE to Res.string.copilotTranscribeError,
         TOO_MANY_VERIFICATION_REQUESTS to Res.string.errorTooManyVerificationRequests,
         SMS_COULD_NOT_BE_SENT to Res.string.errorSmsCouldNotBeSent,
         LOGIN_FAILED to Res.string.errorLoginFailed,
@@ -112,6 +116,7 @@ private val MESSAGES: Map<String, StringResource> =
         FAILED_TO_UPDATE_PROFILE to Res.string.failedToUpdateProfile,
         FAILED_TO_CHANGE_PASSWORD to Res.string.errorFailedToChangePassword,
         FAILED_TO_LOAD_DOCTOR to Res.string.failedToLoadDoctor,
+        FAILED_TO_LOAD_REVIEWS to Res.string.errorLoadingReviews,
         FAILED_TO_LOAD_NOTIFICATIONS to Res.string.errorLoadingNotifications,
         FAILED_TO_UPLOAD_DOCUMENT to Res.string.uploadFailed,
         FAILED_TO_DELETE_DOCUMENT to Res.string.failedToDeleteDocument,

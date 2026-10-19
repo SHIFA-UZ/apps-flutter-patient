@@ -369,6 +369,36 @@ fun ShifaTaskCard(
     }
 }
 
+/** Figma doctor-card, type review (1655:16298): the reviewer, the date, the stars and the comment. */
+@Composable
+fun ShifaReviewCard(
+    name: String,
+    rating: Int,
+    modifier: Modifier = Modifier,
+    date: String? = null,
+    comment: String? = null,
+    avatarUrl: String? = null,
+) = CardChrome(modifier, null) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ShifaAvatar(avatarUrl, ShifaDimens.ReviewAvatar)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CardTitle(name, Modifier.weight(1f), style = ShifaTextStyles.profileName())
+                date?.let { CardBody(it) }
+            }
+            ShifaRating(rating)
+        }
+    }
+    comment?.ifBlank { null }?.let {
+        val style = MaterialTheme.typography.bodySmall
+        Text(it, Modifier.fillMaxWidth(), style = style, color = ShifaColors.Text.Primary)
+    }
+}
+
 /** Figma display-card, type settings: a plain row, no card chrome. */
 @Composable
 fun ShifaSettingsItem(

@@ -22,6 +22,7 @@ data class Appointment(
     val reason: String? = null,
     val status: String? = null,
     val paymentStatus: String = "NOT_REQUIRED",
+    val locationId: Int? = null,
     val locationLabel: String? = null,
     val locationAddress: String? = null,
     // B4 only: B2 leaves them out (seen 2026-10-11).
@@ -81,6 +82,7 @@ data class BookingRequest(
     val serviceId: Long? = null,
     val locationId: Int? = null,
     val documentIds: List<Long>? = null,
+    val rescheduleAppointmentId: Long? = null, // 06 §3.5: a reschedule is a new B3 naming the old one
 )
 
 /** B6 body: the PNG as plain base64, no `data:` prefix (06 §3.8). */

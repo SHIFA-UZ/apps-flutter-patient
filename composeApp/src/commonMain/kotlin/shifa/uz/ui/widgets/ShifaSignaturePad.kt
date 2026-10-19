@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Canvas
@@ -57,7 +58,8 @@ fun ShifaSignaturePad(
             .fillMaxWidth()
             .height(ShifaDimens.SignaturePadHeight)
             .background(ShifaColors.Bg.Surface, ShifaRadius.ControlMd)
-            .border(ShifaSize.S2, ShifaColors.Border.Default, ShifaRadius.ControlMd),
+            .border(ShifaSize.S2, ShifaColors.Border.Default, ShifaRadius.ControlMd)
+            .clip(ShifaRadius.ControlMd),
     ) {
         if (strokes.isEmpty()) {
             Text(
@@ -73,13 +75,17 @@ fun ShifaSignaturePad(
                 .pointerInput(Unit) {
                     // The gesture keeps its own copy: [current] only updates on the next composition.
                     var drawn = emptyList<SignatureStroke>()
+
+                    // A finger off the box draws along its edge, so nothing lands outside it.
+                    fun inside(at: Offset) =
+                        Offset(at.x.coerceIn(0f, size.width.toFloat()), at.y.coerceIn(0f, size.height.toFloat()))
                     detectDragGestures(
                         onDragStart = {
-                            drawn = current + listOf(listOf(it))
+                            drawn = current + listOf(listOf(inside(it)))
                             change(drawn)
                         },
                         onDrag = { input, _ ->
-                            drawn = drawn.dropLast(1) + listOf(drawn.last() + input.position)
+                            drawn = drawn.dropLast(1) + listOf(drawn.last() + inside(input.position))
                             change(drawn)
                         },
                     )

@@ -14,5 +14,11 @@ fun onPushArrived() {
 
 /** The tapped push's userInfo; its string entries are the FCM data. */
 fun onPushOpened(userInfo: Map<Any?, *>) {
-    Push.opened.value = buildMap { userInfo.forEach { (key, value) -> if (key is String && value is String) put(key, value) } }
+    Push.opened.value =
+        buildMap {
+            userInfo.forEach {
+                    (key, value) ->
+                if (key is String && value is String) put(key, value)
+            }
+        }
 }

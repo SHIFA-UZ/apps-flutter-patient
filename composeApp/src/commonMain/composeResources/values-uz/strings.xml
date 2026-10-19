@@ -887,6 +887,15 @@
     <string name="checkInAlreadySubmitted">Belgi allaqachon yuborilgan</string>
     <string name="dueAt">Muddat: %1$s</string>
     <string name="checkInValue">Qiymat</string>
+    <string name="additionalInformation">Qo'shimcha ma'lumot</string>
+    <string name="reschedule">Ko'chirish</string>
+    <string name="rescheduleAppointment">Qabulni ko'chirish</string>
+    <string name="selectNewDate">Yangi sanani tanlang</string>
+    <string name="yourReview">Sizning sharhingiz</string>
+    <string name="rateYourVisit">Iltimos, %3$s kuni %2$s da Dr %1$s qabulingizni baholang</string>
+    <string name="rateYourVisitNoClinic">Iltimos, %2$s kuni Dr %1$s qabulingizni baholang</string>
+    <string name="howDidYouFindYourExperience">Tajribangiz qanday bo'ldi?</string>
+    <string name="leaveAComment">Izoh qoldiring</string>
     <string-array name="months">
         <item>yanvar</item>
         <item>fevral</item>
@@ -939,4 +948,5 @@
     <string name="microphone">Mikrofon</string>
     <string name="switchCamera">Kamerani almashtirish</string>
     <string name="endCall">Qo‘ng‘iroqni tugatish</string>
+    <string name="transcribing">Matnga o'girilmoqda…</string>
 </resources>

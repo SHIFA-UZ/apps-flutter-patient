@@ -887,6 +887,15 @@
     <string name="checkInAlreadySubmitted">Check in already submitted</string>
     <string name="dueAt">Due %1$s</string>
     <string name="checkInValue">Value</string>
+    <string name="additionalInformation">Additional Information</string>
+    <string name="reschedule">Reschedule</string>
+    <string name="rescheduleAppointment">Reschedule Appointment</string>
+    <string name="selectNewDate">Select New Date</string>
+    <string name="yourReview">Your Review</string>
+    <string name="rateYourVisit">Please rate your experience visiting Dr %1$s at %2$s on %3$s</string>
+    <string name="rateYourVisitNoClinic">Please rate your experience visiting Dr %1$s on %2$s</string>
+    <string name="howDidYouFindYourExperience">How did you find your experience?</string>
+    <string name="leaveAComment">Leave a comment</string>
     <string-array name="months">
         <item>January</item>
         <item>February</item>
@@ -939,4 +948,5 @@
     <string name="microphone">Microphone</string>
     <string name="switchCamera">Switch camera</string>
     <string name="endCall">End call</string>
+    <string name="transcribing">Transcribing…</string>
 </resources>

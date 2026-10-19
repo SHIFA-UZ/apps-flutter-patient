@@ -24,7 +24,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -48,7 +50,6 @@ import shifa.composeapp.generated.resources.defaultNotificationTitle
 import shifa.composeapp.generated.resources.doctor
 import shifa.composeapp.generated.resources.documentAccessRequestMessage
 import shifa.composeapp.generated.resources.documentAccessRequestTitle
-import shifa.composeapp.generated.resources.ic_arrow_right_16
 import shifa.composeapp.generated.resources.justNow
 import shifa.composeapp.generated.resources.minuteAgo
 import shifa.composeapp.generated.resources.minutesAgo
@@ -61,14 +62,18 @@ import shifa.composeapp.generated.resources.notifications
 import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.signatureRequestedMessage
 import shifa.composeapp.generated.resources.signatureRequestedTitle
+import shifa.composeapp.generated.resources.submitCheckIn
 import shifa.composeapp.generated.resources.timeYesterday
 import shifa.composeapp.generated.resources.today
 import shifa.composeapp.generated.resources.yesterday
 import shifa.uz.data.model.AppNotification
+import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.ui.documents.DocumentDisplayCard
 import shifa.uz.ui.home.TaskCard
 import shifa.uz.ui.home.UpcomingCard
+import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.Banners
+import shifa.uz.ui.tasks.TaskCheckInTray
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.theme.ShifaTextStyles
@@ -89,7 +94,8 @@ import shifa.uz.utils.getCurrentInstant
 
 /**
  * 13 §4.1-4.2 (NOTIF-01), Figma 1703:15201 (inbox) and its trays 1703:15698 (appointment), 1703:16143 (document),
- * 1703:16483 (task). [onLink] follows the tray's button; the page closes first, like Flutter's `go`.
+ * 1703:16483 (task). [onLink] follows the tray's button; the page closes first, like Flutter's `go`. An open task's
+ * Submit Check in opens the due check-in's tray here (1891:22050); [onCheckInSubmitted] refreshes the lists.
  * Unread titles are brand (Figma has no unread look). ponytail: the ⋮ has no Figma, so it isn't built.
  */
 @Composable
@@ -98,6 +104,7 @@ fun NotificationsScreen(
     onBack: () -> Unit,
     onLink: (NotificationLink) -> Unit,
     onRead: () -> Unit,
+    onCheckInSubmitted: () -> Unit,
     onSignedOut: () -> Unit,
     viewModel: NotificationsViewModel = viewModel { NotificationsViewModel() },
 ) {
@@ -120,10 +127,41 @@ fun NotificationsScreen(
         viewModel::markAllRead,
         viewModel::open,
     )
+    var checkingIn by remember { mutableStateOf<RemoteCareTask?>(null) }
     state.selected?.let {
-        NotificationTraySheet(it, state.link, now, patientName, viewModel::close) { link ->
+        NotificationTraySheet(
+            it,
+            state.link,
+            now,
+            patientName,
+            viewModel::close,
+            onCheckIn = { task ->
+                viewModel.close()
+                checkingIn = task
+            },
+        ) { link ->
             viewModel.close()
             onLink(link)
+        }
+    }
+    checkingIn?.let { task ->
+        key(task) {
+            ScopedViewModels {
+                TaskCheckInTray(
+                    task,
+                    onClose = { checkingIn = null },
+                    onSubmitted = {
+                        checkingIn = null
+                        viewModel.onCheckInSubmitted()
+                        onCheckInSubmitted()
+                    },
+                    onNothingDue = {
+                        checkingIn = null
+                        onLink(NotificationLink.ToTask(task))
+                    },
+                    onSignedOut = onSignedOut,
+                )
+            }
         }
     }
 }
@@ -239,6 +277,7 @@ private fun NotificationTraySheet(
     now: Instant,
     patientName: String?,
     onClose: () -> Unit,
+    onCheckIn: (RemoteCareTask) -> Unit,
     onLink: (NotificationLink) -> Unit,
 ) {
     ModalBottomSheet(
@@ -249,11 +288,14 @@ private fun NotificationTraySheet(
         dragHandle = null,
         contentWindowInsets = { WindowInsets(0) },
     ) {
-        NotificationTray(notification, link, now, patientName, onClose, onLink)
+        NotificationTray(notification, link, now, patientName, onClose, onCheckIn, onLink)
     }
 }
 
-/** Figma notification-appointment / -document / -task: the message, the linked card and its button. */
+/**
+ * Figma notification-appointment / -document / -task: the message, the linked card and its button. An open task's
+ * tray leads with Submit Check in.
+ */
 @Composable
 internal fun NotificationTray(
     notification: AppNotification,
@@ -261,6 +303,7 @@ internal fun NotificationTray(
     now: Instant,
     patientName: String?,
     onClose: () -> Unit = {},
+    onCheckIn: (RemoteCareTask) -> Unit = {},
     onLink: (NotificationLink) -> Unit = {},
 ) {
     val (title, message) = texts(notification)
@@ -278,12 +321,17 @@ internal fun NotificationTray(
                     else -> {}
                 }
             }
-            ShifaPrimaryButton(
-                stringResource(actionLabel(notification.kind)),
-                open,
-                Modifier.fillMaxWidth(),
-                icon = Res.drawable.ic_arrow_right_16,
-            )
+            val label = stringResource(actionLabel(notification.kind))
+            if (it is NotificationLink.ToTask && it.task.isOpen) {
+                ShifaPrimaryButton(
+                    stringResource(Res.string.submitCheckIn),
+                    { onCheckIn(it.task) },
+                    Modifier.fillMaxWidth(),
+                )
+                ShifaSecondaryButton(label, open, Modifier.fillMaxWidth())
+            } else {
+                ShifaPrimaryButton(label, open, Modifier.fillMaxWidth())
+            }
         }
         Spacer(Modifier.navigationBarsPadding())
     }

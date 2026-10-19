@@ -205,4 +205,28 @@ class CreateBookingViewModelTest {
             }
             verifyBlocking(bookings) { book(request) }
         }
+
+    @Test
+    fun `a reschedule keeps the visit's kind, reason and location, and names it in B3`() =
+        runTest {
+            val old =
+                Appointment(id = "77", startAt = first.startAt, reason = "Pain", locationId = 4, status = "CONFIRMED")
+            wheneverBlocking { bookings.getAppointments() } doReturn Result.success(listOf(old))
+            wheneverBlocking { bookings.getSlots("42", LocalDate(2026, 9, 30), 4) } doReturn
+                Result.success(listOf(first))
+            val request =
+                BookingRequest(42, first.startAt, 30, false, "Pain", locationId = 3, rescheduleAppointmentId = 77)
+            wheneverBlocking { bookings.book(request) } doReturn Result.success(Appointment(id = "78"))
+            val reschedule = CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent, old)
+            advanceUntilIdle()
+            assertThat(reschedule.state.value.locationId).isEqualTo(4)
+            assertThat(reschedule.state.value.isVideo).isFalse()
+
+            // Its own old slot doesn't count as taken.
+            reschedule.booked.test {
+                reschedule.book()
+                awaitItem()
+            }
+            verifyBlocking(bookings) { book(request) }
+        }
 }

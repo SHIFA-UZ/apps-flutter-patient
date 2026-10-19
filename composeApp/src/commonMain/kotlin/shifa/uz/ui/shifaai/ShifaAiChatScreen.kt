@@ -38,7 +38,10 @@ import shifa.composeapp.generated.resources.copilotThinking
 import shifa.composeapp.generated.resources.delete
 import shifa.composeapp.generated.resources.deleteChatMessage
 import shifa.composeapp.generated.resources.deleteChatTitle
+import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.composeapp.generated.resources.microphonePermissionDenied
 import shifa.composeapp.generated.resources.shifaAiDisclaimer
+import shifa.composeapp.generated.resources.transcribing
 import shifa.uz.ui.documents.UploadTray
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.MessagePopUp
@@ -51,8 +54,13 @@ import shifa.uz.ui.widgets.ShifaChatTray
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.utils.rememberMicPermission
+import shifa.uz.utils.rememberVoiceRecorder
 
-/** 09 (AI-01): the open chat, over the tab shell. Voice (AI-02) and attachments aren't built yet. */
+/**
+ * 09 (AI-01, AI-02): the open chat, over the tab shell. The mic records until tapped again (Figma chat-bar recording),
+ * then X2's transcript fills the input. Attachments aren't built yet.
+ */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ShifaAiChatScreen(
@@ -70,6 +78,15 @@ fun ShifaAiChatScreen(
         adding = false
         viewModel.showNotice(Res.string.comingSoon)
     }
+    val recorder = rememberVoiceRecorder()
+    val askMic =
+        rememberMicPermission { granted ->
+            when {
+                !granted -> viewModel.showError(Res.string.microphonePermissionDenied)
+                recorder.start() -> viewModel.onRecording()
+                else -> viewModel.showError(Res.string.errorRecordingVoice)
+            }
+        }
     ShifaAiChatContent(
         state,
         adding,
@@ -78,7 +95,12 @@ fun ShifaAiChatScreen(
         onMore = { deleting = true }.takeIf { state.chat?.messages?.isNotEmpty() == true },
         onInput = viewModel::edit,
         onSend = viewModel::send,
-        onMic = soon,
+        onMic = {
+            when {
+                state.recording -> viewModel.transcribe(recorder.stop())
+                !state.isTranscribing && !state.rateLimited -> askMic()
+            }
+        },
         onAttach = { adding = true },
         onCloseAdd = { adding = false },
         onAdd = soon,
@@ -157,7 +179,13 @@ internal fun ShifaAiChatContent(
             UploadTray(onCloseAdd, onAdd, onAdd, onAdd, title = Res.string.addToChat)
         } else {
             ShifaChatTray(onAttach, onSend, sendEnabled = state.canSend) {
-                ShifaChatBar(state.input, onInput, stringResource(Res.string.askAnything), onMic)
+                ShifaChatBar(
+                    state.input,
+                    onInput,
+                    stringResource(if (state.isTranscribing) Res.string.transcribing else Res.string.askAnything),
+                    onMic,
+                    recording = state.recording,
+                )
             }
         }
     }

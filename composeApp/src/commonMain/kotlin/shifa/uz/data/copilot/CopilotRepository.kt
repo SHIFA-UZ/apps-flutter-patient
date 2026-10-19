@@ -2,6 +2,8 @@ package shifa.uz.data.copilot
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.preparePost
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsChannel
@@ -13,8 +15,11 @@ import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.CancellationException
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.COPILOT_FAILED
+import shifa.uz.data.api.FAILED_TO_TRANSCRIBE
 import shifa.uz.data.api.TOO_MANY_REQUESTS
+import shifa.uz.data.api.apiCall
 import shifa.uz.data.api.apiJson
+import shifa.uz.data.api.appendFile
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.api.httpLogger
 import shifa.uz.data.api.logFailure
@@ -24,6 +29,7 @@ import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CopilotError
 import shifa.uz.data.model.CopilotMessage
 import shifa.uz.data.model.CopilotStreamRequest
+import shifa.uz.data.model.TranscribeResponse
 
 private const val RATE_LIMIT = "RATE_LIMIT"
 
@@ -69,6 +75,21 @@ open class CopilotRepository(
             httpLogger.log("FAILED $COPILOT_FAILED, no response: $e")
             Result.failure(ApiException.NetworkError(networkErrorMessage(e)))
         }
+
+    /** X2 (09 §2.5): the recording's text, trimmed. [language] is `uz`, `ru` or `en`, for Whisper. */
+    open suspend fun transcribe(
+        audio: ByteArray,
+        language: String,
+    ): Result<String> =
+        apiCall<TranscribeResponse>(FAILED_TO_TRANSCRIBE) {
+            client.submitFormWithBinaryData(
+                ApiConfig.Endpoints.COPILOT_TRANSCRIBE,
+                formData {
+                    appendFile("file", audio, "voice.m4a")
+                    append("languageHint", language)
+                },
+            )
+        }.map { it.text.trim() }
 
     // 09 §8, exactly: a blank line ends an event, `data:` keeps its leading space, data left at EOF still counts.
     private suspend fun readEvents(
