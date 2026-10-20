@@ -154,6 +154,11 @@ jobs:
           echo "$API_KEY_CONTENT" > ~/private_keys/AuthKey_${API_KEY_ID}.p8
           chmod 600 ~/private_keys/AuthKey_${API_KEY_ID}.p8
 
+      # Xcode's "Compile Kotlin Framework" phase reuses this; building it here prints Kotlin errors in full
+      # (fastlane only shows Xcode's summary).
+      - name: Build Kotlin framework
+        run: ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --no-daemon
+
       - name: Build, Sign and Upload to TestFlight with Fastlane
         working-directory: iosApp
         env:
