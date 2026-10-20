@@ -79,8 +79,8 @@ internal fun DebugContent(
                             "A fake backend: a video visit you can join now, a pending and an unpaid visit, " +
                                 "check-ins due now, unread notifications and chats, and two demo doctors. Booking, " +
                                 "check-ins, cancel, chat and uploads change only demo data. Reads it doesn't fake " +
-                                "come from the real backend, and other writes are refused. Switching restarts the app's " +
-                                "screens.",
+                                "come from the real backend, and other writes are refused. Switching restarts the " +
+                                "app's screens.",
                         )
                         ShifaSecondaryButton("Reset demo data", onReset, Modifier.fillMaxWidth(), enabled = state.demo)
                     }

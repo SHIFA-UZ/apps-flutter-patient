@@ -402,7 +402,8 @@ internal fun ServiceDropdown(
         expanded = expanded,
         onExpandedChange = { expanded = it },
         modifier = Modifier.fillMaxWidth(),
-        isError = state.error == Res.string.bookingSelectServiceForVideo || state.error == Res.string.bookingSelectService,
+        isError =
+            state.error == Res.string.bookingSelectServiceForVideo || state.error == Res.string.bookingSelectService,
     )
     if (state.isPayInClinic) {
         ShifaBanner(

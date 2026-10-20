@@ -102,7 +102,8 @@ class ShifaAiViewModel(
                             copy(
                                 isTranscribing = false,
                                 rateLimited = rateLimited || limited,
-                                error = if (limited) Res.string.copilotDailyLimit else Res.string.copilotTranscribeError,
+                                error =
+                                    if (limited) Res.string.copilotDailyLimit else Res.string.copilotTranscribeError,
                             )
                         }
                         if (it is ApiException.Unauthorized) _signedOut.send(Unit)

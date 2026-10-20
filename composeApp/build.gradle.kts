@@ -184,7 +184,9 @@ dependencies {
 ktlint {
     version.set("1.1.1")
     android.set(true)
-    ignoreFailures.set(true)
+    ignoreFailures.set(false)
+    // Compose resource accessors are generated into build/; only our sources are checked.
+    filter { exclude { it.file.path.contains("/build/") } }
     reporters {
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)

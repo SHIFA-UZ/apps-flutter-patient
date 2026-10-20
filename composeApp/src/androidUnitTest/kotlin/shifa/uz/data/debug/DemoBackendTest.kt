@@ -71,7 +71,8 @@ class DemoBackendTest {
             ).isInstanceOf(ApiException.ValidationError::class.java)
             val booked = bookings.book(request(9201)).getOrThrow()
 
-            assertThat(booked.status).isEqualTo("REQUESTED")
+            // MOBILE_BOOKING_PAYMENT §1: a free booking is confirmed at once.
+            assertThat(booked.status).isEqualTo("CONFIRMED")
             assertThat(booked.paymentStatus).isEqualTo("NOT_REQUIRED")
             assertThat(bookings.getAppointments().getOrThrow().map { it.id }).contains(booked.id)
             assertThat(
@@ -99,13 +100,13 @@ class DemoBackendTest {
     fun `reading notifications lowers the count`() =
         runTest {
             val notifications = NotificationsRepository(client)
-            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(4)
+            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(7)
 
             notifications.markRead(9601).getOrThrow()
-            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(3)
+            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(6)
             notifications.markAllRead().getOrThrow()
             assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(0)
-            assertThat(notifications.getNotifications().getOrThrow()).hasSize(5)
+            assertThat(notifications.getNotifications().getOrThrow()).hasSize(8)
         }
 
     @Test

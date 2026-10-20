@@ -161,8 +161,10 @@ fun MainScreen(
         }
         BackHandler(
             enabled =
-                page == null && list == null && !upcomingOpen && !tasksOpen && checkIn == null && viewing == null && appointment == null &&
-                    live == null && (call == null || callMinimized) && doctor == null && booking == null && rescheduling == null && aiState.chat == null && chat == null && tab != ShifaTab.Home,
+                page == null && list == null && !upcomingOpen && !tasksOpen && checkIn == null && viewing == null &&
+                    appointment == null && live == null && (call == null || callMinimized) && doctor == null &&
+                    booking == null && rescheduling == null && aiState.chat == null && chat == null &&
+                    tab != ShifaTab.Home,
         ) { tab = ShifaTab.Home }
         // 09 §7: the tab goes when the profile shuts Shifa AI out.
         LaunchedEffect(homeState.shifaAi) {

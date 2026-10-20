@@ -36,8 +36,9 @@ internal val previewDoctor =
         locationStreetAddress = "Amir Temur 1",
         locationCity = "Tashkent",
         biography =
-            "Lorem ipsum dolor sit amet consectetur. In orci id arcu viverra elementum et nam ipsum duis. Turpis quis " +
-                "lobortis morbi id quis ut eget sed. Consequat felis consectetur eget suspendisse tincidunt et et eu cursus.",
+            "Lorem ipsum dolor sit amet consectetur. In orci id arcu viverra elementum et nam ipsum duis. " +
+                "Turpis quis lobortis morbi id quis ut eget sed. Consequat felis consectetur eget suspendisse " +
+                "tincidunt et et eu cursus.",
     )
 
 private val past =

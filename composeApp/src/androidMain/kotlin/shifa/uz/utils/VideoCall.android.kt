@@ -95,7 +95,8 @@ internal class DailyVideoCall(
     /** The doctor's (anyone but us) or our camera track. */
     fun track(remote: Boolean): MediaStreamTrack? {
         val participants = client.participants()
-        val who = if (remote) participants.all.values.firstOrNull { it.id != participants.local.id } else participants.local
+        val who =
+            if (remote) participants.all.values.firstOrNull { it.id != participants.local.id } else participants.local
         return who?.media?.camera?.track
     }
 

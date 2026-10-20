@@ -1,7 +1,7 @@
 package shifa.uz.data.api
 
-import io.ktor.client.engine.*
-import io.ktor.client.engine.darwin.*
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.EMPTY
 import io.ktor.client.plugins.logging.Logger

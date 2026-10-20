@@ -1,3 +1,6 @@
+// JSON fixtures stay on one line, like the backend sends them.
+@file:Suppress("ktlint:standard:max-line-length")
+
 package shifa.uz.data.documents
 
 import com.google.common.truth.Truth.assertThat

@@ -20,6 +20,31 @@ in `composeApp/src/commonMain`). It replaced the Flutter app on `main` in v1.2.0
 - Shifa AI chat with voice input
 - Profile: edit, avatar, language (en / ru / uz)
 
+## Screens
+
+<table>
+  <tr>
+    <th>Booking with payment</th>
+    <th>Video visit and signing</th>
+  </tr>
+  <tr>
+    <td><img src="docs/readme/booking-payment.gif" width="260" alt="Home, doctor profile, booking with a paid service, Confirm Payment, appointment details with Payment Completed"></td>
+    <td><img src="docs/readme/video-visit.gif" width="260" alt="Live appointment, join, waiting room, minimised call, request to sign"></td>
+  </tr>
+</table>
+
+| Home | Bookings | Doctor | Appointment |
+|---|---|---|---|
+| <img src="composeApp/screenshots/Home_loaded.png" width="190" alt="Home"> | <img src="composeApp/screenshots/Bookings_loaded.png" width="190" alt="Bookings"> | <img src="composeApp/screenshots/DoctorProfile_about.png" width="190" alt="Doctor profile"> | <img src="composeApp/screenshots/AppointmentDetails_paid.png" width="190" alt="Appointment details"> |
+| **My Tasks** | **Check-in** | **Notifications** | **Messages** |
+| <img src="composeApp/screenshots/Tasks_open.png" width="190" alt="My Tasks"> | <img src="composeApp/screenshots/TaskCheckIn_submit.png" width="190" alt="Task check-in"> | <img src="composeApp/screenshots/Notifications_inbox.png" width="190" alt="Notifications"> | <img src="composeApp/screenshots/Conversation_messages.png" width="190" alt="Chat"> |
+| **Documents** | **Shifa AI** | **Profile** | **Sign in** |
+| <img src="composeApp/screenshots/Documents_list.png" width="190" alt="Documents"> | <img src="composeApp/screenshots/ShifaAi_chats.png" width="190" alt="Shifa AI"> | <img src="composeApp/screenshots/Profile_loaded.png" width="190" alt="Profile"> | <img src="composeApp/screenshots/Login_default.png" width="190" alt="Sign in"> |
+
+The screens are the Roborazzi screenshots in `composeApp/screenshots`, so they stay current when those are
+re-recorded. After that, rebuild the animations: `python3 docs/readme/make_gifs.py composeApp/screenshots docs/readme`
+(needs Pillow).
+
 What is built and what isn't, per ticket: [docs/implemented/README.md](docs/implemented/README.md).
 Architecture, tech stack and coding rules: [CLAUDE.md](CLAUDE.md).
 

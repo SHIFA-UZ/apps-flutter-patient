@@ -53,7 +53,8 @@ data class Doctor(
     // 07 §4.1 derived getters.
     val offersOnline get() = supportsOnline || serviceItems.isNotEmpty()
 
-    val offersInPerson get() = supportsInPerson || !clinic.isNullOrBlank() || !cityName.isNullOrBlank() || latitude != null
+    val offersInPerson get() =
+        supportsInPerson || !clinic.isNullOrBlank() || !cityName.isNullOrBlank() || latitude != null
 
     private val cityName get() = locationCity?.ifBlank { null } ?: city
 
@@ -102,7 +103,8 @@ data class DoctorService(
 
     /** The price for [locationId] (null: video), else the one for any clinic. */
     fun price(locationId: Int?) =
-        prices.firstOrNull { it.locationId == locationId && locationId != null } ?: prices.firstOrNull { it.locationId == null }
+        prices.firstOrNull { it.locationId == locationId && locationId != null }
+            ?: prices.firstOrNull { it.locationId == null }
 
     private companion object {
         const val PAY_LATER = "PAY_LATER"

@@ -23,8 +23,10 @@ data class PatientDocument(
     /**
      * F3 only deletes these. 11 expects `creatorLabel` "Patient", but the backend sends the uploader's full name,
      * so the patient's own uploads carry [patientName] (P1 `fullName`).
+     *
+     * ponytail: a doctor with the patient's exact name looks like theirs; F3 then fails with an error. Needs a backend
+     * flag.
      */
-    // ponytail: a doctor with the patient's exact name looks like theirs; F3 then fails with an error. Needs a backend flag.
     fun isUploadedBy(patientName: String?) =
         creatorLabel == "Patient" || (!patientName.isNullOrBlank() && creatorLabel?.trim() == patientName.trim())
 }

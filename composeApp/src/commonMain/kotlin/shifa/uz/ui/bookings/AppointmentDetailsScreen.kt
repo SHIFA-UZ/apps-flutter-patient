@@ -275,7 +275,11 @@ private fun ServiceSection(appointment: Appointment) {
         payment?.let { (text, type) ->
             ShifaBanner(
                 text,
-                if (type == ShifaBannerType.Success && appointment.isPaid) Res.drawable.ic_check_16 else Res.drawable.ic_info_16,
+                if (type == ShifaBannerType.Success && appointment.isPaid) {
+                    Res.drawable.ic_check_16
+                } else {
+                    Res.drawable.ic_info_16
+                },
                 type,
             )
         }

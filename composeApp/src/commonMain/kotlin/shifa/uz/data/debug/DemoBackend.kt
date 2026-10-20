@@ -1051,7 +1051,8 @@ class DemoBackend(
         private const val DEMO_PHOTO = "https://picsum.photos/id/64/400/400"
 
         // X1's SSE: tokens as `data:` lines, each event ended by a blank line (09 §8).
-        private const val DEMO_AI_REPLY = "data: This is a demo reply.\n\ndata:  Demo mode doesn't ask the real Shifa AI.\n\n"
+        private const val DEMO_AI_REPLY =
+            "data: This is a demo reply.\n\ndata:  Demo mode doesn't ask the real Shifa AI.\n\n"
         private const val DEMO_TRANSCRIPT = "This is a demo transcript of your voice message."
         private const val DEMO_CHECKOUT = "https://shifa.uz/"
     }

@@ -68,7 +68,12 @@ class DebugViewModel(
     fun onPushed(shown: Boolean) {
         _state.value =
             _state.value.copy(
-                notice = if (shown) "Sent: tap it in the notification shade." else "Notifications are off for Shifa. Turn them on in the system settings.",
+                notice =
+                    if (shown) {
+                        "Sent: tap it in the notification shade."
+                    } else {
+                        "Notifications are off for Shifa. Turn them on in the system settings."
+                    },
                 noticeIsError = !shown,
             )
     }

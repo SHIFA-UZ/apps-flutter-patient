@@ -46,7 +46,9 @@ const val FAILED_TO_LOAD_PAYMENT_METHODS = "Could not start payment. Please try 
 const val FAILED_TO_START_VIDEO_CALL = "Failed to start video call"
 const val COPILOT_FAILED = "Co-pilot failed" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_TRANSCRIBE = "Could not transcribe audio"
-const val FAILED_TO_LOAD_CONVERSATIONS = "Failed to fetch conversations" // No l10n key: shows as errorSomethingWentWrong.
+
+// No l10n key: shows as errorSomethingWentWrong.
+const val FAILED_TO_LOAD_CONVERSATIONS = "Failed to fetch conversations"
 const val FAILED_TO_LOAD_CONVERSATION = "Failed to fetch conversation" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_SEND_MESSAGE = "Failed to send message"
 const val FAILED_TO_MARK_CONVERSATION_READ = "Failed to mark as read" // Swallowed (08 §2.4).
@@ -87,7 +89,8 @@ private val MESSAGES: Map<String, StringResource> =
         INVALID_CREDENTIALS to Res.string.errorInvalidCredentials,
         "Account is locked" to Res.string.errorAccountLocked,
         "Invalid credentials - password mismatch" to Res.string.errorInvalidCredentialsPasswordMismatch,
-        "You need to create a patient account first. Use Create Account in the patient app and link your doctor account." to
+        "You need to create a patient account first. Use Create Account in the patient app and link your " +
+            "doctor account." to
             Res.string.errorCreatePatientAccountFirst,
         "Phone verification not configured" to Res.string.errorPhoneVerificationNotConfigured,
         "Invalid or expired phone verification" to Res.string.errorInvalidOrExpiredPhoneVerification,
@@ -133,7 +136,8 @@ private val MESSAGES: Map<String, StringResource> =
             Res.string.errorVideoCallNotYetAvailable,
         "Video call has ended. The join window closes 15 minutes after the appointment end." to
             Res.string.errorVideoCallHasEnded,
-        "Video call is not available. It may have ended, or the join window has closed (usually 15 minutes after the appointment end)." to
+        "Video call is not available. It may have ended, or the join window has closed (usually 15 minutes " +
+            "after the appointment end)." to
             Res.string.errorVideoCallHasEnded,
         "Payment is required before joining this video consultation." to Res.string.errorVideoCallPaymentRequired,
         "Appointment does not belong to this patient" to Res.string.errorAppointmentDoesNotBelongToPatient,

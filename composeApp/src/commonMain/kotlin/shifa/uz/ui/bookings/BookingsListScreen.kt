@@ -121,8 +121,9 @@ internal fun BookingsListContent(
     }
 }
 
-/** A full-page list behind a section's arrow: the sub header, then the scrolling [content]. */
 // ponytail: a plain Column, fine for the tens B2 and D1 give; LazyColumn if a list grows to hundreds.
+
+/** A full-page list behind a section's arrow: the sub header, then the scrolling [content]. */
 @Composable
 internal fun ListPage(
     title: StringResource,

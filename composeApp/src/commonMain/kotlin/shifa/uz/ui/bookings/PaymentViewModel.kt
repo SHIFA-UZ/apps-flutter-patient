@@ -58,7 +58,8 @@ class PaymentViewModel(
         }
     }
 
-    private val finished get() = _state.value.appointment.let { it.isPaymentDead || (it.isPaid && !it.isAwaitingPayment) }
+    private val finished get() =
+        _state.value.appointment.let { it.isPaymentDead || (it.isPaid && !it.isAwaitingPayment) }
 
     /** Complete Payment: asks now, and says so when the backend hasn't seen the payment yet. */
     fun check() {
