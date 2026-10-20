@@ -1,13 +1,8 @@
 name: Deploy to Google Play Store
 
+# Tests run on pull requests (ci.yml), not here.
 on:
   workflow_dispatch:
-    inputs:
-      skip_tests:
-        description: 'Skip tests'
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,15 +40,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       #########################
-      # PHASE 2: TESTS
-      #########################
-
-      - name: Run tests
-        if: ${{ !inputs.skip_tests }}
-        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon
-
-      #########################
-      # PHASE 3: FIREBASE CONFIGURATION
+      # PHASE 2: FIREBASE CONFIGURATION
       #########################
 
       - name: Decode Firebase Android config
@@ -67,7 +54,7 @@ jobs:
           echo "$FIREBASE_ANDROID_CONFIG_BASE64" | base64 --decode > composeApp/google-services.json
 
       #########################
-      # PHASE 4: VERSIONING
+      # PHASE 3: VERSIONING
       #########################
 
       - name: Calculate version
@@ -78,7 +65,7 @@ jobs:
           echo "versionCode: $BUILD_NUMBER"
 
       #########################
-      # PHASE 5: SIGNING
+      # PHASE 4: SIGNING
       #########################
 
       - name: Decode Android keystore
@@ -124,7 +111,7 @@ jobs:
           fi
 
       #########################
-      # PHASE 6: BUILD AAB
+      # PHASE 5: BUILD AAB
       #########################
 
       - name: Build Android App Bundle
@@ -140,7 +127,7 @@ jobs:
           echo "AAB built successfully: $(du -h "$AAB_PATH" | cut -f1)"
 
       #########################
-      # PHASE 7: UPLOAD TO GOOGLE PLAY
+      # PHASE 6: UPLOAD TO GOOGLE PLAY
       #########################
 
       - name: Decode Google Play service account key
@@ -163,7 +150,7 @@ jobs:
           status: completed
 
       #########################
-      # PHASE 8: ARTIFACTS & CLEANUP
+      # PHASE 7: ARTIFACTS & CLEANUP
       #########################
 
       - name: Upload AAB artifact
@@ -182,7 +169,7 @@ jobs:
           rm -f google-play-service-account.json
 
       #########################
-      # PHASE 9: SUMMARY
+      # PHASE 8: SUMMARY
       #########################
 
       - name: Deployment Summary

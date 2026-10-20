@@ -14,6 +14,7 @@ This repo is a template. API and UI come from new specs / Figma — the tech sta
 - Remote: `SHIFA-UZ/apps-flutter-patient` (the Flutter app lives on `main`). This KMP rewrite lives on branch `shifa2.0`, branched from `main`.
 - Commit all work to `shifa2.0`. Never merge, rebase or open a PR into `main`, and never push to `main`, until the user says the rewrite is done.
 - Never commit or push on your own. Show the user the finished work (what changed, screenshots, test results), and only commit and push once they approve.
+- Commits are authored by the user only, with the repo's git identity (`git config user.name` / `user.email`). Never add `Co-Authored-By`, "Generated with" or any other Claude or agent attribution to commit messages or PR descriptions, and never set Claude or an agent as the author or committer.
 
 ## Tech stack (do not swap without asking)
 
@@ -76,8 +77,8 @@ iosApp/                     # Xcode host app
 - Every widget gets `XxxScreenshotTest` (`@RunWith(RobolectricTestRunner)`, `@GraphicsMode(NATIVE)`, `@Config(sdk = [33])`, `captureRoboImage("screenshots/Xxx_state.png")`).
 - Commands: `./gradlew :composeApp:testDebugUnitTest`, `verifyRoborazziDebug`, `recordRoborazziDebug`.
 
-### CI/CD (GitHub Actions, all manual `workflow_dispatch`, ported from `apps-flutter-patient`)
-- `ci.yml`: ktlint, unit tests, Roborazzi verify.
+### CI/CD (GitHub Actions, ported from `apps-flutter-patient`; deploys are manual `workflow_dispatch`)
+- `ci.yml`: runs on every pull request (and by hand): ktlint, unit tests, Roborazzi verify. The deploy workflows don't run tests.
 - `google_play_deploy.yml`: signed `bundleRelease` → Play production (`com.shifa.patientapp`). Signing via root `keystore.properties` written by CI (gitignored); versionCode = `VERSION_CODE_OFFSET + run_number`.
 - `ios_testflight.yml`: fastlane `beta` lane in `iosApp/fastlane` → TestFlight (`uz.shifa.patient`, team `NH97PGA9PT`). Build number = `BUILD_NUMBER_OFFSET + run_number`; version from `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig`.
 - Version name lives in one place: `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig`; `composeApp/build.gradle.kts` reads it for Android's `versionName`.

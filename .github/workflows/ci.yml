@@ -1,8 +1,9 @@
 # Quality gates
 name: CI
 
-# Manual only — run from the Actions tab when needed, not on every push/PR.
+# Every pull request (and by hand from the Actions tab): ktlint, unit tests, screenshot verification.
 on:
+  pull_request:
   workflow_dispatch:
 
 concurrency:

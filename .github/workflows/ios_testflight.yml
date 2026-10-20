@@ -1,13 +1,8 @@
 name: iOS TestFlight Deployment
 
+# Tests run on pull requests (ci.yml), not here.
 on:
   workflow_dispatch:
-    inputs:
-      skip_tests:
-        description: 'Skip tests'
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -65,15 +60,7 @@ jobs:
           restore-keys: konan-${{ runner.os }}-
 
       #########################
-      # PHASE 2: TESTS
-      #########################
-
-      - name: Run tests
-        if: ${{ !inputs.skip_tests }}
-        run: ./gradlew :composeApp:iosSimulatorArm64Test --no-daemon
-
-      #########################
-      # PHASE 3: FIREBASE CONFIGURATION
+      # PHASE 2: FIREBASE CONFIGURATION
       #########################
 
       - name: Decode Firebase iOS config
@@ -88,7 +75,7 @@ jobs:
           plutil -lint iosApp/iosApp/GoogleService-Info.plist
 
       #########################
-      # PHASE 4: FASTLANE
+      # PHASE 3: FASTLANE
       #########################
 
       - name: Setup Ruby & cache gems (Fastlane)
@@ -99,7 +86,7 @@ jobs:
           bundler-cache: true
 
       #########################
-      # PHASE 5: VERSIONING
+      # PHASE 4: VERSIONING
       #########################
 
       - name: Calculate version
@@ -110,7 +97,7 @@ jobs:
           echo "Build: $BUILD_NUMBER"
 
       #########################
-      # PHASE 6: CODE SIGNING SETUP
+      # PHASE 5: CODE SIGNING SETUP
       #########################
 
       - name: Import iOS Distribution Certificate
@@ -155,7 +142,7 @@ jobs:
           rm -rf "$CERT_DIR"
 
       #########################
-      # PHASE 7: FASTLANE - BUILD, SIGN, ARCHIVE & UPLOAD
+      # PHASE 6: FASTLANE - BUILD, SIGN, ARCHIVE & UPLOAD
       #########################
 
       - name: Setup App Store Connect API key
@@ -176,7 +163,7 @@ jobs:
         run: bundle exec fastlane beta
 
       #########################
-      # PHASE 8: ARTIFACTS & CLEANUP
+      # PHASE 7: ARTIFACTS & CLEANUP
       #########################
 
       - name: Upload build logs (on failure)
@@ -195,7 +182,7 @@ jobs:
         run: rm -rf ~/private_keys
 
       #########################
-      # PHASE 9: SUMMARY
+      # PHASE 8: SUMMARY
       #########################
 
       - name: Deployment Summary
