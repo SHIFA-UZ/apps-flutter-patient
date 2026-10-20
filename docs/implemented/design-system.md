@@ -31,7 +31,7 @@ Figma file `B7f95gNrRt8HYYzlGZdk9N` (a copy of `o0MqTfUEfhBX49VljFhp70` with the
 | ShifaNotification | `ShifaNotification` (5 types, `1598:10299`), `ShifaMessageNotification` (photo, unread count with a brand time, optional tap) |
 | ShifaBanner | `ShifaBanner` error / warning / success: an inline message box for screens (login lockout, register errors). No Figma component; styled like `ShifaNotification`. |
 | ShifaPager, ShifaPageElement, ShifaImageContainer | pager dots, page-element slots, 302dp image box |
-| ShifaChat | `ShifaChatBar` (`1673:14877`), `ShifaChatBubble` and `ShifaChatImageBubble` (`1673:14821`; sent or received, optional caption) |
+| ShifaChat | `ShifaChatBar` (`1673:14877`; recording: an animated waveform and a stop button, Figma's is static), `ShifaChatBubble` and `ShifaChatImageBubble` (`1673:14821`; sent or received, optional caption), `ShifaChatVoiceBubble` (not in Figma: play / pause, progress and m:ss, Flutter's look), `ShifaChatThinkingBubble` (three pulsing dots) |
 | ShifaTray, ShifaPopUp | `ShifaTray`, `ShifaChatTray` (`1681:13188`), `ShifaPopUp` (`1702:14263`). They only draw: host them in `ModalBottomSheet` / `Dialog` (see `ShifaTray.kt`). |
 
 Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img_*`). `img_logo` is the white Shifa mark; tint it. `ic_eye_20` and `ic_eye_off_20` are Feather icons, because Figma has no eye icon. `ic_upload_22` and `ic_calendar_20` come from the create-account frames.
@@ -45,7 +45,7 @@ Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img
 
 - Section, tray and pop-up titles are raw black in Figma; they use `Text.Primary` (#272727) here.
 - Certificate illustration has no soft shadow (vector drawables can't blur). The doctor card "in" badge sits about 2px low.
-- Chat send button has no disabled state; the waveform is static.
+- Chat send button has no disabled state; the recording waveform moves (Figma's is static) and has a stop button on the right.
 - Transparent sections keep 12dp of vertical padding that Figma's don't have, so the gap between Home's sections is a little larger than Figma's (12).
 - Open questions:
   - `ShifaImageContainer`: Fit or Crop? Currently Fit.

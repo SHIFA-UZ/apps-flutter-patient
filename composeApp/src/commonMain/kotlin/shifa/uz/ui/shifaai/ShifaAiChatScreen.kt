@@ -34,7 +34,6 @@ import shifa.composeapp.generated.resources.askAnything
 import shifa.composeapp.generated.resources.cancel
 import shifa.composeapp.generated.resources.chat
 import shifa.composeapp.generated.resources.comingSoon
-import shifa.composeapp.generated.resources.copilotThinking
 import shifa.composeapp.generated.resources.delete
 import shifa.composeapp.generated.resources.deleteChatMessage
 import shifa.composeapp.generated.resources.deleteChatTitle
@@ -50,6 +49,7 @@ import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaChatBar
 import shifa.uz.ui.widgets.ShifaChatBubble
 import shifa.uz.ui.widgets.ShifaChatBubbleType
+import shifa.uz.ui.widgets.ShifaChatThinkingBubble
 import shifa.uz.ui.widgets.ShifaChatTray
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSecondaryButton
@@ -58,8 +58,8 @@ import shifa.uz.utils.rememberMicPermission
 import shifa.uz.utils.rememberVoiceRecorder
 
 /**
- * 09 (AI-01, AI-02): the open chat, over the tab shell. The mic records until tapped again (Figma chat-bar recording),
- * then X2's transcript fills the input. Attachments aren't built yet.
+ * 09 (AI-01, AI-02): the open chat, over the tab shell. The mic records until the bar's stop is tapped (Figma
+ * chat-bar recording, animated), then X2's transcript is sent as the question. Attachments aren't built yet.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -155,10 +155,11 @@ internal fun ShifaAiChatContent(
         ) {
             state.streaming?.let { reply ->
                 item {
-                    ShifaChatBubble(
-                        reply.ifEmpty { stringResource(Res.string.copilotThinking) },
-                        ShifaChatBubbleType.ShifaAi,
-                    )
+                    if (reply.isEmpty()) {
+                        ShifaChatThinkingBubble()
+                    } else {
+                        ShifaChatBubble(reply, ShifaChatBubbleType.ShifaAi)
+                    }
                 }
             }
             items(state.chat?.messages.orEmpty().asReversed()) {

@@ -114,7 +114,6 @@
     <string name="copilotPreferredTime">Wunschzeit</string>
     <string name="copilotSuggestDoctors">Ärzte vorschlagen</string>
     <string name="copilotSuggestedDoctors">Vorgeschlagene Ärzte</string>
-    <string name="copilotThinking">Denke nach…</string>
     <string name="copilotTranscribeError">Sprache konnte nicht transkribiert werden</string>
     <string name="copilotTranscriptReportAction">Melden</string>
     <string name="copilotTranscriptReportHint">Falsch erkannt? Optional mit Audio zur Qualitätssicherung senden.</string>

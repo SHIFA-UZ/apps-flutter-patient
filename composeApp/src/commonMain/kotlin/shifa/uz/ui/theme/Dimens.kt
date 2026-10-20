@@ -104,6 +104,9 @@ object ShifaDimens {
     // chat-bubble, type = image: a received or sent photo. Figma's is a placeholder, so Flutter's square (08 §5.5.2).
     val ChatImage = 280.dp
 
+    // chat-bubble, voice: not in Figma, Flutter's player row (08 §5.5.3)
+    val ChatVoiceWidth = 220.dp
+
     // section
     val SectionBorder = 1.dp
 

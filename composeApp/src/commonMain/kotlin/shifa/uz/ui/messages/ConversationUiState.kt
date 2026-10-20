@@ -17,10 +17,11 @@ data class ConversationUiState(
     val messages: List<ChatMessage>? = null,
     val input: String = "",
     val isSending: Boolean = false,
+    val recording: Boolean = false,
     val error: StringResource? = null,
     val notice: StringResource? = null,
 ) {
     val canAddress get() = conversationId != null || doctorId != null
 
-    val canSend get() = input.isNotBlank() && !isSending && canAddress
+    val canSend get() = input.isNotBlank() && !isSending && !recording && canAddress
 }

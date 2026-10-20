@@ -177,7 +177,6 @@
     <string name="copilotPreferredTime">Afzal qilingan vaqt</string>
     <string name="copilotSuggestDoctors">Shifokorlarni tavsiya qilish</string>
     <string name="copilotSuggestedDoctors">Tavsiya etilgan shifokorlar</string>
-    <string name="copilotThinking">O'ylayapman…</string>
     <string name="copilotTranscribeError">Ovozni matnga aylantirib bo'lmadi</string>
     <string name="copilotTranscriptReportAction">Xabar berish</string>
     <string name="copilotTranscriptReportHint">Matn xato chiqdimi? Sifat uchun yuborishingiz mumkin (ovozli ixtiyoriy).</string>

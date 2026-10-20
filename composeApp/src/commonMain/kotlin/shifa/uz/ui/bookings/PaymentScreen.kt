@@ -58,8 +58,25 @@ fun PaymentScreen(
     // A paid booking goes on by itself; a failed one waits for Book again.
     LaunchedEffect(viewModel) { viewModel.done.collect { if (it.isPaid && !it.isPaymentDead) done(it) } }
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
-    PaymentContent(state, onBack, onCheck = viewModel::check, onBookAgain = { onDone(state.appointment) })
+    PaymentContent(
+        state,
+        onBack,
+        onCheck = viewModel::check,
+        onBookAgain = { onDone(state.appointment) },
+        onNavigate = { url ->
+            // The provider's redirects (Flutter's checkout screen): the backend's pages aren't shown.
+            when {
+                CHECKOUT_SUCCESS in url -> viewModel.check()
+                CHECKOUT_CANCEL in url -> onBack()
+                else -> return@PaymentContent false
+            }
+            true
+        },
+    )
 }
+
+private const val CHECKOUT_SUCCESS = "/payments/checkout/success"
+private const val CHECKOUT_CANCEL = "/payments/checkout/cancel"
 
 @Composable
 internal fun PaymentContent(
@@ -67,6 +84,7 @@ internal fun PaymentContent(
     onBack: () -> Unit = {},
     onCheck: () -> Unit = {},
     onBookAgain: () -> Unit = {},
+    onNavigate: (String) -> Boolean = { false },
 ) {
     val failure = state.failure
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
@@ -75,7 +93,7 @@ internal fun PaymentContent(
         }
         Box(Modifier.weight(1f).fillMaxWidth().background(ShifaColors.Bg.Canvas), contentAlignment = Alignment.Center) {
             if (failure == null) {
-                PaymentWebView(state.checkoutUrl, Modifier.fillMaxSize())
+                PaymentWebView(state.checkoutUrl, Modifier.fillMaxSize(), onNavigate)
             } else {
                 ShifaBanner(
                     stringResource(failure),

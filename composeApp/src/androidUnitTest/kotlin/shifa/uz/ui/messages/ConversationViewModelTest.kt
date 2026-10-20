@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.Instant
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -22,10 +23,13 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.errorRecordingVoice
 import shifa.uz.data.chat.ChatRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.ChatMessage
 import shifa.uz.data.model.Conversation
+import shifa.uz.data.model.MessageType
 import shifa.uz.data.model.SendMessageRequest
 
 // The poll never ends: it runs in backgroundScope and time moves a poll at a time.
@@ -36,7 +40,10 @@ class ConversationViewModelTest {
     private val hello = ChatMessage("1", text = "Hello", created = "2026-09-28T08:00:00Z")
     private val reply = ChatMessage("2", text = "Hi", created = "2026-09-28T08:01:00Z")
     private var target = ChatTarget("3", name = "Aziz")
-    private val classToTest by lazy { ConversationViewModel(target, chat, pollMs = 5_000) }
+    private var now = 1_000_000_000L
+    private val classToTest by lazy {
+        ConversationViewModel(target, chat, pollMs = 5_000) { Instant.fromEpochMilliseconds(now) }
+    }
 
     @Before
     fun setUp() {
@@ -132,15 +139,53 @@ class ConversationViewModelTest {
             open()
 
             classToTest.edit("My rash")
-            classToTest.pick("IMG_1.jpg", byteArrayOf(1))
+            classToTest.attach("IMG_1.jpg", byteArrayOf(1))
             assertThat(state.isSending).isTrue()
             runCurrent()
 
             verifyBlocking(chat) {
-                send(SendMessageRequest(3, null, "My rash", "image", "https://f/p.jpg", "IMG_1.jpg"))
+                send(SendMessageRequest(3, null, "My rash", "image", "https://f/p.jpg", "IMG_1.jpg", fileSize = 1))
             }
             assertThat(state.isSending).isFalse()
             assertThat(state.input).isEmpty()
+        }
+
+    @Test
+    fun `a recording is uploaded and sent as a voice message with its length, a file as a document`() =
+        runTest {
+            wheneverBlocking { chat.upload(any(), any()) } doReturn Result.success("https://f/v.m4a")
+            wheneverBlocking { chat.send(any()) } doReturn Result.success(null)
+            open()
+
+            classToTest.onRecording()
+            assertThat(state.recording).isTrue()
+            now += 7_000
+            classToTest.sendVoice(byteArrayOf(1, 2, 3))
+            assertThat(state.recording).isFalse()
+            runCurrent()
+            verifyBlocking(chat) {
+                send(
+                    SendMessageRequest(
+                        3,
+                        null,
+                        null,
+                        "voice",
+                        "https://f/v.m4a",
+                        "voice_1000007000.m4a",
+                        fileSize = 3,
+                        duration = 7,
+                    ),
+                )
+            }
+
+            classToTest.sendVoice(null)
+            assertThat(state.error).isEqualTo(Res.string.errorRecordingVoice)
+
+            classToTest.attach("scan.pdf", byteArrayOf(1), MessageType.Document)
+            runCurrent()
+            verifyBlocking(chat) {
+                send(SendMessageRequest(3, null, null, "document", "https://f/v.m4a", "scan.pdf", fileSize = 1))
+            }
         }
 
     @Test

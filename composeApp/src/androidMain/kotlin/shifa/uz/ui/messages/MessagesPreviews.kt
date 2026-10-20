@@ -99,6 +99,15 @@ internal fun ConversationPreview() =
 
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
+internal fun ConversationRecordingPreview() =
+    PreviewTheme {
+        ConversationContent(
+            ConversationUiState("Dr. Aziz Karimov", conversationId = "1", messages = messages, recording = true),
+        )
+    }
+
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
 internal fun ConversationNewPreview() =
     PreviewTheme {
         ConversationContent(ConversationUiState("Dr. Kamola Karimova", doctorId = "15", messages = emptyList()))
