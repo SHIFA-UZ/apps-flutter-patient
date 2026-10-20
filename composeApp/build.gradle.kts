@@ -168,6 +168,8 @@ android {
     // Robolectric only sees the merged manifest and assets (where Compose resources live) with this.
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // Robolectric screenshot tests are slow on one JVM; spread the test classes over half the cores.
+        unitTests.all { it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1) }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
