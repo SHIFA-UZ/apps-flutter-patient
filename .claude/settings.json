@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./build/**)",
+      "Read(./composeApp/build/**)",
+      "Read(./iosApp/build/**)",
+      "Read(./.gradle/**)",
+      "Read(./.kotlin/**)",
+      "Read(./.idea/**)",
+      "Read(./gradle/wrapper/gradle-wrapper.jar)",
+      "Read(./local.properties)",
+      "Read(./keystore.properties)",
+      "Read(./composeApp/src/androidMain/res/mipmap-*/**)",
+      "Read(./graphify-out/cache/**)"
+    ]
+  }
+}

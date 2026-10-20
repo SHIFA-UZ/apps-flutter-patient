@@ -1,0 +1,67 @@
+# Bookings and doctors
+
+## Bookings tab (`ui/bookings/BookingsScreen.kt`, BOOK-05 + DOC-01 in part)
+
+- Figma: `1648:11080`. Home's header (avatar → Profile, bell → Notifications), a doctor search, filter chips, then, on All, three sections: Recommended doctors (a carousel), My Doctors and Past Appointments. Any other chip shows only its doctors, as full cards with the Clinic / Online / Nearby tags (Figma `1653:12376`). The first open loads everything; pull to refresh reloads it. A 401 logs out. The ViewModel lives in the tab shell, so the tab keeps its state across tab switches. Figma's "Find Doctors near you" row is hidden for now (the user's call).
+- Figma has no upcoming list and no 06 §4.2 status tabs, so the Bookings tab shows none. Upcoming visits are on Home, including ones the doctor hasn't confirmed yet (marked Pending).
+- Recommended doctors: D1 with the search (350 ms debounce, 07) and the chip's params. All: none. Remote: `consultationType=online`. Today: `availableWithin=today`. Emergency: `sortBy=availability` (the spec has no emergency filter). The card shows the next free slot. D1 reads every page (50 each, the backend's cap, up to 20 pages). Not built: the filters sheet, scroll pagination and the availability enrichment (07 §3.8).
+- Near me (07 §2.1): asks for the location permission when needed, then takes one medium-accuracy fix (Android: `fused`, else network, else GPS; on the 30 s timeout the freshest last known fix; iOS: `CLLocationManager.requestLocation`). D1 gets `sortBy=distance`, `latitude`, `longitude` and `radiusKm=50`. The backend appends every doctor without coordinates after the near ones, so the app drops those. Services off, a denial, "don't ask again" or no fix go back to All with a banner. The fix is kept for the session. No fallback to the profile's coordinates: the profile has none yet (PROF-04 map picker).
+- Recommended shows 10 in the carousel. With more, the arrow opens the Recommended page. With none it is hidden, unless a search is typed, so "No doctors found" still answers it.
+- My Doctors: the doctors of the most recent bookings, loaded with D2, as on Home ([home.md](home.md)). With more than 3, the arrow opens the My Doctors page.
+- Past Appointments: one unfiltered B2, over or cancelled, newest first. The badge is red for cancelled, green for confirmed or completed, yellow for anything else. Cancelled cards don't open. With more than 3, the arrow opens the Past page.
+- Doctor cards open the doctor profile, appointment cards open the details.
+
+## List pages (`BookingsListScreen.kt`, DOC-01 in part)
+
+- Figma: `1655:15670` (My Doctors), `1655:15892` (Past); Recommended follows the same pattern. An overlay above the tabs with a back header and every item of the section, as flat cards (Figma). Recommended's are full cards with tags, like the chip lists. The page shares the tab's ViewModel, so Home's My Doctors arrow opens the same page and it loads B2 and D1 if the tab never did.
+- My Doctors cards show "Last Visit dd.MM.yyyy": the doctor's latest confirmed or completed past visit, else no line.
+- Not built: the ⋮ menu (no Figma for it), the nav bar Figma shows under Past, pull to refresh and lazy loading (a plain column).
+
+## Appointment details (`AppointmentDetailsScreen.kt`, BOOK-06, BOOK-12)
+
+- Figma: `1921:25419` (upcoming), `1662:17723` (under 24 h), `1661:17567` (past). An overlay above the tabs, opened from Home and the Bookings tab. It shows the list's B2 appointment (no B4 refetch). The doctor card uses D2 when the appointment has a `doctorId`; if D2 fails, it keeps B2's name, profession and clinic. The card opens the doctor profile.
+- Upcoming (open, not started): one card per row, each when known: Clinic (B2's clinic, else D2's), Video Consultation (Yes / No), Date and Time (local, "Monday 12:00 - 12:30, 28 September 2026"), Location (in person only: the location label, else the location, else the doctor's address) and Additional Information (the reason; "check up" shows as "Check Up").
+- Service (Figma `1825:17774`, `1825:17960`): the booked `serviceTitle` in a read-only field, then how it's paid: Payment Completed (PAID), Payment in clinic with the amount (PAY_IN_CLINIC), Payment pending, or "Refund will be processed by the clinic" (`refundRequired`). Hidden when there's neither.
+- Reschedule and Cancel follow the backend's `canReschedule` / `canCancel` (MOBILE_BOOKING_PAYMENT §5-6), else the 24 h rule (as Figma; the backend now refuses under 24 h with APPOINTMENT_LOCKED_24H). Cancel needs a confirm, then B5, then back to the list with "Appointment cancelled successfully", and Home refreshes. Under 24 h (`isLocked24h`, else the start time) Figma's warning shows on top; Figma has no Contact button, so tapping the warning dials the doctor's phone, else emails them (06 quirk 13).
+- Past (started, over or cancelled): Figma's "Appointment Details" card with the same rows, collapsible with its chevron.
+- Review (06 §3.9): a past visit that isn't cancelled and has a doctor loads B7 (any error is no review). With none, Leave Review opens the tray (Figma `1887:19946`, `1891:20212`): "Please rate your experience visiting Dr {last name} at {clinic} on {dd.MM.yyyy}", the visit's card, 1 to 5 stars, a multi-line comment, and Submit once a star is picked. D5 sends the rating, the trimmed comment (or null) and the visit's id. Success closes the tray with "Thank you for your rating." and shows Your Review (stars and comment); so does a review B7 already has. A failure keeps the tray with the error; D5's 401 doesn't log out (15 §6.2).
+- Not built: Attach Document and the past Documents / Tasks sections. The backend has no call to attach documents after booking and no appointment on documents or tasks; the request is in backend-improvements §13. Kept hidden until then (the user's call). No View Summary button (the user's call; BOOK-09 has no design yet), payment or ⋮ menu. Not tried on a device: cancel, reschedule and reviews change production data.
+
+## Reschedule (`RescheduleScreen.kt`, BOOK-06)
+
+- Figma: `1921:25675`. An overlay above the details, from Reschedule. The header card is the doctor's, refreshed with D2, then the collapsible details card, Select New Date and Available Times as on Create Booking (the same ViewModel in reschedule mode).
+- It keeps the visit's kind (video or not), its reason and its location (B2's `locationId`, else the primary location). A video visit shows the service dropdown again: B2 doesn't say which service was booked, and B3 needs one.
+- Confirm sends B3 with the new slot and `rescheduleAppointmentId` (06 §3.5; production's handling of the old visit is unverified). The double-booking check skips the visit being moved. On success the overlays close and the Bookings tab shows "Appointment rescheduled successfully"; Home refreshes. Cancel just goes back.
+
+## Doctor profile (`ui/doctors/DoctorProfileScreen.kt`, DOC-02 in part, DOC-03)
+
+- Figma: `1655:16298`. An overlay opened from any doctor card. It shows the card's copy at once, then loads D2; an error shows Retry. The header card has no shadow (Figma). Tags: Clinic when in person, Online when online (07 §4.1), Nearby within 50 km of the Near me fix (D1's `distanceKm`, else Haversine from the doctor's coordinates). No fix, no Nearby.
+- Tabs, in Figma's order: About (biography, else further information), Clinic, Reviews, Services (Figma service cards: Free, the first price as "150000.00 UZS", else "Price not set"; old string services as text), Certificates (cards titled with the file name, opened in the documents viewer: DOC-03) and Clinic (address, clinic, phone, email, Telegram and Instagram; the links open the dialer, mail or the browser). Reviews: D4, loaded with the page, as Figma review cards (the patient's photo and name, else "Patient", the date as dd.MM.yyyy, the stars, the comment); a failure shows only in that tab. Each tab has an empty text.
+- Create Booking opens the booking page.
+- Not built: the service detail sheet, open in maps, the ⋮ menu, experience and languages (not in Figma).
+
+## Create booking (`CreateBookingScreen.kt`, BOOK-01/02/03/04)
+
+- Figma: `1662:18783` (empty), `1662:19457` (filled), `1823:16296` (pay now), `1823:16350` (pay in clinic). An overlay above the doctor profile. Figma titles it "Doctor Profile" or "Confirm" (copy-paste), so the page says Create Booking. The header card is the profile's, refreshed with D2.
+- Order (Figma): Select Clinic, Select Service, Video consultation, Select date, Available times, the reason, attachments.
+- Select Clinic: D3's locations (clinic, else label, else address), shown only with more than one; the primary is picked, else the first. Changing it rescans.
+- Select Service: shown when the doctor lists services. Labels are "Title (300000.00 UZS)" (the price for the clinic, else for any clinic) or "Title — Free". In person it lists services that are free, unpriced, or priced for that clinic or any; video lists only services that allow video (MOBILE_BOOKING_PAYMENT §1: `videoAllowed`, never pay later, and an online price or free). A service is needed whenever the list has any (Flutter: only for video).
+- The service's kind (§1): `isFreeConsultation` is free; `paymentType` PAY_LATER is pay in clinic; any other priced one is pay now (the backend's default).
+- Video: hidden for a pay-in-clinic service (no video for pay later). The switch keeps a service that allows video and rescans without a location. A doctor without any services shows the warning under it.
+- Pay in clinic: a note under the service, "Payment in clinic · 90000.00 UZS". Complete Booking books at once (B3 without a provider; CONFIRMED + PAY_IN_CLINIC).
+- Free: as before, Complete Booking books at once.
+- Pay now (BOOK-04): the button says Complete Payment. It loads `GET payments/methods?serviceId&locationId` (location in person only). None: books without a provider (§2.1). Else the Confirm Payment tray (Figma `1876:18609`): one card per provider (Click, Stripe) with the amount, the first chosen (several can be tapped; the chosen one has a brand border, not in Figma), then Pay Now. B3 sends `paymentProvider`; a failure books nothing and stays in the tray (§2.2).
+- B3's reply is PENDING_PAYMENT with `payment.checkoutUrl` and `holdExpiresAt`: the payment page opens (see Payment). Back from it keeps the hold: the page shows "Payment isn't complete. Your slot is held until HH:mm." and the button becomes Continue payment, reopening the same checkout (§2.5). Changing the clinic, service, video, date or time drops the hold with B5, best effort.
+- Slots: B1 day by day for 30 days from today (7 days at a time), with `locationId` only in person. Past slots are dropped. The scan stops on the first day with free slots and selects the first one. With none, it ends on the last day with "No available time slots". The date button shows "Select" only while scanning. The picker allows today to +90 days and loads just that day.
+- Attachments: PDFs only, up to 5, each uploaded with F2 `category=PRE_APPOINTMENT` when picked. An empty file is skipped with a banner.
+- Complete Booking checks, in order: video needs services and one picked, any visit needs a listed service picked, then no open visit of yours at the same start (B2), then B3 (or the payment). Errors show above the button. On success all overlays close, the Bookings tab shows "slot booked", or the pending notice for an old-style PENDING, and Home refreshes.
+- Not built: removing an attachment and the ⋮ menu. Reschedule reuses this page's ViewModel (see Reschedule) and never asks for a payment. Not pressed on a device (production).
+- The switch keeps its 48 dp touch target, so the Video card is taller than Figma's.
+
+## Payment (`PaymentScreen.kt`, BOOK-04)
+
+- Figma: `1825:17388`. Over the booking page; Figma's title "Pay via webview" is a placeholder, so it says Payment. The provider's checkout loads in an in-app WebView (Android `WebView`, iOS `WKWebView`). The backend doc suggests a browser tab; the design's page inside the app lets the app close it by itself. Links that aren't web pages (a bank or wallet app) open that app on Android.
+- Under it: "Your slot is held for m:ss", counted down to `holdExpiresAt` (never a fixed 15 minutes, §2.3), and Complete Payment, which asks B4 now and says "Payment is still pending…" if it isn't paid yet.
+- B4 is polled every 3 s while the page is open (§2.4); the provider's redirect is never trusted. PAID (CONFIRMED) closes the booking pages and opens the visit's details, with Payment Completed under Service (Figma `1825:17774`).
+- PAYMENT_FAILED: "The payment was declined, so the slot was released." EXPIRED: "Time ran out, so the slot was released." EXPIRED but PAID (paid too late, slot taken): "Payment received, but the slot is no longer available. The clinic will refund it." (§7). The page then shows Book again, which returns to the booking page and rescans the day.
+- Not built: Stripe as a fallback when Click's page fails (the user picks the provider instead), and continuing an old pending payment from Home or the details (it expires within the hold).

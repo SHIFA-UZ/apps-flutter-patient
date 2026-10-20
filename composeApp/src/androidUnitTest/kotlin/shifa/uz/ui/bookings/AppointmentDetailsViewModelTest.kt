@@ -1,0 +1,220 @@
+package shifa.uz.ui.bookings
+
+import app.cash.turbine.test
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.Instant
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verifyBlocking
+import org.mockito.kotlin.wheneverBlocking
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.errorCancellingAppointment
+import shifa.composeapp.generated.resources.thankYouForYourRating
+import shifa.uz.data.api.FAILED_TO_CANCEL_APPOINTMENT
+import shifa.uz.data.bookings.BookingsRepository
+import shifa.uz.data.doctors.DoctorsRepository
+import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.Appointment
+import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.Review
+import shifa.uz.data.model.ReviewRequest
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class AppointmentDetailsViewModelTest {
+    private val dispatcher = StandardTestDispatcher()
+    private val doctors = mock<DoctorsRepository>()
+    private val bookings = mock<BookingsRepository>()
+    private val now = Instant.parse("2026-09-27T09:00:00Z")
+    private val inThreeDays =
+        Appointment(id = "1", doctorId = "d1", doctorName = "Ali", startAt = "2026-09-30T09:00:00Z")
+    private val tomorrow = inThreeDays.copy(startAt = "2026-09-28T09:00:00Z")
+    private lateinit var classToTest: AppointmentDetailsViewModel
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+        wheneverBlocking {
+            doctors.getDoctor("d1")
+        } doReturn Result.success(Doctor(id = "d1", fullName = "Dr Ali", phone = "+998 90 123"))
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun create(appointment: Appointment = inThreeDays) {
+        classToTest = AppointmentDetailsViewModel(appointment, doctors, bookings) { now }
+    }
+
+    private val state get() = classToTest.state.value
+
+    @Test
+    fun `it shows the appointment's doctor until D2 loads, then calls D2's phone`() =
+        runTest {
+            create()
+            assertThat(state.shownDoctor.name).isEqualTo("Ali")
+            assertThat(state.contactUri).isNull()
+            advanceUntilIdle()
+
+            assertThat(state.shownDoctor.name).isEqualTo("Dr Ali")
+            assertThat(state.contactUri).isEqualTo("tel:+99890123")
+        }
+
+    @Test
+    fun `within 24 hours it warns and does not cancel, and the backend's flags win`() =
+        runTest {
+            create(tomorrow.copy(startAt = "2026-09-28T08:00:00Z"))
+            assertThat(state.showWarning).isTrue()
+            assertThat(state.canCancel).isFalse()
+
+            classToTest.askCancel()
+            assertThat(state.confirmCancel).isFalse()
+
+            // MOBILE_BOOKING_PAYMENT §5: canCancel / canReschedule / isLocked24h decide when sent.
+            create(inThreeDays.copy(canCancel = false, canReschedule = true, isLocked24h = false))
+            assertThat(state.canCancel).isFalse()
+            assertThat(state.canReschedule).isTrue()
+            assertThat(state.showWarning).isFalse()
+        }
+
+    @Test
+    fun `cancelled and past appointments neither warn nor cancel`() {
+        create(tomorrow.copy(status = "CANCELLED"))
+        assertThat(state.showWarning).isFalse()
+        assertThat(state.canCancel).isFalse()
+
+        create(inThreeDays.copy(startAt = "2026-09-26T09:00:00Z"))
+        assertThat(state.isPast).isTrue()
+        assertThat(state.showWarning).isFalse()
+        assertThat(state.canCancel).isFalse()
+    }
+
+    @Test
+    fun `a confirmed cancel deletes it and closes`() =
+        runTest {
+            wheneverBlocking { bookings.cancel("1") } doReturn Result.success(Unit)
+            create()
+
+            classToTest.cancelled.test {
+                classToTest.askCancel()
+                assertThat(state.confirmCancel).isTrue()
+                classToTest.cancel()
+                assertThat(state.isCancelling).isTrue()
+                advanceUntilIdle()
+                awaitItem()
+            }
+        }
+
+    @Test
+    fun `a failed cancel shows the error`() =
+        runTest {
+            wheneverBlocking { bookings.cancel("1") } doReturn
+                Result.failure(ApiException.ServerError(FAILED_TO_CANCEL_APPOINTMENT))
+            create()
+            classToTest.askCancel()
+
+            classToTest.cancel()
+            advanceUntilIdle()
+
+            assertThat(state.isCancelling).isFalse()
+            assertThat(state.confirmCancel).isFalse()
+            assertThat(state.error).isEqualTo(Res.string.errorCancellingAppointment)
+        }
+
+    @Test
+    fun `no doctor id loads no doctor`() =
+        runTest {
+            create(inThreeDays.copy(doctorId = null))
+            advanceUntilIdle()
+
+            verifyBlocking(doctors, never()) { getDoctor(any()) }
+        }
+
+    @Test
+    fun `a 401 on cancel signs out`() =
+        runTest {
+            wheneverBlocking { bookings.cancel("1") } doReturn Result.failure(ApiException.Unauthorized("Unauthorized"))
+            create()
+
+            classToTest.signedOut.test {
+                classToTest.askCancel()
+                classToTest.cancel()
+                advanceUntilIdle()
+                awaitItem()
+            }
+        }
+
+    private val past = inThreeDays.copy(startAt = "2026-09-20T09:00:00Z", status = "COMPLETED")
+
+    @Test
+    fun `a past visit checks B7, then a rating is sent with D5 and shown`() =
+        runTest {
+            val request = ReviewRequest(4, "Great", 1)
+            wheneverBlocking { doctors.submitReview("d1", request) } doReturn Result.success(Unit)
+            create(past)
+            assertThat(state.isUpcoming).isFalse()
+            assertThat(state.canReview).isFalse()
+            advanceUntilIdle()
+            assertThat(state.canReview).isTrue()
+
+            classToTest.openReview()
+            classToTest.submitReview()
+            verifyBlocking(doctors, never()) { submitReview(any(), any()) }
+            classToTest.onRate(4)
+            classToTest.onCommentChange(" Great ")
+            classToTest.submitReview()
+            advanceUntilIdle()
+
+            verifyBlocking(doctors) { submitReview("d1", request) }
+            assertThat(state.review?.rating).isEqualTo(4)
+            assertThat(state.reviewOpen).isFalse()
+            assertThat(state.canReview).isFalse()
+            assertThat(state.notice).isEqualTo(Res.string.thankYouForYourRating)
+        }
+
+    @Test
+    fun `an existing review hides Leave Review, and a cancelled visit has none`() =
+        runTest {
+            wheneverBlocking { bookings.getReview("1") } doReturn Review(rating = 5)
+            create(past)
+            advanceUntilIdle()
+            assertThat(state.review?.rating).isEqualTo(5)
+            assertThat(state.canReview).isFalse()
+
+            create(past.copy(status = "CANCELLED"))
+            advanceUntilIdle()
+            assertThat(state.canReview).isFalse()
+        }
+
+    @Test
+    fun `a failed review keeps the tray open with the error, without signing out`() =
+        runTest {
+            wheneverBlocking { doctors.submitReview(any(), any()) } doReturn
+                Result.failure(ApiException.Unauthorized("Unauthorized"))
+            create(past)
+            advanceUntilIdle()
+            classToTest.openReview()
+            classToTest.onRate(2)
+
+            classToTest.signedOut.test {
+                classToTest.submitReview()
+                advanceUntilIdle()
+                expectNoEvents()
+            }
+            assertThat(state.reviewOpen).isTrue()
+            assertThat(state.reviewError).isNotNull()
+        }
+}

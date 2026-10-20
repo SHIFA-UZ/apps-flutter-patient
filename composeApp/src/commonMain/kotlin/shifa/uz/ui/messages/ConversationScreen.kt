@@ -1,0 +1,204 @@
+package shifa.uz.ui.messages
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
+import io.kamel.image.KamelImage
+import io.kamel.image.asyncPainterResource
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.addToChat
+import shifa.composeapp.generated.resources.comingSoon
+import shifa.composeapp.generated.resources.document
+import shifa.composeapp.generated.resources.errorOpeningDocument
+import shifa.composeapp.generated.resources.photo
+import shifa.composeapp.generated.resources.typeMessage
+import shifa.composeapp.generated.resources.voiceMessage
+import shifa.uz.data.model.ChatMessage
+import shifa.uz.data.model.MessageType
+import shifa.uz.ui.documents.UploadTray
+import shifa.uz.ui.register.Banners
+import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaDimens
+import shifa.uz.ui.theme.ShifaSpacing
+import shifa.uz.ui.widgets.ShifaChatBar
+import shifa.uz.ui.widgets.ShifaChatBubble
+import shifa.uz.ui.widgets.ShifaChatBubbleType
+import shifa.uz.ui.widgets.ShifaChatImageBubble
+import shifa.uz.ui.widgets.ShifaChatTray
+import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.utils.rememberCameraLauncher
+import shifa.uz.utils.rememberImagePickerLauncher
+
+/**
+ * 08 §5.4 (CHAT-02), Figma 1772:17206: one chat, over the tab shell. Photos go from the camera or gallery; files
+ * and voice aren't sent yet. Received photos, files and voice messages open in the system's viewer.
+ * ponytail: Figma's ⋮ has no action (there's no API for it), so it isn't built; no times or read ticks either.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun ConversationScreen(
+    target: ChatTarget,
+    onBack: () -> Unit,
+    onSignedOut: () -> Unit,
+    viewModel: ConversationViewModel = viewModel { ConversationViewModel(target) },
+) {
+    val state by viewModel.state.collectAsState()
+    val signedOut by rememberUpdatedState(onSignedOut)
+    LaunchedEffect(viewModel) {
+        launch { viewModel.poll() }
+        viewModel.signedOut.collect { signedOut() }
+    }
+    var adding by rememberSaveable { mutableStateOf(false) }
+    BackHandler(adding) { adding = false }
+    val takePhoto = rememberCameraLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes) } }
+    val pickPhoto = rememberImagePickerLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes) } }
+    val pick = { launch: () -> Unit ->
+        adding = false
+        launch()
+    }
+    val uri = LocalUriHandler.current
+    ConversationContent(
+        state,
+        adding,
+        onBack = onBack,
+        onInput = viewModel::edit,
+        onSend = viewModel::send,
+        onMic = { viewModel.showNotice(Res.string.comingSoon) },
+        onAttach = { adding = true },
+        onCloseAdd = { adding = false },
+        onCamera = { pick(takePhoto) },
+        onPhoto = { pick(pickPhoto) },
+        onFile = { pick { viewModel.showNotice(Res.string.comingSoon) } },
+        onOpenFile = { url ->
+            runCatching { uri.openUri(url) }.onFailure { viewModel.showError(Res.string.errorOpeningDocument) }
+        },
+    )
+}
+
+@Composable
+internal fun ConversationContent(
+    state: ConversationUiState,
+    adding: Boolean = false,
+    onBack: () -> Unit = {},
+    onInput: (String) -> Unit = {},
+    onSend: () -> Unit = {},
+    onMic: () -> Unit = {},
+    onAttach: () -> Unit = {},
+    onCloseAdd: () -> Unit = {},
+    onCamera: () -> Unit = {},
+    onPhoto: () -> Unit = {},
+    onFile: () -> Unit = {},
+    onOpenFile: (String) -> Unit = {},
+) {
+    Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
+        ShifaSubHeader(state.name, onBack = onBack, avatar = true, avatarUrl = state.photoUrl)
+        if (state.error != null || state.notice != null) {
+            Column(
+                Modifier.padding(horizontal = ShifaSpacing.Inset.Md),
+                verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
+            ) { Banners(state.error, state.notice) }
+        }
+        // Reversed, so it opens at the newest message (Flutter's opened at the oldest); Top keeps a short chat up.
+        LazyColumn(
+            Modifier.weight(1f),
+            reverseLayout = true,
+            contentPadding = PaddingValues(ShifaSpacing.Inset.Md),
+            verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            val messages = state.messages
+            if (messages == null) {
+                // A failed first load is the banner's; the poll retries.
+                if (state.error == null) item { CircularProgressIndicator(color = ShifaColors.Icon.Brand) }
+            } else {
+                items(messages.asReversed()) { Message(it, onOpenFile) }
+            }
+        }
+        if (adding) {
+            UploadTray(onCloseAdd, onCamera, onPhoto, onFile, title = Res.string.addToChat)
+        } else {
+            ShifaChatTray(onAttach, onSend, sendEnabled = state.canSend) {
+                ShifaChatBar(state.input, onInput, stringResource(Res.string.typeMessage), onMic)
+            }
+        }
+    }
+}
+
+/** 08 §5.5: by type. A message with a file opens it on tap. */
+@Composable
+private fun Message(
+    message: ChatMessage,
+    onOpenFile: (String) -> Unit,
+) {
+    val type = if (message.isMine) ShifaChatBubbleType.Sent else ShifaChatBubbleType.Received
+    val url = message.fileUrl
+    val open = url?.let { Modifier.clickable { onOpenFile(it) } } ?: Modifier
+    when (message.type) {
+        MessageType.Text -> ShifaChatBubble(message.body.orEmpty(), type)
+        MessageType.Image ->
+            if (url != null) {
+                ShifaChatImageBubble(received = !message.isMine, caption = message.body) {
+                    KamelImage(
+                        resource = asyncPainterResource(url),
+                        contentDescription = stringResource(Res.string.photo),
+                        modifier = Modifier.size(ShifaDimens.ChatImage).then(open),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+            } else {
+                ShifaChatBubble(message.body ?: stringResource(Res.string.photo), type)
+            }
+        // ponytail: no file icon or size (08 §5.5.4), the kit has no file bubble.
+        MessageType.Document ->
+            ShifaChatBubble(message.fileName ?: stringResource(Res.string.document), type, open)
+        // ponytail: no in-app player (08 §5.5.3), the system plays it.
+        MessageType.Voice ->
+            ShifaChatBubble(
+                stringResource(Res.string.voiceMessage) + message.durationSeconds?.let { " ${duration(it)}" }.orEmpty(),
+                type,
+                open,
+            )
+        MessageType.System ->
+            Text(
+                message.body.orEmpty(),
+                Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
+                color = ShifaColors.Text.Tertiary,
+                textAlign = TextAlign.Center,
+            )
+    }
+}
+
+/** m:ss. */
+internal fun duration(seconds: Int) = "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"

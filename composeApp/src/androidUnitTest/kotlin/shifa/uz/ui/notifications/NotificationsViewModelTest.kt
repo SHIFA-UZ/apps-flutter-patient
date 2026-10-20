@@ -1,0 +1,224 @@
+package shifa.uz.ui.notifications
+
+import app.cash.turbine.test
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verifyBlocking
+import org.mockito.kotlin.wheneverBlocking
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.allNotificationsMarkedAsRead
+import shifa.composeapp.generated.resources.errorNetworkConnection
+import shifa.uz.data.api.NETWORK_ERROR
+import shifa.uz.data.bookings.BookingsRepository
+import shifa.uz.data.documents.DocumentsRepository
+import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.AppNotification
+import shifa.uz.data.model.Appointment
+import shifa.uz.data.model.PatientDocument
+import shifa.uz.data.model.RemoteCareTask
+import shifa.uz.data.notifications.NotificationsRepository
+import shifa.uz.data.tasks.TasksRepository
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class NotificationsViewModelTest {
+    private val dispatcher = StandardTestDispatcher()
+    private val notifications = mock<NotificationsRepository>()
+    private val bookings = mock<BookingsRepository>()
+    private val documents = mock<DocumentsRepository>()
+    private val tasks = mock<TasksRepository>()
+
+    private val reminder =
+        AppNotification(1, "", "", "appointment_reminder", "2026-09-28T08:00:00Z", appointmentId = "a1")
+    private val document = AppNotification(2, "", "", "NEW_DOCUMENT", "2026-09-28T07:00:00Z", documentId = "d1")
+    private val task = AppNotification(3, "", "", "TASK_ASSIGNED", "2026-09-27T07:00:00Z", taskId = "t1")
+    private val read = AppNotification(4, "", "", "TASK_COMPLETED", "2026-09-26T07:00:00Z", readAt = "x", taskId = "t1")
+    private val all = listOf(read, task, reminder, document)
+    private val appointment = Appointment(id = "a1")
+    private val file = PatientDocument("d1", fileUrl = "https://f/1")
+    private val care = RemoteCareTask(id = "t1", startDate = "2026-09-20")
+    private lateinit var classToTest: NotificationsViewModel
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+        wheneverBlocking { notifications.getNotifications() } doReturn Result.success(all)
+        wheneverBlocking { notifications.markRead(any()) } doReturn Result.success(Unit)
+        wheneverBlocking { notifications.markAllRead() } doReturn Result.success(Unit)
+        wheneverBlocking { bookings.getAppointments() } doReturn Result.success(listOf(appointment))
+        wheneverBlocking { documents.getDocuments() } doReturn Result.success(listOf(file))
+        wheneverBlocking { tasks.getMyTasks() } doReturn Result.success(listOf(care))
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private val state get() = classToTest.state.value
+
+    private fun TestScope.open() {
+        classToTest = NotificationsViewModel(notifications, bookings, documents, tasks)
+        advanceUntilIdle()
+    }
+
+    private fun TestScope.tap(notification: AppNotification): NotificationLink? {
+        classToTest.open(notification)
+        advanceUntilIdle()
+        return state.link
+    }
+
+    @Test
+    fun `N1 loads newest first, and a filter keeps its types`() =
+        runTest {
+            open()
+
+            assertThat(state.shownIn(NotificationFilter.All)).containsExactly(reminder, document, task, read).inOrder()
+            assertThat(state.shownIn(NotificationFilter.Appointments)).containsExactly(reminder)
+            assertThat(state.shownIn(NotificationFilter.Tasks)).containsExactly(task, read).inOrder()
+            listOf("CONSULTATION_PAYMENT_DUE_1H", "INSTALLMENT_OVERDUE").forEach { kind ->
+                assertThat(NotificationFilter.entries.filter { it.matches(kind) })
+                    .containsExactly(NotificationFilter.All, NotificationFilter.Payments)
+            }
+        }
+
+    @Test
+    fun `a tap marks an unread one read once, and tells the bell`() =
+        runTest {
+            open()
+
+            classToTest.read.test {
+                tap(reminder)
+                awaitItem()
+            }
+            assertThat(state.notifications!!.first { it.id == 1 }.isRead).isTrue()
+            assertThat(state.selected).isEqualTo(reminder)
+
+            tap(read)
+            verifyBlocking(notifications, times(1)) { markRead(any()) }
+        }
+
+    @Test
+    fun `the tray links the item found in its list`() =
+        runTest {
+            open()
+
+            assertThat(tap(reminder)).isEqualTo(NotificationLink.ToAppointment(appointment))
+            assertThat(tap(document)).isEqualTo(NotificationLink.ToDocument(file))
+            assertThat(tap(task)).isEqualTo(NotificationLink.ToTask(care))
+        }
+
+    @Test
+    fun `an access request shows its document, and a signature request opens the visit to sign`() =
+        runTest {
+            open()
+
+            val access =
+                AppNotification(5, "", "", "DOCUMENT_ACCESS_REQUEST", "2026-09-28T07:00:00Z", documentId = "d1")
+            assertThat(tap(access)).isEqualTo(NotificationLink.ToDocument(file))
+            val sign = AppNotification(6, "", "", "SIGNATURE_REQUESTED", "2026-09-28T07:00:00Z", appointmentId = "a1")
+            assertThat(tap(sign)).isEqualTo(NotificationLink.ToSigning(appointment))
+            // A 025-2 form's signing isn't built.
+            assertThat(tap(sign.copy(id = 7, patientFormId = "f1"))).isNull()
+        }
+
+    @Test
+    fun `a visit summary opens the Documents tab`() =
+        runTest {
+            open()
+
+            val ready =
+                AppNotification(8, "", "", "AI_VISIT_SUMMARY_READY", "2026-09-28T07:00:00Z", appointmentId = "a1")
+            assertThat(tap(ready)).isEqualTo(NotificationLink.ToDocuments)
+        }
+
+    @Test
+    fun `an item not in its list opens the list, and a completed task opens My Tasks`() =
+        runTest {
+            wheneverBlocking { bookings.getAppointments() } doReturn Result.success(emptyList())
+            wheneverBlocking { documents.getDocuments() } doReturn
+                Result.failure(ApiException.NetworkError(NETWORK_ERROR))
+            open()
+
+            assertThat(tap(reminder)).isEqualTo(NotificationLink.ToBookings)
+            assertThat(tap(document)).isEqualTo(NotificationLink.ToDocuments)
+            assertThat(tap(read)).isEqualTo(NotificationLink.ToTasks)
+        }
+
+    @Test
+    fun `unbuilt routes get no button`() =
+        runTest {
+            open()
+
+            val payment =
+                AppNotification(9, "", "", "CONSULTATION_PAYMENT_DUE_1H", "2026-09-28T08:00:00Z", appointmentId = "a1")
+            assertThat(tap(payment)).isNull()
+            verifyBlocking(bookings, never()) { getAppointments() }
+
+            classToTest.close()
+            assertThat(state.selected).isNull()
+        }
+
+    @Test
+    fun `mark all reads everything with the notice`() =
+        runTest {
+            open()
+
+            classToTest.read.test {
+                classToTest.markAllRead()
+                advanceUntilIdle()
+                awaitItem()
+            }
+            assertThat(state.notifications!!.all { it.isRead }).isTrue()
+            assertThat(state.notice).isEqualTo(Res.string.allNotificationsMarkedAsRead)
+        }
+
+    @Test
+    fun `a failed reload keeps the list and shows the error`() =
+        runTest {
+            open()
+            wheneverBlocking { notifications.getNotifications() } doReturn
+                Result.failure(ApiException.NetworkError(NETWORK_ERROR))
+
+            classToTest.load()
+            advanceUntilIdle()
+
+            assertThat(state.notifications).isEqualTo(all)
+            assertThat(state.error).isEqualTo(Res.string.errorNetworkConnection)
+        }
+
+    @Test
+    fun `a 401 signs out`() =
+        runTest {
+            wheneverBlocking { notifications.getNotifications() } doReturn
+                Result.failure(ApiException.Unauthorized("Unauthorized"))
+            classToTest = NotificationsViewModel(notifications, bookings, documents, tasks)
+
+            classToTest.signedOut.test {
+                advanceUntilIdle()
+                awaitItem()
+            }
+        }
+
+    @Test
+    fun `an access request message splits into its parts`() {
+        assertThat(accessRequestParts("""Dr. Aziz requested access to "MRI scan" for Ali Valiyev."""))
+            .containsExactly("Dr. Aziz", "MRI scan", "Ali Valiyev")
+            .inOrder()
+        assertThat(accessRequestParts("Something else")).isNull()
+    }
+}

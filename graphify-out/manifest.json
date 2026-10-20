@@ -1,0 +1,884 @@
+{
+  "build.gradle.kts": {
+    "mtime": 1776196095.7107036,
+    "seen": 1790497420.929885,
+    "ast_hash": "fdc8e16084ed464a0a9dacc57d75b648",
+    "semantic_hash": "fdc8e16084ed464a0a9dacc57d75b648"
+  },
+  "composeApp/build.gradle.kts": {
+    "mtime": 1790457663.241482,
+    "seen": 1790497420.929888,
+    "ast_hash": "ade7e3925d092eb5722988786fec9bac",
+    "semantic_hash": "ade7e3925d092eb5722988786fec9bac"
+  },
+  "composeApp/google-services.json": {
+    "mtime": 1790452844.2929847,
+    "seen": 1790497420.929889,
+    "ast_hash": "d81ec23f1e5c537a7d71b7a6a58dbf2e",
+    "semantic_hash": "d81ec23f1e5c537a7d71b7a6a58dbf2e"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/MainActivity.kt": {
+    "mtime": 1776196095.724121,
+    "seen": 1790497420.9298902,
+    "ast_hash": "b6500597003b60a16d93ebe2d628a774",
+    "semantic_hash": "b6500597003b60a16d93ebe2d628a774"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/Platform.android.kt": {
+    "mtime": 1776196095.724699,
+    "seen": 1790497420.929891,
+    "ast_hash": "75249708963971097e2b485eb39a3aec",
+    "semantic_hash": "75249708963971097e2b485eb39a3aec"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/data/api/HttpClient.android.kt": {
+    "mtime": 1776196095.7252712,
+    "seen": 1790497420.929892,
+    "ast_hash": "cf782c33da1ff2cdb3584b619486a772",
+    "semantic_hash": "cf782c33da1ff2cdb3584b619486a772"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/ui/widgets/ChatPreviews.kt": {
+    "mtime": 1790458863.4544997,
+    "seen": 1790497420.929892,
+    "ast_hash": "91d4d986fe1caed271879d18b8639aeb",
+    "semantic_hash": "91d4d986fe1caed271879d18b8639aeb"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/ui/widgets/DisplayPreviews.kt": {
+    "mtime": 1790458864.7919266,
+    "seen": 1790497420.929893,
+    "ast_hash": "d5a747e09b1322ee1ff2bd3a738c8e0e",
+    "semantic_hash": "d5a747e09b1322ee1ff2bd3a738c8e0e"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/ui/widgets/InputsPreviews.kt": {
+    "mtime": 1790458885.0648828,
+    "seen": 1790497420.929893,
+    "ast_hash": "97cb51971b032bd245256dde3ce3a81b",
+    "semantic_hash": "97cb51971b032bd245256dde3ce3a81b"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/ui/widgets/SectionPreviews.kt": {
+    "mtime": 1790458408.5566282,
+    "seen": 1790497420.929894,
+    "ast_hash": "bf5680090332501b7c9ac027b034b599",
+    "semantic_hash": "bf5680090332501b7c9ac027b034b599"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/ui/widgets/WidgetsPreviews.kt": {
+    "mtime": 1790458885.391482,
+    "seen": 1790497420.929895,
+    "ast_hash": "a7a9ddfbbab8a06b8205f1fca8b774a3",
+    "semantic_hash": "a7a9ddfbbab8a06b8205f1fca8b774a3"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/utils/DocumentPicker.android.kt": {
+    "mtime": 1776196095.728408,
+    "seen": 1790497420.9298959,
+    "ast_hash": "897ce5ce92adc0e3f6cb56864422083b",
+    "semantic_hash": "897ce5ce92adc0e3f6cb56864422083b"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/utils/FileSaver.android.kt": {
+    "mtime": 1776196095.7287285,
+    "seen": 1790497420.9298959,
+    "ast_hash": "3f2b02b46a88f26d16685863a4757695",
+    "semantic_hash": "3f2b02b46a88f26d16685863a4757695"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/utils/ImagePicker.android.kt": {
+    "mtime": 1776196095.729141,
+    "seen": 1790497420.929897,
+    "ast_hash": "2d8d9d676423357f58e87f9132fdb53f",
+    "semantic_hash": "2d8d9d676423357f58e87f9132fdb53f"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/utils/PlatformUtils.android.kt": {
+    "mtime": 1776196095.7294576,
+    "seen": 1790497420.929897,
+    "ast_hash": "a9e75bc4014e2bf2e2c616afd8dd1c5f",
+    "semantic_hash": "a9e75bc4014e2bf2e2c616afd8dd1c5f"
+  },
+  "composeApp/src/androidMain/kotlin/shifa/uz/utils/TimeProvider.android.kt": {
+    "mtime": 1776196095.7298024,
+    "seen": 1790497420.929898,
+    "ast_hash": "6dacbb0290bcf480c87df26237c3757e",
+    "semantic_hash": "6dacbb0290bcf480c87df26237c3757e"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaButtonsScreenshotTest.kt": {
+    "mtime": 1790457228.8099644,
+    "seen": 1790497420.929899,
+    "ast_hash": "81c81237d6bcc6a528866a55879c189e",
+    "semantic_hash": "81c81237d6bcc6a528866a55879c189e"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaCardsScreenshotTest.kt": {
+    "mtime": 1790458962.942104,
+    "seen": 1790497420.929899,
+    "ast_hash": "cf24b4f9aebce20e65d2eb26c95dcb4d",
+    "semantic_hash": "cf24b4f9aebce20e65d2eb26c95dcb4d"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaChatScreenshotTest.kt": {
+    "mtime": 1790458863.5196772,
+    "seen": 1790497420.9299,
+    "ast_hash": "3d8bf2bf6f94f33ec82b5dd837bea837",
+    "semantic_hash": "3d8bf2bf6f94f33ec82b5dd837bea837"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaChipsScreenshotTest.kt": {
+    "mtime": 1790458858.5648508,
+    "seen": 1790497420.9299,
+    "ast_hash": "ad1098e174b104c275332b45d1e27066",
+    "semantic_hash": "ad1098e174b104c275332b45d1e27066"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaDropdownScreenshotTest.kt": {
+    "mtime": 1790458858.5817928,
+    "seen": 1790497420.9299011,
+    "ast_hash": "4ab68596e519ce942605afaaef14bb65",
+    "semantic_hash": "4ab68596e519ce942605afaaef14bb65"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaImageContainerScreenshotTest.kt": {
+    "mtime": 1790458849.7014487,
+    "seen": 1790497420.929902,
+    "ast_hash": "77bc1db9c88909749cd8fe43619667a8",
+    "semantic_hash": "77bc1db9c88909749cd8fe43619667a8"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaInputFieldScreenshotTest.kt": {
+    "mtime": 1790457228.8112836,
+    "seen": 1790497420.929902,
+    "ast_hash": "50ac957581bc64359e847c130a083d09",
+    "semantic_hash": "50ac957581bc64359e847c130a083d09"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaNavBarScreenshotTest.kt": {
+    "mtime": 1790457228.8108914,
+    "seen": 1790497420.929903,
+    "ast_hash": "f07dbc5cd33d92dc7de1b35a5cb80abd",
+    "semantic_hash": "f07dbc5cd33d92dc7de1b35a5cb80abd"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaNotificationScreenshotTest.kt": {
+    "mtime": 1790458849.66461,
+    "seen": 1790497420.929903,
+    "ast_hash": "c3e4b03463b9145bd52db8d86a4fa4b6",
+    "semantic_hash": "c3e4b03463b9145bd52db8d86a4fa4b6"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaPageElementScreenshotTest.kt": {
+    "mtime": 1790458849.6903524,
+    "seen": 1790497420.9299042,
+    "ast_hash": "6a1025cee522d2e94563faafa8c4f962",
+    "semantic_hash": "6a1025cee522d2e94563faafa8c4f962"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaPageHeaderScreenshotTest.kt": {
+    "mtime": 1790457228.8104444,
+    "seen": 1790497420.929905,
+    "ast_hash": "323401d22197c1c2d15bc4e742e8a53e",
+    "semantic_hash": "323401d22197c1c2d15bc4e742e8a53e"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaPagerScreenshotTest.kt": {
+    "mtime": 1790458849.6785567,
+    "seen": 1790497420.929905,
+    "ast_hash": "8d4bdd671d9a642a19924bd45d16ffcc",
+    "semantic_hash": "8d4bdd671d9a642a19924bd45d16ffcc"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaPopUpScreenshotTest.kt": {
+    "mtime": 1790458863.542994,
+    "seen": 1790497420.929906,
+    "ast_hash": "3975821ab531551cd8383affdf1b73f5",
+    "semantic_hash": "3975821ab531551cd8383affdf1b73f5"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaSearchFieldScreenshotTest.kt": {
+    "mtime": 1790458858.5735924,
+    "seen": 1790497420.929906,
+    "ast_hash": "30119e7e316ebad206c3b1e5af3d8788",
+    "semantic_hash": "30119e7e316ebad206c3b1e5af3d8788"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaSectionScreenshotTest.kt": {
+    "mtime": 1790458408.5760825,
+    "seen": 1790497420.9299068,
+    "ast_hash": "b35ab6736b578e62926ccaeaf25164d4",
+    "semantic_hash": "b35ab6736b578e62926ccaeaf25164d4"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaSwitchScreenshotTest.kt": {
+    "mtime": 1790458858.5898936,
+    "seen": 1790497420.929908,
+    "ast_hash": "d7b5f8c50aacf818920631721d916437",
+    "semantic_hash": "d7b5f8c50aacf818920631721d916437"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaTagScreenshotTest.kt": {
+    "mtime": 1790457228.8084815,
+    "seen": 1790497420.929908,
+    "ast_hash": "8a52f13e8a97f52e73b908412362a3ed",
+    "semantic_hash": "8a52f13e8a97f52e73b908412362a3ed"
+  },
+  "composeApp/src/androidUnitTest/kotlin/shifa/uz/ui/widgets/ShifaTrayScreenshotTest.kt": {
+    "mtime": 1790458863.5311182,
+    "seen": 1790497420.929909,
+    "ast_hash": "93ee24ae6d186c7e239da11daaad25e4",
+    "semantic_hash": "93ee24ae6d186c7e239da11daaad25e4"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/App.kt": {
+    "mtime": 1790452416.3611197,
+    "seen": 1790497420.929909,
+    "ast_hash": "bf98bcd5a272316a6a4566b699999326",
+    "semantic_hash": "bf98bcd5a272316a6a4566b699999326"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/Platform.kt": {
+    "mtime": 1776196095.7514238,
+    "seen": 1790497420.92991,
+    "ast_hash": "8d1b7163129eeab65f785285cf685919",
+    "semantic_hash": "8d1b7163129eeab65f785285cf685919"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/data/api/ApiConfig.kt": {
+    "mtime": 1790452416.406986,
+    "seen": 1790497420.9299111,
+    "ast_hash": "f22f30806935b05bda8a3f9680854fef",
+    "semantic_hash": "f22f30806935b05bda8a3f9680854fef"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/data/api/ApiHelper.kt": {
+    "mtime": 1776196095.7521503,
+    "seen": 1790497420.9299111,
+    "ast_hash": "d0a8d12ee0669980e5e2e9bcc662d888",
+    "semantic_hash": "d0a8d12ee0669980e5e2e9bcc662d888"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/data/api/HttpClient.kt": {
+    "mtime": 1776196095.7524197,
+    "seen": 1790497420.929912,
+    "ast_hash": "d55745ddc8bfebf226061c5f450eb4c3",
+    "semantic_hash": "d55745ddc8bfebf226061c5f450eb4c3"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/data/model/ApiError.kt": {
+    "mtime": 1776196095.7538767,
+    "seen": 1790497420.929912,
+    "ast_hash": "5c12912398f7f7c28ec990b269b396db",
+    "semantic_hash": "5c12912398f7f7c28ec990b269b396db"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/data/model/AuthModels.kt": {
+    "mtime": 1790452416.3767896,
+    "seen": 1790497420.929913,
+    "ast_hash": "e79ed7a023f5f7574b75406d090191f8",
+    "semantic_hash": "e79ed7a023f5f7574b75406d090191f8"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/data/storage/TokenStorage.kt": {
+    "mtime": 1790452416.3933535,
+    "seen": 1790497420.929913,
+    "ast_hash": "094c00a6fdfe062c41304501086bd922",
+    "semantic_hash": "094c00a6fdfe062c41304501086bd922"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/navigation/ShifaNavBar.kt": {
+    "mtime": 1790458273.0366058,
+    "seen": 1790497420.929914,
+    "ast_hash": "5bf200562df83eff99710a4acfc0115d",
+    "semantic_hash": "5bf200562df83eff99710a4acfc0115d"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/theme/Color.kt": {
+    "mtime": 1790455011.5555153,
+    "seen": 1790497420.929915,
+    "ast_hash": "262524701c7f777f1d4f82509efbdadb",
+    "semantic_hash": "262524701c7f777f1d4f82509efbdadb"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/theme/Dimens.kt": {
+    "mtime": 1790458865.086192,
+    "seen": 1790497420.929915,
+    "ast_hash": "0952cf973e7a40d96db6385a7958b63e",
+    "semantic_hash": "0952cf973e7a40d96db6385a7958b63e"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/theme/Theme.kt": {
+    "mtime": 1790455039.9799545,
+    "seen": 1790497420.929916,
+    "ast_hash": "7d1d380edc7eb0dfa020f7b65881f747",
+    "semantic_hash": "7d1d380edc7eb0dfa020f7b65881f747"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/theme/Typography.kt": {
+    "mtime": 1790458878.9782844,
+    "seen": 1790497420.929916,
+    "ast_hash": "32392ef656b634b2f64e34cdc94d309f",
+    "semantic_hash": "32392ef656b634b2f64e34cdc94d309f"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaButtons.kt": {
+    "mtime": 1790458273.3574023,
+    "seen": 1790497420.9299169,
+    "ast_hash": "a16abe475675ab8be3a26a58234a4d75",
+    "semantic_hash": "a16abe475675ab8be3a26a58234a4d75"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaCards.kt": {
+    "mtime": 1790459074.6380882,
+    "seen": 1790497420.929918,
+    "ast_hash": "e649cbc37ff83787ca1eaf8a21ec31fc",
+    "semantic_hash": "e649cbc37ff83787ca1eaf8a21ec31fc"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaChat.kt": {
+    "mtime": 1790459074.6385837,
+    "seen": 1790497420.929918,
+    "ast_hash": "652e1256b5d3557ec101969c423e1ae6",
+    "semantic_hash": "652e1256b5d3557ec101969c423e1ae6"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaChips.kt": {
+    "mtime": 1790458839.1621344,
+    "seen": 1790497420.929919,
+    "ast_hash": "5460158155e4af49a0646418c99522e3",
+    "semantic_hash": "5460158155e4af49a0646418c99522e3"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaDropdown.kt": {
+    "mtime": 1790458839.1746047,
+    "seen": 1790497420.929919,
+    "ast_hash": "5c3c2fedafe2eecabeea3877a9f59a89",
+    "semantic_hash": "5c3c2fedafe2eecabeea3877a9f59a89"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaImageContainer.kt": {
+    "mtime": 1790458827.6975236,
+    "seen": 1790497420.92992,
+    "ast_hash": "ee883caf4c52c3a534e1a2ff33912ea9",
+    "semantic_hash": "ee883caf4c52c3a534e1a2ff33912ea9"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaInputField.kt": {
+    "mtime": 1790459074.6374424,
+    "seen": 1790497420.929921,
+    "ast_hash": "39f9b8c2797c7f128e3c219aaaa69e21",
+    "semantic_hash": "39f9b8c2797c7f128e3c219aaaa69e21"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaNotification.kt": {
+    "mtime": 1790458865.6969635,
+    "seen": 1790497420.929921,
+    "ast_hash": "920575fd2c2d35b67574a724424ffb9e",
+    "semantic_hash": "920575fd2c2d35b67574a724424ffb9e"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaPageElement.kt": {
+    "mtime": 1790458875.1511683,
+    "seen": 1790497420.929922,
+    "ast_hash": "03a3814f79970bb403978fb52322ad8c",
+    "semantic_hash": "03a3814f79970bb403978fb52322ad8c"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaPageHeader.kt": {
+    "mtime": 1790458273.8570728,
+    "seen": 1790497420.929922,
+    "ast_hash": "86c627dcda2c2abbdb8d5b0a7f1f2b20",
+    "semantic_hash": "86c627dcda2c2abbdb8d5b0a7f1f2b20"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaPager.kt": {
+    "mtime": 1790458827.6840189,
+    "seen": 1790497420.929923,
+    "ast_hash": "6af2573ba93eb9d3391dd494bf3c1e83",
+    "semantic_hash": "6af2573ba93eb9d3391dd494bf3c1e83"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaPopUp.kt": {
+    "mtime": 1790458846.305425,
+    "seen": 1790497420.929924,
+    "ast_hash": "7e3f421842b01a176c80953a3dcf6fc7",
+    "semantic_hash": "7e3f421842b01a176c80953a3dcf6fc7"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaSearchField.kt": {
+    "mtime": 1790458839.168807,
+    "seen": 1790497420.929924,
+    "ast_hash": "b9809b5ac76a543b0e71677eafdbe982",
+    "semantic_hash": "b9809b5ac76a543b0e71677eafdbe982"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaSection.kt": {
+    "mtime": 1790458865.8559258,
+    "seen": 1790497420.9299252,
+    "ast_hash": "0e4357368223ec7edec667a026123438",
+    "semantic_hash": "0e4357368223ec7edec667a026123438"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaSwitch.kt": {
+    "mtime": 1790459148.7501123,
+    "seen": 1790497420.9299252,
+    "ast_hash": "cffedee7357eee086d2d469faa93cb96",
+    "semantic_hash": "cffedee7357eee086d2d469faa93cb96"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaTag.kt": {
+    "mtime": 1790458171.0431073,
+    "seen": 1790497420.929926,
+    "ast_hash": "b66944cd8bf5ecec37e4e6557004d13d",
+    "semantic_hash": "b66944cd8bf5ecec37e4e6557004d13d"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/ui/widgets/ShifaTray.kt": {
+    "mtime": 1790458865.9318814,
+    "seen": 1790497420.929926,
+    "ast_hash": "aef6bcc74c2e131917d1d70f111bb8cf",
+    "semantic_hash": "aef6bcc74c2e131917d1d70f111bb8cf"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/utils/DocumentPicker.kt": {
+    "mtime": 1776196095.7693353,
+    "seen": 1790497420.9299269,
+    "ast_hash": "bfd2c6ac0027e5717b4e502b0f201647",
+    "semantic_hash": "bfd2c6ac0027e5717b4e502b0f201647"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/utils/FileSaver.kt": {
+    "mtime": 1776196095.769595,
+    "seen": 1790497420.9299278,
+    "ast_hash": "0b41c7c7fbbd1429a11e7f7eb5056da5",
+    "semantic_hash": "0b41c7c7fbbd1429a11e7f7eb5056da5"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/utils/ImagePicker.kt": {
+    "mtime": 1776196095.7698634,
+    "seen": 1790497420.9299278,
+    "ast_hash": "813ae2f3555cc588e7c82cd351d4ca56",
+    "semantic_hash": "813ae2f3555cc588e7c82cd351d4ca56"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/utils/PlatformUtils.kt": {
+    "mtime": 1776196095.7701213,
+    "seen": 1790497420.929929,
+    "ast_hash": "6456ee281705eac8d31039d51f986ac4",
+    "semantic_hash": "6456ee281705eac8d31039d51f986ac4"
+  },
+  "composeApp/src/commonMain/kotlin/shifa/uz/utils/TimeProvider.kt": {
+    "mtime": 1776196095.770421,
+    "seen": 1790497420.929929,
+    "ast_hash": "90b93e3ad677ab0e61cc64151ea601ab",
+    "semantic_hash": "90b93e3ad677ab0e61cc64151ea601ab"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/MainViewController.kt": {
+    "mtime": 1776196095.771056,
+    "seen": 1790497420.92993,
+    "ast_hash": "0d00fded69d89ec6bd4b5d505fbb5b1b",
+    "semantic_hash": "0d00fded69d89ec6bd4b5d505fbb5b1b"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/Platform.ios.kt": {
+    "mtime": 1776196095.7716343,
+    "seen": 1790497420.92993,
+    "ast_hash": "c6066dfd3b109874b048a8d7a2e6b39b",
+    "semantic_hash": "c6066dfd3b109874b048a8d7a2e6b39b"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/data/api/HttpClient.ios.kt": {
+    "mtime": 1776196095.772132,
+    "seen": 1790497420.929931,
+    "ast_hash": "be121ddeaf411f06adfaa39d3c6ba0cf",
+    "semantic_hash": "be121ddeaf411f06adfaa39d3c6ba0cf"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/utils/DocumentPicker.ios.kt": {
+    "mtime": 1776196095.772496,
+    "seen": 1790497420.929932,
+    "ast_hash": "9f8081fb024f7672009c026f47c27468",
+    "semantic_hash": "9f8081fb024f7672009c026f47c27468"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/utils/FileSaver.ios.kt": {
+    "mtime": 1776196095.7727735,
+    "seen": 1790497420.929932,
+    "ast_hash": "5e791f408df9546865467485042c6059",
+    "semantic_hash": "5e791f408df9546865467485042c6059"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/utils/ImagePicker.ios.kt": {
+    "mtime": 1776196095.7730522,
+    "seen": 1790497420.929933,
+    "ast_hash": "baef7a47e9d96a9f1c78d0b665f0d2cd",
+    "semantic_hash": "baef7a47e9d96a9f1c78d0b665f0d2cd"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/utils/PlatformUtils.ios.kt": {
+    "mtime": 1776196095.7732904,
+    "seen": 1790497420.929933,
+    "ast_hash": "2ee245e7f31cb9878e56bac97d7e5a5f",
+    "semantic_hash": "2ee245e7f31cb9878e56bac97d7e5a5f"
+  },
+  "composeApp/src/iosMain/kotlin/shifa/uz/utils/TimeProvider.ios.kt": {
+    "mtime": 1776196095.7735643,
+    "seen": 1790497420.929934,
+    "ast_hash": "b050fd2b6b0386e6161bb83d344535d9",
+    "semantic_hash": "b050fd2b6b0386e6161bb83d344535d9"
+  },
+  "docs/kmp-spec/strings/de.json": {
+    "mtime": 1790452188.4915466,
+    "seen": 1790497420.9299352,
+    "ast_hash": "824e60866c4956779aaebcf4d550e1d5",
+    "semantic_hash": "824e60866c4956779aaebcf4d550e1d5"
+  },
+  "docs/kmp-spec/strings/en.json": {
+    "mtime": 1790452188.49057,
+    "seen": 1790497420.9299352,
+    "ast_hash": "130e2ecb5ad200fd8d9f06a5fd292027",
+    "semantic_hash": "130e2ecb5ad200fd8d9f06a5fd292027"
+  },
+  "docs/kmp-spec/strings/ru.json": {
+    "mtime": 1790452188.4937515,
+    "seen": 1790497420.929936,
+    "ast_hash": "d3346a505e80cad909c8578e8c31bac4",
+    "semantic_hash": "d3346a505e80cad909c8578e8c31bac4"
+  },
+  "docs/kmp-spec/strings/uz.json": {
+    "mtime": 1790452188.4926364,
+    "seen": 1790497420.929936,
+    "ast_hash": "7c7c2d62d5ad5a1734bb01bea160d625",
+    "semantic_hash": "7c7c2d62d5ad5a1734bb01bea160d625"
+  },
+  "gradlew": {
+    "mtime": 1768320434.5890558,
+    "seen": 1790497420.929937,
+    "ast_hash": "794669d78aef1dd5c7d889ef618b311a",
+    "semantic_hash": "794669d78aef1dd5c7d889ef618b311a"
+  },
+  "iosApp/iosApp/Assets.xcassets/AccentColor.colorset/Contents.json": {
+    "mtime": 1768320434.5935178,
+    "seen": 1790497420.9299378,
+    "ast_hash": "55019f7265dde0a78318b0807f98e847",
+    "semantic_hash": "55019f7265dde0a78318b0807f98e847"
+  },
+  "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+    "mtime": 1768320434.594983,
+    "seen": 1790497420.9299378,
+    "ast_hash": "e8a75a6f667950ac337a5a0c1281e516",
+    "semantic_hash": "e8a75a6f667950ac337a5a0c1281e516"
+  },
+  "iosApp/iosApp/Assets.xcassets/Contents.json": {
+    "mtime": 1768320434.597554,
+    "seen": 1790497420.929939,
+    "ast_hash": "9deb2ada1cc834bbebf8bbad9c8978a1",
+    "semantic_hash": "9deb2ada1cc834bbebf8bbad9c8978a1"
+  },
+  "iosApp/iosApp/Assets.xcassets/LaunchLogo.imageset/Contents.json": {
+    "mtime": 1776196095.7794597,
+    "seen": 1790497420.929939,
+    "ast_hash": "119aafda5b304d42f7e8600fea7a6afd",
+    "semantic_hash": "119aafda5b304d42f7e8600fea7a6afd"
+  },
+  "iosApp/iosApp/ContentView.swift": {
+    "mtime": 1776196095.780445,
+    "seen": 1790497420.9299462,
+    "ast_hash": "662c0821a18c0eba8817964aade741be",
+    "semantic_hash": "662c0821a18c0eba8817964aade741be"
+  },
+  "iosApp/iosApp/Preview Content/Preview Assets.xcassets/Contents.json": {
+    "mtime": 1768320434.5999238,
+    "seen": 1790497420.9299462,
+    "ast_hash": "9deb2ada1cc834bbebf8bbad9c8978a1",
+    "semantic_hash": "9deb2ada1cc834bbebf8bbad9c8978a1"
+  },
+  "iosApp/iosApp/iOSApp.swift": {
+    "mtime": 1768320434.6005404,
+    "seen": 1790497420.929947,
+    "ast_hash": "f6a01e7c9aa7a979c4ef926df57fe088",
+    "semantic_hash": "f6a01e7c9aa7a979c4ef926df57fe088"
+  },
+  "settings.gradle.kts": {
+    "mtime": 1768320434.6013706,
+    "seen": 1790497420.9299479,
+    "ast_hash": "04a1fc9805d87fd287dd9308ccb434cb",
+    "semantic_hash": "04a1fc9805d87fd287dd9308ccb434cb"
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1790453396.105249,
+    "seen": 1790497420.9299479,
+    "ast_hash": "9895ff4416472e615dc7ea1cb1ac767c",
+    "semantic_hash": "9895ff4416472e615dc7ea1cb1ac767c"
+  },
+  ".github/workflows/google_play_deploy.yml": {
+    "mtime": 1790453396.1178784,
+    "seen": 1790497420.929949,
+    "ast_hash": "eac459a65c88febaa8ccdd0d90de9b84",
+    "semantic_hash": "eac459a65c88febaa8ccdd0d90de9b84"
+  },
+  ".github/workflows/ios_testflight.yml": {
+    "mtime": 1790453396.128242,
+    "seen": 1790497420.929949,
+    "ast_hash": "1938d28245b9ff86504b9db7800f9e0a",
+    "semantic_hash": "1938d28245b9ff86504b9db7800f9e0a"
+  },
+  "CLAUDE.md": {
+    "mtime": 1790495994.4281204,
+    "seen": 1790497420.92995,
+    "ast_hash": "41cfefc1900264353f62cd329f8e66ec",
+    "semantic_hash": "41cfefc1900264353f62cd329f8e66ec"
+  },
+  "README.md": {
+    "mtime": 1790452442.143117,
+    "seen": 1790497420.929951,
+    "ast_hash": "e06d13d67073199375486fa41d36baf6",
+    "semantic_hash": "e06d13d67073199375486fa41d36baf6"
+  },
+  "docs/implemented/README.md": {
+    "mtime": 1790495842.3990848,
+    "seen": 1790497420.929951,
+    "ast_hash": "c91a5c0c9046080d4e5d3ac86177c766",
+    "semantic_hash": "c91a5c0c9046080d4e5d3ac86177c766"
+  },
+  "docs/implemented/design-system.md": {
+    "mtime": 1790495842.4123626,
+    "seen": 1790497420.929952,
+    "ast_hash": "9cba921f187ea1ac5758fba9943b20d5",
+    "semantic_hash": "9cba921f187ea1ac5758fba9943b20d5"
+  },
+  "docs/kmp-spec/00-README.md": {
+    "mtime": 1790453411.1745834,
+    "seen": 1790497420.929952,
+    "ast_hash": "e285f14f529fe09b72fba2e741bcc721",
+    "semantic_hash": "e285f14f529fe09b72fba2e741bcc721"
+  },
+  "docs/kmp-spec/01-architecture-and-core.md": {
+    "mtime": 1790453040.275466,
+    "seen": 1790497420.929953,
+    "ast_hash": "f337b06cfe7e33c5b365848e8ac63e03",
+    "semantic_hash": "f337b06cfe7e33c5b365848e8ac63e03"
+  },
+  "docs/kmp-spec/02-navigation-and-shell.md": {
+    "mtime": 1790452769.9369218,
+    "seen": 1790497420.929953,
+    "ast_hash": "4d8853462a1437e94ed12c02171a80db",
+    "semantic_hash": "4d8853462a1437e94ed12c02171a80db"
+  },
+  "docs/kmp-spec/03-app-lock.md": {
+    "mtime": 1790452970.9286861,
+    "seen": 1790497420.929954,
+    "ast_hash": "463e7d2dd214cc7c6b75e74f20632b2f",
+    "semantic_hash": "463e7d2dd214cc7c6b75e74f20632b2f"
+  },
+  "docs/kmp-spec/04-design-system-and-ui-kit.md": {
+    "mtime": 1790453295.562771,
+    "seen": 1790497420.929954,
+    "ast_hash": "ee55ef6f47e5e79cedc203e8a8346d9b",
+    "semantic_hash": "ee55ef6f47e5e79cedc203e8a8346d9b"
+  },
+  "docs/kmp-spec/05-auth.md": {
+    "mtime": 1790452586.2385094,
+    "seen": 1790497420.929955,
+    "ast_hash": "30fcc616a561681c10114ce465ca0fd5",
+    "semantic_hash": "30fcc616a561681c10114ce465ca0fd5"
+  },
+  "docs/kmp-spec/06-bookings-payments-video.md": {
+    "mtime": 1790452706.0496845,
+    "seen": 1790497420.9299562,
+    "ast_hash": "cb2d028526032ae2e1abbe9108fe560f",
+    "semantic_hash": "cb2d028526032ae2e1abbe9108fe560f"
+  },
+  "docs/kmp-spec/07-doctors.md": {
+    "mtime": 1790452788.5442152,
+    "seen": 1790497420.9299562,
+    "ast_hash": "3d32c004eec677dd2d50f6077006056c",
+    "semantic_hash": "3d32c004eec677dd2d50f6077006056c"
+  },
+  "docs/kmp-spec/08-chat.md": {
+    "mtime": 1790452753.7264194,
+    "seen": 1790497420.9299572,
+    "ast_hash": "32226883726e8aa6e82b7933cf505bee",
+    "semantic_hash": "32226883726e8aa6e82b7933cf505bee"
+  },
+  "docs/kmp-spec/09-shifa-ai-copilot.md": {
+    "mtime": 1790453022.6435032,
+    "seen": 1790497420.9299579,
+    "ast_hash": "d5a22161861702720568c4ab3e647964",
+    "semantic_hash": "d5a22161861702720568c4ab3e647964"
+  },
+  "docs/kmp-spec/10-home.md": {
+    "mtime": 1790452517.0191934,
+    "seen": 1790497420.9299579,
+    "ast_hash": "022e2dace178c509ed6ca635439d1097",
+    "semantic_hash": "022e2dace178c509ed6ca635439d1097"
+  },
+  "docs/kmp-spec/11-documents.md": {
+    "mtime": 1790452842.3001895,
+    "seen": 1790497420.9299588,
+    "ast_hash": "03f007a74ea2cc6f56575c1f6c15d1bb",
+    "semantic_hash": "03f007a74ea2cc6f56575c1f6c15d1bb"
+  },
+  "docs/kmp-spec/12-tasks.md": {
+    "mtime": 1790452993.302182,
+    "seen": 1790497420.9299588,
+    "ast_hash": "506157857a5987bfacc80ef99d4ee461",
+    "semantic_hash": "506157857a5987bfacc80ef99d4ee461"
+  },
+  "docs/kmp-spec/13-notifications.md": {
+    "mtime": 1790452793.1665516,
+    "seen": 1790497420.92996,
+    "ast_hash": "f77d191fe9d6fd7ec1e6389c9f9e0648",
+    "semantic_hash": "f77d191fe9d6fd7ec1e6389c9f9e0648"
+  },
+  "docs/kmp-spec/14-profile-and-account.md": {
+    "mtime": 1790453177.720737,
+    "seen": 1790497420.929961,
+    "ast_hash": "4f6823e6994b9d82db8b3da9190a5998",
+    "semantic_hash": "4f6823e6994b9d82db8b3da9190a5998"
+  },
+  "docs/kmp-spec/15-api-reference.md": {
+    "mtime": 1790453146.667667,
+    "seen": 1790497420.929961,
+    "ast_hash": "1c255cf12d583bac63298d4bd1978f79",
+    "semantic_hash": "1c255cf12d583bac63298d4bd1978f79"
+  },
+  "docs/kmp-spec/16-implementation-plan.md": {
+    "mtime": 1790455262.1194422,
+    "seen": 1790497420.929962,
+    "ast_hash": "e11d34c1bc2c50fef217bfe716006213",
+    "semantic_hash": "e11d34c1bc2c50fef217bfe716006213"
+  },
+  "docs/kmp-spec/strings/README.md": {
+    "mtime": 1790453068.0697138,
+    "seen": 1790497420.929962,
+    "ast_hash": "908e0a314e24015b7c0b58484f66add3",
+    "semantic_hash": "908e0a314e24015b7c0b58484f66add3"
+  },
+  "composeApp/screenshots/ShifaButtons_all_states.png": {
+    "mtime": 1790459158.178493,
+    "seen": 1790497420.929963,
+    "ast_hash": "c1fa39438a8144a70b36d04e81bc2cf8",
+    "semantic_hash": "c1fa39438a8144a70b36d04e81bc2cf8"
+  },
+  "composeApp/screenshots/ShifaCards_all_cards.png": {
+    "mtime": 1790459158.6283581,
+    "seen": 1790497420.929963,
+    "ast_hash": "59ee66b61b834fc99ae09bf80a7c3632",
+    "semantic_hash": "59ee66b61b834fc99ae09bf80a7c3632"
+  },
+  "composeApp/screenshots/ShifaChat_chat_bar.png": {
+    "mtime": 1790459158.695833,
+    "seen": 1790497420.929964,
+    "ast_hash": "2609ed02f6c020000ac439db40ff2eec",
+    "semantic_hash": "2609ed02f6c020000ac439db40ff2eec"
+  },
+  "composeApp/screenshots/ShifaChat_chat_bubble.png": {
+    "mtime": 1790459158.7544758,
+    "seen": 1790497420.929965,
+    "ast_hash": "f27783695a4bcb8d7321b131f504f968",
+    "semantic_hash": "f27783695a4bcb8d7321b131f504f968"
+  },
+  "composeApp/screenshots/ShifaChips_all_states.png": {
+    "mtime": 1790459158.8308847,
+    "seen": 1790497420.929965,
+    "ast_hash": "64247987fc456de980e64adbd2887300",
+    "semantic_hash": "64247987fc456de980e64adbd2887300"
+  },
+  "composeApp/screenshots/ShifaDropdown_all_states.png": {
+    "mtime": 1790459158.919776,
+    "seen": 1790497420.929966,
+    "ast_hash": "617bcaf6cc72a809d4902cebcb5b2051",
+    "semantic_hash": "617bcaf6cc72a809d4902cebcb5b2051"
+  },
+  "composeApp/screenshots/ShifaImageContainer_empty.png": {
+    "mtime": 1790459158.9732327,
+    "seen": 1790497420.9299672,
+    "ast_hash": "e8cfcb5140fbe9e30e95d3cb54ed2081",
+    "semantic_hash": "e8cfcb5140fbe9e30e95d3cb54ed2081"
+  },
+  "composeApp/screenshots/ShifaInputField_all_states.png": {
+    "mtime": 1790459159.0475798,
+    "seen": 1790497420.9299672,
+    "ast_hash": "e4fc005aef73e8848cb9d79accf3ceaf",
+    "semantic_hash": "e4fc005aef73e8848cb9d79accf3ceaf"
+  },
+  "composeApp/screenshots/ShifaNavBar_each_tab_selected.png": {
+    "mtime": 1790459159.1665792,
+    "seen": 1790497420.929968,
+    "ast_hash": "7149df4f4632a543341c0a5af78bb870",
+    "semantic_hash": "7149df4f4632a543341c0a5af78bb870"
+  },
+  "composeApp/screenshots/ShifaNotification_all_types.png": {
+    "mtime": 1790459159.2534182,
+    "seen": 1790497420.929968,
+    "ast_hash": "36d5488c5deb6f23d0d16e90df6f2094",
+    "semantic_hash": "36d5488c5deb6f23d0d16e90df6f2094"
+  },
+  "composeApp/screenshots/ShifaPageElement_all_types.png": {
+    "mtime": 1790459159.31896,
+    "seen": 1790497420.9299688,
+    "ast_hash": "ce9d6b982d1dcd8de638cb518d00695c",
+    "semantic_hash": "ce9d6b982d1dcd8de638cb518d00695c"
+  },
+  "composeApp/screenshots/ShifaPageHeader_all_variants.png": {
+    "mtime": 1790459159.3714852,
+    "seen": 1790497420.9299688,
+    "ast_hash": "7e8b0387718f4b5917ae426a8f2d4c23",
+    "semantic_hash": "7e8b0387718f4b5917ae426a8f2d4c23"
+  },
+  "composeApp/screenshots/ShifaPager_all_pages.png": {
+    "mtime": 1790459159.415131,
+    "seen": 1790497420.92997,
+    "ast_hash": "dbff92148a7a3ea5518a7b08b6223f47",
+    "semantic_hash": "dbff92148a7a3ea5518a7b08b6223f47"
+  },
+  "composeApp/screenshots/ShifaPopUp_default.png": {
+    "mtime": 1790459159.4806013,
+    "seen": 1790497420.929971,
+    "ast_hash": "5369b4b0a178d1b6192968ccdc1be782",
+    "semantic_hash": "5369b4b0a178d1b6192968ccdc1be782"
+  },
+  "composeApp/screenshots/ShifaSearchField_all_states.png": {
+    "mtime": 1790459159.5431678,
+    "seen": 1790497420.929971,
+    "ast_hash": "9d519b127b85acc044bd24001c83c583",
+    "semantic_hash": "9d519b127b85acc044bd24001c83c583"
+  },
+  "composeApp/screenshots/ShifaSection_all_types.png": {
+    "mtime": 1790459159.6224508,
+    "seen": 1790497420.929972,
+    "ast_hash": "11c0d0b9b731afb72b7c3c52c8a45b74",
+    "semantic_hash": "11c0d0b9b731afb72b7c3c52c8a45b74"
+  },
+  "composeApp/screenshots/ShifaSwitch_all_states.png": {
+    "mtime": 1790459159.6647148,
+    "seen": 1790497420.929972,
+    "ast_hash": "4eb1767cdee5cc9ac32a9a1bd5c72835",
+    "semantic_hash": "4eb1767cdee5cc9ac32a9a1bd5c72835"
+  },
+  "composeApp/screenshots/ShifaTag_all_types.png": {
+    "mtime": 1790459159.696354,
+    "seen": 1790497420.929973,
+    "ast_hash": "bf176d40c6a8de2ab4cece6b2de1b801",
+    "semantic_hash": "bf176d40c6a8de2ab4cece6b2de1b801"
+  },
+  "composeApp/screenshots/ShifaTray_all_types.png": {
+    "mtime": 1790459159.8151243,
+    "seen": 1790497420.929974,
+    "ast_hash": "6ede13cab5408b9034fdcbe30920fae1",
+    "semantic_hash": "6ede13cab5408b9034fdcbe30920fae1"
+  },
+  "composeApp/src/androidMain/ic_launcher-playstore.png": {
+    "mtime": 1776196095.7234087,
+    "seen": 1790497420.929974,
+    "ast_hash": "4901c9e1c4c5909e88f83fa77e6d352d",
+    "semantic_hash": "4901c9e1c4c5909e88f83fa77e6d352d"
+  },
+  "composeApp/src/androidMain/res/mipmap-hdpi/ic_launcher.webp": {
+    "mtime": 1776196095.733361,
+    "seen": 1790497420.929975,
+    "ast_hash": "aa470bdf3a6dce5da8989203365ac6fc",
+    "semantic_hash": "aa470bdf3a6dce5da8989203365ac6fc"
+  },
+  "composeApp/src/androidMain/res/mipmap-hdpi/ic_launcher_round.webp": {
+    "mtime": 1776196095.7336473,
+    "seen": 1790497420.929975,
+    "ast_hash": "d05e3332132b09facd273208b9faf2db",
+    "semantic_hash": "d05e3332132b09facd273208b9faf2db"
+  },
+  "composeApp/src/androidMain/res/mipmap-mdpi/ic_launcher.webp": {
+    "mtime": 1776196095.7341983,
+    "seen": 1790497420.929976,
+    "ast_hash": "59b15e4e15e9bb2c8da55a58dfb29064",
+    "semantic_hash": "59b15e4e15e9bb2c8da55a58dfb29064"
+  },
+  "composeApp/src/androidMain/res/mipmap-mdpi/ic_launcher_round.webp": {
+    "mtime": 1776196095.7345247,
+    "seen": 1790497420.9299772,
+    "ast_hash": "3149cb5abce199ec73bd264313404e3b",
+    "semantic_hash": "3149cb5abce199ec73bd264313404e3b"
+  },
+  "composeApp/src/androidMain/res/mipmap-xhdpi/ic_launcher.webp": {
+    "mtime": 1776196095.7364569,
+    "seen": 1790497420.9299772,
+    "ast_hash": "e05d6c532fddf9ffc62abd3c8917ea84",
+    "semantic_hash": "e05d6c532fddf9ffc62abd3c8917ea84"
+  },
+  "composeApp/src/androidMain/res/mipmap-xhdpi/ic_launcher_round.webp": {
+    "mtime": 1776196095.7377121,
+    "seen": 1790497420.9299781,
+    "ast_hash": "5905f3b824fe97f5dac3f4ec66ee61ac",
+    "semantic_hash": "5905f3b824fe97f5dac3f4ec66ee61ac"
+  },
+  "composeApp/src/androidMain/res/mipmap-xxhdpi/ic_launcher.webp": {
+    "mtime": 1776196095.7389977,
+    "seen": 1790497420.9299781,
+    "ast_hash": "5cf99019142f46fa26535513976d14c9",
+    "semantic_hash": "5cf99019142f46fa26535513976d14c9"
+  },
+  "composeApp/src/androidMain/res/mipmap-xxhdpi/ic_launcher_round.webp": {
+    "mtime": 1776196095.7394798,
+    "seen": 1790497420.9299788,
+    "ast_hash": "b037bae03d143455ec1ed5b339793ca4",
+    "semantic_hash": "b037bae03d143455ec1ed5b339793ca4"
+  },
+  "composeApp/src/androidMain/res/mipmap-xxxhdpi/ic_launcher.webp": {
+    "mtime": 1776196095.7403,
+    "seen": 1790497420.9299798,
+    "ast_hash": "71165ba9ee7e6480c09ea7b6136a9c0b",
+    "semantic_hash": "71165ba9ee7e6480c09ea7b6136a9c0b"
+  },
+  "composeApp/src/androidMain/res/mipmap-xxxhdpi/ic_launcher_round.webp": {
+    "mtime": 1776196095.7406526,
+    "seen": 1790497420.9299798,
+    "ast_hash": "c80b502fa4b8a20643b8cfd97709325c",
+    "semantic_hash": "c80b502fa4b8a20643b8cfd97709325c"
+  },
+  "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/app-icon-1024.png": {
+    "mtime": 1776196095.7790554,
+    "seen": 1790497420.929981,
+    "ast_hash": "34e92f21d205851a43423be9329fd2dc",
+    "semantic_hash": "34e92f21d205851a43423be9329fd2dc"
+  },
+  "iosApp/iosApp/Assets.xcassets/LaunchLogo.imageset/logo.svg": {
+    "mtime": 1776196095.7797656,
+    "seen": 1790497420.929981,
+    "ast_hash": "d1907e0c00c710c6ff2bfd2c4b753344",
+    "semantic_hash": "d1907e0c00c710c6ff2bfd2c4b753344"
+  }
+}
