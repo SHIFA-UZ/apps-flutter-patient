@@ -11,8 +11,9 @@ This repo is a template. API and UI come from new specs / Figma — the tech sta
 
 ## Git
 
-- Remote: `SHIFA-UZ/apps-flutter-patient` (the Flutter app lives on `main`). This KMP rewrite lives on branch `shifa2.0`, branched from `main`.
-- Commit all work to `shifa2.0`. Never merge, rebase or open a PR into `main`, and never push to `main`, until the user says the rewrite is done.
+- Remote: `SHIFA-UZ/apps-flutter-patient`. The KMP app replaced the Flutter app on `main` (v1.2.0, `shifa2.0` merged).
+- New features go on branch `shifa3.0`. Never push to `main` directly or merge into it unless the user asks; changes reach `main` through a pull request.
+- Never commit `iosApp/iosApp.xcodeproj/xcshareddata/xcschemes/iosApp.xcscheme`: the IDE rewrites it locally and drops the Archive action TestFlight builds need.
 - Never commit or push on your own. Show the user the finished work (what changed, screenshots, test results), and only commit and push once they approve.
 - Commits are authored by the user only, with the repo's git identity (`git config user.name` / `user.email`). Never add `Co-Authored-By`, "Generated with" or any other Claude or agent attribution to commit messages or PR descriptions, and never set Claude or an agent as the author or committer.
 
