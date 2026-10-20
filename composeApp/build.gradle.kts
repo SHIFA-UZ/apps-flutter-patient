@@ -98,9 +98,14 @@ kotlin {
     }
 }
 
-val versionMajor = 1
-val versionMinor = 0
-val versionPatch = 0
+// The one version for both apps: MARKETING_VERSION in iosApp/Configuration/Config.xcconfig.
+val appVersionName =
+    rootProject
+        .file("iosApp/Configuration/Config.xcconfig")
+        .readLines()
+        .first { it.startsWith("MARKETING_VERSION=") }
+        .substringAfter("=")
+        .trim()
 
 val versionBuild =
     if (project.hasProperty("versionBuild")) {
@@ -109,7 +114,6 @@ val versionBuild =
         System.getenv("VERSION_BUILD_NUMBER")?.toIntOrNull() ?: 1
     }
 
-val appVersionName = "$versionMajor.$versionMinor.$versionPatch"
 val appVersionCode = versionBuild
 
 println("Building Shifa v$appVersionName (Build $appVersionCode)")

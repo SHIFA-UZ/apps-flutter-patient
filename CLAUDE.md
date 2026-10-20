@@ -80,5 +80,5 @@ iosApp/                     # Xcode host app
 - `ci.yml`: ktlint, unit tests, Roborazzi verify.
 - `google_play_deploy.yml`: signed `bundleRelease` → Play production (`com.shifa.patientapp`). Signing via root `keystore.properties` written by CI (gitignored); versionCode = `VERSION_CODE_OFFSET + run_number`.
 - `ios_testflight.yml`: fastlane `beta` lane in `iosApp/fastlane` → TestFlight (`uz.shifa.patient`, team `NH97PGA9PT`). Build number = `BUILD_NUMBER_OFFSET + run_number`; version from `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig`.
-- Version name lives in two places: `versionMajor/Minor/Patch` in `composeApp/build.gradle.kts` and `MARKETING_VERSION` in `Config.xcconfig` — bump both.
+- Version name lives in one place: `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig`; `composeApp/build.gradle.kts` reads it for Android's `versionName`.
 - Secrets (same as Flutter repo): `FIREBASE_ANDROID_CONFIG_BASE64`, `FIREBASE_IOS_CONFIG_BASE64`, `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `GOOGLE_PLAY_SERVICE_ACCOUNT_BASE64`, `IOS_CERTIFICATE_P12_BASE64`, `IOS_CERTIFICATE_PASSWORD`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_API_KEY_P8`.
