@@ -32,6 +32,8 @@ internal fun ChatBubblePreview() =
         ShifaChatBubble("chat message", ShifaChatBubbleType.Sent)
         ShifaChatBubble("chat message", ShifaChatBubbleType.ShifaAi)
         ShifaChatImageBubble { Box(Modifier.size(16.dp).background(ShifaColors.Bg.Surface)) }
+        ShifaChatVoiceBubble(playing = false, position = 0, duration = 42, onToggle = {}, received = true)
+        ShifaChatVoiceBubble(playing = true, position = 15, duration = 42, onToggle = {})
         ShifaChatBubble(
             "A longer message that wraps onto several lines to show the max width and line height of the bubble.",
             ShifaChatBubbleType.Received,

@@ -118,6 +118,8 @@ The full plan is in [payment-flow.md](payment-flow.md).
 
 **Update 2026-10-20:** the backend built the hold (`PENDING_PAYMENT` + `holdExpiresAt`), `paymentProvider` on B3, `payments/methods` and pay later; see [MOBILE_BOOKING_PAYMENT.md](MOBILE_BOOKING_PAYMENT.md). The app follows it (BOOK-04). Still open from this list: fees and tax, receipts, a payment history and saved cards.
 
+**Bug (2026-10-20, production):** every Click booking fails. B3 with `paymentProvider: "CLICK"` answers `400 Could not start Click checkout: Invalid character '=' for QUERY_PARAM in "https://…/api/payments/checkout/success?ref=…"`: the backend puts its own success URL (which carries `?ref=`) into the Click checkout link's query without URL-encoding it, so its URI builder rejects it. Nothing is booked. Fixed in `backend-kotlin-shifa` on `fix/click-return-url-encoding` (`ClickGateway` URL-encodes `return_url`, with a test); it needs merging and a Railway deploy. The app shows the message in the Confirm Payment tray; Stripe is unaffected.
+
 ## 13. Live visit
 
 **Now:** the Live Appointment page (Figma 1918:22602) shows Service, Additional Notes and Documents attached, and an End Appointment button. B2 and B4 send no service, notes or documents for a visit, and there's no call to end one. B2 also leaves out `signatureRequested` / `alreadySigned` and once sent `paymentStatus: null` where B4 said `PENDING`, so the app loads B4 for every live visit. The signature tray's "Doctor's notes" has nothing to show for B6 (the visit summary): only 025-2 forms (B11) have complaints and a diagnosis.

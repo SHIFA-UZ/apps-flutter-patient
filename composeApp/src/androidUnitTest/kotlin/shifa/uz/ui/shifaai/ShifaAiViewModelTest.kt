@@ -215,7 +215,7 @@ class ShifaAiViewModelTest {
     }
 
     @Test
-    fun `a recording's transcript fills the input unsent, and a failure keeps the typed text`() =
+    fun `a recording's transcript is sent as the question, and a failure keeps the typed text`() =
         runTest {
             classToTest.open("1")
             classToTest.onRecording()
@@ -226,9 +226,11 @@ class ShifaAiViewModelTest {
             assertThat(state.isTranscribing).isTrue()
             advanceUntilIdle()
             assertThat(heard).containsExactly("ru")
-            assertThat(state.input).isEqualTo("I have a headache")
-            assertThat(state.chat?.messages).isEqualTo(saved.messages)
-            assertThat(state.canSend).isTrue()
+            assertThat(state.input).isEmpty()
+            assertThat(asked.last().first.last().content).isEqualTo("I have a headache")
+            assertThat(state.chat?.messages?.map { it.content }).contains("I have a headache")
+
+            classToTest.edit("I have a headache")
 
             transcript = Result.failure(ApiException.ServerError("x"))
             classToTest.transcribe(byteArrayOf(1))

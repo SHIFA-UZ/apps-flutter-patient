@@ -87,7 +87,7 @@ class ShifaAiViewModel(
 
     fun onRecording() = update { copy(recording = true, error = null, notice = null) }
 
-    /** 09 §5.7, X2: the transcript replaces the input for the patient to check; it isn't sent. */
+    /** X2: the transcript is sent as the question at once (09 §5.7 had it fill the input; the user wants it sent). */
     fun transcribe(audio: ByteArray?) {
         update { copy(recording = false) }
         if (audio == null) return showError(Res.string.errorRecordingVoice)
@@ -95,7 +95,10 @@ class ShifaAiViewModel(
         transcription =
             viewModelScope.launch {
                 copilot.transcribe(audio, language.value.whisperCode).fold(
-                    onSuccess = { update { copy(isTranscribing = false, input = it.ifEmpty { input }) } },
+                    onSuccess = {
+                        update { copy(isTranscribing = false, input = it.ifBlank { input }) }
+                        if (it.isNotBlank()) send()
+                    },
                     onFailure = {
                         val limited = it is ApiException.RateLimit
                         update {

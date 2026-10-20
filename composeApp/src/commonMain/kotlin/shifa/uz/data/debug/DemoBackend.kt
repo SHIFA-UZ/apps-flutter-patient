@@ -1000,6 +1000,8 @@ class DemoBackend(
                     "text" to request.text,
                     "attachmentUrl" to request.attachmentUrl,
                     "attachmentName" to request.attachmentName,
+                    "fileSize" to request.fileSize,
+                    "duration" to request.duration,
                     "createdAt" to clock().toString(),
                     "isMine" to true,
                 )

@@ -177,7 +177,6 @@
     <string name="copilotPreferredTime">Желаемое время</string>
     <string name="copilotSuggestDoctors">Подобрать врачей</string>
     <string name="copilotSuggestedDoctors">Рекомендованные врачи</string>
-    <string name="copilotThinking">Думаю…</string>
     <string name="copilotTranscribeError">Не удалось распознать речь</string>
     <string name="copilotTranscriptReportAction">Сообщить</string>
     <string name="copilotTranscriptReportHint">Текст неверный? Можете отправить на проверку (аудио по желанию).</string>

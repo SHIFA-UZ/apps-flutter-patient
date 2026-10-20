@@ -55,6 +55,7 @@ data class ChatMessage(
     private val text: String? = null,
     private val attachmentUrl: String? = null,
     private val attachmentName: String? = null,
+    private val duration: Double? = null,
     @SerialName("createdAt") private val created: String,
     val isMine: Boolean = false,
     val isRead: Boolean = false,
@@ -64,10 +65,11 @@ data class ChatMessage(
 
     private val isNew get() = content != null && rawType != null
 
+    // A legacy item with a `type` (C3's echo) keeps it; one without is typed by its attachment's name (08 §3.4).
     val type: MessageType
         get() =
             when {
-                isNew ->
+                rawType != null ->
                     MessageType.entries.firstOrNull {
                         it.name.equals(
                             rawType,
@@ -77,17 +79,20 @@ data class ChatMessage(
                 attachmentUrl == null -> MessageType.Text
                 (attachmentName ?: attachmentUrl).lowercase().let { n -> DOCUMENT_EXTENSIONS.any { n.endsWith(it) } } ->
                     MessageType.Document
+                (attachmentName ?: attachmentUrl).lowercase().let { n -> VOICE_EXTENSIONS.any { n.endsWith(it) } } ->
+                    MessageType.Voice
                 else -> MessageType.Image
             }
 
     val body get() = (if (isNew) content?.text else text)?.ifBlank { null }
     val fileUrl get() = if (isNew) content?.file ?: content?.thumbnailUrl else attachmentUrl
     val fileName get() = if (isNew) content?.fileName else attachmentName
-    val durationSeconds get() = content?.duration?.toInt()
+    val durationSeconds get() = (content?.duration ?: duration)?.toInt()
 }
 
 // Not in a private companion: the serializer lives there and the repository couldn't reach it.
 private val DOCUMENT_EXTENSIONS = listOf(".pdf", ".doc", ".docx")
+private val VOICE_EXTENSIONS = listOf(".m4a", ".aac", ".mp3", ".ogg")
 
 /** C5 item; the rest of its keys aren't shown. */
 @Serializable
@@ -112,6 +117,8 @@ data class SendMessageRequest(
     val type: String? = null,
     val attachmentUrl: String? = null,
     val attachmentName: String? = null,
+    val fileSize: Long? = null,
+    val duration: Int? = null,
 )
 
 /** C7. */

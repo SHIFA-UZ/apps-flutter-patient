@@ -177,7 +177,6 @@
     <string name="copilotPreferredTime">Preferred time</string>
     <string name="copilotSuggestDoctors">Suggest doctors</string>
     <string name="copilotSuggestedDoctors">Suggested doctors</string>
-    <string name="copilotThinking">Thinking…</string>
     <string name="copilotTranscribeError">Could not transcribe audio</string>
     <string name="copilotTranscriptReportAction">Report</string>
     <string name="copilotTranscriptReportHint">If the transcription looks wrong, you can send it for review (optional audio).</string>

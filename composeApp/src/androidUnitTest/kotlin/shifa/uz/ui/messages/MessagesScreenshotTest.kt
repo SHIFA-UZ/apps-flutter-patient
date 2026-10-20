@@ -35,4 +35,9 @@ class MessagesScreenshotTest {
     fun newChat() {
         captureRoboImage("screenshots/Conversation_new.png") { ConversationNewPreview() }
     }
+
+    @Test
+    fun conversationRecording() {
+        captureRoboImage("screenshots/Conversation_recording.png") { ConversationRecordingPreview() }
+    }
 }
