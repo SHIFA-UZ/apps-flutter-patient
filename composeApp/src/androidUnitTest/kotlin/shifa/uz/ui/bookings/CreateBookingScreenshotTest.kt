@@ -34,4 +34,31 @@ class CreateBookingScreenshotTest {
     fun reschedule() {
         captureRoboImage("screenshots/Reschedule.png") { ReschedulePreview() }
     }
+
+    @Test
+    @Config(qualifiers = "w393dp-h1100dp-xhdpi")
+    fun payNow() {
+        captureRoboImage("screenshots/CreateBooking_payNow.png") { CreateBookingPayNowPreview() }
+    }
+
+    @Test
+    @Config(qualifiers = "w393dp-h1000dp-xhdpi")
+    fun payInClinic() {
+        captureRoboImage("screenshots/CreateBooking_payInClinic.png") { CreateBookingPayInClinicPreview() }
+    }
+
+    @Test
+    fun confirmPayment() {
+        captureRoboImage("screenshots/CreateBooking_confirmPayment.png") { ConfirmPaymentTrayPreview() }
+    }
+
+    @Test
+    fun payment() {
+        captureRoboImage("screenshots/Payment.png") { PaymentPreview() }
+    }
+
+    @Test
+    fun paymentExpired() {
+        captureRoboImage("screenshots/Payment_expired.png") { PaymentExpiredPreview() }
+    }
 }

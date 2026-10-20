@@ -34,8 +34,7 @@ private val form =
     )
 
 @Composable
-private fun Profile(state: ProfileUiState) =
-    PreviewTheme { ProfileContent(state, {}, {}, {}, {}, {}, {}, {}, {}, {}) }
+private fun Profile(state: ProfileUiState) = PreviewTheme { ProfileContent(state, {}, {}, {}, {}, {}, {}, {}, {}, {}) }
 
 @Composable
 private fun EditProfile(state: EditProfileUiState) =

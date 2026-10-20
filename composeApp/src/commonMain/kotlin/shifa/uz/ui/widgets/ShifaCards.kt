@@ -2,6 +2,7 @@ package shifa.uz.ui.widgets
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +59,7 @@ import shifa.composeapp.generated.resources.ic_video_12
 import shifa.composeapp.generated.resources.ic_zap_16
 import shifa.composeapp.generated.resources.img_certificate
 import shifa.composeapp.generated.resources.img_documents
+import shifa.composeapp.generated.resources.img_shifa_ai_header
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -261,6 +263,37 @@ fun ShifaDoctorServiceCard(
     { IconTile(Res.drawable.ic_briefcase_16, ShifaColors.Bg.SuccessSubtle, ShifaColors.Icon.Brand) },
 ) {
     CardBody(price, ShifaColors.Text.Link, MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
+}
+
+/**
+ * Figma display-card in the Confirm Payment tray (1876:18609): the provider and the amount, on a brand tile.
+ * Not in Figma: the brand border on the [selected] one, for a choice of several providers.
+ */
+@Composable
+fun ShifaPaymentMethodCard(
+    name: String,
+    amount: String,
+    modifier: Modifier = Modifier,
+    selected: Boolean = false,
+    onClick: (() -> Unit)? = null,
+) = DisplayCard(
+    name,
+    modifier.then(
+        if (selected) Modifier.border(ShifaSize.S2, ShifaColors.Border.Brand, ShifaRadius.ControlMd) else Modifier,
+    ),
+    onClick,
+    {
+        Box(
+            Modifier
+                .size(ShifaDimens.TaskIcon)
+                .background(ShifaColors.Bg.SuccessSubtle, ShifaRadius.ControlMd)
+                .padding(ShifaSpacing.Inset.Xs)
+                .background(ShifaColors.Icon.Brand, ShifaRadius.Full),
+        )
+    },
+    trailing = {},
+) {
+    CardBody(amount, ShifaColors.Text.Primary)
 }
 
 /**
@@ -505,6 +538,7 @@ private fun IconTile(
     }
 }
 
+/** A person's photo, round. No photo, or one that fails to load: Shifa AI's header picture. [placeholder] shows while it loads. */
 @Composable
 internal fun ShifaAvatar(
     url: String?,
@@ -513,16 +547,28 @@ internal fun ShifaAvatar(
     placeholder: Color = if (LocalCardOnSurface.current) ShifaColors.Bg.Surface else ShifaColors.Bg.Canvas,
 ) {
     Box(modifier.size(size).clip(ShifaRadius.Full).background(placeholder)) {
-        if (url != null) {
+        if (url == null) {
+            DefaultAvatar()
+        } else {
             KamelImage(
                 resource = asyncPainterResource(url),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
+                onFailure = { DefaultAvatar() },
             )
         }
     }
 }
+
+@Composable
+private fun DefaultAvatar() =
+    Image(
+        painterResource(Res.drawable.img_shifa_ai_header),
+        null,
+        Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop,
+    )
 
 @Composable
 internal fun CardChrome(

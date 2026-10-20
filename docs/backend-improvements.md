@@ -116,7 +116,7 @@ The full plan is in [payment-flow.md](payment-flow.md).
 - Prices before booking for every visit type (in person too), with fees or tax and the total.
 - Later: refunds on cancel (with a status), fiscal receipts, a payment history endpoint, saved cards and Apple / Google Pay through Stripe, a payment that carries over on reschedule, and `paymentStatus` from X4 (AI booking).
 
-**Until then:** Flow A in [payment-flow.md](payment-flow.md): the WebView checkout with polling, the Stripe fallback, a pending screen, and Pay now on the appointment.
+**Update 2026-10-20:** the backend built the hold (`PENDING_PAYMENT` + `holdExpiresAt`), `paymentProvider` on B3, `payments/methods` and pay later; see [MOBILE_BOOKING_PAYMENT.md](MOBILE_BOOKING_PAYMENT.md). The app follows it (BOOK-04). Still open from this list: fees and tax, receipts, a payment history and saved cards.
 
 ## 13. Live visit
 
@@ -129,7 +129,7 @@ The full plan is in [payment-flow.md](payment-flow.md).
 - Give B6 the doctor's notes to show, or link the visit's 025-2 form, so the tray can show what's being signed.
 
 - For the appointment details (Figma 1921:25419, 1661:17567). Checked against the backend's own OpenAPI (`/v3/api-docs`, 2026-10-19): none of this exists yet.
-  - **Service:** add `serviceId` and `serviceTitle` to `AppointmentDto` (B2, B4 and B3's reply). B3 already takes `serviceId` but never returns it.
+  - ~~**Service**~~: done (MOBILE_BOOKING_PAYMENT §5, 2026-10-20): `serviceId` and `serviceTitle` are on `AppointmentDto`, and the details page shows them.
   - **Attach Document after booking:** `POST /patients/me/appointments/{id}/documents` with `{ "documentIds": [101] }` (documents already uploaded with F2), and the attached ids as `documentIds` on `AppointmentDto`. Today documents can only be attached in B3.
   - **Documents from the visit:** `appointmentId` on `PatientDocumentDto` (F1), set when the doctor uploads during or after the visit.
   - **Tasks from the visit:** `appointmentId` (and the doctor's id and name) on `TaskDto` (T1, T2). It has no doctor today, so the app can't tell where a task came from.

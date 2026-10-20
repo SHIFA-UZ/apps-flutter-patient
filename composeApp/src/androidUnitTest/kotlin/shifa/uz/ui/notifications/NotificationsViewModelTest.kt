@@ -123,6 +123,30 @@ class NotificationsViewModelTest {
         }
 
     @Test
+    fun `an access request shows its document, and a signature request opens the visit to sign`() =
+        runTest {
+            open()
+
+            val access =
+                AppNotification(5, "", "", "DOCUMENT_ACCESS_REQUEST", "2026-09-28T07:00:00Z", documentId = "d1")
+            assertThat(tap(access)).isEqualTo(NotificationLink.ToDocument(file))
+            val sign = AppNotification(6, "", "", "SIGNATURE_REQUESTED", "2026-09-28T07:00:00Z", appointmentId = "a1")
+            assertThat(tap(sign)).isEqualTo(NotificationLink.ToSigning(appointment))
+            // A 025-2 form's signing isn't built.
+            assertThat(tap(sign.copy(id = 7, patientFormId = "f1"))).isNull()
+        }
+
+    @Test
+    fun `a visit summary opens the Documents tab`() =
+        runTest {
+            open()
+
+            val ready =
+                AppNotification(8, "", "", "AI_VISIT_SUMMARY_READY", "2026-09-28T07:00:00Z", appointmentId = "a1")
+            assertThat(tap(ready)).isEqualTo(NotificationLink.ToDocuments)
+        }
+
+    @Test
     fun `an item not in its list opens the list, and a completed task opens My Tasks`() =
         runTest {
             wheneverBlocking { bookings.getAppointments() } doReturn Result.success(emptyList())

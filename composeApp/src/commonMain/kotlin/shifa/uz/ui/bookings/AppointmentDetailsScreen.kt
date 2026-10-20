@@ -1,6 +1,7 @@
 package shifa.uz.ui.bookings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -39,7 +40,7 @@ import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.additionalInformation
 import shifa.composeapp.generated.resources.appointmentDetails
-import shifa.composeapp.generated.resources.appointmentLessThan48Hours
+import shifa.composeapp.generated.resources.appointmentLessThan24Hours
 import shifa.composeapp.generated.resources.areYouSureCancel
 import shifa.composeapp.generated.resources.cancel
 import shifa.composeapp.generated.resources.cancelAppointment
@@ -49,17 +50,24 @@ import shifa.composeapp.generated.resources.consultationInPerson
 import shifa.composeapp.generated.resources.contactDoctorDirectly
 import shifa.composeapp.generated.resources.dateAndTime
 import shifa.composeapp.generated.resources.howDidYouFindYourExperience
+import shifa.composeapp.generated.resources.ic_check_16
 import shifa.composeapp.generated.resources.ic_chevron_down_16
 import shifa.composeapp.generated.resources.ic_chevron_up_16
 import shifa.composeapp.generated.resources.ic_edit_20
+import shifa.composeapp.generated.resources.ic_info_16
 import shifa.composeapp.generated.resources.leaveAComment
 import shifa.composeapp.generated.resources.leaveReview
 import shifa.composeapp.generated.resources.location
 import shifa.composeapp.generated.resources.months
 import shifa.composeapp.generated.resources.no
+import shifa.composeapp.generated.resources.paymentCompleted
+import shifa.composeapp.generated.resources.paymentInClinic
+import shifa.composeapp.generated.resources.paymentPendingTitle
 import shifa.composeapp.generated.resources.rateYourVisit
 import shifa.composeapp.generated.resources.rateYourVisitNoClinic
+import shifa.composeapp.generated.resources.refundByClinic
 import shifa.composeapp.generated.resources.reschedule
+import shifa.composeapp.generated.resources.service
 import shifa.composeapp.generated.resources.submit
 import shifa.composeapp.generated.resources.videoConsultation
 import shifa.composeapp.generated.resources.weekdays
@@ -72,10 +80,14 @@ import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.MessagePopUp
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
+import shifa.uz.ui.theme.ShifaRadius
+import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.theme.ShifaTextStyles
 import shifa.uz.ui.widgets.LocalCardOnSurface
 import shifa.uz.ui.widgets.ShifaActionButton
+import shifa.uz.ui.widgets.ShifaBanner
+import shifa.uz.ui.widgets.ShifaBannerType
 import shifa.uz.ui.widgets.ShifaInputField
 import shifa.uz.ui.widgets.ShifaNotification
 import shifa.uz.ui.widgets.ShifaNotificationType
@@ -184,13 +196,14 @@ internal fun AppointmentDetailsContent(
                 if (state.showWarning) {
                     // Figma has no Contact button: the warning dials or mails the doctor.
                     ShifaNotification(
-                        stringResource(Res.string.appointmentLessThan48Hours),
+                        stringResource(Res.string.appointmentLessThan24Hours),
                         stringResource(Res.string.contactDoctorDirectly),
                         ShifaNotificationType.Feedback,
                         Modifier.fillMaxWidth(),
                         onClick = onContact.takeIf { state.contactUri != null },
                     )
                 }
+                ServiceSection(appointment)
                 detailRows(appointment, doctor).forEach { InfoSection(it.title, it.text, it.style) }
             } else {
                 AppointmentSummaryCard(appointment, doctor, state.detailsOpen, onToggleDetails)
@@ -215,7 +228,7 @@ internal fun AppointmentDetailsContent(
                     stringResource(Res.string.reschedule),
                     onReschedule,
                     Modifier.fillMaxWidth(),
-                    enabled = state.canCancel,
+                    enabled = state.canReschedule,
                 )
                 ShifaSecondaryButton(
                     stringResource(Res.string.cancel),
@@ -237,6 +250,50 @@ internal fun AppointmentDetailsContent(
         }
     }
 }
+
+/**
+ * Figma 1825:17774 / 1825:17960: the booked service, then how it's paid: Payment Completed, Payment in clinic with the
+ * amount, pending, or a refund the clinic owes. Hidden when there's neither a service nor a payment to show.
+ */
+@Composable
+private fun ServiceSection(appointment: Appointment) {
+    val title = appointment.serviceTitle?.trim()?.ifEmpty { null }
+    val payment: Pair<String, ShifaBannerType>? =
+        when {
+            appointment.refundRequired -> stringResource(Res.string.refundByClinic) to ShifaBannerType.Warning
+            appointment.isPaid -> stringResource(Res.string.paymentCompleted) to ShifaBannerType.Success
+            appointment.isPayInClinic ->
+                listOfNotNull(stringResource(Res.string.paymentInClinic), appointment.price).joinToString(" · ") to
+                    ShifaBannerType.Success
+            appointment.isAwaitingPayment || appointment.paymentStatus == "PENDING" ->
+                stringResource(Res.string.paymentPendingTitle) to ShifaBannerType.Warning
+            else -> null
+        }
+    if (title == null && payment == null) return
+    ShifaSection(stringResource(Res.string.service)) {
+        title?.let { InfoField(it) }
+        payment?.let { (text, type) ->
+            ShifaBanner(
+                text,
+                if (type == ShifaBannerType.Success && appointment.isPaid) Res.drawable.ic_check_16 else Res.drawable.ic_info_16,
+                type,
+            )
+        }
+    }
+}
+
+/** Figma input-field, read only: the service's title. */
+@Composable
+private fun InfoField(text: String) =
+    Text(
+        text,
+        Modifier
+            .fillMaxWidth()
+            .border(ShifaSize.S2, ShifaColors.Border.Default, ShifaRadius.ControlMd)
+            .padding(ShifaSpacing.Inset.Sm),
+        style = MaterialTheme.typography.bodyLarge,
+        color = ShifaColors.Text.Primary,
+    )
 
 internal class DetailRow(
     val title: StringResource,

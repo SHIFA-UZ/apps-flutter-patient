@@ -951,4 +951,21 @@
     <string name="switchCamera">Сменить камеру</string>
     <string name="endCall">Завершить звонок</string>
     <string name="transcribing">Расшифровка…</string>
+    <string name="notificationActionOpenDocuments">Открыть документы</string>
+    <string name="bookingSelectService">Пожалуйста, выберите услугу.</string>
+    <string name="selectClinic">Выберите клинику</string>
+    <string name="selectService">Выберите услугу</string>
+    <string name="confirmPayment">Подтвердите оплату</string>
+    <string name="payment">Оплата</string>
+    <string name="paymentCompleted">Оплата завершена</string>
+    <string name="paymentInClinic">Оплата в клинике</string>
+    <string name="paymentSlotHeld">Время записи сохранено ещё %1$s</string>
+    <string name="paymentNotCompletedHeld">Оплата не завершена. Время записи сохранено до %1$s.</string>
+    <string name="paymentFailedSlotReleased">Оплата отклонена, время записи освобождено. Запишитесь снова.</string>
+    <string name="paymentExpiredSlotReleased">Время оплаты истекло, время записи освобождено. Запишитесь снова.</string>
+    <string name="paymentRefundSlotTaken">Оплата получена, но это время уже занято. Клиника вернёт деньги.</string>
+    <string name="bookAgain">Записаться снова</string>
+    <string name="refundByClinic">Клиника оформит возврат.</string>
+    <string name="appointmentLessThan24Hours">До приёма меньше 24 часов</string>
+    <string name="service">Услуга</string>
 </resources>

@@ -949,4 +949,21 @@
     <string name="switchCamera">Kamerani almashtirish</string>
     <string name="endCall">Qo‘ng‘iroqni tugatish</string>
     <string name="transcribing">Matnga o'girilmoqda…</string>
+    <string name="notificationActionOpenDocuments">Hujjatlarni ochish</string>
+    <string name="bookingSelectService">Iltimos, xizmatni tanlang.</string>
+    <string name="selectClinic">Klinikani tanlang</string>
+    <string name="selectService">Xizmatni tanlang</string>
+    <string name="confirmPayment">To'lovni tasdiqlang</string>
+    <string name="payment">To'lov</string>
+    <string name="paymentCompleted">To'lov amalga oshirildi</string>
+    <string name="paymentInClinic">Klinikada to'lov</string>
+    <string name="paymentSlotHeld">Vaqtingiz yana %1$s saqlanadi</string>
+    <string name="paymentNotCompletedHeld">To'lov tugallanmadi. Vaqtingiz %1$s gacha saqlanadi.</string>
+    <string name="paymentFailedSlotReleased">To'lov rad etildi, vaqt bo'shatildi. Iltimos, qaytadan yoziling.</string>
+    <string name="paymentExpiredSlotReleased">To'lov vaqti tugadi, vaqt bo'shatildi. Iltimos, qaytadan yoziling.</string>
+    <string name="paymentRefundSlotTaken">To'lov qabul qilindi, lekin bu vaqt band. Klinika pulni qaytaradi.</string>
+    <string name="bookAgain">Qaytadan yozilish</string>
+    <string name="refundByClinic">Pulni klinika qaytaradi.</string>
+    <string name="appointmentLessThan24Hours">Qabulgacha 24 soatdan kam qoldi</string>
+    <string name="service">Xizmat</string>
 </resources>

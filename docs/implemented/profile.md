@@ -37,7 +37,7 @@
 - Profile → Settings → "Debug menu", shown only when `isDebugBuild` (`BuildConfig.DEBUG`, `Platform.isDebugBinary`). English only; release builds have no row and ignore the saved demo flag.
 - **Demo data** (`data/debug/DemoBackend.kt`): the shared `httpClient` switches to a Ktor `MockEngine` with in-memory data seeded around now:
   - a video visit whose join window is open, a REQUESTED one, an unpaid one, a cancellable one, past ones;
-  - two demo doctors (a free video service, an online-priced one, a clinic-only one that B3 rejects for video, as production does), with slots 09:00 to 16:30;
+  - two demo doctors with the three payment kinds (a free video service, a pay-now video one, a pay-in-clinic one that can't be video; the second doctor's is pay now in person), two clinics for the first, and slots 09:00 to 16:30. `payments/methods` offers Click and Stripe for pay now; B3 with a provider holds the slot for 15 minutes, and its checkout (shifa.uz) "pays" itself 15 s later, so the payment page closes to Payment Completed;
   - check-ins due now for three tasks, five notifications (four unread), two chats (the doctor answers each message 4 s later), two documents, and a canned Shifa AI reply.
   - Booking, cancel, check-ins, mark read, chat, uploads and profile edits change only that data. A GET it doesn't fake goes to the real backend, and so does `auth/`; any other write gets 501 "Not available in demo mode". The data is reseeded on launch and by "Reset demo data".
   - The live video visit (9101) asks for a signature: B4 and B6 are faked; V1 stays refused, so a call stops at Join Now.

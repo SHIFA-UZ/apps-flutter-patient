@@ -20,7 +20,7 @@ enum class NotificationFilter(
     Payments(Res.string.notificationFilterPayments, { "PAYMENT" in it || "INSTALLMENT" in it }),
 }
 
-/** Where the details tray's button goes; the first three also show their card. */
+/** Where the details tray's button goes; the ones with an item also show its card. */
 sealed interface NotificationLink {
     data class ToAppointment(
         val appointment: Appointment,
@@ -32,6 +32,11 @@ sealed interface NotificationLink {
 
     data class ToTask(
         val task: RemoteCareTask,
+    ) : NotificationLink
+
+    /** SIGNATURE_REQUESTED: the visit's Live Appointment page, where its Request to sign is. */
+    data class ToSigning(
+        val appointment: Appointment,
     ) : NotificationLink
 
     data object ToBookings : NotificationLink
@@ -122,6 +127,8 @@ internal fun accessRequestParts(message: String) = ACCESS_REQUEST.matchEntire(me
 internal fun actionLabel(kind: String) =
     when {
         kind == "PROPHYLAXIS_REMINDER" -> Res.string.notificationActionOpenBookings
+        kind == "SIGNATURE_REQUESTED" -> Res.string.signNow
+        kind.startsWith("AI_") -> Res.string.notificationActionOpenDocuments
         "APPOINTMENT" in kind -> Res.string.notificationActionOpenAppointment
         "DOCUMENT" in kind -> Res.string.notificationActionViewDocument
         "TASK" in kind -> Res.string.notificationActionOpenTask

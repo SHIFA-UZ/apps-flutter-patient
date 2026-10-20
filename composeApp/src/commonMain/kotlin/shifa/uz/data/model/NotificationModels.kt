@@ -22,7 +22,7 @@ data class UnreadCount(
 /**
  * N1 item, the keys the app reads (15 §5.10). Without `id`, `title`, `message`, `type` or an ISO `createdAt` the
  * item is skipped (13 quirk 9). Linked ids come camelCase, snake_case or under `data`.
- * ponytail: no form, plan or access-request ids; their screens aren't built.
+ * ponytail: no plan or access-request ids; their screens aren't built.
  */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -37,6 +37,7 @@ data class AppNotification(
     @JsonNames("document_id") private val documentId: String? = null,
     @JsonNames("task_id") private val taskId: String? = null,
     @JsonNames("chat_id") private val chatId: String? = null,
+    @JsonNames("patient_form_id") private val patientFormId: String? = null,
     @JsonNames("doctor_name") private val doctorName: String? = null,
     private val data: JsonObject? = null,
 ) {
@@ -49,6 +50,7 @@ data class AppNotification(
     val document get() = documentId ?: data.string("documentId", "document_id")
     val task get() = taskId ?: data.string("taskId", "task_id")
     val chat get() = chatId ?: data.string("chatId", "chat_id")
+    val form get() = patientFormId ?: data.string("patientFormId", "patient_form_id")
     val doctor get() = doctorName ?: data.string("doctorName", "doctor_name")
 
     companion object {
@@ -80,6 +82,7 @@ data class AppNotification(
                 "TASK" to "taskId",
                 "MESSAGE" to "chatId",
                 "CHAT" to "chatId",
+                "SIGNATURE" to "appointmentId",
             )
     }
 }

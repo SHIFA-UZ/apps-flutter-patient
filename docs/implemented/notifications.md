@@ -15,12 +15,12 @@
 
 - Figma: `1703:15698` (appointment), `1703:16143` (document), `1703:16483` (task). A tap opens the tray and marks the item read (N3, best effort, quirk 11). It updates on screen right away, and the bell refreshes when N3 goes through.
 - The tray shows the message, the linked card and a button. The cards are Home's appointment card, the Documents list card and Home's task card. Inside a tray they use Figma's look: canvas fill, no shadow, no chevron (`LocalCardOnSurface`).
-- There is no get-by-id endpoint, so the item is looked up in B2, F1 or T1. When it isn't found, or the list call fails, the button opens the list instead: the Bookings tab, the Documents tab or My Tasks. TASK_COMPLETED opens My Tasks. PROPHYLAXIS_REMINDER opens the Bookings tab. The button closes the page first, then opens the target.
+- There is no get-by-id endpoint, so the item is looked up in B2, F1 or T1. When it isn't found, or the list call fails, the button opens the list instead: the Bookings tab, the Documents tab or My Tasks. TASK_COMPLETED opens My Tasks. PROPHYLAXIS_REMINDER opens the Bookings tab. DOCUMENT_ACCESS_REQUEST / APPROVED / REJECTED show the document asked for (`documentId`) with View document. SIGNATURE_REQUESTED with an `appointmentId` shows the visit's card with Sign now, which opens its Live Appointment page (B4 shows the Request to sign there); one with a `patientFormId` (a 025-2 form) gets no button. AI_VISIT_SUMMARY_READY / AI_SCRIBE_READY have "Open documents", which opens the Documents tab (no summary page, the user's call). The button closes the page first, then opens the target.
 - Button labels come from 13 §6.3 ("View appointment", "View document", "Open task", "Open bookings"), not Figma's placeholder copy. No arrow icon (Figma).
 - A task tray whose task is open (not COMPLETED or CANCELLED) leads with **Submit Check in** (Figma `1703:16483`), with Open task as the secondary button. It closes the tray and opens the check-in tray over the inbox (Figma `1891:22050`, the task page's tray): today's PENDING check-in, else the next one, else the latest. Success shows "Check-in submitted successfully" on the inbox and reloads My Tasks and Home. Nothing pending, or T3 failing, opens the task page instead.
 - Not built:
-  - Buttons for payment, installment, treatment plan, sign form and visit summary. Those screens don't exist yet, so the tray shows only the message. Chat items open the chat (see messages.md).
-  - Approve and reject for access requests (NOTIF-02).
+  - Buttons for payment, installment, treatment plan and 025-2 form signing. Those screens don't exist yet, so the tray shows only the message. Chat items open the chat (see messages.md).
+  - Approve and reject for access requests (NOTIF-02); the tray shows the document only.
   - The 280 max-height scroll for long messages.
 - Not tried on a device: mark read and mark all read (production data).
 

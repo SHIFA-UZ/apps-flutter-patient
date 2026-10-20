@@ -175,6 +175,7 @@ class DemoBackend(
                 path.startsWith(
                     Endpoints.MY_TASKS,
                 ) && p[3] == "check-in" -> data.submitCheckIn(p[2], body)
+            get && path == Endpoints.PAYMENT_METHODS -> ok(data.paymentMethods(request.url.parameters["serviceId"]))
             get && path == Endpoints.NOTIFICATIONS -> ok(JsonArray(data.notifications))
             get && path == Endpoints.UNREAD_NOTIFICATIONS_COUNT -> ok(obj("count" to data.unread()))
             request.method == HttpMethod.Put && path == Endpoints.NOTIFICATIONS_READ_ALL -> data.readAll()
@@ -240,9 +241,16 @@ class DemoBackend(
                         online = true,
                         services =
                             listOf(
+                                // The three payment kinds (MOBILE_BOOKING_PAYMENT §1); UZS amounts are so'm.
                                 service(9201, "Free video consultation (demo)", free = true),
-                                service(9202, "Video check-up (demo)", 15_000_000, location = null),
-                                service(9203, "Filling, clinic only (demo)", 9_000_000, location = 9301),
+                                service(9202, "Video check-up, pay now (demo)", 150_000, location = null),
+                                service(
+                                    9203,
+                                    "Filling, pay in clinic (demo)",
+                                    90_000,
+                                    location = 9301,
+                                    payLater = true,
+                                ),
                             ),
                     ),
                 "9002" to
@@ -252,13 +260,17 @@ class DemoBackend(
                         "Rahimova",
                         "Cardiologist",
                         online = false,
-                        services = listOf(service(9204, "Consultation (demo)", 20_000_000, location = 9302)),
+                        services = listOf(service(9204, "Consultation, pay now (demo)", 200_000, location = 9302)),
                     ),
             )
 
         val locations =
             mapOf(
-                "9001" to listOf(location(9301, DEMO_CLINIC, "Amir Temur 1")),
+                "9001" to
+                    listOf(
+                        location(9301, DEMO_CLINIC, "Amir Temur 1"),
+                        location(9303, "Shifa Demo Chilonzor", "Bunyodkor 7"),
+                    ),
                 "9002" to listOf(location(9302, "Shifa Demo Heart Centre", "Navoi 15")),
             )
 
@@ -298,10 +310,13 @@ class DemoBackend(
             price: Long? = null,
             location: Int? = null,
             free: Boolean = false,
+            payLater: Boolean = false,
         ) = obj(
             "id" to id,
             "title" to title,
             "isFreeConsultation" to free,
+            "paymentType" to (if (payLater) "PAY_LATER" else "PAY_NOW").takeUnless { free },
+            "videoAllowed" to (!payLater && location == null),
             "prices" to
                 listOfNotNull(
                     price?.let { obj("amountMinor" to it, "currency" to "UZS", "locationId" to location) },
@@ -401,7 +416,7 @@ class DemoBackend(
                 "reason" to reason,
                 "status" to status,
                 "paymentStatus" to payment,
-                "paymentAmountMinor" to 15_000_000.takeIf { payment == "PENDING" },
+                "paymentAmountMinor" to 150_000.takeIf { payment == "PENDING" },
                 "paymentCurrency" to "UZS".takeIf { payment == "PENDING" },
             )
         }
@@ -465,6 +480,11 @@ class DemoBackend(
             if (request.isVideo && !free && prices.none { it["locationId"] == null || it["locationId"] is JsonNull }) {
                 return fail(HttpStatusCode.BadRequest, "Selected service has no price configured")
             }
+            val payLater = !free && service?.str("paymentType") == "PAY_LATER"
+            if (request.isVideo && payLater) {
+                return fail(HttpStatusCode.BadRequest, "Video consultation is not allowed for this service")
+            }
+            val amount = prices.firstOrNull()?.long("amountMinor")
             val taken =
                 appointments.any {
                     it.str(
@@ -477,24 +497,96 @@ class DemoBackend(
             // ponytail: production's reschedule is unverified (06 §3.5); here the new visit replaces the old one.
             request.rescheduleAppointmentId?.let { old -> appointments.removeAll { it.long("id") == old } }
             val start = Instant.parse(request.startAt)
+            val payNow = service != null && !free && !payLater
+            val provider = request.paymentProvider.takeIf { payNow }
+            val id = id()
+            val hold = getCurrentInstant() + 15.minutes
             val booked =
-                visit(
-                    id(),
-                    request.doctorId.toString(),
-                    start,
-                    video = request.isVideo,
-                    status = "REQUESTED",
-                    payment = if (request.isVideo && !free) "PENDING" else "NOT_REQUIRED",
-                    reason = request.reason,
+                JsonObject(
+                    visit(
+                        id,
+                        request.doctorId.toString(),
+                        start,
+                        video = request.isVideo,
+                        // §2: pay now holds the slot; the old flow (no provider) waits as REQUESTED.
+                        status =
+                            when {
+                                provider != null -> "PENDING_PAYMENT"
+                                payNow -> "REQUESTED"
+                                else -> "CONFIRMED"
+                            },
+                        payment =
+                            when {
+                                payNow -> "PENDING"
+                                payLater -> "PAY_IN_CLINIC"
+                                else -> "NOT_REQUIRED"
+                            },
+                        reason = request.reason,
+                    ) +
+                        obj(
+                            "isVideoConsultation" to request.isVideo,
+                            "serviceId" to service?.long("id"),
+                            "serviceTitle" to service?.str("title"),
+                            "paymentType" to if (payNow) "PAY_NOW" else "PAY_LATER".takeIf { payLater },
+                            "paymentBadge" to "PAY_IN_CLINIC".takeIf { payLater },
+                            "paymentAmountMinor" to amount.takeIf { payNow || payLater },
+                            "paymentCurrency" to "UZS".takeIf { payNow || payLater },
+                            "holdExpiresAt" to hold.toString().takeIf { provider != null },
+                        ),
                 )
             appointments += booked
-            return ok(booked)
+            if (provider == null) return ok(booked)
+            // The fake provider "pays" 15 s after the checkout opens; B4 then reads CONFIRMED + PAID (§2.4).
+            paidAt[id.toString()] = getCurrentInstant() + 15.seconds
+            return ok(
+                JsonObject(
+                    booked +
+                        obj(
+                            "payment" to
+                                obj(
+                                    "id" to id + 1000,
+                                    "provider" to provider,
+                                    "checkoutUrl" to DEMO_CHECKOUT,
+                                    "expiresAt" to hold.toString(),
+                                ),
+                        ),
+                ),
+            )
+        }
+
+        private val paidAt = mutableMapOf<String, Instant>()
+
+        /** §2.1: Click and Stripe for a pay-now service, none for free and pay later. */
+        fun paymentMethods(serviceId: String?): JsonArray {
+            val service =
+                doctors.values.flatMap { it.list("serviceItems").map { s -> s.jsonObject } }
+                    .firstOrNull { it.str("id") == serviceId }
+            val payNow =
+                service != null && service.str("paymentType") == "PAY_NOW" &&
+                    service["isFreeConsultation"]?.jsonPrimitive?.booleanOrNull != true
+            if (!payNow) return JsonArray(emptyList())
+            val amount = service!!.list("prices").firstOrNull()?.jsonObject?.long("amountMinor") ?: 0
+            return JsonArray(
+                listOf("CLICK", "STRIPE").map { obj("provider" to it, "amountMinor" to amount, "currency" to "UZS") },
+            )
         }
 
         // B4 adds the signing flags that B2 leaves out, as production does. The visit to join now asks for one.
         private val signatures = mutableMapOf("9101" to false)
 
         fun appointment(id: String): Reply {
+            paidAt[id]?.takeIf { getCurrentInstant() >= it }?.let {
+                paidAt.remove(id)
+                val i = appointments.indexOfFirst { a -> a.str("id") == id }
+                if (i >= 0 && appointments[i].str("status") == "PENDING_PAYMENT") {
+                    appointments[i] =
+                        JsonObject(
+                            appointments[i] +
+                                obj("status" to "CONFIRMED", "paymentStatus" to "PAID", "paymentBadge" to "PAID") -
+                                "holdExpiresAt",
+                        )
+                }
+            }
             val visit =
                 appointments.firstOrNull {
                     it.str("id") == id
@@ -699,6 +791,30 @@ class DemoBackend(
                     now - 1.days,
                     "documentId" to "9701",
                     read = true,
+                ),
+                notification(
+                    9608,
+                    "AI_VISIT_SUMMARY_READY",
+                    "Visit summary is ready",
+                    "Your after-visit summary is now available.",
+                    now - 30.minutes,
+                    "appointmentId" to "9107",
+                ),
+                notification(
+                    9606,
+                    "SIGNATURE_REQUESTED",
+                    "Signature requested",
+                    "Aziza Karimova asked you to sign your visit summary.",
+                    now - 3.minutes,
+                    "appointmentId" to "9101",
+                ),
+                notification(
+                    9607,
+                    "DOCUMENT_ACCESS_REQUEST",
+                    "Document access request",
+                    "Aziza Karimova requested access to \"Blood test results (demo)\" for you.",
+                    now - 2.hours,
+                    "documentId" to "9701",
                 ),
             )
 
@@ -937,6 +1053,7 @@ class DemoBackend(
         // X1's SSE: tokens as `data:` lines, each event ended by a blank line (09 §8).
         private const val DEMO_AI_REPLY = "data: This is a demo reply.\n\ndata:  Demo mode doesn't ask the real Shifa AI.\n\n"
         private const val DEMO_TRANSCRIPT = "This is a demo transcript of your voice message."
+        private const val DEMO_CHECKOUT = "https://shifa.uz/"
     }
 }
 

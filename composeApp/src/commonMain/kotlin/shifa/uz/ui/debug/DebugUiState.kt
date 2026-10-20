@@ -53,6 +53,12 @@ data class DebugUiState(
             FakePush("Task check-in due", "TASK_REMINDER", "Time for your check-in.", "taskId" to taskId),
             FakePush("New document", "NEW_DOCUMENT", "A doctor shared a document.", "documentId" to documentId),
             FakePush("New chat message", "NEW_MESSAGE", "You have a new message.", "chatId" to chatId),
+            FakePush(
+                "Visit summary ready",
+                "AI_VISIT_SUMMARY_READY",
+                "Your after-visit summary is now available.",
+                "appointmentId" to appointmentId,
+            ),
             FakePush("Treatment plan updated", "TREATMENT_PLAN_UPDATED", "Your treatment plan changed."),
         )
 }

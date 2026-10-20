@@ -1,5 +1,7 @@
 # Payment flow
 
+> Superseded for consultations (2026-10-20): the backend now holds the slot while the patient pays. The app follows [MOBILE_BOOKING_PAYMENT.md](MOBILE_BOOKING_PAYMENT.md); see BOOK-04 in implemented/README.md and implemented/bookings.md. This file still describes treatment plans (BOOK-11).
+
 The plan for BOOK-04 (consultation payment) and BOOK-11 (treatment plans): what we can build on today's backend (Flow A), and the payment flow that would be best for patients (Flow B), with what it needs.
 
 Every flow is drawn in [payment-flow-diagrams.md](payment-flow-diagrams.md).

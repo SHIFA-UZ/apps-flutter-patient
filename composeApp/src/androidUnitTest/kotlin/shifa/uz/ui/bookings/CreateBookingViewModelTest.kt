@@ -22,9 +22,11 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.bookingSelectService
 import shifa.composeapp.generated.resources.bookingSelectServiceForVideo
 import shifa.composeapp.generated.resources.bookingSlotTaken
 import shifa.composeapp.generated.resources.bookingVideoNoServicesOffered
@@ -39,6 +41,8 @@ import shifa.uz.data.model.DoctorLocation
 import shifa.uz.data.model.DoctorPrice
 import shifa.uz.data.model.DoctorService
 import shifa.uz.data.model.PatientDocument
+import shifa.uz.data.model.PaymentCheckout
+import shifa.uz.data.model.PaymentMethod
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreateBookingViewModelTest {
@@ -54,6 +58,12 @@ class CreateBookingViewModelTest {
                     DoctorService("7", "Video visit", prices = listOf(DoctorPrice(100_000, "UZS"))),
                     DoctorService("8", "Filling", prices = listOf(DoctorPrice(9_000_000, "UZS", locationId = 14))),
                     DoctorService("3", "Free video visit", isFreeConsultation = true),
+                    DoctorService(
+                        "9",
+                        "Cleaning",
+                        prices = listOf(DoctorPrice(90_000, "UZS", locationId = 5)),
+                        paymentType = "PAY_LATER",
+                    ),
                 ),
         )
 
@@ -126,7 +136,7 @@ class CreateBookingViewModelTest {
         }
 
     @Test
-    fun `video scans without a location and clears the service`() =
+    fun `video scans without a location and keeps a service that allows it`() =
         runTest {
             val video = AvailableSlot("2026-09-29T05:00:00Z", "2026-09-29T05:30:00Z")
             wheneverBlocking { bookings.getSlots(any(), any(), isNull()) } doReturn Result.success(listOf(video))
@@ -136,7 +146,14 @@ class CreateBookingViewModelTest {
             classToTest.onVideoChange(false)
             classToTest.onVideoChange(true)
             advanceUntilIdle()
+            assertThat(state.serviceId).isEqualTo("7")
 
+            // Pay later is in person only (MOBILE_BOOKING_PAYMENT §1).
+            classToTest.onVideoChange(false)
+            classToTest.onServiceChange("9")
+            assertThat(state.canSwitchVideo).isFalse()
+            classToTest.onVideoChange(true)
+            advanceUntilIdle()
             assertThat(state.serviceId).isNull()
             assertThat(state.date).isEqualTo(today)
             assertThat(state.slot).isEqualTo(video)
@@ -173,6 +190,10 @@ class CreateBookingViewModelTest {
                 )
             open()
             classToTest.book()
+            // In person needs a service too, once the doctor lists some.
+            assertThat(state.error).isEqualTo(Res.string.bookingSelectService)
+            classToTest.onServiceChange("3")
+            classToTest.book()
             advanceUntilIdle()
 
             assertThat(state.error).isEqualTo(Res.string.bookingSlotTaken)
@@ -187,7 +208,7 @@ class CreateBookingViewModelTest {
             wheneverBlocking { documents.upload(bytes, "a.pdf", "a.pdf", "PRE_APPOINTMENT") } doReturn
                 Result.success(PatientDocument("101", "a.pdf"))
             val request =
-                BookingRequest(42, first.startAt, 30, false, "Pain", locationId = 3, documentIds = listOf(101))
+                BookingRequest(42, first.startAt, 30, false, "Pain", 3, locationId = 3, documentIds = listOf(101))
             wheneverBlocking {
                 bookings.book(
                     request,
@@ -196,6 +217,7 @@ class CreateBookingViewModelTest {
             open()
             classToTest.attach("a.pdf", bytes)
             classToTest.onReasonChange(" Pain ")
+            classToTest.onServiceChange("3")
             advanceUntilIdle()
             assertThat(state.documents.map { it.id }).containsExactly("101")
 
@@ -228,5 +250,72 @@ class CreateBookingViewModelTest {
                 awaitItem()
             }
             verifyBlocking(bookings) { book(request) }
+        }
+
+    @Test
+    fun `pay now asks for a provider, books with it and opens the held checkout`() =
+        runTest {
+            val held =
+                Appointment(
+                    id = "50",
+                    status = Appointment.PENDING_PAYMENT,
+                    holdExpiresAt = "2026-09-28T09:15:00Z",
+                    payment = PaymentCheckout("880", "STRIPE", "https://pay/880", "2026-09-28T09:15:00Z"),
+                )
+            val request =
+                BookingRequest(42, first.startAt, 30, false, serviceId = 7, locationId = 3, paymentProvider = "STRIPE")
+            wheneverBlocking { bookings.getPaymentMethods("7", 5) } doReturn
+                Result.success(listOf(PaymentMethod("CLICK", 150_000, "UZS"), PaymentMethod("STRIPE", 150_000, "UZS")))
+            wheneverBlocking { bookings.book(request) } doReturn Result.success(held)
+            open()
+            classToTest.onServiceChange("7")
+            assertThat(state.isPayNow).isTrue()
+
+            classToTest.book()
+            advanceUntilIdle()
+            assertThat(state.methods?.map { it.provider }).containsExactly("CLICK", "STRIPE").inOrder()
+            assertThat(state.provider).isEqualTo("CLICK")
+            verifyBlocking(bookings, never()) { book(any()) }
+
+            classToTest.onProviderSelect("STRIPE")
+            classToTest.pay()
+            advanceUntilIdle()
+            assertThat(state.methods).isNull()
+            assertThat(state.pending).isEqualTo(held)
+            assertThat(state.paying).isTrue()
+
+            // Back on the booking page the slot stays held, and Complete Payment goes back to the same checkout.
+            classToTest.onPaymentClosed()
+            assertThat(state.isHeld(now)).isTrue()
+            classToTest.book()
+            assertThat(state.paying).isTrue()
+            verifyBlocking(bookings, times(1)) { book(any()) }
+
+            classToTest.paid.test {
+                classToTest.onPaymentDone(held.copy(status = "CONFIRMED", paymentStatus = Appointment.PAID))
+                assertThat(awaitItem().id).isEqualTo("50")
+            }
+        }
+
+    @Test
+    fun `pay in clinic and free book at once, and a failed or expired payment frees the page`() =
+        runTest {
+            val clinic = BookingRequest(42, first.startAt, 30, false, serviceId = 9, locationId = 3)
+            wheneverBlocking { bookings.book(clinic) } doReturn
+                Result.success(Appointment(id = "60", status = "CONFIRMED", paymentStatus = Appointment.PAY_IN_CLINIC))
+            open()
+            classToTest.onServiceChange("9")
+            assertThat(state.isPayInClinic).isTrue()
+            assertThat(state.price).isEqualTo("90000.00 UZS")
+            classToTest.booked.test {
+                classToTest.book()
+                assertThat(awaitItem()).isFalse()
+            }
+            verifyBlocking(bookings, never()) { getPaymentMethods(any(), anyOrNull()) }
+
+            val dead = Appointment(id = "61", status = Appointment.EXPIRED)
+            classToTest.onPaymentDone(dead)
+            assertThat(state.pending).isNull()
+            assertThat(state.paying).isFalse()
         }
 }

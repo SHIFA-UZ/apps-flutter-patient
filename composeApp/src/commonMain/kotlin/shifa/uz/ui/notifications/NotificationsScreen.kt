@@ -315,6 +315,7 @@ internal fun NotificationTray(
             CompositionLocalProvider(LocalCardOnSurface provides true) {
                 when (it) {
                     is NotificationLink.ToAppointment -> UpcomingCard(it.appointment, now, onClick = { open() })
+                    is NotificationLink.ToSigning -> UpcomingCard(it.appointment, now, onClick = { open() })
                     is NotificationLink.ToDocument ->
                         DocumentDisplayCard(it.document, it.document.isUploadedBy(patientName), open)
                     is NotificationLink.ToTask -> TaskCard(it.task, now, open)

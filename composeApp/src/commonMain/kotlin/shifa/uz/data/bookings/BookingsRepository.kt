@@ -15,6 +15,7 @@ import shifa.uz.data.api.FAILED_TO_BOOK_APPOINTMENT
 import shifa.uz.data.api.FAILED_TO_CANCEL_APPOINTMENT
 import shifa.uz.data.api.FAILED_TO_LOAD_APPOINTMENT
 import shifa.uz.data.api.FAILED_TO_LOAD_APPOINTMENTS
+import shifa.uz.data.api.FAILED_TO_LOAD_PAYMENT_METHODS
 import shifa.uz.data.api.FAILED_TO_LOAD_SLOTS
 import shifa.uz.data.api.FAILED_TO_SUBMIT_SIGNATURE
 import shifa.uz.data.api.apiCall
@@ -23,6 +24,7 @@ import shifa.uz.data.api.items
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
+import shifa.uz.data.model.PaymentMethod
 import shifa.uz.data.model.Review
 import shifa.uz.data.model.SignatureRequest
 import kotlin.io.encoding.Base64
@@ -75,6 +77,18 @@ class BookingsRepository(
                 parameter("locationId", locationId)
             }
         }.map { it.items<AvailableSlot>() }
+
+    /** MOBILE_BOOKING_PAYMENT §2.1: the providers for a pay-now [serviceId]; empty for free and pay later. */
+    suspend fun getPaymentMethods(
+        serviceId: String,
+        locationId: Int?,
+    ): Result<List<PaymentMethod>> =
+        apiCall<JsonElement>(FAILED_TO_LOAD_PAYMENT_METHODS) {
+            client.get(ApiConfig.Endpoints.PAYMENT_METHODS) {
+                parameter("serviceId", serviceId)
+                parameter("locationId", locationId)
+            }
+        }.map { it.items<PaymentMethod>() }
 
     /** B3. */
     suspend fun book(request: BookingRequest): Result<Appointment> =

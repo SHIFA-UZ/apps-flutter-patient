@@ -25,6 +25,7 @@ import shifa.uz.ui.notifications.NotificationLink.ToChat
 import shifa.uz.ui.notifications.NotificationLink.ToDocument
 import shifa.uz.ui.notifications.NotificationLink.ToDocuments
 import shifa.uz.ui.notifications.NotificationLink.ToMessages
+import shifa.uz.ui.notifications.NotificationLink.ToSigning
 import shifa.uz.ui.notifications.NotificationLink.ToTask
 import shifa.uz.ui.notifications.NotificationLink.ToTasks
 
@@ -115,7 +116,7 @@ class NotificationsViewModel(
 /**
  * 13 §4.2's sheet routes that exist here, for the tray and for a tapped push. There's no get-by-id, so the linked
  * item is found in its list; when it isn't there (or the list fails) the list opens instead.
- * ponytail: payment, sign form, treatment plan and visit summary aren't built, so those get no link.
+ * ponytail: payment, the 025-2 form and treatment plans aren't built, so those get no link.
  */
 internal class NotificationLinks(
     private val bookings: BookingsRepository,
@@ -133,27 +134,33 @@ internal class NotificationLinks(
                     ?.let { id -> tasks.getMyTasks().getOrNull()?.find { it.id == id } }
                     ?.let(::ToTask) ?: ToTasks
             kind == "PROPHYLAXIS_REMINDER" -> ToBookings
+            // The user's call: no summary page; the visit's documentation is on the Documents tab.
+            kind in VISIT_SUMMARY -> ToDocuments
+            // 13 §6.3: a 025-2 form (patientFormId) has its own signing, not built; else the visit's.
+            kind == "SIGNATURE_REQUESTED" -> if (n.form == null) appointment(n.appointment)?.let(::ToSigning) else null
+            // A request also shows the document asked for (approve / reject is NOTIF-02, not built).
             kind.startsWith("DOCUMENT_ACCESS_") -> document(n.document) ?: ToDocuments
             n.appointment != null && n.document == null ->
-                bookings.getAppointments().getOrNull()?.find { it.id == n.appointment }?.let(::ToAppointment)
-                    ?: ToBookings
+                appointment(
+                    n.appointment,
+                )?.let(::ToAppointment) ?: ToBookings
             else -> document(n.document) ?: n.document?.let { ToDocuments }
         }
     }
+
+    private suspend fun appointment(id: String?) =
+        id?.let { bookings.getAppointments().getOrNull()?.find { it.id == id } }
 
     private suspend fun document(id: String?) =
         id?.let { documents.getDocuments().getOrNull()?.find { it.id == id && it.file != null } }?.let(::ToDocument)
 
     private companion object {
-        // DOCUMENT_ACCESS_REQUEST is approved or rejected inline (NOTIF-02, not built).
         val UNBUILT =
             listOf(
                 "CONSULTATION_PAYMENT_",
                 "TREATMENT_PLAN_",
                 "INSTALLMENT_",
-                "SIGNATURE_REQUESTED",
-                "AI_",
-                "DOCUMENT_ACCESS_REQUEST",
             )
+        val VISIT_SUMMARY = setOf("AI_VISIT_SUMMARY_READY", "AI_SCRIBE_READY")
     }
 }

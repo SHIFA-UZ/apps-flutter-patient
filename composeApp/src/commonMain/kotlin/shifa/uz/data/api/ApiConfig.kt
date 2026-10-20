@@ -34,6 +34,7 @@ object ApiConfig {
         const val SEARCH_USERS = "patients/me/messages/search"
         const val UPLOAD_ATTACHMENT = "messages/upload-attachment"
         const val VIDEO_TOKEN = "video/token"
+        const val PAYMENT_METHODS = "payments/methods"
 
         fun doctor(id: String) = "public/doctors/$id"
 

@@ -28,17 +28,42 @@ data class Appointment(
     // B4 only: B2 leaves them out (seen 2026-10-11).
     val signatureRequested: Boolean = false,
     val alreadySigned: Boolean = false,
+    // MOBILE_BOOKING_PAYMENT §5.
+    val isVideoConsultation: Boolean? = null,
+    val serviceId: String? = null,
+    val serviceTitle: String? = null,
+    val paymentType: String? = null, // PAY_NOW, PAY_LATER, null: free or old
+    val paymentBadge: String? = null, // PAID, PAY_IN_CLINIC
+    val paymentAmountMinor: Long? = null,
+    val paymentCurrency: String? = null,
+    val holdExpiresAt: String? = null, // while PENDING_PAYMENT
+    val isLocked24h: Boolean? = null,
+    val canCancel: Boolean? = null,
+    val canReschedule: Boolean? = null,
+    val refundRequired: Boolean = false,
+    val payment: PaymentCheckout? = null, // B3's reply for pay now only
 ) {
     val needsSignature get() = signatureRequested && !alreadySigned
 
-    val isVideo get() = videoFlag == true || location == "Video Consultation"
+    val isVideo get() = isVideoConsultation ?: (videoFlag == true || location == "Video Consultation")
+
+    val isPaid get() = paymentBadge == PAID || paymentStatus == PAID
+
+    val isPayInClinic get() = paymentBadge == PAY_IN_CLINIC || paymentStatus == PAY_IN_CLINIC
+
+    val isAwaitingPayment get() = status == PENDING_PAYMENT
+
+    /** The pay-now booking died: its hold ran out, or the provider declined (the slot is free again). */
+    val isPaymentDead get() = status == EXPIRED || status == PAYMENT_FAILED
+
+    val price get() = paymentAmountMinor?.let { moneyText(it, paymentCurrency.orEmpty()) }
 
     // Null is CONFIRMED, and IN_PROGRESS (the visit has started) is past it. REQUESTED waits for the doctor:
     // B3 creates every booking as REQUESTED and nothing confirms it automatically.
     val isConfirmed get() = status == null || status == "CONFIRMED" || status == "IN_PROGRESS"
 
     // 06 quirk 12: Flutter ignored the status here. REQUESTED and PENDING are open (new bookings are either, 15 B2).
-    val isOpen get() = status != "CANCELLED" && status != "COMPLETED"
+    val isOpen get() = status != "CANCELLED" && status != "COMPLETED" && !isPaymentDead
 
     val start get() = parseInstant(startAt)
 
@@ -48,6 +73,36 @@ data class Appointment(
     fun isNow(now: Instant) = window?.contains(now) == true
 
     fun isOver(now: Instant) = window?.let { now > it.endInclusive } ?: true
+
+    companion object {
+        const val PAID = "PAID"
+        const val PAY_IN_CLINIC = "PAY_IN_CLINIC"
+        const val PENDING_PAYMENT = "PENDING_PAYMENT"
+        const val EXPIRED = "EXPIRED"
+        const val PAYMENT_FAILED = "PAYMENT_FAILED"
+    }
+}
+
+/** B3's pay-now checkout (MOBILE_BOOKING_PAYMENT §2.2). */
+@Serializable
+data class PaymentCheckout(
+    val id: String = "",
+    val provider: String? = null,
+    val checkoutUrl: String? = null,
+    val expiresAt: String? = null,
+)
+
+/** `GET payments/methods` item: a provider the service can be paid with (§2.1). */
+@Serializable
+data class PaymentMethod(
+    val provider: String = "",
+    val amountMinor: Long = 0,
+    val currency: String = "",
+) {
+    val price get() = moneyText(amountMinor, currency)
+
+    /** CLICK → Click, STRIPE → Stripe. */
+    val name get() = provider.lowercase().replaceFirstChar { it.uppercase() }
 }
 
 /** D2's [doctor], else the card's copy from the appointment (until D2 loads, or if it fails). */
@@ -83,6 +138,7 @@ data class BookingRequest(
     val locationId: Int? = null,
     val documentIds: List<Long>? = null,
     val rescheduleAppointmentId: Long? = null, // 06 §3.5: a reschedule is a new B3 naming the old one
+    val paymentProvider: String? = null, // pay now only, from payments/methods (§2.2)
 )
 
 /** B6 body: the PNG as plain base64, no `data:` prefix (06 §3.8). */

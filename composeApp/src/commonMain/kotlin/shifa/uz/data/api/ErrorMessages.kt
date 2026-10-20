@@ -42,6 +42,7 @@ const val FAILED_TO_LOAD_SLOTS = "Error loading slots"
 const val FAILED_TO_BOOK_APPOINTMENT = "Failed to book appointment"
 const val FAILED_TO_LOAD_APPOINTMENT = "Failed to load appointment" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_SUBMIT_SIGNATURE = "Failed to submit signature"
+const val FAILED_TO_LOAD_PAYMENT_METHODS = "Could not start payment. Please try again."
 const val FAILED_TO_START_VIDEO_CALL = "Failed to start video call"
 const val COPILOT_FAILED = "Co-pilot failed" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_TRANSCRIBE = "Could not transcribe audio"
@@ -99,6 +100,7 @@ private val MESSAGES: Map<String, StringResource> =
         "Phone number not found" to Res.string.errorPhoneNumberNotFound,
         "User not found" to Res.string.errorUserNotFound,
         TOO_MANY_REQUESTS to Res.string.errorTooManyRequests,
+        FAILED_TO_LOAD_PAYMENT_METHODS to Res.string.paymentCouldNotStart,
         FAILED_TO_TRANSCRIBE to Res.string.copilotTranscribeError,
         TOO_MANY_VERIFICATION_REQUESTS to Res.string.errorTooManyVerificationRequests,
         SMS_COULD_NOT_BE_SENT to Res.string.errorSmsCouldNotBeSent,

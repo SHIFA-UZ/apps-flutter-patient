@@ -8,8 +8,8 @@ import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.Review
 import shifa.uz.data.model.shownDoctor
 
-// 06 §3.5: cancel only 48 h or more ahead. Figma's copy says 24 h; the spec wins.
-private const val CANCEL_HOURS = 48
+// MOBILE_BOOKING_PAYMENT §6: no cancel or reschedule under 24 h (the backend's 409 APPOINTMENT_LOCKED_24H), as Figma.
+private const val CANCEL_HOURS = 24
 
 /** [doctor] is D2, null until it loads (or if it fails): the card then shows the appointment's copy. */
 @Stable
@@ -34,9 +34,16 @@ data class AppointmentDetailsUiState(
 
     val isPast get() = hoursUntil?.let { it < 0 } ?: true
 
-    val canCancel get() = appointment.isOpen && !isPast && hoursUntil!! >= CANCEL_HOURS && appointment.id.isNotBlank()
+    private val locked get() = appointment.isLocked24h ?: (hoursUntil!! < CANCEL_HOURS)
 
-    val showWarning get() = appointment.isOpen && !isPast && hoursUntil!! < CANCEL_HOURS
+    /** The backend's `canCancel` / `canReschedule` drive the buttons (§5); older replies fall back to the 24 h rule. */
+    val canCancel get() =
+        appointment.isOpen && !isPast && appointment.id.isNotBlank() && (appointment.canCancel ?: !locked)
+
+    val canReschedule get() =
+        appointment.isOpen && !isPast && appointment.id.isNotBlank() && (appointment.canReschedule ?: !locked)
+
+    val showWarning get() = appointment.isOpen && !isPast && locked
 
     /** Upcoming has the info cards, Reschedule and Cancel; anything else is past: the summary card and a review. */
     val isUpcoming get() = appointment.isOpen && !isPast

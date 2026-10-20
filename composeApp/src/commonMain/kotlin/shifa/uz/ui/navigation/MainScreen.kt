@@ -124,6 +124,7 @@ fun MainScreen(
                 is NotificationLink.ToAppointment -> appointment = link.appointment
                 is NotificationLink.ToDocument -> viewing = link.document
                 is NotificationLink.ToTask -> checkIn = link.task
+                is NotificationLink.ToSigning -> live = link.appointment
                 NotificationLink.ToBookings -> tab = ShifaTab.Bookings
                 NotificationLink.ToDocuments -> tab = ShifaTab.Documents
                 NotificationLink.ToTasks -> tasksOpen = true
@@ -385,6 +386,15 @@ fun MainScreen(
                                     list = null
                                     tab = ShifaTab.Bookings
                                     bookings.onBooked(pending)
+                                    home.refresh()
+                                },
+                                // Figma 1825:17774: paid, the visit's details with Payment Completed.
+                                onPaid = { paid ->
+                                    booking = null
+                                    doctor = null
+                                    list = null
+                                    appointment = paid
+                                    bookings.load()
                                     home.refresh()
                                 },
                                 onSignedOut = onLogOut,

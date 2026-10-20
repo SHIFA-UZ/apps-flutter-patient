@@ -1,13 +1,22 @@
 package shifa.uz.ui.bookings
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
+import shifa.uz.data.model.DoctorLocation
+import shifa.uz.data.model.DoctorPrice
 import shifa.uz.data.model.DoctorService
 import shifa.uz.data.model.PatientDocument
+import shifa.uz.data.model.PaymentCheckout
+import shifa.uz.data.model.PaymentMethod
 import shifa.uz.ui.doctors.LocalDeviceLocation
 import shifa.uz.ui.widgets.PreviewTheme
 import shifa.uz.utils.DeviceLocation
@@ -71,3 +80,86 @@ internal fun ReschedulePreview() =
             detailsOpen = true,
         )
     }
+
+private val paying =
+    doctor.copy(
+        serviceItems =
+            listOf(
+                DoctorService("8", "Check up", prices = listOf(DoctorPrice(300_000, "UZS")), paymentType = "PAY_NOW"),
+                DoctorService(
+                    "9",
+                    "Cleaning",
+                    prices = listOf(DoctorPrice(90_000, "UZS", locationId = 1)),
+                    paymentType = "PAY_LATER",
+                ),
+            ),
+    )
+
+private val clinics =
+    listOf(DoctorLocation(1, true, clinic = "Sog'lom Hayot Klinikasi"), DoctorLocation(2, clinic = "SEBAMED"))
+
+// Figma 1823:16296: pay now, so Complete Payment.
+@Preview(widthDp = 393, heightDp = 1100)
+@Composable
+internal fun CreateBookingPayNowPreview() =
+    Booking(
+        CreateBookingUiState(
+            paying,
+            locations = clinics,
+            locationId = 1,
+            serviceId = "8",
+            date = LocalDate(2026, 10, 20),
+            slots = slots,
+            slot = slots.first(),
+        ),
+    )
+
+// Figma 1823:16350: pay in clinic, so no video and a note under the service.
+@Preview(widthDp = 393, heightDp = 1000)
+@Composable
+internal fun CreateBookingPayInClinicPreview() =
+    Booking(
+        CreateBookingUiState(
+            paying,
+            locationId = 1,
+            serviceId = "9",
+            date = LocalDate(2026, 10, 20),
+            slots = slots,
+            slot = slots.first(),
+            reason = "New appointment regarding my health issues",
+        ),
+    )
+
+// Figma 1876:18609.
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun ConfirmPaymentTrayPreview() =
+    PreviewTheme {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            ConfirmPaymentTray(
+                CreateBookingUiState(
+                    paying,
+                    methods = listOf(PaymentMethod("STRIPE", 300_000, "UZS")),
+                    provider = "STRIPE",
+                ),
+            )
+        }
+    }
+
+private val held =
+    Appointment(
+        id = "50",
+        status = Appointment.PENDING_PAYMENT,
+        holdExpiresAt = "2026-09-27T09:12:34Z",
+        payment = PaymentCheckout("880", "STRIPE", "https://pay/880"),
+    )
+
+// Figma 1825:17388 (the provider's page is empty in previews).
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun PaymentPreview() = PreviewTheme { PaymentContent(PaymentUiState(held, now)) }
+
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun PaymentExpiredPreview() =
+    PreviewTheme { PaymentContent(PaymentUiState(held.copy(status = Appointment.EXPIRED), now)) }

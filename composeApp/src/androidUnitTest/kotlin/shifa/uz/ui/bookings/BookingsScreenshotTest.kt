@@ -72,4 +72,16 @@ class BookingsScreenshotTest {
     fun reviewTray() {
         captureRoboImage("screenshots/AppointmentDetails_reviewTray.png") { ReviewTrayPreview() }
     }
+
+    @Test
+    @Config(qualifiers = "w393dp-h1000dp-xhdpi")
+    fun detailsPaid() {
+        captureRoboImage("screenshots/AppointmentDetails_paid.png") { AppointmentDetailsPaidPreview() }
+    }
+
+    @Test
+    @Config(qualifiers = "w393dp-h1000dp-xhdpi")
+    fun detailsPayInClinic() {
+        captureRoboImage("screenshots/AppointmentDetails_payInClinic.png") { AppointmentDetailsPayInClinicPreview() }
+    }
 }

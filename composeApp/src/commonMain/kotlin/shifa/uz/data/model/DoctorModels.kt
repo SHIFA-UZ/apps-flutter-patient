@@ -72,6 +72,10 @@ data class Doctor(
     val about get() = biography?.ifBlank { null } ?: furtherInformation?.ifBlank { null }
 }
 
+/**
+ * D2 `serviceItems[]` (MOBILE_BOOKING_PAYMENT §1): free, pay now (online, Click / Stripe) or pay later (at the
+ * clinic). `isFreeConsultation` wins over [paymentType]; a priced service without one is pay now (the backend default).
+ */
 @Serializable
 data class DoctorService(
     val id: String = "",
@@ -79,9 +83,30 @@ data class DoctorService(
     val description: String? = null,
     val isFreeConsultation: Boolean = false,
     val prices: List<DoctorPrice> = emptyList(),
+    val paymentType: String? = null, // PAY_NOW, PAY_LATER
+    val videoAllowed: Boolean? = null,
 ) {
     // B3 rejects a video booking whose service has only clinic prices ("Selected service has no price configured").
     val isOnline get() = isFreeConsultation || prices.any { it.locationId == null }
+
+    val isPayLater get() = !isFreeConsultation && paymentType.equals(PAY_LATER, ignoreCase = true)
+
+    val isPayNow get() = !isFreeConsultation && !isPayLater
+
+    // Pay later can't be video (§1); older backends don't send videoAllowed.
+    val canVideo get() = (videoAllowed ?: true) && !isPayLater && isOnline
+
+    /** In person at [locationId] needs a price there or one for any clinic; free needs none. */
+    fun bookableAt(locationId: Int?) =
+        isFreeConsultation || prices.isEmpty() || prices.any { it.locationId == null || it.locationId == locationId }
+
+    /** The price for [locationId] (null: video), else the one for any clinic. */
+    fun price(locationId: Int?) =
+        prices.firstOrNull { it.locationId == locationId && locationId != null } ?: prices.firstOrNull { it.locationId == null }
+
+    private companion object {
+        const val PAY_LATER = "PAY_LATER"
+    }
 }
 
 @Serializable
@@ -90,8 +115,19 @@ data class DoctorPrice(
     val currency: String = "",
     val locationId: Int? = null, // the clinic this price is for; null: any, video included
 ) {
-    /** 07 §4.3 profile price: always 2 decimals, e.g. "150000.00 UZS". */
-    val text get() = "${amountMinor / 100}.${(amountMinor % 100).toString().padStart(2, '0')} $currency".trim()
+    val text get() = moneyText(amountMinor, currency)
+}
+
+/**
+ * Figma's "300000.00 UZS": always 2 decimals. UZS has no subunit, so its `amountMinor` is already so'm
+ * (MOBILE_BOOKING_PAYMENT §1); other currencies are in cents.
+ */
+fun moneyText(
+    amountMinor: Long,
+    currency: String,
+): String {
+    val major = if (currency.equals("UZS", ignoreCase = true)) amountMinor * 100 else amountMinor
+    return "${major / 100}.${(major % 100).toString().padStart(2, '0')} $currency".trim()
 }
 
 /** D3 item (15 §5.4), only the keys booking reads. */
@@ -99,7 +135,13 @@ data class DoctorPrice(
 data class DoctorLocation(
     val id: Int = 0,
     val isPrimary: Boolean = false,
-)
+    val label: String? = null,
+    val clinic: String? = null,
+    val address: String? = null,
+) {
+    /** Select Clinic's row: the clinic, else the label, else the address. */
+    val name get() = listOf(clinic, label, address).firstNotNullOfOrNull { it?.trim()?.ifEmpty { null } }
+}
 
 /** D4 item and D5's reply (15 §5.5). B7 sends only rating, comment and createdAt. */
 @Serializable

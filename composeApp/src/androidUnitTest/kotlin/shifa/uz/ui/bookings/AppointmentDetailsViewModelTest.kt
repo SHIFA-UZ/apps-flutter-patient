@@ -74,14 +74,20 @@ class AppointmentDetailsViewModelTest {
         }
 
     @Test
-    fun `within 48 hours it warns and does not cancel`() =
+    fun `within 24 hours it warns and does not cancel, and the backend's flags win`() =
         runTest {
-            create(tomorrow)
+            create(tomorrow.copy(startAt = "2026-09-28T08:00:00Z"))
             assertThat(state.showWarning).isTrue()
             assertThat(state.canCancel).isFalse()
 
             classToTest.askCancel()
             assertThat(state.confirmCancel).isFalse()
+
+            // MOBILE_BOOKING_PAYMENT §5: canCancel / canReschedule / isLocked24h decide when sent.
+            create(inThreeDays.copy(canCancel = false, canReschedule = true, isLocked24h = false))
+            assertThat(state.canCancel).isFalse()
+            assertThat(state.canReschedule).isTrue()
+            assertThat(state.showWarning).isFalse()
         }
 
     @Test

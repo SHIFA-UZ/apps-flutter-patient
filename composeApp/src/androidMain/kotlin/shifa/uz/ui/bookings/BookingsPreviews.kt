@@ -147,7 +147,7 @@ internal val previewAppointment =
 
 private val soon = previewAppointment
 
-// Figma 1662:17723: less than 48 h away.
+// Figma 1662:17723: less than 24 h away.
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
 internal fun AppointmentDetailsSoonPreview() =
@@ -198,4 +198,44 @@ internal fun ReviewTrayPreview() =
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
             ReviewTray(AppointmentDetailsUiState(pastVisit, now, previewDoctor, reviewChecked = true, rating = 3))
         }
+    }
+
+// Figma 1825:17774: paid, after the payment page closed.
+@Preview(widthDp = 393, heightDp = 1000)
+@Composable
+internal fun AppointmentDetailsPaidPreview() =
+    PreviewTheme {
+        AppointmentDetailsContent(
+            AppointmentDetailsUiState(
+                soon.copy(
+                    startAt = "2026-10-05T07:00:00Z",
+                    endAt = "2026-10-05T07:30:00Z",
+                    serviceTitle = "Check up",
+                    paymentStatus = Appointment.PAID,
+                    paymentBadge = Appointment.PAID,
+                ),
+                now,
+                previewDoctor,
+            ),
+        )
+    }
+
+// Figma 1825:17960: paid at the clinic, under 24 h.
+@Preview(widthDp = 393, heightDp = 1000)
+@Composable
+internal fun AppointmentDetailsPayInClinicPreview() =
+    PreviewTheme {
+        AppointmentDetailsContent(
+            AppointmentDetailsUiState(
+                soon.copy(
+                    serviceTitle = "Check up",
+                    paymentStatus = Appointment.PAY_IN_CLINIC,
+                    paymentBadge = Appointment.PAY_IN_CLINIC,
+                    paymentAmountMinor = 300_000,
+                    paymentCurrency = "UZS",
+                ),
+                now,
+                previewDoctor,
+            ),
+        )
     }
