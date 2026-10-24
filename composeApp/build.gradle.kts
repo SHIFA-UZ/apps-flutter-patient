@@ -169,7 +169,11 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
         // Robolectric screenshot tests are slow on one JVM; spread the test classes over half the cores.
-        unitTests.all { it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1) }
+        unitTests.all {
+            it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+            // Screenshots show local times: one zone for every test JVM, whatever order the tests run in.
+            it.systemProperty("user.timezone", "Asia/Tashkent")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

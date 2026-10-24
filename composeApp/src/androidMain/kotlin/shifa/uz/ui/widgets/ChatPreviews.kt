@@ -28,9 +28,8 @@ internal fun ChatBarPreview() =
 @Composable
 internal fun ChatBubblePreview() =
     Gallery {
-        ShifaChatBubble("chat message", ShifaChatBubbleType.Received)
-        ShifaChatBubble("chat message", ShifaChatBubbleType.Sent)
-        ShifaChatBubble("chat message", ShifaChatBubbleType.ShifaAi)
+        ShifaChatBubble("chat message", ShifaChatBubbleType.Received, time = "17:00")
+        ShifaChatBubble("chat message", ShifaChatBubbleType.Sent, time = "17:01")
         ShifaChatImageBubble { Box(Modifier.size(16.dp).background(ShifaColors.Bg.Surface)) }
         ShifaChatVoiceBubble(playing = false, position = 0, duration = 42, onToggle = {}, received = true)
         ShifaChatVoiceBubble(playing = true, position = 15, duration = 42, onToggle = {})

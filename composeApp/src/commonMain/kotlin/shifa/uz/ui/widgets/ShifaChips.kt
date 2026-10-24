@@ -62,10 +62,7 @@ fun ShifaChip(
                     Modifier
                 },
             ).selectable(selected, onClick = onClick)
-            .padding(
-                horizontal = ShifaSpacing.Inset.Md,
-                vertical = if (slot) ShifaSpacing.Stack.Sm else ShifaSpacing.Stack.Xs,
-            ),
+            .padding(horizontal = ShifaSpacing.Inset.Md, vertical = ShifaSpacing.Stack.Sm),
         horizontalArrangement = Arrangement.spacedBy(ShifaDimens.InteractiveChipIconGap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {

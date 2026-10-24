@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -62,12 +61,15 @@ import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaBanner
 import shifa.uz.ui.widgets.ShifaBannerType
+import shifa.uz.ui.widgets.ShifaCardSkeleton
 import shifa.uz.ui.widgets.ShifaCarousel
 import shifa.uz.ui.widgets.ShifaDoctorCard
 import shifa.uz.ui.widgets.ShifaDoctorCardType
+import shifa.uz.ui.widgets.ShifaListSkeleton
 import shifa.uz.ui.widgets.ShifaMainHeader
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
@@ -145,7 +147,6 @@ internal fun HomeContent(
         ShifaPageElement(ShifaPageElementType.Header, Modifier.statusBarsPadding()) {
             ShifaMainHeader(
                 "${stringResource(Res.string.hello)}, ${state.firstName ?: stringResource(Res.string.patient)}",
-                home = true,
                 avatarUrl = state.photoUrl,
                 onNotifications = onNotifications,
                 onAvatar = onAccount,
@@ -204,7 +205,7 @@ internal fun HomeContent(
     }
 }
 
-/** A spinner until the first load, the empty text, or up to [limit] cards. Hidden when a first load failed. No [title], no header. */
+/** Skeleton cards until the first load, the empty text, or up to [limit] cards. Hidden when a first load failed. No [title], no header. */
 @Composable
 internal fun <T> HomeSection(
     title: StringResource?,
@@ -221,7 +222,17 @@ internal fun <T> HomeSection(
     if (items == null && !isLoading) return
     ShifaSection(title?.let { stringResource(it) }, type = type, onMore = onMore) {
         when {
-            items == null -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+            items == null && carousel ->
+                ShifaCarousel(Modifier.fillMaxWidth(), ShifaSpacing.Gap.Sm) {
+                    repeat(2) {
+                        ShifaCardSkeleton(
+                            avatar = ShifaDimens.DoctorAvatarIn,
+                            width = ShifaDimens.DoctorCardInMaxWidth,
+                            shadow = false,
+                        )
+                    }
+                }
+            items == null -> ShifaListSkeleton(count = minOf(limit, SKELETON_ITEMS), gap = gap)
             items.isEmpty() ->
                 Text(
                     stringResource(empty),
@@ -344,3 +355,6 @@ internal fun slot(
     at: Instant,
     now: Instant,
 ) = formatSlot(at, now, stringResource(Res.string.availabilityToday), stringResource(Res.string.availabilityTomorrow))
+
+// Placeholder cards per list while it first loads.
+internal const val SKELETON_ITEMS = 3

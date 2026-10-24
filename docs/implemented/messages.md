@@ -23,11 +23,13 @@
   - document (its file name);
   - voice: a player (CHAT-04, 08 §5.5.3): play / pause, a progress bar, the position and the length (`content.duration`, else the stream's). One message plays at a time (Flutter let several); leaving the chat stops it. `utils/AudioPlayer.kt`: Android `MediaPlayer`, iOS `AVPlayer` streaming the URL (the session switches to playback, so it uses the speaker after a recording). A failed stream just stops; no voice URL shows "Voice Message".
   - system (centred grey text).
+- The list's last message: the backend's English placeholder for a photo, voice message or file ("photo", "voice message", "attachment"…, any case or emoji) shows in the app's language.
+- Every bubble shows when it was sent under it (not in Figma): HH:mm today, else "HH:mm, 20 Sep".
 - Tapping an image or document opens it in the Documents viewer (DOCS-03) over the chat: pinch to zoom a photo, scroll a PDF, Download; no Delete (it isn't a patient document). Flutter opened the system viewer.
 - Notification taps open the chat when the push or inbox item has a `chatId` (fixes 00 bug 10), else the Messages tab. The inbox tray's button is "Open chat".
 - Not built:
   - Figma's ⋮ (no API for it);
-  - times and read ticks, link detection;
+  - read ticks, link detection;
   - the unread badge (CHAT-06).
 - A C3 echo or legacy item with a `type` keeps it; without one, a `.m4a` / `.aac` / `.mp3` / `.ogg` attachment is voice (08 §3.4 rendered it as a broken image), and a flat `duration` counts.
 - Not tried against the backend: sending, uploads and mark read (production data).

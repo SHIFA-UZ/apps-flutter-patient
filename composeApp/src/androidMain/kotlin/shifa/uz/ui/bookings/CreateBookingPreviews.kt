@@ -3,7 +3,6 @@ package shifa.uz.ui.bookings
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,9 +16,7 @@ import shifa.uz.data.model.DoctorService
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.data.model.PaymentCheckout
 import shifa.uz.data.model.PaymentMethod
-import shifa.uz.ui.doctors.LocalDeviceLocation
 import shifa.uz.ui.widgets.PreviewTheme
-import shifa.uz.utils.DeviceLocation
 import kotlin.time.Duration.Companion.minutes
 
 private val now = Instant.parse("2026-09-27T09:00:00Z")
@@ -41,9 +38,7 @@ private val doctor =
 @Composable
 private fun Booking(state: CreateBookingUiState) =
     PreviewTheme {
-        CompositionLocalProvider(LocalDeviceLocation provides DeviceLocation.Found(41.3, 69.2)) {
-            CreateBookingContent(state, now)
-        }
+        CreateBookingContent(state, now)
     }
 
 // Figma 1662:18783: still looking for the next free day.

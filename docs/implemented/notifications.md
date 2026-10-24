@@ -8,7 +8,7 @@
 - Chips: All / Appointments / Tasks / Documents / Payments. They match on the type: `APPOINTMENT`, `TASK`, `DOCUMENT` or `SIGNATURE`, and `PAYMENT` or `INSTALLMENT`. Payments isn't in Figma; payment cards keep the folder icon, as Figma has no payment one. The empty texts differ for All and for a filter. Newest first, grouped under Today / Yesterday / "Sep 20" (local dates). Figma's "Last Week" is placeholder copy.
 - Cards: `ShifaNotification` with the type's icon (appointment, task, chat; everything else gets Figma's folder card). Title and message use the 13 §6.3 localized texts; SIGNATURE_REQUESTED fills in the doctor, DOCUMENT_ACCESS_REQUEST fills in who, file and patient. Unknown types show the backend's text. Time: "Just now", "N minutes ago", HH:mm today, "Yesterday HH:mm", else "Sep 20 • HH:mm".
 - The header check (N4) marks everything read, shows "All notifications marked as read" and refreshes the bell count.
-- Unread cards have a brand (primary) title; Figma has no unread look.
+- Unread cards use Figma's unread variant (`1598:10299`): a bold brand time and a notification-bubble. Each card is one notification, so its bubble shows 1. The list sits on canvas under the surface header and chips.
 - Not built: the ⋮ menu (no Figma for it), and the title count.
 
 ## Details tray (NOTIF-01, NOTIF-04 in part)

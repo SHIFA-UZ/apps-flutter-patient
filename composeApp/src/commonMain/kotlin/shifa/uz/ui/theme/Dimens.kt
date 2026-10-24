@@ -59,7 +59,6 @@ object ShifaDimens {
     val TertiaryButtonPaddingStart = 10.dp
     val TertiaryButtonPaddingEnd = 15.dp
     val TertiaryButtonPaddingVertical = 10.dp
-    val IconButtonPadding = 10.dp
 
     // page-header
     val PageHeaderAvatar = 40.dp
@@ -72,6 +71,7 @@ object ShifaDimens {
     val DoctorAvatarIn = 68.dp
     val DoctorBadgeCompact = 17.45.dp
     val DoctorBadgeIn = 19.43.dp
+    val DoctorCardInMaxWidth = 272.dp
     val DocumentThumbWidth = 55.dp
     val DocumentThumbHeight = 48.dp
     val TaskIcon = 48.dp
@@ -106,6 +106,10 @@ object ShifaDimens {
 
     // chat-bubble, voice: not in Figma, Flutter's player row (08 §5.5.3)
     val ChatVoiceWidth = 220.dp
+
+    // skeletons (not in Figma): a placeholder chat bubble (one line in its padding) and a slot chip
+    val ChatSkeletonHeight = 50.dp
+    val ChipSkeletonHeight = 34.dp
 
     // section
     val SectionBorder = 1.dp
@@ -183,10 +187,4 @@ object ShifaShadow {
     val Dropdown = Shadow(radius = 6.dp, color = Color(0x26000000)) // raw in Figma: expanded dropdown
     val Section = Shadow(radius = 12.7.dp, color = Color(0x26000000)) // raw in Figma: section inside a section
     val NavBar = Shadow(radius = 41.4.dp, color = Color(0x3B000000), offset = DpOffset(2.dp, 2.dp))
-    val ChatTray =
-        Shadow(
-            radius = 30.dp,
-            color = Color(0x14000000),
-            offset = DpOffset(2.dp, 2.dp),
-        ) // tray shifa-chat row, no style
 }

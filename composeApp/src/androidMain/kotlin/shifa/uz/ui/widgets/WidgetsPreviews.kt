@@ -24,8 +24,8 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_eye_20
 import shifa.composeapp.generated.resources.ic_globe_24
 import shifa.composeapp.generated.resources.ic_plus_16
+import shifa.composeapp.generated.resources.ic_plus_18
 import shifa.composeapp.generated.resources.ic_plus_22
-import shifa.composeapp.generated.resources.ic_plus_24
 import shifa.composeapp.generated.resources.ic_trash_24
 import shifa.uz.ui.navigation.ShifaNavBar
 import shifa.uz.ui.navigation.ShifaTab
@@ -97,9 +97,9 @@ internal fun ButtonsPreview() =
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(false, true).forEach { secondary ->
-                ShifaIconButton(Res.drawable.ic_plus_24, null, {}, secondary = secondary)
-                ShifaIconButton(Res.drawable.ic_plus_24, null, {}, secondary = secondary, enabled = false)
-                ShifaIconButton(Res.drawable.ic_plus_24, null, {}, secondary = secondary, destructive = true)
+                ShifaIconButton(Res.drawable.ic_plus_18, null, {}, secondary = secondary)
+                ShifaIconButton(Res.drawable.ic_plus_18, null, {}, secondary = secondary, enabled = false)
+                ShifaIconButton(Res.drawable.ic_plus_18, null, {}, secondary = secondary, destructive = true)
             }
         }
     }
@@ -221,7 +221,7 @@ internal fun CardsPreview() =
 @Composable
 internal fun PageHeaderPreview() =
     Gallery {
-        ShifaMainHeader("Home", home = true, onNotifications = {})
+        ShifaMainHeader("Home", onNotifications = {}, notificationCount = 3)
         ShifaMainHeader("Page Name", onNotifications = {})
         ShifaSubHeader("Page Name", onBack = {}, onCheck = {}, onMore = {})
     }

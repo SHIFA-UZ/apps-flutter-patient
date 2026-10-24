@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSpacing
@@ -35,5 +36,6 @@ fun ShifaTag(
         style = style,
         color = type.text,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
     )
 }

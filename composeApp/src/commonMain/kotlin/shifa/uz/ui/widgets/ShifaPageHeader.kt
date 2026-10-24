@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -20,23 +19,27 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.back
 import shifa.composeapp.generated.resources.ic_arrow_left_16
 import shifa.composeapp.generated.resources.ic_bell_16
 import shifa.composeapp.generated.resources.ic_check_square_16
 import shifa.composeapp.generated.resources.ic_more_vertical_16
+import shifa.composeapp.generated.resources.more
+import shifa.composeapp.generated.resources.notifications
+import shifa.composeapp.generated.resources.select
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
 
-/** Figma page-header, page = main. [home] picks the large title (type = home). */
+/** Figma page-header, page = main: the 32 title on every tab. */
 @Composable
 fun ShifaMainHeader(
     title: String,
     modifier: Modifier = Modifier,
-    home: Boolean = false,
     avatarUrl: String? = null,
     onNotifications: (() -> Unit)? = null,
     onAvatar: (() -> Unit)? = null,
@@ -47,24 +50,18 @@ fun ShifaMainHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        HeaderTitle(title, if (home) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.headlineSmall)
+        HeaderTitle(title, MaterialTheme.typography.headlineLarge, Modifier.weight(1f, fill = false))
         Row(
             horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             onNotifications?.let {
-                // No badge in Figma; the unread count (N2) uses the Material one, capped at 9+.
-                BadgedBox(badge = {
-                    if (notificationCount > 0) {
-                        Badge(containerColor = ShifaColors.Icon.Error, contentColor = ShifaColors.Text.Inverse) {
-                            Text(if (notificationCount > 9) "9+" else "$notificationCount")
-                        }
-                    }
-                }) {
+                // Figma's header has no badge; the unread count (N2) is the notification-bubble.
+                BadgedBox(badge = { if (notificationCount > 0) ShifaNotificationBubble(notificationCount) }) {
                     ShifaActionButton(
                         it,
                         icon = Res.drawable.ic_bell_16,
-                        contentDescription = "Notifications",
+                        contentDescription = stringResource(Res.string.notifications),
                         secondary = true,
                     )
                 }
@@ -98,7 +95,12 @@ fun ShifaSubHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         onBack?.let {
-            ShifaActionButton(it, icon = Res.drawable.ic_arrow_left_16, contentDescription = "Back", secondary = true)
+            ShifaActionButton(
+                it,
+                icon = Res.drawable.ic_arrow_left_16,
+                contentDescription = stringResource(Res.string.back),
+                secondary = true,
+            )
         }
         if (avatar) {
             Row(
@@ -120,7 +122,7 @@ fun ShifaSubHeader(
                 ShifaActionButton(
                     it,
                     icon = Res.drawable.ic_check_square_16,
-                    contentDescription = "Select",
+                    contentDescription = stringResource(Res.string.select),
                     secondary = true,
                 )
             }
@@ -132,7 +134,11 @@ fun ShifaSubHeader(
                         .clickable(role = Role.Button, onClick = it)
                         .padding(ShifaSpacing.Inset.Xs),
                 ) {
-                    Icon(painterResource(Res.drawable.ic_more_vertical_16), "More", tint = ShifaColors.Icon.Primary)
+                    Icon(
+                        painterResource(Res.drawable.ic_more_vertical_16),
+                        stringResource(Res.string.more),
+                        tint = ShifaColors.Icon.Primary,
+                    )
                 }
             }
         }

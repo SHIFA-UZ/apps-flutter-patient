@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_activity_16
 import shifa.composeapp.generated.resources.ic_alert_circle_16
@@ -60,6 +62,7 @@ import shifa.composeapp.generated.resources.ic_zap_16
 import shifa.composeapp.generated.resources.img_certificate
 import shifa.composeapp.generated.resources.img_documents
 import shifa.composeapp.generated.resources.img_shifa_ai_header
+import shifa.composeapp.generated.resources.verified
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -148,7 +151,12 @@ fun ShifaDoctorCard(
     onClick: (() -> Unit)? = null,
 ) {
     CardChrome(
-        if (type == ShifaDoctorCardType.In) modifier.width(IntrinsicSize.Max) else modifier,
+        // In hugs its content up to Figma's width; a longer name or tag ellipsizes.
+        if (type == ShifaDoctorCardType.In) {
+            modifier.widthIn(max = ShifaDimens.DoctorCardInMaxWidth).width(IntrinsicSize.Max)
+        } else {
+            modifier
+        },
         onClick,
         shadow = shadow,
     ) {
@@ -162,7 +170,7 @@ fun ShifaDoctorCard(
                 if (verified) {
                     Image(
                         painterResource(Res.drawable.ic_verified_20),
-                        "Verified",
+                        stringResource(Res.string.verified),
                         Modifier.align(Alignment.BottomEnd).size(type.badge),
                     )
                 }

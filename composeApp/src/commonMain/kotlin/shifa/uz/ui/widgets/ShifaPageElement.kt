@@ -20,6 +20,9 @@ enum class ShifaPageElementType(
     Header(ShifaColors.Bg.Surface, PaddingValues()),
     FlexHeader(ShifaColors.Bg.Surface, PaddingValues(horizontal = ShifaSpacing.Inset.Md)),
     Body(ShifaColors.Bg.Surface, PaddingValues(ShifaSpacing.Inset.Md)),
+
+    // A sub page's body: every page outside the tab bar sits on canvas (Figma 1655:15670).
+    SubBody(ShifaColors.Bg.Canvas, PaddingValues(ShifaSpacing.Inset.Md)),
     ActionTray(
         ShifaColors.Bg.Surface,
         PaddingValues(horizontal = ShifaSpacing.Inset.Md, vertical = ShifaSpacing.Inset.Sm),
@@ -38,9 +41,10 @@ fun ShifaPageElement(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val tray = type == ShifaPageElementType.ActionTray
-    // Figma clips here; not clipping keeps the children's shadows intact.
+    // Figma clips here; not clipping keeps the children's shadows intact. The background goes first, so insets the
+    // caller adds (statusBarsPadding on a header, navigationBarsPadding on a tray) are painted too, not the page.
     Column(
-        modifier.fillMaxWidth().background(type.bg).padding(type.padding),
+        Modifier.fillMaxWidth().background(type.bg).then(modifier).padding(type.padding),
         verticalArrangement = if (tray) Arrangement.spacedBy(ShifaSpacing.Gap.Md) else Arrangement.Top,
         content = content,
     )

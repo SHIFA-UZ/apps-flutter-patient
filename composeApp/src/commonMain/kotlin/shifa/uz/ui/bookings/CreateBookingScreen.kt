@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -99,6 +98,7 @@ import shifa.uz.ui.widgets.ShifaBanner
 import shifa.uz.ui.widgets.ShifaBannerType
 import shifa.uz.ui.widgets.ShifaChip
 import shifa.uz.ui.widgets.ShifaChipGrid
+import shifa.uz.ui.widgets.ShifaChipsSkeleton
 import shifa.uz.ui.widgets.ShifaDropdown
 import shifa.uz.ui.widgets.ShifaInputField
 import shifa.uz.ui.widgets.ShifaPageElement
@@ -303,7 +303,7 @@ internal fun DateSection(
     },
 ) {}
 
-/** The day's free slots as chips; a spinner while B1 loads. */
+/** The day's free slots as chips; chip placeholders while B1 loads. */
 @Composable
 internal fun TimesSection(
     state: CreateBookingUiState,
@@ -311,7 +311,7 @@ internal fun TimesSection(
 ) = ShifaSection(stringResource(Res.string.availableTimes)) {
     val slots = state.slots
     when {
-        slots == null -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+        slots == null -> ShifaChipsSkeleton()
         slots.isEmpty() ->
             Text(
                 stringResource(Res.string.noAvailableTimeSlots),

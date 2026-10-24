@@ -43,9 +43,15 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.clear
 import shifa.composeapp.generated.resources.ic_mic_22
 import shifa.composeapp.generated.resources.ic_x_22
+import shifa.composeapp.generated.resources.pause
+import shifa.composeapp.generated.resources.play
+import shifa.composeapp.generated.resources.recordVoiceMessage
+import shifa.composeapp.generated.resources.stopRecording
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -91,7 +97,7 @@ fun ShifaChatBar(
             RecordingWaveform(Modifier.weight(1f))
             Icon(
                 Icons.Rounded.Stop,
-                "Stop recording",
+                stringResource(Res.string.stopRecording),
                 Modifier.clip(ShifaRadius.Full).clickable(onClick = onMic),
                 tint = ShifaColors.Icon.Primary,
             )
@@ -112,9 +118,9 @@ fun ShifaChatBar(
                 },
             )
             if (value.isEmpty()) {
-                BarIcon(Res.drawable.ic_mic_22, "Record voice message", onMic)
+                BarIcon(Res.drawable.ic_mic_22, stringResource(Res.string.recordVoiceMessage), onMic)
             } else {
-                BarIcon(Res.drawable.ic_x_22, "Clear") { onValueChange("") }
+                BarIcon(Res.drawable.ic_x_22, stringResource(Res.string.clear)) { onValueChange("") }
             }
         }
     }
@@ -172,15 +178,20 @@ private fun BarIcon(
     tint = ShifaColors.Icon.Primary,
 )
 
-enum class ShifaChatBubbleType { Received, Sent, ShifaAi }
+// Shifa AI's replies are received bubbles (Figma 1772:17214), like a doctor's.
+enum class ShifaChatBubbleType { Received, Sent }
 
-/** Figma chat-bubble, type = received / sent / shifa-ai. Sent aligns end, the rest start. */
+/**
+ * Figma chat-bubble, type = received / sent. Sent aligns end, received start.
+ * Not in Figma: [time], when it was sent, under the bubble (on every bubble type).
+ */
 @Composable
 fun ShifaChatBubble(
     text: String,
     type: ShifaChatBubbleType,
     modifier: Modifier = Modifier,
-) = Bubble(type, modifier) {
+    time: String? = null,
+) = Bubble(type, modifier, time) {
     BubbleText(text, if (type == ShifaChatBubbleType.Sent) TextAlign.End else TextAlign.Start)
 }
 
@@ -193,8 +204,9 @@ fun ShifaChatImageBubble(
     modifier: Modifier = Modifier,
     received: Boolean = false,
     caption: String? = null,
+    time: String? = null,
     image: @Composable () -> Unit,
-) = Bubble(if (received) ShifaChatBubbleType.Received else ShifaChatBubbleType.Sent, modifier) {
+) = Bubble(if (received) ShifaChatBubbleType.Received else ShifaChatBubbleType.Sent, modifier, time) {
     Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
         Box(Modifier.clip(ShifaRadius.Sm)) { image() }
         caption?.let { BubbleText(it, if (received) TextAlign.Start else TextAlign.End) }
@@ -204,7 +216,7 @@ fun ShifaChatImageBubble(
 /** Shifa AI is thinking (09): three dots that pulse in turn, in a shifa-ai bubble. Static in previews and tests. */
 @Composable
 fun ShifaChatThinkingBubble(modifier: Modifier = Modifier) =
-    Bubble(ShifaChatBubbleType.ShifaAi, modifier) {
+    Bubble(ShifaChatBubbleType.Received, modifier) {
         val phase = wavePhase()
         val color = ShifaColors.Text.Tertiary
         val dot = ShifaSize.S8
@@ -238,7 +250,8 @@ fun ShifaChatVoiceBubble(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
     received: Boolean = false,
-) = Bubble(if (received) ShifaChatBubbleType.Received else ShifaChatBubbleType.Sent, modifier) {
+    time: String? = null,
+) = Bubble(if (received) ShifaChatBubbleType.Received else ShifaChatBubbleType.Sent, modifier, time) {
     Row(
         Modifier.width(ShifaDimens.ChatVoiceWidth),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
@@ -246,7 +259,7 @@ fun ShifaChatVoiceBubble(
     ) {
         Icon(
             if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-            if (playing) "Pause" else "Play",
+            stringResource(if (playing) Res.string.pause else Res.string.play),
             Modifier.clip(ShifaRadius.Full).clickable(onClick = onToggle),
             tint = ShifaColors.Icon.Primary,
         )
@@ -281,17 +294,19 @@ private fun BubbleText(
 }
 
 // Figma: the corner at the sender's side is square.
-private val ReceivedShape = ShifaRadius.ControlLg.copy(topStart = ZeroCornerSize)
-private val SentShape = ShifaRadius.ControlLg.copy(topEnd = ZeroCornerSize)
+internal val ReceivedShape = ShifaRadius.ControlLg.copy(topStart = ZeroCornerSize)
+internal val SentShape = ShifaRadius.ControlLg.copy(topEnd = ZeroCornerSize)
 
 @Composable
 private fun Bubble(
     type: ShifaChatBubbleType,
     modifier: Modifier,
+    time: String? = null,
     content: @Composable () -> Unit,
-) = Box(
+) = Column(
     modifier.fillMaxWidth(),
-    contentAlignment = if (type == ShifaChatBubbleType.Sent) Alignment.CenterEnd else Alignment.CenterStart,
+    verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Stack.Xs),
+    horizontalAlignment = if (type == ShifaChatBubbleType.Sent) Alignment.End else Alignment.Start,
 ) {
     Box(
         Modifier
@@ -300,8 +315,8 @@ private fun Bubble(
                 when (type) {
                     ShifaChatBubbleType.Received -> Modifier.background(ShifaColors.Alpha.Teal25, ReceivedShape)
                     ShifaChatBubbleType.Sent -> Modifier.background(ShifaColors.Alpha.Black5, SentShape)
-                    ShifaChatBubbleType.ShifaAi -> Modifier
                 },
             ).padding(horizontal = ShifaSpacing.Inset.Md, vertical = ShifaSpacing.Stack.Md),
     ) { content() }
+    time?.let { Text(it, style = ShifaTextStyles.caption(), color = ShifaColors.Text.Tertiary) }
 }

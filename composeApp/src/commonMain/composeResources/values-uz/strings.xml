@@ -226,7 +226,6 @@
     <string name="doctorProfile">Shifokor profili</string>
     <string name="doctors">Shifokorlar</string>
     <string name="doctorsCount">%1$s tasdiqlangan shifokor</string>
-    <string name="doctorsNearMe">Yaqinimdagi shifokorlar</string>
     <string name="doctorsPageSummary">%1$s/%2$s-sahifa · %3$s shifokor</string>
     <string name="document">Hujjat</string>
     <string name="documentAccessApproved">Kirish ruxsat etildi</string>
@@ -333,7 +332,6 @@
     <string name="errorFailedToSendSmsCode">SMS kodi yuborilmadi</string>
     <string name="errorFailedToSendVerificationCode">Tasdiqlash kodi yuborilmadi</string>
     <string name="errorFirebaseVerificationNotConfigured">Firebase tasdiqlash sozlanmagan</string>
-    <string name="errorGettingCurrentLocation">Joriy joylashuvni olishda xatolik</string>
     <string name="errorInvalidCredentials">Bu telefon raqami yoki email bilan hisob topilmadi. Ma'lumotlarni tekshiring yoki yangi hisob yarating.</string>
     <string name="errorInvalidCredentialsPasswordMismatch">Parol noto'g'ri. Qaytadan urinib ko'ring yoki parolni tiklang.</string>
     <string name="errorInvalidKey">Kalit noto'g'ri</string>
@@ -419,7 +417,6 @@
     <string name="filterConsultationType">Konsultatsiya</string>
     <string name="filterEmergency">Shoshilinch</string>
     <string name="filterMinRating">Reyting</string>
-    <string name="filterNearMe">Yaqinimda</string>
     <string name="filterOnline">Onlayn</string>
     <string name="filterPrice">Narx</string>
     <string name="filterRemote">Masofaviy</string>
@@ -428,7 +425,6 @@
     <string name="filterTopRated">Eng yuqori reyting</string>
     <string name="filterVerified">Tasdiqlangan</string>
     <string name="findADoctor">Shifokor topish</string>
-    <string name="findDoctorsNearYou">Yaqiningizdagi shifokorlar</string>
     <string name="firstName">Ism</string>
     <string name="forgotPassword">Parolni unutdingizmi?</string>
     <string name="forgotPasswordEnterEmail">Email manzilingizni kiriting. Parolni tiklash uchun tasdiqlash kodi yuboramiz.</string>
@@ -492,9 +488,6 @@
     <string name="location">Manzil</string>
     <string name="locationAndLanguage">Manzil va til</string>
     <string name="locationLabel">Manzil</string>
-    <string name="locationPermissionDenied">Joylashuv ruxsatlari rad etildi.</string>
-    <string name="locationPermissionDeniedForever">Joylashuv ruxsatlari doimiy ravishda rad etildi. Iltimos, sozlamalarda yoqing.</string>
-    <string name="locationServicesDisabled">Joylashuv xizmatlari o'chirilgan. Iltimos, ularni yoqing.</string>
     <string name="lockAfterInactivity">Faolsizlikdan keyin qulflash</string>
     <string name="logOut">Chiqish</string>
     <string name="login">Kirish</string>
@@ -514,7 +507,6 @@
     <string name="myTasks">Mening vazifalarim</string>
     <string name="name">Ism</string>
     <string name="navigationError">Navigatsiya xatosi</string>
-    <string name="nearby">Yaqin</string>
     <string name="neurologist">Nevrolog</string>
     <string name="newAppointmentBookedButFailedToCancelOld">Yangi uchrashuv band qilindi, lekin eskisini bekor qilish muvaffaqiyatsiz</string>
     <string name="newAppointmentScheduled">Yangi qabul rejalashtirildi</string>
@@ -965,4 +957,13 @@
     <string name="refundByClinic">Pulni klinika qaytaradi.</string>
     <string name="appointmentLessThan24Hours">Qabulgacha 24 soatdan kam qoldi</string>
     <string name="service">Xizmat</string>
+    <string name="more">Yana</string>
+    <string name="attach">Biriktirish</string>
+    <string name="play">Ijro etish</string>
+    <string name="pause">Pauza</string>
+    <string name="verified">Tasdiqlangan</string>
+    <string name="seeAll">Barchasini ko'rish</string>
+    <string name="stopRecording">Yozishni to'xtatish</string>
+    <string name="recordVoiceMessage">Ovozli xabar yozish</string>
+    <string name="pageOf">%1$s-sahifa, jami %2$s</string>
 </resources>

@@ -84,7 +84,7 @@ internal fun BookingsListContent(
                 HomeSection(
                     null,
                     state.recommended,
-                    state.isLoading,
+                    state.isLoading || state.isSearching,
                     Res.string.noDoctorsFound,
                     limit = Int.MAX_VALUE,
                 ) {
@@ -139,10 +139,12 @@ internal fun ListPage(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .background(ShifaColors.Bg.Canvas)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = ShifaSpacing.Inset.Md),
-            verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
+                .padding(ShifaSpacing.Inset.Md),
+            // Figma my-doctors (1655:15670): cards 8 apart on canvas.
+            verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
         ) {
             Banners(error)
             content()

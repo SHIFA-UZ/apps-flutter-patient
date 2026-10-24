@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +31,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.doctor
+import shifa.composeapp.generated.resources.document
 import shifa.composeapp.generated.resources.messages
 import shifa.composeapp.generated.resources.noConversations
 import shifa.composeapp.generated.resources.noDoctorsAvailable
@@ -39,12 +39,16 @@ import shifa.composeapp.generated.resources.noMessages
 import shifa.composeapp.generated.resources.photo
 import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.search
+import shifa.composeapp.generated.resources.voiceMessage
 import shifa.uz.data.model.ChatContact
 import shifa.uz.data.model.ChatUser
 import shifa.uz.ui.notifications.DayHeader
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaSpacing
+import shifa.uz.ui.widgets.ShifaCardSkeleton
+import shifa.uz.ui.widgets.ShifaListSkeleton
 import shifa.uz.ui.widgets.ShifaMainHeader
 import shifa.uz.ui.widgets.ShifaMessageNotification
 import shifa.uz.ui.widgets.ShifaPageElement
@@ -110,7 +114,6 @@ internal fun MessagesContent(
         ShifaPageElement(ShifaPageElementType.Header, Modifier.statusBarsPadding()) {
             ShifaMainHeader(
                 stringResource(Res.string.messages),
-                home = true,
                 avatarUrl = avatarUrl,
                 onNotifications = onNotifications,
                 onAvatar = onAccount,
@@ -146,7 +149,7 @@ private fun LazyListScope.results(
 ) {
     val results = state.results
     when {
-        results == null -> if (state.isSearching) item { CircularProgressIndicator(color = ShifaColors.Icon.Brand) }
+        results == null -> if (state.isSearching) item { MessagesSkeleton() }
         results.isEmpty() -> item { Hint(Res.string.noDoctorsAvailable) }
         else ->
             items(results) {
@@ -172,7 +175,7 @@ private fun LazyListScope.chats(
         chats == null ->
             item {
                 if (state.isLoading) {
-                    CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+                    MessagesSkeleton()
                 } else {
                     ShifaSecondaryButton(stringResource(Res.string.retry), onRefresh)
                 }
@@ -199,13 +202,26 @@ private fun LazyListScope.chats(
     }
 }
 
-/** 08 §5.3: none is "No messages", the backend's "photo" is localized. */
+/**
+ * 08 §5.3: none is "No messages". The backend's English placeholder for a photo, voice message or file (any case,
+ * emoji or punctuation around it) is localized; real text shows as sent.
+ */
 @Composable
-private fun preview(lastMessage: String?) =
-    when {
-        lastMessage.isNullOrBlank() -> stringResource(Res.string.noMessages)
-        lastMessage.trim().equals("photo", ignoreCase = true) -> stringResource(Res.string.photo)
+private fun preview(lastMessage: String?): String {
+    if (lastMessage.isNullOrBlank()) return stringResource(Res.string.noMessages)
+    return when (lastMessage.lowercase().filter { it.isLetter() || it == ' ' }.trim()) {
+        "photo", "image", "picture" -> stringResource(Res.string.photo)
+        "voice", "voice message", "audio", "audio message" -> stringResource(Res.string.voiceMessage)
+        "document", "file", "attachment" -> stringResource(Res.string.document)
         else -> lastMessage
+    }
+}
+
+// Rows shaped like the message cards: a 56 photo and two lines, no shadow.
+@Composable
+private fun MessagesSkeleton() =
+    ShifaListSkeleton(count = 5) {
+        ShifaCardSkeleton(avatar = ShifaDimens.NotificationAvatar, lines = 2, shadow = false)
     }
 
 @Composable

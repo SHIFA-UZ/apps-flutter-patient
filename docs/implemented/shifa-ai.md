@@ -3,6 +3,7 @@
 ## Chats (`ui/shifaai/ShifaAiScreen.kt`, AI-01)
 
 - Figma: `1655:16752`. The centre tab. The header is Home's (avatar → Profile, bell → Notifications with the badge) over the Figma gradient image.
+- Each question and reply keeps when it was sent (`CopilotMessage.sentAt`, epoch ms, never sent to X1), shown under the bubble like the doctor chat's times (not in Figma). Chats saved before this have none.
 - Chats live only on this device, since X1 keeps no history: `CopilotStorage` in the secure store (health data), newest first, at most 20 chats of 60 messages each. A chat is saved once it has a message. The card title is the first question, the text is the last message, and the time reads like the inbox.
 - Search matches any message in a chat, ignoring case. No chats: "No conversations yet"; no match: "No messages". "New Chat" floats above the bar.
 - The chats are cleared on logout (AUTH-08, fixes 00 bug 4), on the first launch after a reinstall, and when the saved session gets a 401.
@@ -10,7 +11,7 @@
 ## Chat (`ShifaAiChatScreen.kt`)
 
 - Figma: `1673:14621` (chat), `1673:14790` (header), `1681:13859` (Add to chat). An overlay above the tabs. The ViewModel lives in the tab shell, so the list sees every change.
-- Send posts the whole chat to X1 (`patients/me/copilot/stream`, SSE, on the shared client) with the app language (EN / RU / UZ; German sends EN). The reply streams token by token into a Shifa AI bubble (three pulsing dots before the first token, `ShifaChatThinkingBubble`; "Thinking…" went). The newest turn stays in view, and the list sits above the keyboard.
+- Send posts the whole chat to X1 (`patients/me/copilot/stream`, SSE, on the shared client) with the app language (EN / RU / UZ; German sends EN). The reply streams token by token into a teal received bubble, as Figma's chat `1772:17214` (three pulsing dots before the first token, `ShifaChatThinkingBubble`; "Thinking…" went). The newest turn stays in view, and the list sits above the keyboard.
 - SSE parsing follows 09 §8: a blank line ends an event, `data:` keeps its leading space, and data left at EOF counts. An empty reply isn't saved.
 - Errors: a 429, a `RATE_LIMIT` code or an SSE `RATE_LIMIT` error event shows the daily-limit banner and blocks sending until the chat is reopened. Other errors show the generic Shifa AI error; the question stays in the chat, unanswered. A 401 logs out.
 - Back or leaving the chat stops the reply; what streamed so far is dropped.

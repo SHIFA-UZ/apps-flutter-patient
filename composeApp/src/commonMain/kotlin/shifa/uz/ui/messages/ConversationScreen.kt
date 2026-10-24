@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,12 +35,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.addToChat
 import shifa.composeapp.generated.resources.document
 import shifa.composeapp.generated.resources.errorRecordingVoice
 import shifa.composeapp.generated.resources.microphonePermissionDenied
+import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.photo
 import shifa.composeapp.generated.resources.typeMessage
 import shifa.composeapp.generated.resources.voiceMessage
@@ -59,10 +61,13 @@ import shifa.uz.ui.widgets.ShifaChatBar
 import shifa.uz.ui.widgets.ShifaChatBubble
 import shifa.uz.ui.widgets.ShifaChatBubbleType
 import shifa.uz.ui.widgets.ShifaChatImageBubble
+import shifa.uz.ui.widgets.ShifaChatSkeleton
 import shifa.uz.ui.widgets.ShifaChatTray
 import shifa.uz.ui.widgets.ShifaChatVoiceBubble
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.utils.Playback
+import shifa.uz.utils.formatSentTime
+import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.rememberAudioPlayer
 import shifa.uz.utils.rememberCameraLauncher
 import shifa.uz.utils.rememberDocumentPickerLauncher
@@ -156,6 +161,7 @@ internal fun ConversationContent(
     onPhoto: () -> Unit = {},
     onFile: () -> Unit = {},
     onOpenFile: (url: String, name: String?) -> Unit = { _, _ -> },
+    now: Instant = getCurrentInstant(),
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
         ShifaSubHeader(state.name, onBack = onBack, avatar = true, avatarUrl = state.photoUrl)
@@ -165,6 +171,7 @@ internal fun ConversationContent(
                 verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
             ) { Banners(state.error, state.notice) }
         }
+        val months = stringArrayResource(Res.array.monthsShort)
         // Reversed, so it opens at the newest message (Flutter's opened at the oldest); Top keeps a short chat up.
         LazyColumn(
             Modifier.weight(1f),
@@ -176,9 +183,11 @@ internal fun ConversationContent(
             val messages = state.messages
             if (messages == null) {
                 // A failed first load is the banner's; the poll retries.
-                if (state.error == null) item { CircularProgressIndicator(color = ShifaColors.Icon.Brand) }
+                if (state.error == null) item { ShifaChatSkeleton() }
             } else {
-                items(messages.asReversed()) { Message(it, playback, onOpenFile, onToggleVoice) }
+                items(messages.asReversed()) {
+                    Message(it, formatSentTime(it.createdAt, now, months), playback, onOpenFile, onToggleVoice)
+                }
             }
         }
         if (adding) {
@@ -197,10 +206,14 @@ internal fun ConversationContent(
     }
 }
 
-/** 08 §5.5: by type. A message with a file opens it on tap; a voice message plays ([playback] is this one's when its URL matches). */
+/**
+ * 08 §5.5: by type, with its sent [time]. A message with a file opens it on tap; a voice message plays ([playback] is
+ * this one's when its URL matches).
+ */
 @Composable
 private fun Message(
     message: ChatMessage,
+    time: String,
     playback: Playback?,
     onOpenFile: (url: String, name: String?) -> Unit,
     onToggleVoice: (String) -> Unit,
@@ -209,10 +222,10 @@ private fun Message(
     val url = message.fileUrl
     val open = url?.let { Modifier.clickable { onOpenFile(it, message.fileName) } } ?: Modifier
     when (message.type) {
-        MessageType.Text -> ShifaChatBubble(message.body.orEmpty(), type)
+        MessageType.Text -> ShifaChatBubble(message.body.orEmpty(), type, time = time)
         MessageType.Image ->
             if (url != null) {
-                ShifaChatImageBubble(received = !message.isMine, caption = message.body) {
+                ShifaChatImageBubble(received = !message.isMine, caption = message.body, time = time) {
                     KamelImage(
                         resource = asyncPainterResource(url),
                         contentDescription = stringResource(Res.string.photo),
@@ -221,11 +234,11 @@ private fun Message(
                     )
                 }
             } else {
-                ShifaChatBubble(message.body ?: stringResource(Res.string.photo), type)
+                ShifaChatBubble(message.body ?: stringResource(Res.string.photo), type, time = time)
             }
         // ponytail: no file icon or size (08 §5.5.4), the kit has no file bubble.
         MessageType.Document ->
-            ShifaChatBubble(message.fileName ?: stringResource(Res.string.document), type, open)
+            ShifaChatBubble(message.fileName ?: stringResource(Res.string.document), type, open, time)
         MessageType.Voice ->
             if (url != null) {
                 val playing = playback?.takeIf { it.url == url }
@@ -235,9 +248,10 @@ private fun Message(
                     duration = message.durationSeconds ?: playing?.duration ?: 0,
                     onToggle = { onToggleVoice(url) },
                     received = !message.isMine,
+                    time = time,
                 )
             } else {
-                ShifaChatBubble(stringResource(Res.string.voiceMessage), type)
+                ShifaChatBubble(stringResource(Res.string.voiceMessage), type, time = time)
             }
         MessageType.System ->
             Text(

@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import kotlinx.datetime.Instant
+import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.addToChat
@@ -39,6 +41,7 @@ import shifa.composeapp.generated.resources.deleteChatMessage
 import shifa.composeapp.generated.resources.deleteChatTitle
 import shifa.composeapp.generated.resources.errorRecordingVoice
 import shifa.composeapp.generated.resources.microphonePermissionDenied
+import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.shifaAiDisclaimer
 import shifa.composeapp.generated.resources.transcribing
 import shifa.uz.ui.documents.UploadTray
@@ -54,6 +57,8 @@ import shifa.uz.ui.widgets.ShifaChatTray
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.utils.formatSentTime
+import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.rememberMicPermission
 import shifa.uz.utils.rememberVoiceRecorder
 
@@ -137,6 +142,7 @@ internal fun ShifaAiChatContent(
     onAttach: () -> Unit = {},
     onCloseAdd: () -> Unit = {},
     onAdd: () -> Unit = {},
+    now: Instant = getCurrentInstant(),
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
         ShifaSubHeader(stringResource(Res.string.chat), onBack = onBack, onMore = onMore)
@@ -146,6 +152,7 @@ internal fun ShifaAiChatContent(
                 verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
             ) { Banners(state.error, state.notice) }
         }
+        val months = stringArrayResource(Res.array.monthsShort)
         // Reversed, so the newest turn (and a streaming reply) stays in view; Top keeps a short chat at the top.
         LazyColumn(
             Modifier.weight(1f),
@@ -158,12 +165,16 @@ internal fun ShifaAiChatContent(
                     if (reply.isEmpty()) {
                         ShifaChatThinkingBubble()
                     } else {
-                        ShifaChatBubble(reply, ShifaChatBubbleType.ShifaAi)
+                        ShifaChatBubble(reply, ShifaChatBubbleType.Received)
                     }
                 }
             }
             items(state.chat?.messages.orEmpty().asReversed()) {
-                ShifaChatBubble(it.content, if (it.isUser) ShifaChatBubbleType.Sent else ShifaChatBubbleType.ShifaAi)
+                ShifaChatBubble(
+                    it.content,
+                    if (it.isUser) ShifaChatBubbleType.Sent else ShifaChatBubbleType.Received,
+                    time = it.sentAt?.let { ms -> formatSentTime(Instant.fromEpochMilliseconds(ms), now, months) },
+                )
             }
             // Not in Figma: 09 §6 item 5, the disclaimer.
             item {

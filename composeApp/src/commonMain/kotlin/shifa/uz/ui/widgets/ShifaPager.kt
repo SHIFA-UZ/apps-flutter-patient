@@ -10,6 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import org.jetbrains.compose.resources.stringResource
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.pageOf
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSize
@@ -22,9 +25,10 @@ fun ShifaPager(
     current: Int,
     modifier: Modifier = Modifier,
 ) {
+    val description = stringResource(Res.string.pageOf, current + 1, count)
     Row(
         modifier
-            .semantics(mergeDescendants = true) { contentDescription = "Page ${current + 1} of $count" }
+            .semantics(mergeDescendants = true) { contentDescription = description }
             .padding(ShifaSpacing.Inset.Xs),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
     ) {

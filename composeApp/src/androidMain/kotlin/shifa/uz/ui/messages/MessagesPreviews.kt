@@ -94,6 +94,7 @@ internal fun ConversationPreview() =
     PreviewTheme {
         ConversationContent(
             ConversationUiState("Dr. Aziz Karimov", conversationId = "1", messages = messages, input = "Thank you!"),
+            now = now,
         )
     }
 
@@ -103,6 +104,7 @@ internal fun ConversationRecordingPreview() =
     PreviewTheme {
         ConversationContent(
             ConversationUiState("Dr. Aziz Karimov", conversationId = "1", messages = messages, recording = true),
+            now = now,
         )
     }
 

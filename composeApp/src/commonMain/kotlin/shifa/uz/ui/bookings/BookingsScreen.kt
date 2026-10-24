@@ -59,7 +59,6 @@ import shifa.uz.ui.widgets.ShifaTagType
 import shifa.uz.utils.formatTimeDay
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.parseInstant
-import shifa.uz.utils.rememberLocationRequest
 
 /** 06/07: the Bookings tab, Figma 1648:11080. Find doctors (D1), my doctors and past visits (B2). */
 @Composable
@@ -81,7 +80,6 @@ fun BookingsScreen(
         if (viewModel.state.value.past == null) viewModel.load()
         viewModel.signedOut.collect { signedOut() }
     }
-    val locate = rememberLocationRequest(viewModel::located)
     BookingsContent(
         state,
         now = getCurrentInstant(),
@@ -89,15 +87,7 @@ fun BookingsScreen(
         notificationCount = notificationCount,
         onRefresh = viewModel::load,
         onSearch = viewModel::search,
-        onFilter = {
-            when {
-                it != DoctorFilter.NearMe -> viewModel.filterBy(it)
-                !state.isLocating -> {
-                    viewModel.locating()
-                    locate()
-                }
-            }
-        },
+        onFilter = viewModel::filterBy,
         onNotifications = onNotifications,
         onAccount = onAccount,
         onAppointment = onAppointment,
@@ -135,7 +125,6 @@ internal fun BookingsContent(
             )
         }
         ShifaPageElement(ShifaPageElementType.ActionTray) {
-            // Figma's "Find Doctors near you" row (ic_location_24, findDoctorsNearYou) is hidden for now.
             ShifaSearchField(state.query, onSearch, stringResource(Res.string.search), Modifier.fillMaxWidth())
             ShifaCarousel {
                 DoctorFilter.entries.forEach {
@@ -158,7 +147,7 @@ internal fun BookingsContent(
                                 HomeSection(
                                     Res.string.recommendedDoctors,
                                     state.recommended,
-                                    state.isLoading || state.isLocating,
+                                    state.isLoading || state.isSearching,
                                     Res.string.noDoctorsFound,
                                     ShifaSectionType.CardOnWhite,
                                     onMore =
@@ -197,7 +186,7 @@ internal fun BookingsContent(
                             HomeSection(
                                 null,
                                 state.recommended,
-                                state.isLoading || state.isLocating,
+                                state.isLoading || state.isSearching,
                                 Res.string.noDoctorsFound,
                                 limit = Int.MAX_VALUE,
                                 gap = ShifaSpacing.Gap.Md,
@@ -227,6 +216,7 @@ private fun RecommendedCard(
         avatarUrl = doctor.photoUrl,
         verified = doctor.isVerified,
         tags = next?.let { { ShifaTag(it, type = ShifaTagType.Primary) } },
+        shadow = false, // Figma 1653:12016: flat on the section's teal
         onClick = { onClick(doctor) },
     )
 }

@@ -81,6 +81,18 @@ fun formatVisit(
         "${local.dayOfMonth.twoDigits()} ${months[local.monthNumber - 1]} ${local.year}"
 }
 
+/** A chat message's sent time: HH:mm today, else "HH:mm, d MMM". [months] are the 12 short names. */
+fun formatSentTime(
+    at: Instant,
+    now: Instant,
+    months: List<String>,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+) = if (at.toLocalDateTime(zone).date == now.toLocalDateTime(zone).date) {
+    formatTime(at, zone)
+} else {
+    formatTimeDay(at, months, zone)
+}
+
 /** HH:mm in local time. */
 fun formatTime(
     at: Instant,

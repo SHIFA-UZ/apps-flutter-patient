@@ -1,6 +1,8 @@
 # Design system
 
-Figma file `B7f95gNrRt8HYYzlGZdk9N` (a copy of `o0MqTfUEfhBX49VljFhp70` with the same node IDs; newer designs are only in the copy): tokens page `1572:13099`, Components page `1572:11699`. Light mode only.
+Figma file `B7f95gNrRt8HYYzlGZdk9N` (a copy of `o0MqTfUEfhBX49VljFhp70` with the same node IDs; newer designs are only in the copy): tokens page `1572:13099`, Components page `1572:11699`. Light mode only. The 2026-10-24 design update came from a later copy, `vcvTRthZBesjFI0wu4uzJO` (same node IDs).
+
+Page backgrounds: tab pages are surface; every page outside the tab bar is canvas under a surface header (`ShifaPageElementType.SubBody` for a padded body), except the two chats (doctor chat, Shifa AI chat), which stay surface.
 
 ## Tokens (`ui/theme/`)
 
@@ -15,24 +17,25 @@ Figma file `B7f95gNrRt8HYYzlGZdk9N` (a copy of `o0MqTfUEfhBX49VljFhp70` with the
 
 | File | Composables |
 |---|---|
-| ShifaButtons | `ShifaPrimaryButton`, `ShifaSecondaryButton`, `ShifaTertiaryButton`, `ShifaActionButton` (pill), `ShifaIconButton` |
+| ShifaButtons | `ShifaPrimaryButton`, `ShifaSecondaryButton`, `ShifaTertiaryButton`, `ShifaActionButton` (pill), `ShifaIconButton` (`1572:13829`: 42 round, an 18 icon in 12 padding; secondary is canvas with a dark, grey or red icon; `shadow = false` in the chat tray) |
 | ShifaInputField | `ShifaInputField` (`clearable` hides the X; `trailingIcon` replaces it, e.g. the password eye) |
 | ShifaSearchField, ShifaDropdown, ShifaSwitch | `ShifaSearchField`, `ShifaDropdown` (opens inline; `onSelect` gets the index, so labels may repeat), `ShifaSwitch` |
-| ShifaChips | `ShifaChip` (filter / slot), `ShifaChipGrid` (4 columns), `ShifaCarousel` |
+| ShifaChips | `ShifaChip` (filter / slot, padding 16 × 8 on both, `1585:12641`), `ShifaChipGrid` (4 columns), `ShifaCarousel` |
 | ShifaCalendarCard | `ShifaCalendarCard` (`1662:18317`): calendar-card, a month toggle and date-bubbles (non-month / default / disabled / filled); a null arrow callback hides it |
 | ShifaRating | `ShifaRating`: five stars, the rating filled amber; tappable with `onRate` (review tray, `1887:19946`) |
 | ShifaReviewCard | `ShifaReviewCard` (`1655:16298`): doctor-card, review type: avatar, name, date, stars, comment |
 | ShifaSignaturePad | `ShifaSignaturePad` (`1919:23186`): the input-field box as a pad; the caller keeps the strokes, `signaturePng` makes the PNG |
 | ShifaTag | `ShifaTag` (primary / secondary / tertiary, `1585:12637`): Bold 12/12, padding 12 × 8 |
 | ShifaCards | upcoming (`1572:13984`) and past (`1573:12114`) appointment cards, `ShifaDoctorCard` full / compact / in (`1590:9994`; avatars 84 / 48 / 68, name Bold 16, the in card hugs its content), document, document with an action button (`ShifaDocumentActionCard`, Request to sign, `1918:22602`), certificate (`1592:9994`), doctor service (`1670:13024`), check-in (`1662:18576`, the ticked card takes its form as a slot), task (optional progress bar), `ShifaSettingsItem` (optional icon, destructive red for Delete my Account). Under `LocalCardOnSurface` the cards take the on-white look of the notification trays: canvas fill, no shadow, no chevron. Every avatar (`ShifaAvatar`: headers, profile, doctors, chats, reviews) without a photo, or whose photo fails to load, shows the Shifa AI header picture (`img_shifa_ai_header`), cropped round |
-| ShifaSection | `ShifaSection`: header with an optional arrow; background type card-on-color / on-white / transparent |
-| ShifaPageHeader | `ShifaMainHeader`, `ShifaSubHeader` |
+| ShifaSection | `ShifaSection`: header (Bold 20/22) with an optional arrow; background type card-on-color / on-white (padding 16) / transparent |
+| ShifaPageHeader | `ShifaMainHeader` (32 title on every tab; the bell's unread count is a `ShifaNotificationBubble`), `ShifaSubHeader` (24 title) |
 | ShifaNavBar | `ShifaNavBar`, `ShifaTab` (`1572:13574`) |
-| ShifaNotification | `ShifaNotification` (5 types, `1598:10299`), `ShifaMessageNotification` (photo, unread count with a brand time, optional tap) |
+| ShifaNotification | `ShifaNotification` (5 types, `1598:10299`: surface, title Bold 16, body 12/14, a 22 high title bar; unread: a bold brand time and the bubble, an unread chat on canvas), `ShifaMessageNotification` (photo, unread count with a brand time, optional tap), `ShifaNotificationBubble` (`1785:18917`: the unread count, white Bold 10 on brand, 99+ above 99) |
 | ShifaBanner | `ShifaBanner` error / warning / success: an inline message box for screens (login lockout, register errors). No Figma component; styled like `ShifaNotification`. |
-| ShifaPager, ShifaPageElement, ShifaImageContainer | pager dots, page-element slots, 302dp image box |
-| ShifaChat | `ShifaChatBar` (`1673:14877`; recording: an animated waveform and a stop button, Figma's is static), `ShifaChatBubble` and `ShifaChatImageBubble` (`1673:14821`; sent or received, optional caption), `ShifaChatVoiceBubble` (not in Figma: play / pause, progress and m:ss, Flutter's look), `ShifaChatThinkingBubble` (three pulsing dots) |
-| ShifaTray, ShifaPopUp | `ShifaTray`, `ShifaChatTray` (`1681:13188`), `ShifaPopUp` (`1702:14263`). They only draw: host them in `ModalBottomSheet` / `Dialog` (see `ShifaTray.kt`). |
+| ShifaPager, ShifaPageElement, ShifaImageContainer | pager dots, page-element slots (the background is painted under insets the caller adds, e.g. `statusBarsPadding`), 302dp image box |
+| ShifaSkeleton | Not in Figma: `ShifaSkeleton` (a pulsing grey block, still in previews), `ShifaCardSkeleton` (avatar + text bars in the card chrome), `ShifaListSkeleton`, `ShifaChatSkeleton`, `ShifaChipsSkeleton`. Every first load shows these instead of a spinner (`HomeSection` for Home, Bookings, the full lists, Tasks, Upcoming; Messages, the chats, Notifications, Documents, the doctor profile and its reviews, the booking's time slots). The document viewer keeps its spinner. |
+| ShifaChat | `ShifaChatBar` (`1673:14877`; recording: an animated waveform and a stop button, Figma's is static), `ShifaChatBubble` and `ShifaChatImageBubble` (`1673:14821`; sent or received, Shifa AI's replies included (teal, `1772:17214`), optional caption; not in Figma: an optional sent `time` under every bubble type, caption 10/14 tertiary), `ShifaChatVoiceBubble` (not in Figma: play / pause, progress and m:ss, Flutter's look), `ShifaChatThinkingBubble` (three pulsing dots) |
+| ShifaTray, ShifaPopUp | `ShifaTray`, `ShifaChatTray` (`1681:13188`, row as `1772:17215`: no shadows), `ShifaPopUp` (`1702:14263`). They only draw: host them in `ModalBottomSheet` / `Dialog` (see `ShifaTray.kt`). |
 
 Icons are Figma exports in `composeResources/drawable` (`ic_<name>_<size>`, `img_*`). `img_logo` is the white Shifa mark; tint it. `ic_eye_20` and `ic_eye_off_20` are Feather icons, because Figma has no eye icon. `ic_upload_22` and `ic_calendar_20` come from the create-account frames.
 
