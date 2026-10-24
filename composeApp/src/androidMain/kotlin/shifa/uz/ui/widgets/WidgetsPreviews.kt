@@ -196,7 +196,9 @@ internal fun CardsPreview() =
         )
         ShifaDocumentCard("abc.pdf", "Added by Dr Azamat Rakhimov", "15.07.2026", onClick = {})
         ShifaCertificateCard("Certificate name", "15.07.2026", onClick = {})
-        ShifaDoctorServiceCard("Setting Page", "300000.00 UZS", onClick = {})
+        ShifaDoctorServiceCard("Setting Page", "300000.00 UZS", description = INFO)
+        ShifaDoctorServiceCard("Setting Page", "300000.00 UZS", description = INFO, expanded = true)
+        ShifaDoctorServiceCard("No description", "Free")
         ShifaCheckInCard("Date", "Time", false, {})
         ShifaCheckInCard("Date", "Time", true, {}) {
             ShifaInputField("", {}, "Enter ‘task’", Modifier.fillMaxWidth(), clearable = false)
@@ -232,3 +234,7 @@ internal fun NavBarPreview() =
     Gallery(background = ShifaColors.Bg.Canvas) {
         ShifaTab.entries.forEach { ShifaNavBar(selected = it, onSelect = {}) }
     }
+
+private const val INFO =
+    "This serves as an initial consultation for you discuss an issue with the doctor, and decide which procedures " +
+        "are needed to move forward."

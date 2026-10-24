@@ -20,6 +20,13 @@ fun parseInstant(value: String?): Instant? {
         ?: runCatching { LocalDateTime.parse(iso).toInstant(TimeZone.currentSystemDefault()) }.getOrNull()
 }
 
+/** A `yyyy-MM-dd` or an instant as a local date; null when it's neither. */
+fun parseDay(
+    value: String,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+): LocalDate? =
+    runCatching { LocalDate.parse(value.trim()) }.getOrNull() ?: parseInstant(value)?.toLocalDateTime(zone)?.date
+
 /** dd.MM.yyyy */
 fun formatDate(date: LocalDate) = "${date.dayOfMonth.twoDigits()}.${date.monthNumber.twoDigits()}.${date.year}"
 
@@ -28,10 +35,7 @@ fun formatDay(
     value: String,
     zone: TimeZone = TimeZone.currentSystemDefault(),
 ): String {
-    val date =
-        runCatching { LocalDate.parse(value.trim()) }.getOrNull()
-            ?: parseInstant(value)?.toLocalDateTime(zone)?.date
-            ?: return value
+    val date = parseDay(value, zone) ?: return value
     return formatDate(date)
 }
 

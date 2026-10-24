@@ -149,6 +149,14 @@ The full plan is in [payment-flow.md](payment-flow.md).
 
 **Until then:** no From Appointment card and no Delete Entry; a submitted day only shows what was sent.
 
+## 15. Document's visit
+
+**Now:** the document viewer (Figma 1921:23596) shows a "From Appointment" card that opens the visit the document came from. `PatientDocumentDto` (F1) has no link to an appointment, and the appointment DTOs don't list their documents.
+
+**Change:** add `appointmentId` (null for the patient's own uploads) to `PatientDocumentDto`. The app already reads it.
+
+**Until then:** the app guesses: a document uploaded by a doctor (`creatorLabel` is the doctor's name) on the day of a visit with that doctor belongs to that visit. Documents with no match show no card.
+
 ## Questions to confirm (15 §6.4)
 
 - Whether the error shape is the same across all controllers (see #4).

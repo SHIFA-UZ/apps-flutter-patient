@@ -968,4 +968,9 @@
     <string name="stopRecording">Остановить запись</string>
     <string name="recordVoiceMessage">Записать голосовое сообщение</string>
     <string name="pageOf">Страница %1$s из %2$s</string>
+    <string name="copy">Копировать</string>
+    <string name="copied">Скопировано</string>
+    <string name="share">Поделиться</string>
+    <string name="regenerate">Сгенерировать заново</string>
+    <string name="fromAppointment">Из приёма</string>
 </resources>

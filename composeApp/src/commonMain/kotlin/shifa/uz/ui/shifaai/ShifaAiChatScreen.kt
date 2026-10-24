@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import kotlinx.datetime.Instant
@@ -36,6 +38,7 @@ import shifa.composeapp.generated.resources.askAnything
 import shifa.composeapp.generated.resources.cancel
 import shifa.composeapp.generated.resources.chat
 import shifa.composeapp.generated.resources.comingSoon
+import shifa.composeapp.generated.resources.copied
 import shifa.composeapp.generated.resources.delete
 import shifa.composeapp.generated.resources.deleteChatMessage
 import shifa.composeapp.generated.resources.deleteChatTitle
@@ -44,6 +47,7 @@ import shifa.composeapp.generated.resources.microphonePermissionDenied
 import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.shifaAiDisclaimer
 import shifa.composeapp.generated.resources.transcribing
+import shifa.uz.data.model.CopilotMessage
 import shifa.uz.ui.documents.UploadTray
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.MessagePopUp
@@ -52,6 +56,7 @@ import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaChatBar
 import shifa.uz.ui.widgets.ShifaChatBubble
 import shifa.uz.ui.widgets.ShifaChatBubbleType
+import shifa.uz.ui.widgets.ShifaChatReplyBubble
 import shifa.uz.ui.widgets.ShifaChatThinkingBubble
 import shifa.uz.ui.widgets.ShifaChatTray
 import shifa.uz.ui.widgets.ShifaPrimaryButton
@@ -60,6 +65,7 @@ import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.utils.formatSentTime
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.rememberMicPermission
+import shifa.uz.utils.rememberTextShare
 import shifa.uz.utils.rememberVoiceRecorder
 
 /**
@@ -92,6 +98,10 @@ fun ShifaAiChatScreen(
                 else -> viewModel.showError(Res.string.errorRecordingVoice)
             }
         }
+
+    @Suppress("DEPRECATION") // LocalClipboard's ClipEntry has no common constructor for text yet
+    val clipboard = LocalClipboardManager.current
+    val share = rememberTextShare()
     ShifaAiChatContent(
         state,
         adding,
@@ -109,6 +119,12 @@ fun ShifaAiChatScreen(
         onAttach = { adding = true },
         onCloseAdd = { adding = false },
         onAdd = soon,
+        onCopy = {
+            clipboard.setText(AnnotatedString(it))
+            viewModel.showNotice(Res.string.copied)
+        },
+        onRegenerate = viewModel::regenerate,
+        onShare = share,
     )
     if (deleting) {
         Dialog({ deleting = false }) {
@@ -142,6 +158,9 @@ internal fun ShifaAiChatContent(
     onAttach: () -> Unit = {},
     onCloseAdd: () -> Unit = {},
     onAdd: () -> Unit = {},
+    onCopy: (String) -> Unit = {},
+    onRegenerate: () -> Unit = {},
+    onShare: (String) -> Unit = {},
     now: Instant = getCurrentInstant(),
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
@@ -165,16 +184,28 @@ internal fun ShifaAiChatContent(
                     if (reply.isEmpty()) {
                         ShifaChatThinkingBubble()
                     } else {
-                        ShifaChatBubble(reply, ShifaChatBubbleType.Received)
+                        ShifaChatReplyBubble(reply)
                     }
                 }
             }
-            items(state.chat?.messages.orEmpty().asReversed()) {
-                ShifaChatBubble(
-                    it.content,
-                    if (it.isUser) ShifaChatBubbleType.Sent else ShifaChatBubbleType.Received,
-                    time = it.sentAt?.let { ms -> formatSentTime(Instant.fromEpochMilliseconds(ms), now, months) },
-                )
+            val messages = state.chat?.messages.orEmpty()
+
+            fun timeOf(message: CopilotMessage) =
+                message.sentAt?.let { formatSentTime(Instant.fromEpochMilliseconds(it), now, months) }
+            itemsIndexed(messages.asReversed()) { i, it ->
+                if (it.isUser) {
+                    ShifaChatBubble(it.content, ShifaChatBubbleType.Sent, time = timeOf(it))
+                } else {
+                    // Regenerate only on the newest reply, once nothing is streaming (Figma 1673:14621).
+                    val newest = i == 0 && !state.isSending && !state.rateLimited
+                    ShifaChatReplyBubble(
+                        it.content,
+                        time = timeOf(it),
+                        onCopy = { onCopy(it.content) },
+                        onRegenerate = onRegenerate.takeIf { newest },
+                        onShare = { onShare(it.content) },
+                    )
+                }
             }
             // Not in Figma: 09 §6 item 5, the disclaimer.
             item {

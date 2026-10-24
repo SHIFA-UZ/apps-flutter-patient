@@ -16,10 +16,13 @@ private val now = Instant.parse("2026-09-27T09:00:00Z")
 private val loaded =
     DoctorProfileUiState(
         previewDoctor.copy(
-            distanceKm = 1.2,
             serviceItems =
                 listOf(
-                    DoctorService(title = "Consultation", isFreeConsultation = true),
+                    DoctorService(
+                        title = "Consultation",
+                        description = "A first visit to talk the issue through and plan what's next.",
+                        isFreeConsultation = true,
+                    ),
                     DoctorService(title = "Implant", prices = listOf(DoctorPrice(30000000, "UZS"))),
                     DoctorService(title = "Cleaning"),
                 ),
