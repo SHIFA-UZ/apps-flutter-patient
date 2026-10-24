@@ -19,15 +19,20 @@ private val headache =
     CopilotChat(
         "1",
         listOf(
-            CopilotMessage(USER, "I've had a headache for three days, mostly in the evening. What could it be?"),
+            CopilotMessage(
+                USER,
+                "I've had a headache for three days, mostly in the evening. What could it be?",
+                at("2026-09-28T08:38:00Z"),
+            ),
             CopilotMessage(
                 ASSISTANT,
                 "Evening headaches that last a few days are often tension headaches: long hours at a screen, " +
                     "poor sleep, stress or not drinking enough water can all cause them. Try regular breaks, water " +
                     "through the day and a steady sleep time. See a doctor soon if the pain is sudden and severe, " +
                     "wakes you up, or comes with fever, a stiff neck, vision changes or weakness.",
+                at("2026-09-28T08:39:00Z"),
             ),
-            CopilotMessage(USER, "Which doctor should I see?"),
+            CopilotMessage(USER, "Which doctor should I see?", at("2026-09-28T08:40:00Z")),
         ),
         at("2026-09-28T08:40:00Z"),
     )
@@ -76,6 +81,7 @@ internal fun ShifaAiChatPreview() =
         ShifaAiChatContent(
             ShifaAiUiState(chats, chat = headache.copy(messages = headache.messages.dropLast(1))),
             onMore = {},
+            now = now,
         )
     }
 
@@ -86,6 +92,7 @@ internal fun ShifaAiThinkingPreview() =
         ShifaAiChatContent(
             ShifaAiUiState(chats, chat = headache, input = "And what tests", streaming = ""),
             onMore = {},
+            now = now,
         )
     }
 
@@ -96,6 +103,7 @@ internal fun ShifaAiRateLimitPreview() =
         ShifaAiChatContent(
             ShifaAiUiState(chats, chat = headache, error = Res.string.copilotDailyLimit, rateLimited = true),
             onMore = {},
+            now = now,
         )
     }
 
@@ -103,10 +111,16 @@ internal fun ShifaAiRateLimitPreview() =
 @Composable
 internal fun ShifaAiAddToChatPreview() =
     PreviewTheme {
-        ShifaAiChatContent(ShifaAiUiState(chats, chat = headache), adding = true, onMore = {})
+        ShifaAiChatContent(ShifaAiUiState(chats, chat = headache), adding = true, onMore = {}, now = now)
     }
 
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
 internal fun ShifaAiRecordingPreview() =
-    PreviewTheme { ShifaAiChatContent(ShifaAiUiState(chats, chat = headache, recording = true), onMore = {}) }
+    PreviewTheme {
+        ShifaAiChatContent(
+            ShifaAiUiState(chats, chat = headache, recording = true),
+            onMore = {},
+            now = now,
+        )
+    }

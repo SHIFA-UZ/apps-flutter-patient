@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -15,6 +16,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
@@ -22,14 +24,12 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.appointmentCancelledSuccessfully
-import shifa.composeapp.generated.resources.locationPermissionDeniedForever
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsQuery
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
-import shifa.uz.utils.DeviceLocation
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookingsViewModelTest {
@@ -125,37 +125,38 @@ class BookingsViewModelTest {
         }
 
     @Test
-    fun `near me searches around the fix and drops doctors without coordinates`() =
+    fun `after a load every chip is fetched once, so switching shows it without asking again`() =
         runTest {
-            val fix = DeviceLocation.Found(40.63, 72.50)
-            val near = Doctor(id = "n", distanceKm = 0.1)
-            val located = Doctor(id = "l", latitude = 40.7, longitude = 72.5)
-            val nowhere = Doctor(id = "x")
-            val query =
-                DoctorsQuery(search = "", sortBy = "distance", latitude = 40.63, longitude = 72.50, radiusKm = 50.0)
-            wheneverBlocking { doctors.searchDoctors(query) } doReturn Result.success(listOf(near, located, nowhere))
+            val remote = DoctorsQuery(search = "", consultationType = "online")
+            wheneverBlocking { doctors.searchDoctors(remote) } doReturn Result.success(listOf(ali))
+            classToTest.load()
+            advanceUntilIdle()
+            verifyBlocking(doctors, times(1)) { searchDoctors(remote) } // prefetched
 
-            classToTest.locating()
-            assertThat(state.filter).isEqualTo(DoctorFilter.NearMe)
-            assertThat(state.recommended).isNull()
-            classToTest.located(fix)
+            classToTest.filterBy(DoctorFilter.Remote)
+            assertThat(state.isSearching).isFalse()
             advanceUntilIdle()
 
-            assertThat(state.recommended).containsExactly(near, located).inOrder()
-            assertThat(state.location).isEqualTo(fix)
-            assertThat(state.isLocating).isFalse()
-            assertThat(located.distanceFrom(fix)).isWithin(0.01).of(7.78) // Haversine
+            assertThat(state.recommended).containsExactly(ali)
+            verifyBlocking(doctors, times(1)) { searchDoctors(remote) }
+            verifyBlocking(doctors, times(DoctorFilter.entries.size)) { searchDoctors(any()) }
         }
 
     @Test
-    fun `no fix goes back to All and says why`() =
+    fun `a chip not fetched yet shows skeletons until D1 answers`() =
         runTest {
-            classToTest.locating()
-            classToTest.located(DeviceLocation.DeniedForever)
-            advanceUntilIdle()
+            val today = DoctorsQuery(search = "", availableWithin = "today")
+            wheneverBlocking { doctors.searchDoctors(today) } doSuspendableAnswer {
+                delay(1_000) // D1 is slow
+                Result.success(listOf(vali))
+            }
+            classToTest.filterBy(DoctorFilter.Today)
+            dispatcher.scheduler.advanceTimeBy(500)
 
-            assertThat(state.filter).isEqualTo(DoctorFilter.All)
-            assertThat(state.error).isEqualTo(Res.string.locationPermissionDeniedForever)
+            assertThat(state.isSearching).isTrue()
+            assertThat(state.recommended).isNull()
+            advanceUntilIdle()
+            assertThat(state.isSearching).isFalse()
             assertThat(state.recommended).containsExactly(vali)
         }
 }

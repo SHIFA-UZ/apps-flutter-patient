@@ -105,14 +105,19 @@ class ShifaAiViewModelTest {
             assertThat(state.input).isEmpty()
             assertThat(state.streaming).isEqualTo("Hel")
             assertThat(state.canSend).isFalse()
-            assertThat(asked).containsExactly(listOf(CopilotMessage(USER, "Headache?")) to "RU")
+            assertThat(asked).containsExactly(listOf(CopilotMessage(USER, "Headache?", 1000)) to "RU")
 
             clock = 2000
             gate?.complete(Unit)
             advanceUntilIdle()
 
+            // Each turn keeps when it was sent.
             val chat =
-                CopilotChat("1000", listOf(CopilotMessage(USER, "Headache?"), CopilotMessage(ASSISTANT, "Hello")), 2000)
+                CopilotChat(
+                    "1000",
+                    listOf(CopilotMessage(USER, "Headache?", 1000), CopilotMessage(ASSISTANT, "Hello", 2000)),
+                    2000,
+                )
             assertThat(state.streaming).isNull()
             assertThat(state.chat).isEqualTo(chat)
             assertThat(state.chats).containsExactly(chat, saved).inOrder()
@@ -154,7 +159,7 @@ class ShifaAiViewModelTest {
             advanceUntilIdle()
             assertThat(asked).hasSize(1)
             // 09 §5.1: the question stays, unanswered.
-            assertThat(state.chat?.messages?.last()).isEqualTo(CopilotMessage(USER, "Hi"))
+            assertThat(state.chat?.messages?.last()).isEqualTo(CopilotMessage(USER, "Hi", 1000))
 
             classToTest.close()
             classToTest.open("1")
@@ -190,7 +195,7 @@ class ShifaAiViewModelTest {
             advanceUntilIdle()
             assertThat(state.chat).isNull()
             assertThat(state.streaming).isNull()
-            assertThat(state.chats.single().messages.last()).isEqualTo(CopilotMessage(USER, "Hi"))
+            assertThat(state.chats.single().messages.last()).isEqualTo(CopilotMessage(USER, "Hi", 1000))
 
             classToTest.open("1")
             classToTest.delete()

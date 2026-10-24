@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -49,7 +50,10 @@ enum class ShifaNotificationType(
     Feedback(Res.drawable.ic_info_16, ShifaColors.Icon.Warning),
 }
 
-/** Figma notification, every type but message. Feedback has no [time] in Figma. [unread] titles are brand (not in Figma). */
+/**
+ * Figma notification, every type but message. Unread ([unreadCount] > 0): a bold brand [time] and the count's
+ * [ShifaNotificationBubble]; an unread chat sits on canvas. Feedback has no [time] or bubble in Figma.
+ */
 @Composable
 fun ShifaNotification(
     title: String,
@@ -57,13 +61,20 @@ fun ShifaNotification(
     type: ShifaNotificationType,
     modifier: Modifier = Modifier,
     time: String? = null,
-    unread: Boolean = false,
+    unreadCount: Int = 0,
     onClick: (() -> Unit)? = null,
 ) {
     val feedback = type == ShifaNotificationType.Feedback
+    val unread = unreadCount > 0 && !feedback
+    val bg =
+        when {
+            feedback -> ShifaColors.Bg.WarningSubtle
+            unread && type == ShifaNotificationType.Chat -> ShifaColors.Bg.Canvas
+            else -> ShifaColors.Bg.Surface
+        }
     Column(
         modifier
-            .notificationChrome(if (feedback) ShifaColors.Bg.WarningSubtle else ShifaColors.Bg.Canvas, onClick)
+            .notificationChrome(bg, onClick)
             .then(
                 if (feedback) {
                     Modifier.border(
@@ -78,8 +89,25 @@ fun ShifaNotification(
             .padding(ShifaSpacing.Inset.Sm),
         verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
     ) {
-        TitleBar(title, time, type, unread)
-        NotificationBody(body)
+        TitleBar(time, if (unread) unreadCount else 0) {
+            Row(
+                Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(painterResource(type.icon), null, tint = type.tint)
+                TitleText(title)
+            }
+        }
+        val style = ShifaTextStyles.notificationBody()
+        Text(
+            body,
+            Modifier.lineBox(style),
+            style = style,
+            color = ShifaColors.Text.Primary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -101,51 +129,7 @@ fun ShifaMessageNotification(
     ) {
         ShifaAvatar(avatarUrl, ShifaDimens.NotificationAvatar, placeholder = ShifaColors.Bg.Disabled)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
-            Row(
-                Modifier.fillMaxWidth().height(ShifaSize.S22),
-                horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val title = ShifaTextStyles.profileName()
-                Text(
-                    sender,
-                    Modifier.weight(1f).lineBox(title),
-                    style = title,
-                    color = ShifaColors.Text.Primary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                val unread = unreadCount > 0
-                time?.let {
-                    val style = MaterialTheme.typography.labelSmall
-                    Text(
-                        it,
-                        Modifier.lineBox(style),
-                        style = if (unread) style else style.copy(fontWeight = FontWeight.Medium),
-                        color = if (unread) ShifaColors.Text.Brand else ShifaColors.Text.Tertiary,
-                        maxLines = 1,
-                    )
-                }
-                if (unread) {
-                    // Figma notification-bubble: a 14 text box in a 4 padding.
-                    val style = MaterialTheme.typography.labelSmall
-                    Box(
-                        Modifier
-                            .background(ShifaColors.Icon.Brand, ShifaRadius.Full)
-                            .padding(ShifaSpacing.Stack.Xs)
-                            .defaultMinSize(ShifaSize.S14, ShifaSize.S14),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            if (unreadCount > 99) "99+" else "$unreadCount",
-                            Modifier.lineBox(style),
-                            style = style,
-                            color = ShifaColors.Text.Inverse,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-            }
+            TitleBar(time, unreadCount) { TitleText(sender, Modifier.weight(1f)) }
             val style = ShifaTextStyles.notificationBody()
             Text(
                 body,
@@ -159,6 +143,30 @@ fun ShifaMessageNotification(
     }
 }
 
+/** Figma notification-bubble: an unread count, white on brand, in a 14 text box with 4 padding. Over 99 shows 99+. */
+@Composable
+fun ShifaNotificationBubble(
+    count: Int,
+    modifier: Modifier = Modifier,
+) {
+    val style = MaterialTheme.typography.labelSmall
+    Box(
+        modifier
+            .background(ShifaColors.Icon.Brand, ShifaRadius.Full)
+            .padding(ShifaSpacing.Stack.Xs)
+            .defaultMinSize(ShifaSize.S14, ShifaSize.S14),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            if (count > 99) "99+" else "$count",
+            Modifier.lineBox(style),
+            style = style,
+            color = ShifaColors.Text.Inverse,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
 private fun Modifier.notificationChrome(
     bg: Color,
     onClick: (() -> Unit)?,
@@ -167,50 +175,46 @@ private fun Modifier.notificationChrome(
     .background(bg)
     .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
 
+/** Figma title-bar: 22 high (the bubble's height), the [title], then the time and, when [unreadCount] > 0, the bubble. */
 @Composable
 private fun TitleBar(
-    title: String,
     time: String?,
-    type: ShifaNotificationType?,
-    unread: Boolean = false,
+    unreadCount: Int,
+    title: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().height(ShifaSize.S22),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            type?.let { Icon(painterResource(it.icon), null, tint = it.tint) }
-            val style = MaterialTheme.typography.labelMedium
+        title()
+        val unread = unreadCount > 0
+        time?.let {
+            val style = MaterialTheme.typography.labelSmall
             Text(
-                title,
+                it,
                 Modifier.lineBox(style),
-                style = style,
-                color = if (unread) ShifaColors.Text.Brand else ShifaColors.Text.Primary,
+                style = if (unread) style else style.copy(fontWeight = FontWeight.Medium),
+                color = if (unread) ShifaColors.Text.Brand else ShifaColors.Text.Tertiary,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
             )
         }
-        time?.let {
-            val style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)
-            Text(it, Modifier.lineBox(style), style = style, color = ShifaColors.Text.Tertiary, maxLines = 1)
-        }
+        if (unread) ShifaNotificationBubble(unreadCount)
     }
 }
 
 @Composable
-private fun NotificationBody(text: String) {
-    val style = MaterialTheme.typography.bodyMedium
+private fun TitleText(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    val style = ShifaTextStyles.profileName()
     Text(
         text,
-        Modifier.lineBox(style),
+        modifier.lineBox(style),
         style = style,
         color = ShifaColors.Text.Primary,
-        maxLines = 2,
+        maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
 }

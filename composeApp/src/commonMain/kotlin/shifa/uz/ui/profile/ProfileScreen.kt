@@ -211,9 +211,9 @@ internal fun ProfileContent(
         ShifaPageElement(ShifaPageElementType.Header) {
             ShifaSubHeader(stringResource(Res.string.profile), onBack = onBack)
         }
-        PullToRefreshBox(state.isLoading, onRefresh, Modifier.weight(1f)) {
+        PullToRefreshBox(state.isLoading, onRefresh, Modifier.weight(1f).background(ShifaColors.Bg.Canvas)) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding()) {
-                ShifaPageElement(ShifaPageElementType.Body) {
+                ShifaPageElement(ShifaPageElementType.SubBody) {
                     Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
                         Banners(state.error)
                         if (state.isUploading) UploadingBanner()
@@ -295,7 +295,7 @@ private fun ProfileCard(
         Modifier
             .fillMaxWidth()
             .clip(ShifaRadius.ControlMd)
-            .background(ShifaColors.Bg.Canvas)
+            .background(ShifaColors.Bg.Surface)
             .padding(ShifaSpacing.Inset.Md),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
         verticalAlignment = Alignment.CenterVertically,

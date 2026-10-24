@@ -1,7 +1,6 @@
 package shifa.uz.ui.doctors
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.datetime.Instant
 import shifa.composeapp.generated.resources.Res
@@ -11,7 +10,6 @@ import shifa.uz.data.model.DoctorService
 import shifa.uz.data.model.Review
 import shifa.uz.ui.bookings.previewDoctor
 import shifa.uz.ui.widgets.PreviewTheme
-import shifa.uz.utils.DeviceLocation
 
 private val now = Instant.parse("2026-09-27T09:00:00Z")
 
@@ -32,10 +30,7 @@ private val loaded =
 @Composable
 private fun Profile(state: DoctorProfileUiState) =
     PreviewTheme {
-        // Near me found, so Nearby shows (Figma).
-        CompositionLocalProvider(LocalDeviceLocation provides DeviceLocation.Found(41.3, 69.2)) {
-            DoctorProfileContent(state, now)
-        }
+        DoctorProfileContent(state, now)
     }
 
 // Figma 1655:16298.

@@ -142,7 +142,6 @@
     <string name="doctorProfile">Arztprofil</string>
     <string name="doctors">Ärzte</string>
     <string name="doctorsCount">%1$s verifizierte Ärzte</string>
-    <string name="doctorsNearMe">Ärzte in meiner Nähe</string>
     <string name="doctorsPageSummary">Seite %1$s von %2$s · %3$s Ärzte</string>
     <string name="documentAccessApprovedMessage">Ihre Anfrage für Dokumentenzugriff wurde genehmigt.</string>
     <string name="documentAccessApprovedTitle">Dokumentenzugriff genehmigt</string>
@@ -238,7 +237,6 @@
     <string name="filterConsultationType">Konsultation</string>
     <string name="filterEmergency">Notfall</string>
     <string name="filterMinRating">Bewertung</string>
-    <string name="filterNearMe">In der Nähe</string>
     <string name="filterOnline">Online</string>
     <string name="filterPrice">Preis</string>
     <string name="filterRemote">Online</string>
@@ -247,7 +245,6 @@
     <string name="filterTopRated">Top bewertet</string>
     <string name="filterVerified">Verifiziert</string>
     <string name="findADoctor">Arzt finden</string>
-    <string name="findDoctorsNearYou">Ärzte in Ihrer Nähe</string>
     <string name="forgotPassword">Passwort vergessen?</string>
     <string name="forgotPasswordEnterEmail">Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Bestätigungscode zum Zurücksetzen des Passworts.</string>
     <string name="form0252ConfirmSigning">Ich habe dieses Formular gelesen und stimme der Unterschrift zu.</string>
@@ -285,8 +282,6 @@
     <string name="loading">Lädt...</string>
     <string name="location">Standort</string>
     <string name="locationAndLanguage">Standort &amp; Sprache</string>
-    <string name="locationPermissionDenied">Standortberechtigung verweigert.</string>
-    <string name="locationPermissionDeniedForever">Standortberechtigung dauerhaft verweigert. Bitte in den Einstellungen aktivieren.</string>
     <string name="logOut">Abmelden</string>
     <string name="login">Anmeldung</string>
     <string name="loginAttemptsRemaining">Noch %1$s Anmeldeversuch(e) vor zeitweiliger Sperre.</string>
@@ -298,7 +293,6 @@
     <string name="moreFilters">Filter</string>
     <string name="myDoctors">Meine Ärzte</string>
     <string name="name">Vorname</string>
-    <string name="nearby">In der Nähe</string>
     <string name="newAppointmentScheduledTitle">Neuer Termin geplant</string>
     <string name="newDocumentMessage">Ein neues Dokument wurde Ihrer Akte hinzugefügt. Tippen Sie zum Ansehen.</string>
     <string name="newDocumentTitle">Neues Dokument</string>

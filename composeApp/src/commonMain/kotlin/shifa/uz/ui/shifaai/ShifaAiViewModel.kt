@@ -120,7 +120,8 @@ class ShifaAiViewModel(
         val state = _state.value
         val open = state.chat ?: return
         if (!state.canSend) return
-        val asked = put(open.copy(messages = open.messages + CopilotMessage(CopilotMessage.USER, state.input.trim())))
+        val asked =
+            put(open.copy(messages = open.messages + CopilotMessage(CopilotMessage.USER, state.input.trim(), now())))
         update { copy(input = "", streaming = "", error = null, notice = null) }
         reply =
             viewModelScope.launch {
@@ -133,7 +134,9 @@ class ShifaAiViewModel(
                         // 09 Q14: an empty reply isn't a message.
                         if (it.isNotEmpty()) {
                             put(
-                                asked.copy(messages = asked.messages + CopilotMessage(CopilotMessage.ASSISTANT, it)),
+                                asked.copy(
+                                    messages = asked.messages + CopilotMessage(CopilotMessage.ASSISTANT, it, now()),
+                                ),
                             )
                         }
                     },

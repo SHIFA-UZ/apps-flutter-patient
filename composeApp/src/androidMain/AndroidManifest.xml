@@ -6,8 +6,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Near me (07 §2.1) -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- Push (13 §10), asked for after login -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

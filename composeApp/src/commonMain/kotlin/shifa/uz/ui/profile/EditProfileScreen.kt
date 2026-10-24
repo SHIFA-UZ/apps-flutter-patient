@@ -154,8 +154,8 @@ internal fun EditProfileContent(
         ShifaPageElement(ShifaPageElementType.Header) {
             ShifaSubHeader(stringResource(Res.string.editProfile), onBack = onBack)
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            ShifaPageElement(ShifaPageElementType.Body) {
+        Column(Modifier.weight(1f).background(ShifaColors.Bg.Canvas).verticalScroll(rememberScrollState())) {
+            ShifaPageElement(ShifaPageElementType.SubBody) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
                     horizontalAlignment = Alignment.CenterHorizontally,

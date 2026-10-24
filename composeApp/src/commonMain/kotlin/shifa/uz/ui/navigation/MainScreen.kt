@@ -49,7 +49,6 @@ import shifa.uz.ui.bookings.BookingsViewModel
 import shifa.uz.ui.bookings.CreateBookingScreen
 import shifa.uz.ui.bookings.RescheduleScreen
 import shifa.uz.ui.doctors.DoctorProfileScreen
-import shifa.uz.ui.doctors.LocalDeviceLocation
 import shifa.uz.ui.documents.DocumentViewerScreen
 import shifa.uz.ui.documents.DocumentsScreen
 import shifa.uz.ui.documents.DocumentsViewModel
@@ -98,7 +97,6 @@ fun MainScreen(
         val messages = viewModel { MessagesViewModel() }
         val homeState by home.state.collectAsState()
         val aiState by shifaAi.state.collectAsState()
-        val nearMe = bookings.state.collectAsState().value.location
         var tab by rememberSaveable { mutableStateOf(ShifaTab.Home) }
         var page by rememberSaveable { mutableStateOf<Page?>(null) }
         var list by rememberSaveable { mutableStateOf<BookingsList?>(null) }
@@ -173,293 +171,291 @@ fun MainScreen(
                 shifaAi.close()
             }
         }
-        CompositionLocalProvider(LocalDeviceLocation provides nearMe) {
-            Box(Modifier.fillMaxSize()) {
-                tabs.SaveableStateProvider(tab) {
-                    when (tab) {
-                        ShifaTab.Home ->
-                            HomeScreen(
-                                onNotifications = { page = Page.Notifications },
-                                onAccount = { page = Page.Account },
-                                onUpcoming = { upcomingOpen = true },
-                                onAppointment = { appointment = it },
-                                onLive = { live = it },
-                                onTasks = { tasksOpen = true },
-                                onDoctors = { list = BookingsList.MyDoctors },
-                                onDoctor = { doctor = it },
-                                onSignedOut = onLogOut,
-                                contentPadding = navPadding,
-                                viewModel = home,
-                            )
-                        ShifaTab.Documents ->
-                            DocumentsScreen(
-                                avatarUrl = homeState.photoUrl,
-                                patientName = homeState.fullName,
-                                notificationCount = homeState.unreadNotifications,
-                                onNotifications = { page = Page.Notifications },
-                                onAccount = { page = Page.Account },
-                                onOpen = { viewing = it },
-                                onSignedOut = onLogOut,
-                                contentPadding = navPadding,
-                                viewModel = documents,
-                            )
-                        ShifaTab.Bookings ->
-                            BookingsScreen(
-                                avatarUrl = homeState.photoUrl,
-                                notificationCount = homeState.unreadNotifications,
-                                onNotifications = { page = Page.Notifications },
-                                onAccount = { page = Page.Account },
-                                onAppointment = { appointment = it },
-                                onDoctor = { doctor = it },
-                                onList = { list = it },
-                                onSignedOut = onLogOut,
-                                contentPadding = navPadding,
-                                viewModel = bookings,
-                            )
-                        ShifaTab.ShifaAi ->
-                            ShifaAiScreen(
-                                shifaAi,
-                                avatarUrl = homeState.photoUrl,
-                                notificationCount = homeState.unreadNotifications,
-                                onNotifications = { page = Page.Notifications },
-                                onAccount = { page = Page.Account },
-                                contentPadding = navPadding,
-                            )
-                        ShifaTab.Messages ->
-                            MessagesScreen(
-                                avatarUrl = homeState.photoUrl,
-                                notificationCount = homeState.unreadNotifications,
-                                onNotifications = { page = Page.Notifications },
-                                onAccount = { page = Page.Account },
-                                onOpen = { chat = it },
-                                onSignedOut = onLogOut,
-                                contentPadding = navPadding,
-                                viewModel = messages,
-                            )
-                        else -> ComingSoon(stringResource(tab.label))
-                    }
+        Box(Modifier.fillMaxSize()) {
+            tabs.SaveableStateProvider(tab) {
+                when (tab) {
+                    ShifaTab.Home ->
+                        HomeScreen(
+                            onNotifications = { page = Page.Notifications },
+                            onAccount = { page = Page.Account },
+                            onUpcoming = { upcomingOpen = true },
+                            onAppointment = { appointment = it },
+                            onLive = { live = it },
+                            onTasks = { tasksOpen = true },
+                            onDoctors = { list = BookingsList.MyDoctors },
+                            onDoctor = { doctor = it },
+                            onSignedOut = onLogOut,
+                            contentPadding = navPadding,
+                            viewModel = home,
+                        )
+                    ShifaTab.Documents ->
+                        DocumentsScreen(
+                            avatarUrl = homeState.photoUrl,
+                            patientName = homeState.fullName,
+                            notificationCount = homeState.unreadNotifications,
+                            onNotifications = { page = Page.Notifications },
+                            onAccount = { page = Page.Account },
+                            onOpen = { viewing = it },
+                            onSignedOut = onLogOut,
+                            contentPadding = navPadding,
+                            viewModel = documents,
+                        )
+                    ShifaTab.Bookings ->
+                        BookingsScreen(
+                            avatarUrl = homeState.photoUrl,
+                            notificationCount = homeState.unreadNotifications,
+                            onNotifications = { page = Page.Notifications },
+                            onAccount = { page = Page.Account },
+                            onAppointment = { appointment = it },
+                            onDoctor = { doctor = it },
+                            onList = { list = it },
+                            onSignedOut = onLogOut,
+                            contentPadding = navPadding,
+                            viewModel = bookings,
+                        )
+                    ShifaTab.ShifaAi ->
+                        ShifaAiScreen(
+                            shifaAi,
+                            avatarUrl = homeState.photoUrl,
+                            notificationCount = homeState.unreadNotifications,
+                            onNotifications = { page = Page.Notifications },
+                            onAccount = { page = Page.Account },
+                            contentPadding = navPadding,
+                        )
+                    ShifaTab.Messages ->
+                        MessagesScreen(
+                            avatarUrl = homeState.photoUrl,
+                            notificationCount = homeState.unreadNotifications,
+                            onNotifications = { page = Page.Notifications },
+                            onAccount = { page = Page.Account },
+                            onOpen = { chat = it },
+                            onSignedOut = onLogOut,
+                            contentPadding = navPadding,
+                            viewModel = messages,
+                        )
+                    else -> ComingSoon(stringResource(tab.label))
                 }
-                ShifaNavBar(
-                    tab,
-                    { tab = it },
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .onSizeChanged { navPadding = PaddingValues(bottom = with(density) { it.height.toDp() }) }
-                        .navigationBarsPadding()
-                        .padding(ShifaSpacing.Inset.Md),
-                    ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
+            }
+            ShifaNavBar(
+                tab,
+                { tab = it },
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { navPadding = PaddingValues(bottom = with(density) { it.height.toDp() }) }
+                    .navigationBarsPadding()
+                    .padding(ShifaSpacing.Inset.Md),
+                ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
+            )
+            // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a certificate / document → a call.
+            if (aiState.chat != null) {
+                BackHandler { shifaAi.close() }
+                ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
+            }
+            chat?.let {
+                // Back on the list, its unread counts and last messages are refetched.
+                val close = {
+                    chat = null
+                    messages.load()
+                }
+                BackHandler { close() }
+                key(it) { ScopedViewModels { ConversationScreen(it, onBack = close, onSignedOut = onLogOut) } }
+            }
+            list?.let {
+                BackHandler { list = null }
+                BookingsListScreen(
+                    it,
+                    bookings,
+                    onBack = { list = null },
+                    onDoctor = { doctor = it },
+                    onAppointment = { appointment = it },
+                    onSignedOut = onLogOut,
                 )
-                // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a certificate / document → a call.
-                if (aiState.chat != null) {
-                    BackHandler { shifaAi.close() }
-                    ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
-                }
-                chat?.let {
-                    // Back on the list, its unread counts and last messages are refetched.
-                    val close = {
-                        chat = null
-                        messages.load()
+            }
+            if (upcomingOpen) {
+                BackHandler { upcomingOpen = false }
+                UpcomingScreen(home, onBack = { upcomingOpen = false }, onAppointment = { appointment = it })
+            }
+            if (tasksOpen) {
+                BackHandler { tasksOpen = false }
+                TasksScreen(
+                    tasks,
+                    onBack = { tasksOpen = false },
+                    onTask = { checkIn = it },
+                    onSignedOut = onLogOut,
+                )
+            }
+            checkIn?.let {
+                BackHandler { checkIn = null }
+                key(it) {
+                    ScopedViewModels {
+                        TaskCheckInScreen(
+                            it,
+                            onBack = { checkIn = null },
+                            onSubmitted = {
+                                tasks.onSubmitted()
+                                home.refresh()
+                            },
+                            onSignedOut = onLogOut,
+                        )
                     }
-                    BackHandler { close() }
-                    key(it) { ScopedViewModels { ConversationScreen(it, onBack = close, onSignedOut = onLogOut) } }
                 }
-                list?.let {
-                    BackHandler { list = null }
-                    BookingsListScreen(
-                        it,
-                        bookings,
-                        onBack = { list = null },
-                        onDoctor = { doctor = it },
-                        onAppointment = { appointment = it },
-                        onSignedOut = onLogOut,
-                    )
+            }
+            appointment?.let {
+                BackHandler { appointment = null }
+                key(it) {
+                    ScopedViewModels {
+                        AppointmentDetailsScreen(
+                            it,
+                            onBack = { appointment = null },
+                            onDoctor = { doctor = it },
+                            onReschedule = { rescheduling = it },
+                            onCancelled = {
+                                appointment = null
+                                bookings.onCancelled()
+                                home.refresh()
+                            },
+                            onSignedOut = onLogOut,
+                        )
+                    }
                 }
-                if (upcomingOpen) {
-                    BackHandler { upcomingOpen = false }
-                    UpcomingScreen(home, onBack = { upcomingOpen = false }, onAppointment = { appointment = it })
+            }
+            rescheduling?.let {
+                BackHandler { rescheduling = null }
+                key(it) {
+                    ScopedViewModels {
+                        RescheduleScreen(
+                            it,
+                            onBack = { rescheduling = null },
+                            onRescheduled = {
+                                rescheduling = null
+                                appointment = null
+                                list = null
+                                tab = ShifaTab.Bookings
+                                bookings.onRescheduled()
+                                home.refresh()
+                            },
+                            onSignedOut = onLogOut,
+                        )
+                    }
                 }
-                if (tasksOpen) {
-                    BackHandler { tasksOpen = false }
-                    TasksScreen(
-                        tasks,
-                        onBack = { tasksOpen = false },
-                        onTask = { checkIn = it },
-                        onSignedOut = onLogOut,
-                    )
+            }
+            live?.let {
+                BackHandler { live = null }
+                key(it) {
+                    ScopedViewModels {
+                        LiveAppointmentScreen(
+                            it,
+                            onBack = { live = null },
+                            onDoctor = { doctor = it },
+                            onJoin = {
+                                call = it
+                                callMinimized = false
+                            },
+                            onSignedOut = onLogOut,
+                        )
+                    }
                 }
-                checkIn?.let {
-                    BackHandler { checkIn = null }
-                    key(it) {
-                        ScopedViewModels {
-                            TaskCheckInScreen(
-                                it,
-                                onBack = { checkIn = null },
-                                onSubmitted = {
-                                    tasks.onSubmitted()
-                                    home.refresh()
-                                },
-                                onSignedOut = onLogOut,
-                            )
+            }
+            doctor?.let {
+                BackHandler { doctor = null }
+                key(it) {
+                    ScopedViewModels {
+                        DoctorProfileScreen(
+                            it,
+                            onBack = { doctor = null },
+                            onCertificate = { viewing = it },
+                            onBook = { booking = it },
+                            onSignedOut = onLogOut,
+                        )
+                    }
+                }
+            }
+            booking?.let {
+                BackHandler { booking = null }
+                key(it) {
+                    ScopedViewModels {
+                        CreateBookingScreen(
+                            it,
+                            onBack = { booking = null },
+                            onBooked = { pending ->
+                                // 06 §3.1: then /bookings.
+                                booking = null
+                                doctor = null
+                                appointment = null
+                                list = null
+                                tab = ShifaTab.Bookings
+                                bookings.onBooked(pending)
+                                home.refresh()
+                            },
+                            // Figma 1825:17774: paid, the visit's details with Payment Completed.
+                            onPaid = { paid ->
+                                booking = null
+                                doctor = null
+                                list = null
+                                appointment = paid
+                                bookings.load()
+                                home.refresh()
+                            },
+                            onSignedOut = onLogOut,
+                        )
+                    }
+                }
+            }
+            page?.let {
+                BackHandler { page = null }
+                // Each page gets fresh ViewModels, cleared when it closes.
+                key(it) {
+                    ScopedViewModels {
+                        when (it) {
+                            Page.Account ->
+                                ProfileScreen(
+                                    onBack = { page = null },
+                                    onLogOut = onLogOut,
+                                    onAccountDeleted = onAccountDeleted,
+                                    onProfileChanged = home::onProfileChanged,
+                                )
+                            Page.Notifications ->
+                                NotificationsScreen(
+                                    homeState.fullName,
+                                    onBack = { page = null },
+                                    onLink = follow,
+                                    onRead = home::refresh,
+                                    onCheckInSubmitted = {
+                                        tasks.onSubmitted()
+                                        home.refresh()
+                                    },
+                                    onSignedOut = onLogOut,
+                                )
                         }
                     }
                 }
-                appointment?.let {
-                    BackHandler { appointment = null }
-                    key(it) {
-                        ScopedViewModels {
-                            AppointmentDetailsScreen(
-                                it,
-                                onBack = { appointment = null },
-                                onDoctor = { doctor = it },
-                                onReschedule = { rescheduling = it },
-                                onCancelled = {
-                                    appointment = null
-                                    bookings.onCancelled()
-                                    home.refresh()
-                                },
-                                onSignedOut = onLogOut,
-                            )
-                        }
+            }
+            viewing?.let {
+                BackHandler { viewing = null }
+                key(it) {
+                    ScopedViewModels {
+                        DocumentViewerScreen(it, homeState.fullName, onBack = { viewing = null }, onDeleted = {
+                            viewing = null
+                            documents.onDeleted(it.id)
+                        })
                     }
                 }
-                rescheduling?.let {
-                    BackHandler { rescheduling = null }
-                    key(it) {
-                        ScopedViewModels {
-                            RescheduleScreen(
-                                it,
-                                onBack = { rescheduling = null },
-                                onRescheduled = {
-                                    rescheduling = null
-                                    appointment = null
-                                    list = null
-                                    tab = ShifaTab.Bookings
-                                    bookings.onRescheduled()
-                                    home.refresh()
-                                },
-                                onSignedOut = onLogOut,
-                            )
-                        }
-                    }
-                }
-                live?.let {
-                    BackHandler { live = null }
-                    key(it) {
-                        ScopedViewModels {
-                            LiveAppointmentScreen(
-                                it,
-                                onBack = { live = null },
-                                onDoctor = { doctor = it },
-                                onJoin = {
-                                    call = it
-                                    callMinimized = false
-                                },
-                                onSignedOut = onLogOut,
-                            )
-                        }
-                    }
-                }
-                doctor?.let {
-                    BackHandler { doctor = null }
-                    key(it) {
-                        ScopedViewModels {
-                            DoctorProfileScreen(
-                                it,
-                                onBack = { doctor = null },
-                                onCertificate = { viewing = it },
-                                onBook = { booking = it },
-                                onSignedOut = onLogOut,
-                            )
-                        }
-                    }
-                }
-                booking?.let {
-                    BackHandler { booking = null }
-                    key(it) {
-                        ScopedViewModels {
-                            CreateBookingScreen(
-                                it,
-                                onBack = { booking = null },
-                                onBooked = { pending ->
-                                    // 06 §3.1: then /bookings.
-                                    booking = null
-                                    doctor = null
-                                    appointment = null
-                                    list = null
-                                    tab = ShifaTab.Bookings
-                                    bookings.onBooked(pending)
-                                    home.refresh()
-                                },
-                                // Figma 1825:17774: paid, the visit's details with Payment Completed.
-                                onPaid = { paid ->
-                                    booking = null
-                                    doctor = null
-                                    list = null
-                                    appointment = paid
-                                    bookings.load()
-                                    home.refresh()
-                                },
-                                onSignedOut = onLogOut,
-                            )
-                        }
-                    }
-                }
-                page?.let {
-                    BackHandler { page = null }
-                    // Each page gets fresh ViewModels, cleared when it closes.
-                    key(it) {
-                        ScopedViewModels {
-                            when (it) {
-                                Page.Account ->
-                                    ProfileScreen(
-                                        onBack = { page = null },
-                                        onLogOut = onLogOut,
-                                        onAccountDeleted = onAccountDeleted,
-                                        onProfileChanged = home::onProfileChanged,
-                                    )
-                                Page.Notifications ->
-                                    NotificationsScreen(
-                                        homeState.fullName,
-                                        onBack = { page = null },
-                                        onLink = follow,
-                                        onRead = home::refresh,
-                                        onCheckInSubmitted = {
-                                            tasks.onSubmitted()
-                                            home.refresh()
-                                        },
-                                        onSignedOut = onLogOut,
-                                    )
-                            }
-                        }
-                    }
-                }
-                viewing?.let {
-                    BackHandler { viewing = null }
-                    key(it) {
-                        ScopedViewModels {
-                            DocumentViewerScreen(it, homeState.fullName, onBack = { viewing = null }, onDeleted = {
-                                viewing = null
-                                documents.onDeleted(it.id)
-                            })
-                        }
-                    }
-                }
-                // Over everything, full screen or in its small window; it handles its own Back.
-                call?.let {
-                    key(it) {
-                        ScopedViewModels {
-                            VideoCallScreen(
-                                it,
-                                minimized = callMinimized,
-                                onMinimize = { callMinimized = true },
-                                onExpand = { callMinimized = false },
-                                onClose = {
-                                    call = null
-                                    callMinimized = false
-                                },
-                                onSignedOut = onLogOut,
-                            )
-                        }
+            }
+            // Over everything, full screen or in its small window; it handles its own Back.
+            call?.let {
+                key(it) {
+                    ScopedViewModels {
+                        VideoCallScreen(
+                            it,
+                            minimized = callMinimized,
+                            onMinimize = { callMinimized = true },
+                            onExpand = { callMinimized = false },
+                            onClose = {
+                                call = null
+                                callMinimized = false
+                            },
+                            onSignedOut = onLogOut,
+                        )
                     }
                 }
             }
@@ -488,7 +484,7 @@ internal fun ComingSoon(
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaSubHeader(title, onBack = onBack)
         Column(
-            Modifier.fillMaxSize().padding(ShifaSpacing.Inset.Lg),
+            Modifier.fillMaxSize().background(ShifaColors.Bg.Canvas).padding(ShifaSpacing.Inset.Lg),
             verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Lg, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

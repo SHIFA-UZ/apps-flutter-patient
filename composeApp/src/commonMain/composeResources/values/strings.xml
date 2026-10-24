@@ -226,7 +226,6 @@
     <string name="doctorProfile">Doctor Profile</string>
     <string name="doctors">Doctors</string>
     <string name="doctorsCount">%1$s verified doctors</string>
-    <string name="doctorsNearMe">Doctors near me</string>
     <string name="doctorsPageSummary">Page %1$s of %2$s · %3$s doctors</string>
     <string name="document">Document</string>
     <string name="documentAccessApproved">Access granted</string>
@@ -333,7 +332,6 @@
     <string name="errorFailedToSendSmsCode">Failed to send SMS code</string>
     <string name="errorFailedToSendVerificationCode">Failed to send verification code</string>
     <string name="errorFirebaseVerificationNotConfigured">Firebase verification not configured</string>
-    <string name="errorGettingCurrentLocation">Error getting current location</string>
     <string name="errorInvalidCredentials">No account found with this phone number or email. Check your entry or create an account.</string>
     <string name="errorInvalidCredentialsPasswordMismatch">Incorrect password. Please try again or reset your password.</string>
     <string name="errorInvalidKey">Invalid key</string>
@@ -419,7 +417,6 @@
     <string name="filterConsultationType">Consultation</string>
     <string name="filterEmergency">Emergency</string>
     <string name="filterMinRating">Rating</string>
-    <string name="filterNearMe">Near me</string>
     <string name="filterOnline">Online</string>
     <string name="filterPrice">Price</string>
     <string name="filterRemote">Remote</string>
@@ -428,7 +425,6 @@
     <string name="filterTopRated">Top rated</string>
     <string name="filterVerified">Verified</string>
     <string name="findADoctor">Find a Doctor</string>
-    <string name="findDoctorsNearYou">Find Doctors near you</string>
     <string name="firstName">First name</string>
     <string name="forgotPassword">Forgot Password?</string>
     <string name="forgotPasswordEnterEmail">Enter your email address. We will send you a verification code to reset your password.</string>
@@ -492,9 +488,6 @@
     <string name="location">Location</string>
     <string name="locationAndLanguage">Location &amp; Language</string>
     <string name="locationLabel">Location</string>
-    <string name="locationPermissionDenied">Location permissions are denied.</string>
-    <string name="locationPermissionDeniedForever">Location permissions are permanently denied. Please enable them in settings.</string>
-    <string name="locationServicesDisabled">Location services are disabled. Please enable them.</string>
     <string name="lockAfterInactivity">Lock after inactivity</string>
     <string name="logOut">Log Out</string>
     <string name="login">Login</string>
@@ -514,7 +507,6 @@
     <string name="myTasks">My Tasks</string>
     <string name="name">Name</string>
     <string name="navigationError">Navigation Error</string>
-    <string name="nearby">Nearby</string>
     <string name="neurologist">Neurologist</string>
     <string name="newAppointmentBookedButFailedToCancelOld">New appointment booked, but failed to cancel old one</string>
     <string name="newAppointmentScheduled">New appointment scheduled</string>
@@ -965,4 +957,13 @@
     <string name="refundByClinic">Refund will be processed by the clinic.</string>
     <string name="appointmentLessThan24Hours">Appointment is less than 24h away</string>
     <string name="service">Service</string>
+    <string name="more">More</string>
+    <string name="attach">Attach</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="verified">Verified</string>
+    <string name="seeAll">See all</string>
+    <string name="stopRecording">Stop recording</string>
+    <string name="recordVoiceMessage">Record voice message</string>
+    <string name="pageOf">Page %1$s of %2$s</string>
 </resources>

@@ -1,5 +1,7 @@
 package shifa.uz.ui.widgets
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -10,6 +12,8 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_alert_circle_16
 import shifa.composeapp.generated.resources.ic_check_circle_16
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaDimens
+import shifa.uz.ui.theme.ShifaSpacing
 
 private const val BODY =
     "Lorem ipsum dolor sit amet consectetur. Libero pellentesque nam at nunc urna dignissim. " +
@@ -18,13 +22,18 @@ private const val BODY =
 @Preview
 @Composable
 internal fun NotificationPreview() =
-    Gallery {
+    Gallery(ShifaColors.Bg.Canvas) {
         ShifaNotificationType.entries.forEach {
             val feedback = it == ShifaNotificationType.Feedback
             ShifaNotification("${it.name} Title", BODY, it, time = if (feedback) null else "17:00")
         }
+        ShifaNotification("Unread Title", BODY, ShifaNotificationType.Task, time = "17:00", unreadCount = 20)
+        ShifaNotification("Unread Chat", BODY, ShifaNotificationType.Chat, time = "17:00", unreadCount = 1)
         ShifaMessageNotification("Sender Name", BODY, "17:00")
         ShifaMessageNotification("Sender Name", BODY, "17:00", unreadCount = 2)
+        Row(horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
+            listOf(1, 20, 120).forEach { ShifaNotificationBubble(it) }
+        }
     }
 
 @Preview
@@ -73,3 +82,13 @@ internal fun BannerPreview() =
 @Composable
 private fun Placeholder(text: String) =
     Text(text, style = MaterialTheme.typography.bodyLarge, color = ShifaColors.Text.Primary)
+
+@Preview
+@Composable
+internal fun SkeletonPreview() =
+    Gallery(ShifaColors.Bg.Canvas) {
+        ShifaListSkeleton(count = 2)
+        ShifaCardSkeleton(avatar = ShifaDimens.DoctorAvatarIn, width = ShifaDimens.DoctorCardInMaxWidth, shadow = false)
+        ShifaChipsSkeleton()
+        ShifaChatSkeleton()
+    }

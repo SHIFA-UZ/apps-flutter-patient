@@ -19,10 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
+import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
-import shifa.composeapp.generated.resources.ic_arrow_up_24
-import shifa.composeapp.generated.resources.ic_plus_24
+import shifa.composeapp.generated.resources.attach
+import shifa.composeapp.generated.resources.close
+import shifa.composeapp.generated.resources.ic_arrow_up_18
+import shifa.composeapp.generated.resources.ic_plus_18
 import shifa.composeapp.generated.resources.ic_x_16
+import shifa.composeapp.generated.resources.send
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaShadow
@@ -64,17 +68,27 @@ fun ShifaChatTray(
             suggestions.forEach { ShifaActionButton({ onSuggestion(it) }, text = it, secondary = true) }
         }
     }
-    // Figma puts the shadow on the row frame, i.e. under each child.
-    val rowShadow = Modifier.dropShadow(ShifaRadius.Full, ShifaShadow.ChatTray)
-    // The tray sits on the screen's bottom edge, so it pads for the system bar itself.
+    // The tray sits on the screen's bottom edge, so it pads for the system bar itself. No shadows in the row (1772:17215).
     Row(
         Modifier.navigationBarsPadding(),
         horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ShifaIconButton(Res.drawable.ic_plus_24, "Attach", onAttach, rowShadow, secondary = true)
-        Box(rowShadow.weight(1f)) { chatBar() }
-        ShifaIconButton(Res.drawable.ic_arrow_up_24, "Send", onSend, rowShadow, enabled = sendEnabled)
+        ShifaIconButton(
+            Res.drawable.ic_plus_18,
+            stringResource(Res.string.attach),
+            onAttach,
+            secondary = true,
+            shadow = false,
+        )
+        Box(Modifier.weight(1f)) { chatBar() }
+        ShifaIconButton(
+            Res.drawable.ic_arrow_up_18,
+            stringResource(Res.string.send),
+            onSend,
+            enabled = sendEnabled,
+            shadow = false,
+        )
     }
 }
 
@@ -106,5 +120,10 @@ internal fun TrayHeader(
         color = ShifaColors.Text.Primary,
         textAlign = TextAlign.Center,
     )
-    ShifaActionButton(onClose, icon = Res.drawable.ic_x_16, contentDescription = "Close", secondary = true)
+    ShifaActionButton(
+        onClose,
+        icon = Res.drawable.ic_x_16,
+        contentDescription = stringResource(Res.string.close),
+        secondary = true,
+    )
 }

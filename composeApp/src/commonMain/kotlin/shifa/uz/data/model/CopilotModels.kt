@@ -2,11 +2,12 @@ package shifa.uz.data.model
 
 import kotlinx.serialization.Serializable
 
-/** A turn (09 §2): [role] is `user` or `assistant`. */
+/** A turn (09 §2): [role] is `user` or `assistant`. [sentAt] (epoch ms) is ours, never sent to X1; older chats have none. */
 @Serializable
 data class CopilotMessage(
     val role: String,
     val content: String,
+    val sentAt: Long? = null,
 ) {
     val isUser get() = role == USER
 

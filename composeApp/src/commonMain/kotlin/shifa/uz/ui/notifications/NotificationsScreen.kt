@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -75,12 +74,15 @@ import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.tasks.TaskCheckInTray
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.theme.ShifaTextStyles
 import shifa.uz.ui.theme.lineBox
 import shifa.uz.ui.widgets.LocalCardOnSurface
+import shifa.uz.ui.widgets.ShifaCardSkeleton
 import shifa.uz.ui.widgets.ShifaCarousel
 import shifa.uz.ui.widgets.ShifaChip
+import shifa.uz.ui.widgets.ShifaListSkeleton
 import shifa.uz.ui.widgets.ShifaNotification
 import shifa.uz.ui.widgets.ShifaNotificationType
 import shifa.uz.ui.widgets.ShifaPageElement
@@ -189,7 +191,11 @@ internal fun NotificationsContent(
                 }
             }
         }
-        PullToRefreshBox(state.isLoading && state.notifications != null, onRefresh, Modifier.weight(1f)) {
+        PullToRefreshBox(
+            state.isLoading && state.notifications != null,
+            onRefresh,
+            Modifier.weight(1f).background(ShifaColors.Bg.Canvas),
+        ) {
             Column(
                 Modifier
                     .fillMaxSize()
@@ -202,7 +208,10 @@ internal fun NotificationsContent(
                 Banners(state.error, state.notice)
                 val shown = state.shownIn(filter)
                 when {
-                    shown == null && state.isLoading -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+                    shown == null && state.isLoading ->
+                        ShifaListSkeleton(count = 6, gap = ShifaSpacing.Gap.Md) {
+                            ShifaCardSkeleton(avatar = ShifaSize.S24, shadow = false)
+                        }
                     // 13 §4.1: a failed first load offers a retry; the error is the banner's.
                     shown == null -> ShifaSecondaryButton(stringResource(Res.string.retry), onRefresh)
                     shown.isEmpty() ->
@@ -223,7 +232,8 @@ internal fun NotificationsContent(
                                     message,
                                     iconOf(it.kind),
                                     time = time(it.createdAt, now),
-                                    unread = !it.isRead,
+                                    // One notification: an unread one's bubble counts 1.
+                                    unreadCount = if (it.isRead) 0 else 1,
                                 ) {
                                     onOpen(it)
                                 }

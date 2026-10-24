@@ -107,15 +107,18 @@ import shifa.composeapp.generated.resources.upload
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.CardTitle
 import shifa.uz.ui.widgets.ShifaActionButton
+import shifa.uz.ui.widgets.ShifaCardSkeleton
 import shifa.uz.ui.widgets.ShifaChip
 import shifa.uz.ui.widgets.ShifaDocumentCard
 import shifa.uz.ui.widgets.ShifaDropdown
 import shifa.uz.ui.widgets.ShifaInputField
+import shifa.uz.ui.widgets.ShifaListSkeleton
 import shifa.uz.ui.widgets.ShifaMainHeader
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
@@ -290,7 +293,7 @@ internal fun DocumentsContent(
                     verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
                 ) { Banners(state.error, state.notice) }
             }
-            PullToRefreshBox(state.isLoading, onRefresh, Modifier.weight(1f)) {
+            PullToRefreshBox(state.isLoading && state.documents != null, onRefresh, Modifier.weight(1f)) {
                 // Ids may be blank or repeated, so items aren't keyed; key(document) keeps a swipe on its own card.
                 LazyColumn(
                     Modifier.fillMaxSize(),
@@ -304,6 +307,13 @@ internal fun DocumentsContent(
                     verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
                 ) {
                     val shown = state.shown
+                    if (state.documents == null && state.isLoading) {
+                        item {
+                            ShifaListSkeleton(count = 5, gap = ShifaSpacing.Gap.Md) {
+                                ShifaCardSkeleton(avatar = ShifaDimens.DocumentThumbHeight)
+                            }
+                        }
+                    }
                     if (state.documents != null && shown.isEmpty()) {
                         item {
                             Text(

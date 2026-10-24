@@ -200,28 +200,33 @@ fun ShifaIconButton(
     secondary: Boolean = false,
     enabled: Boolean = true,
     destructive: Boolean = false,
+    shadow: Boolean = true,
 ) {
-    val accent =
+    // Figma icon-button (1572:13829): 42 round, an 18 icon in 12 padding. Secondary is canvas with a coloured icon.
+    val bg =
         when {
-            !enabled -> if (secondary) ShifaColors.Border.Disabled else ShifaColors.Interactive.DisabledBg
+            secondary -> ShifaColors.Bg.Canvas
+            !enabled -> ShifaColors.Interactive.DisabledBg
             destructive -> ShifaColors.Interactive.Destructive
             else -> ShifaColors.Interactive.Primary
+        }
+    val tint =
+        when {
+            !enabled -> ShifaColors.Icon.Disabled
+            !secondary -> ShifaColors.Icon.Inverse
+            destructive -> ShifaColors.Icon.Error
+            else -> ShifaColors.Icon.Primary
         }
     Box(
         modifier =
             modifier
-                .dropShadow(ShifaRadius.Full, ShifaShadow.Default)
+                .then(if (shadow) Modifier.dropShadow(ShifaRadius.Full, ShifaShadow.Default) else Modifier)
                 .clip(ShifaRadius.Full)
-                .then(
-                    if (secondary) {
-                        Modifier.background(ShifaColors.Bg.Surface).border(ShifaSize.S2, accent, ShifaRadius.Full)
-                    } else {
-                        Modifier.background(accent)
-                    },
-                ).clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .padding(ShifaDimens.IconButtonPadding),
+                .background(bg)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+                .padding(ShifaSpacing.Inset.Sm),
     ) {
-        Icon(painterResource(icon), contentDescription, tint = if (secondary) accent else ShifaColors.Icon.Inverse)
+        Icon(painterResource(icon), contentDescription, tint = tint)
     }
 }
 

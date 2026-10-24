@@ -28,7 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.VisualTransformation
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.clear
 import shifa.composeapp.generated.resources.ic_x_20
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
@@ -115,7 +117,7 @@ fun ShifaInputField(
                     } else if (enabled && clearable) {
                         Icon(
                             painterResource(Res.drawable.ic_x_20),
-                            contentDescription = "Clear",
+                            contentDescription = stringResource(Res.string.clear),
                             modifier = Modifier.clip(ShifaRadius.Full).clickable { onValueChange("") },
                             tint = ShifaColors.Icon.Secondary,
                         )

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,10 +53,12 @@ import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaRadius
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.theme.ShifaTextStyles
+import shifa.uz.ui.widgets.ShifaCardSkeleton
 import shifa.uz.ui.widgets.ShifaCarousel
 import shifa.uz.ui.widgets.ShifaCertificateCard
 import shifa.uz.ui.widgets.ShifaChip
 import shifa.uz.ui.widgets.ShifaDoctorServiceCard
+import shifa.uz.ui.widgets.ShifaListSkeleton
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
@@ -135,7 +136,7 @@ internal fun DoctorProfileContent(
                     Empty(error)
                     ShifaSecondaryButton(stringResource(Res.string.retry), onRetry)
                 }
-                else -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+                else -> ShifaListSkeleton(count = 2, shadow = false) { ShifaCardSkeleton(lines = 4, shadow = false) }
             }
         }
         ShifaPageElement(ShifaPageElementType.ActionTray, Modifier.navigationBarsPadding()) {
@@ -156,7 +157,7 @@ private fun ColumnScope.TabContent(
             val reviews = state.reviews
             val error = state.reviewsError
             when {
-                reviews == null -> CircularProgressIndicator(color = ShifaColors.Icon.Brand)
+                reviews == null -> ShifaListSkeleton()
                 error != null -> Empty(error)
                 reviews.isEmpty() -> Empty(Res.string.noReviews)
                 else ->

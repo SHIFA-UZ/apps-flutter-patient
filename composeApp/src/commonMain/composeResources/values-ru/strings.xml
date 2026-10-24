@@ -226,7 +226,6 @@
     <string name="doctorProfile">Профиль врача</string>
     <string name="doctors">Врачи</string>
     <string name="doctorsCount">%1$s проверенных врачей</string>
-    <string name="doctorsNearMe">Врачи рядом со мной</string>
     <string name="doctorsPageSummary">Стр. %1$s из %2$s · %3$s врачей</string>
     <string name="document">Документ</string>
     <string name="documentAccessApproved">Доступ разрешён</string>
@@ -333,7 +332,6 @@
     <string name="errorFailedToSendSmsCode">Не удалось отправить SMS-код</string>
     <string name="errorFailedToSendVerificationCode">Не удалось отправить код подтверждения</string>
     <string name="errorFirebaseVerificationNotConfigured">Верификация Firebase не настроена</string>
-    <string name="errorGettingCurrentLocation">Ошибка определения местоположения</string>
     <string name="errorInvalidCredentials">Аккаунт с этим номером телефона или email не найден. Проверьте данные или создайте аккаунт.</string>
     <string name="errorInvalidCredentialsPasswordMismatch">Неверный пароль. Попробуйте ещё раз или сбросьте пароль.</string>
     <string name="errorInvalidKey">Неверный ключ</string>
@@ -419,7 +417,6 @@
     <string name="filterConsultationType">Консультация</string>
     <string name="filterEmergency">Срочно</string>
     <string name="filterMinRating">Рейтинг</string>
-    <string name="filterNearMe">Рядом</string>
     <string name="filterOnline">Онлайн</string>
     <string name="filterPrice">Цена</string>
     <string name="filterRemote">Онлайн</string>
@@ -428,7 +425,6 @@
     <string name="filterTopRated">Лучшие</string>
     <string name="filterVerified">Проверенные</string>
     <string name="findADoctor">Найти врача</string>
-    <string name="findDoctorsNearYou">Найдите врача рядом</string>
     <string name="firstName">Имя</string>
     <string name="forgotPassword">Забыли пароль?</string>
     <string name="forgotPasswordEnterEmail">Введите ваш email. Мы отправим вам код для сброса пароля.</string>
@@ -492,9 +488,6 @@
     <string name="location">Местоположение</string>
     <string name="locationAndLanguage">Местоположение и язык</string>
     <string name="locationLabel">Местоположение</string>
-    <string name="locationPermissionDenied">Доступ к местоположению запрещён.</string>
-    <string name="locationPermissionDeniedForever">Доступ к местоположению постоянно запрещён. Включите в настройках.</string>
-    <string name="locationServicesDisabled">Службы геолокации отключены. Пожалуйста, включите их.</string>
     <string name="lockAfterInactivity">Блокировать после бездействия</string>
     <string name="logOut">Выйти</string>
     <string name="login">Вход</string>
@@ -514,7 +507,6 @@
     <string name="myTasks">Мои задачи</string>
     <string name="name">Имя</string>
     <string name="navigationError">Ошибка навигации</string>
-    <string name="nearby">Рядом</string>
     <string name="neurologist">Невролог</string>
     <string name="newAppointmentBookedButFailedToCancelOld">Новый приём забронирован, но не удалось отменить старый</string>
     <string name="newAppointmentScheduled">Назначен новый приём</string>
@@ -967,4 +959,13 @@
     <string name="refundByClinic">Клиника оформит возврат.</string>
     <string name="appointmentLessThan24Hours">До приёма меньше 24 часов</string>
     <string name="service">Услуга</string>
+    <string name="more">Ещё</string>
+    <string name="attach">Прикрепить</string>
+    <string name="play">Воспроизвести</string>
+    <string name="pause">Пауза</string>
+    <string name="verified">Проверен</string>
+    <string name="seeAll">Смотреть все</string>
+    <string name="stopRecording">Остановить запись</string>
+    <string name="recordVoiceMessage">Записать голосовое сообщение</string>
+    <string name="pageOf">Страница %1$s из %2$s</string>
 </resources>

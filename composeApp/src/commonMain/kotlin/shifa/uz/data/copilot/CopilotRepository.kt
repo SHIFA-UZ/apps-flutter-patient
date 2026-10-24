@@ -47,7 +47,8 @@ open class CopilotRepository(
             client.preparePost(ApiConfig.Endpoints.COPILOT_STREAM) {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Text.EventStream)
-                setBody(CopilotStreamRequest(messages, language))
+                // A null sentAt is left out (explicitNulls = false), so X1 gets only role and content.
+                setBody(CopilotStreamRequest(messages.map { it.copy(sentAt = null) }, language))
             }.execute { response ->
                 val status = response.status.value
                 if (status != 200) {

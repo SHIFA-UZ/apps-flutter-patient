@@ -14,8 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_arrow_right_16
+import shifa.composeapp.generated.resources.seeAll
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -41,6 +43,7 @@ fun ShifaSection(
     action: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val transparent = type == ShifaSectionType.CardTransparent
     Column(
         modifier
             .fillMaxWidth()
@@ -49,13 +52,14 @@ fun ShifaSection(
             .then(
                 type.border?.let { Modifier.border(ShifaDimens.SectionBorder, it, ShifaRadius.ControlLg) } ?: Modifier,
             )
-            .padding(vertical = ShifaSpacing.Inset.Sm)
+            // Figma: 16 on the card sections, none on card-transparent (kept at 12 so pages keep their spacing).
+            .padding(vertical = if (transparent) ShifaSpacing.Inset.Sm else ShifaSpacing.Inset.Md)
             .then(
-                if (type == ShifaSectionType.CardTransparent) {
+                if (transparent) {
                     Modifier
                 } else {
                     Modifier.padding(
-                        horizontal = ShifaSpacing.Inset.Sm,
+                        horizontal = ShifaSpacing.Inset.Md,
                     )
                 },
             ),
@@ -74,7 +78,7 @@ fun ShifaSection(
                     ShifaActionButton(
                         it,
                         icon = Res.drawable.ic_arrow_right_16,
-                        contentDescription = "See all",
+                        contentDescription = stringResource(Res.string.seeAll),
                         secondary = true,
                     )
                 }
