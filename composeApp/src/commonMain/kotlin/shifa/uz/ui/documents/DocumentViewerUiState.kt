@@ -2,6 +2,7 @@ package shifa.uz.ui.documents
 
 import androidx.compose.runtime.Stable
 import org.jetbrains.compose.resources.StringResource
+import shifa.uz.data.model.Appointment
 
 @Stable
 data class DocumentViewerUiState(
@@ -14,6 +15,8 @@ data class DocumentViewerUiState(
     val isDeleting: Boolean = false,
     val error: StringResource? = null,
     val notice: StringResource? = null,
+    /** Figma's From Appointment (1921:23596): the visit the document came from, when it's known. */
+    val appointment: Appointment? = null,
 ) {
     val canDownload get() = bytes != null && extension != null
 }

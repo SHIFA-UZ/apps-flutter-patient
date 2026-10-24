@@ -7,6 +7,7 @@ import shifa.composeapp.generated.resources.documentUploadedSuccessfully
 import shifa.composeapp.generated.resources.enterDocumentTitle
 import shifa.composeapp.generated.resources.errorNetworkConnection
 import shifa.composeapp.generated.resources.failedToDeleteDocument
+import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.widgets.Gallery
@@ -49,7 +50,7 @@ private fun Documents(state: DocumentsUiState) = PreviewTheme { DocumentsContent
 
 @Composable
 private fun Viewer(state: DocumentViewerUiState) =
-    PreviewTheme { DocumentViewerContent(state, "MRI scan", onMore = {}) }
+    PreviewTheme { DocumentViewerContent(state, "MRI scan", onAppointment = {}, onMore = {}) }
 
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
@@ -104,4 +105,24 @@ internal fun DocumentViewerErrorPreview() =
 internal fun DocumentViewerUnsupportedPreview() =
     Viewer(
         DocumentViewerUiState(bytes = byteArrayOf(1), isLoading = false),
+    )
+
+// Figma 1921:23596: the visit the document came from.
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun DocumentViewerFromAppointmentPreview() =
+    Viewer(
+        DocumentViewerUiState(
+            bytes = byteArrayOf(1),
+            isLoading = false,
+            appointment =
+                Appointment(
+                    id = "42",
+                    doctorName = "Azamat Rakhimov",
+                    doctorProfession = "Dentist",
+                    doctorClinic = "Sog'lom Hayot Klinikasi",
+                    startAt = "2026-08-15T05:00:00Z",
+                    status = "COMPLETED",
+                ),
+        ),
     )

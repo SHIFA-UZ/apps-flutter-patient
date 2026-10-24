@@ -5,4 +5,4 @@ PRODUCT_BUNDLE_IDENTIFIER=uz.shifa.patient
 
 CURRENT_PROJECT_VERSION=1
 // The version for iOS and Android (composeApp/build.gradle.kts reads it). Bump it here only.
-MARKETING_VERSION=1.2.2
+MARKETING_VERSION=1.2.3

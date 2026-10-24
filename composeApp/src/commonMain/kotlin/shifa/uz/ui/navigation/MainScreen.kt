@@ -434,10 +434,20 @@ fun MainScreen(
                 BackHandler { viewing = null }
                 key(it) {
                     ScopedViewModels {
-                        DocumentViewerScreen(it, homeState.fullName, onBack = { viewing = null }, onDeleted = {
-                            viewing = null
-                            documents.onDeleted(it.id)
-                        })
+                        DocumentViewerScreen(
+                            it,
+                            homeState.fullName,
+                            onBack = { viewing = null },
+                            onDeleted = {
+                                viewing = null
+                                documents.onDeleted(it.id)
+                            },
+                            // The details sit under the viewer, so the viewer closes to show them.
+                            onAppointment = { visit ->
+                                viewing = null
+                                appointment = visit
+                            },
+                        )
                     }
                 }
             }

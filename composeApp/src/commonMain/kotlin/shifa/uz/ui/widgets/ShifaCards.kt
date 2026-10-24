@@ -51,7 +51,9 @@ import shifa.composeapp.generated.resources.ic_check_16
 import shifa.composeapp.generated.resources.ic_check_circle_16
 import shifa.composeapp.generated.resources.ic_checkbox_24
 import shifa.composeapp.generated.resources.ic_checkbox_checked_24
+import shifa.composeapp.generated.resources.ic_chevron_down_16
 import shifa.composeapp.generated.resources.ic_chevron_right_16
+import shifa.composeapp.generated.resources.ic_chevron_up_16
 import shifa.composeapp.generated.resources.ic_clock_12
 import shifa.composeapp.generated.resources.ic_clock_16
 import shifa.composeapp.generated.resources.ic_star_12
@@ -103,7 +105,10 @@ enum class ShifaAppointmentStatus(
     Error(ShifaColors.Bg.ErrorSubtle, Res.drawable.ic_alert_circle_16, ShifaColors.Icon.Error),
 }
 
-/** Figma past-appointment-card. Figma drops the [shadow] on a full-page list. */
+/**
+ * Figma past-appointment-card. Figma drops the [shadow] on a full-page list. [link]: a chevron instead of the status,
+ * where the card leads to the visit (a document's From Appointment, 1921:23602).
+ */
 @Composable
 fun ShifaPastAppointmentCard(
     doctorName: String,
@@ -114,13 +119,18 @@ fun ShifaPastAppointmentCard(
     status: ShifaAppointmentStatus = ShifaAppointmentStatus.Successful,
     video: Boolean = false,
     shadow: Boolean = true,
+    link: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) = AppointmentCard(doctorName, subtitle, time, avatarUrl, video, modifier, onClick, shadow) {
     Box(
-        Modifier.size(ShifaSize.S28).background(status.bg, ShifaRadius.Full),
+        Modifier.size(ShifaSize.S28).background(if (link) ShifaColors.Bg.Canvas else status.bg, ShifaRadius.Full),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(painterResource(status.icon), status.name, tint = status.tint)
+        if (link) {
+            Icon(painterResource(Res.drawable.ic_chevron_right_16), null, tint = ShifaColors.Icon.Primary)
+        } else {
+            Icon(painterResource(status.icon), status.name, tint = status.tint)
+        }
     }
 }
 
@@ -257,20 +267,58 @@ fun ShifaCertificateCard(
     CardBody(date, ShifaColors.Text.Tertiary)
 }
 
-/** Figma display-card, type doctor-service. [price] is preformatted, e.g. "300000.00 UZS". */
+/**
+ * Figma display-card, types service-collapsed / service-expanded (1670:13024, 1921:24533). [price] is preformatted,
+ * e.g. "300000.00 UZS". With a [description], the chevron toggles it under the card ([expanded], [onToggle]); without
+ * one there's no chevron.
+ */
 @Composable
 fun ShifaDoctorServiceCard(
     name: String,
     price: String,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-) = DisplayCard(
-    name,
-    modifier,
-    onClick,
-    { IconTile(Res.drawable.ic_briefcase_16, ShifaColors.Bg.SuccessSubtle, ShifaColors.Icon.Brand) },
+    description: String? = null,
+    expanded: Boolean = false,
+    onToggle: () -> Unit = {},
 ) {
-    CardBody(price, ShifaColors.Text.Link, MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
+    val info = description?.trim()?.ifEmpty { null }
+    CardChrome(
+        if (info != null) modifier.clickable(onClick = onToggle) else modifier,
+        onClick = null,
+        gap = ShifaSpacing.Gap.Md,
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconTile(Res.drawable.ic_briefcase_16, ShifaColors.Bg.SuccessSubtle, ShifaColors.Icon.Brand)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Xs)) {
+                CardTitle(name, style = ShifaTextStyles.profileName())
+                CardBody(
+                    price,
+                    ShifaColors.Text.Link,
+                    MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                )
+            }
+            // Figma keeps the down chevron when open; up says it closes.
+            if (info != null) {
+                Box(Modifier.background(ShifaColors.Bg.Canvas, ShifaRadius.Full).padding(ShifaSpacing.Inset.Xs)) {
+                    Icon(
+                        painterResource(
+                            if (expanded) Res.drawable.ic_chevron_up_16 else Res.drawable.ic_chevron_down_16,
+                        ),
+                        null,
+                        tint = ShifaColors.Icon.Primary,
+                    )
+                }
+            }
+        }
+        if (info != null && expanded) {
+            val style = MaterialTheme.typography.bodySmall
+            Text(info, Modifier.fillMaxWidth().lineBox(style), style = style, color = ShifaColors.Text.Primary)
+        }
+    }
 }
 
 /**

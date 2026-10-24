@@ -55,4 +55,9 @@ class DocumentsScreenshotTest {
     fun `viewer unsupported`() {
         captureRoboImage("screenshots/DocumentViewer_unsupported.png") { DocumentViewerUnsupportedPreview() }
     }
+
+    @Test
+    fun `viewer from appointment`() {
+        captureRoboImage("screenshots/DocumentViewer_fromAppointment.png") { DocumentViewerFromAppointmentPreview() }
+    }
 }

@@ -1,8 +1,14 @@
 package shifa.uz.data.model
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
-/** F1/F2 item (15 §5.7). Ids may come as numbers; the lenient JSON reads them into strings. */
+/**
+ * F1/F2 item (15 §5.7). Ids may come as numbers; the lenient JSON reads them into strings. [appointmentId]: the visit
+ * the document came from; the backend's PatientDocumentDto doesn't send it yet (backend-improvements §15).
+ */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class PatientDocument(
     val id: String = "",
@@ -15,6 +21,7 @@ data class PatientDocument(
     val doctorName: String? = null,
     val creatorLabel: String? = null, // Doctor, Patient, Unknown
     val category: String? = null,
+    @JsonNames("appointment_id") val appointmentId: String? = null,
 ) {
     val displayDate get() = date?.ifBlank { null } ?: createdAt
 

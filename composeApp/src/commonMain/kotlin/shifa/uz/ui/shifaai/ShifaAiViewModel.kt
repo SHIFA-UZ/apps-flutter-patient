@@ -120,9 +120,20 @@ class ShifaAiViewModel(
         val state = _state.value
         val open = state.chat ?: return
         if (!state.canSend) return
-        val asked =
-            put(open.copy(messages = open.messages + CopilotMessage(CopilotMessage.USER, state.input.trim(), now())))
-        update { copy(input = "", streaming = "", error = null, notice = null) }
+        update { copy(input = "") }
+        ask(put(open.copy(messages = open.messages + CopilotMessage(CopilotMessage.USER, state.input.trim(), now()))))
+    }
+
+    /** Figma's refresh on the last reply (1673:14621): drop it and ask X1 again with the same question. */
+    fun regenerate() {
+        val state = _state.value
+        val open = state.chat ?: return
+        if (state.isSending || state.rateLimited || open.messages.lastOrNull()?.isUser != false) return
+        ask(put(open.copy(messages = open.messages.dropLast(1))))
+    }
+
+    private fun ask(asked: CopilotChat) {
+        update { copy(streaming = "", error = null, notice = null) }
         reply =
             viewModelScope.launch {
                 copilot.stream(

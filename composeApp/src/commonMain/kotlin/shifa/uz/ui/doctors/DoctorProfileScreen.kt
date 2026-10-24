@@ -18,7 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -175,16 +178,25 @@ private fun ColumnScope.TabContent(
         DoctorTab.About -> InfoSection(null, doctor.about ?: stringResource(Res.string.noBiographyAvailable))
         DoctorTab.Services ->
             when {
-                doctor.serviceItems.isNotEmpty() ->
-                    doctor.serviceItems.forEach {
+                doctor.serviceItems.isNotEmpty() -> {
+                    // Open cards by position: ids may be blank.
+                    var open by remember(doctor.id) { mutableStateOf(emptySet<Int>()) }
+                    doctor.serviceItems.forEachIndexed { i, it ->
                         val price =
                             when {
                                 it.isFreeConsultation -> stringResource(Res.string.consultationServiceFreeBadge)
                                 it.prices.isEmpty() -> stringResource(Res.string.priceNotSet)
                                 else -> it.prices.first().text
                             }
-                        ShifaDoctorServiceCard(it.title, price)
+                        ShifaDoctorServiceCard(
+                            it.title,
+                            price,
+                            description = it.description,
+                            expanded = i in open,
+                            onToggle = { open = if (i in open) open - i else open + i },
+                        )
                     }
+                }
                 doctor.services.isNotEmpty() -> doctor.services.forEach { InfoSection(null, it) }
                 else -> Empty(Res.string.noServicesAvailable)
             }

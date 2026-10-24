@@ -23,14 +23,19 @@ import shifa.composeapp.generated.resources.documentSaved
 import shifa.composeapp.generated.resources.errorOpeningDocument
 import shifa.composeapp.generated.resources.errorSomethingWentWrong
 import shifa.uz.data.api.FAILED_TO_DELETE_DOCUMENT
+import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.ApiException
+import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PatientDocument
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DocumentViewerViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val documents = mock<DocumentsRepository>()
+    private val bookings = mock<BookingsRepository>()
+    private val visit = Appointment(id = "42", doctorName = "Aziz Karimov", startAt = "2026-09-20T05:00:00Z")
+    private val otherDay = Appointment(id = "43", doctorName = "Aziz Karimov", startAt = "2026-09-21T05:00:00Z")
     private val pdf = "%PDF-1.4".encodeToByteArray()
     private val document =
         PatientDocument(id = "5", title = "Lab: result", fileUrl = "https://f/5", creatorLabel = "Patient")
@@ -40,6 +45,7 @@ class DocumentViewerViewModelTest {
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         wheneverBlocking { documents.getFile("https://f/5") } doReturn Result.success(pdf)
+        wheneverBlocking { bookings.getAppointments() } doReturn Result.success(listOf(visit, otherDay))
     }
 
     @After
@@ -48,7 +54,7 @@ class DocumentViewerViewModelTest {
     }
 
     private fun create(doc: PatientDocument = document) {
-        classToTest = DocumentViewerViewModel(doc, documents)
+        classToTest = DocumentViewerViewModel(doc, documents, bookings)
     }
 
     private val state get() = classToTest.state.value
@@ -155,5 +161,32 @@ class DocumentViewerViewModelTest {
             assertThat(state.confirmDelete).isFalse()
             assertThat(state.isDeleting).isFalse()
             assertThat(state.error).isNotNull()
+        }
+
+    @Test
+    fun `a doctor's upload belongs to that doctor's visit on its day`() =
+        runTest {
+            create(document.copy(creatorLabel = " aziz karimov ", date = "2026-09-20"))
+            advanceUntilIdle()
+
+            assertThat(state.appointment).isEqualTo(visit)
+        }
+
+    @Test
+    fun `the backend's appointmentId wins over the guess`() =
+        runTest {
+            create(document.copy(creatorLabel = "Aziz Karimov", date = "2026-09-20", appointmentId = "43"))
+            advanceUntilIdle()
+
+            assertThat(state.appointment).isEqualTo(otherDay)
+        }
+
+    @Test
+    fun `the patient's own upload has no visit`() =
+        runTest {
+            create(document.copy(date = "2026-09-20"))
+            advanceUntilIdle()
+
+            assertThat(state.appointment).isNull()
         }
 }

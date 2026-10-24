@@ -42,15 +42,22 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.clear
+import shifa.composeapp.generated.resources.copy
+import shifa.composeapp.generated.resources.ic_copy_16
 import shifa.composeapp.generated.resources.ic_mic_22
+import shifa.composeapp.generated.resources.ic_refresh_cw_16
+import shifa.composeapp.generated.resources.ic_share_16
 import shifa.composeapp.generated.resources.ic_x_22
 import shifa.composeapp.generated.resources.pause
 import shifa.composeapp.generated.resources.play
 import shifa.composeapp.generated.resources.recordVoiceMessage
+import shifa.composeapp.generated.resources.regenerate
+import shifa.composeapp.generated.resources.share
 import shifa.composeapp.generated.resources.stopRecording
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
@@ -178,7 +185,7 @@ private fun BarIcon(
     tint = ShifaColors.Icon.Primary,
 )
 
-// Shifa AI's replies are received bubbles (Figma 1772:17214), like a doctor's.
+// Shifa AI's replies are ShifaChatReplyBubble, without a fill (Figma 1673:14621).
 enum class ShifaChatBubbleType { Received, Sent }
 
 /**
@@ -213,10 +220,57 @@ fun ShifaChatImageBubble(
     }
 }
 
-/** Shifa AI is thinking (09): three dots that pulse in turn, in a shifa-ai bubble. Static in previews and tests. */
+/**
+ * Figma chat-bubble, type = shifa-ai (1673:15033): Shifa AI's reply, no fill, and under it the action-buttons Copy,
+ * Regenerate and Share, each shown when its callback is set (none while the reply streams). Figma's "Searched for…"
+ * line isn't shown: X1 doesn't say what it looked up. Not in Figma: [time], when it came, under the text.
+ */
+@Composable
+fun ShifaChatReplyBubble(
+    text: String,
+    modifier: Modifier = Modifier,
+    time: String? = null,
+    onCopy: (() -> Unit)? = null,
+    onRegenerate: (() -> Unit)? = null,
+    onShare: (() -> Unit)? = null,
+) = ReplyBox(modifier) {
+    Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
+        BubbleText(text, TextAlign.Start)
+        time?.let { Text(it, style = ShifaTextStyles.caption(), color = ShifaColors.Text.Tertiary) }
+        if (onCopy != null || onRegenerate != null || onShare != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(ShifaSpacing.Inset.Md)) {
+                onCopy?.let { ReplyAction(it, Res.drawable.ic_copy_16, Res.string.copy) }
+                onRegenerate?.let { ReplyAction(it, Res.drawable.ic_refresh_cw_16, Res.string.regenerate) }
+                onShare?.let { ReplyAction(it, Res.drawable.ic_share_16, Res.string.share) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReplyAction(
+    onClick: () -> Unit,
+    icon: DrawableResource,
+    label: StringResource,
+) = ShifaActionButton(onClick, icon = icon, contentDescription = stringResource(label), secondary = true)
+
+// Shifa AI's reply has no bubble: the text keeps the bubbles' insets.
+@Composable
+private fun ReplyBox(
+    modifier: Modifier,
+    content: @Composable () -> Unit,
+) = Box(
+    modifier
+        .fillMaxWidth()
+        .padding(vertical = ShifaSpacing.Stack.Md)
+        .widthIn(max = ShifaDimens.ChatBubbleMaxWidth)
+        .padding(horizontal = ShifaSpacing.Inset.Md),
+) { content() }
+
+/** Shifa AI is thinking (09): three dots that pulse in turn, where its reply will be. Static in previews and tests. */
 @Composable
 fun ShifaChatThinkingBubble(modifier: Modifier = Modifier) =
-    Bubble(ShifaChatBubbleType.Received, modifier) {
+    ReplyBox(modifier) {
         val phase = wavePhase()
         val color = ShifaColors.Text.Tertiary
         val dot = ShifaSize.S8

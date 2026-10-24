@@ -966,4 +966,9 @@
     <string name="stopRecording">Yozishni to'xtatish</string>
     <string name="recordVoiceMessage">Ovozli xabar yozish</string>
     <string name="pageOf">%1$s-sahifa, jami %2$s</string>
+    <string name="copy">Nusxalash</string>
+    <string name="copied">Nusxalandi</string>
+    <string name="share">Ulashish</string>
+    <string name="regenerate">Qayta yaratish</string>
+    <string name="fromAppointment">Qabuldan</string>
 </resources>

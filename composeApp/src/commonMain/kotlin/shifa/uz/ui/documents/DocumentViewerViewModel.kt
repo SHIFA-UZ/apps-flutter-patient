@@ -9,20 +9,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.documentSaved
 import shifa.composeapp.generated.resources.errorOpeningDocument
 import shifa.composeapp.generated.resources.errorSomethingWentWrong
 import shifa.uz.data.api.toUserMessage
+import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.data.model.documentExtension
+import shifa.uz.utils.parseDay
 import shifa.uz.utils.safeFileName
 
 /** 11 (DOCS-03). A 401 here isn't a logout: the file may live on another host (11 quirk 4). */
 class DocumentViewerViewModel(
     private val document: PatientDocument,
     private val documents: DocumentsRepository = DocumentsRepository(),
+    private val bookings: BookingsRepository = BookingsRepository(),
 ) : ViewModel() {
     private val _state = MutableStateFlow(DocumentViewerUiState())
     val state: StateFlow<DocumentViewerUiState> = _state.asStateFlow()
@@ -32,6 +37,36 @@ class DocumentViewerViewModel(
 
     init {
         load()
+        findAppointment()
+    }
+
+    /**
+     * The document's visit, from B2: by [PatientDocument.appointmentId] once the backend sends it, else the doctor's
+     * visit on the document's day (the uploader is the doctor by name). No match or a failed B2: no section.
+     * ponytail: two visits with one doctor on one day pick the latest; the id fixes that.
+     */
+    private fun findAppointment() {
+        viewModelScope.launch {
+            val all = bookings.getAppointments().getOrNull() ?: return@launch
+            val id = document.appointmentId?.ifBlank { null }
+            val found =
+                if (id != null) {
+                    all.firstOrNull { it.id == id }
+                } else {
+                    val day = document.displayDate?.let { parseDay(it) }
+                    val doctor = document.creatorLabel?.trim()?.lowercase()?.ifEmpty { null }
+                    if (day == null || doctor == null) {
+                        null
+                    } else {
+                        all.filter {
+                            it.status != "CANCELLED" &&
+                                it.doctorName?.trim()?.lowercase() == doctor &&
+                                it.start?.toLocalDateTime(TimeZone.currentSystemDefault())?.date == day
+                        }.maxByOrNull { it.startAt }
+                    }
+                }
+            update { copy(appointment = found) }
+        }
     }
 
     private fun update(transform: DocumentViewerUiState.() -> DocumentViewerUiState) {

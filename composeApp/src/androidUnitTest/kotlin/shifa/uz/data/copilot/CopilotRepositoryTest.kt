@@ -34,7 +34,8 @@ class CopilotRepositoryTest {
     private val streamed = mutableListOf<String>()
 
     private suspend fun stream() =
-        classToTest.stream(listOf(CopilotMessage(CopilotMessage.USER, "Hi")), "RU") {
+        // The send time is the app's own; X1 gets only role and content.
+        classToTest.stream(listOf(CopilotMessage(CopilotMessage.USER, "Hi", sentAt = 1000)), "RU") {
             streamed += it
         }
 

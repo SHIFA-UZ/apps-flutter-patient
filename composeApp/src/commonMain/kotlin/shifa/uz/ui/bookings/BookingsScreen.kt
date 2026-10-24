@@ -227,6 +227,7 @@ internal fun PastCard(
     appointment: Appointment,
     onClick: (Appointment) -> Unit,
     shadow: Boolean = true,
+    link: Boolean = false,
 ) {
     val cancelled = appointment.status == "CANCELLED"
     val place = if (appointment.isVideo) stringResource(Res.string.videoConsultation) else appointment.doctorClinic
@@ -243,6 +244,7 @@ internal fun PastCard(
             },
         video = appointment.isVideo,
         shadow = shadow,
+        link = link,
         onClick = { onClick(appointment) }.takeUnless { cancelled },
     )
 }

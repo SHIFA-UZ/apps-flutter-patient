@@ -247,4 +247,20 @@ class ShifaAiViewModelTest {
             assertThat(state.error).isEqualTo(Res.string.errorRecordingVoice)
             assertThat(heard).hasSize(2)
         }
+
+    @Test
+    fun `regenerate drops the last reply and asks again with the same question`() =
+        runTest {
+            classToTest.open("1")
+            classToTest.regenerate()
+            advanceUntilIdle()
+
+            assertThat(asked).containsExactly(listOf(CopilotMessage(USER, "Can I take Paracetamol?")) to "RU")
+            assertThat(state.chat?.messages)
+                .containsExactly(
+                    CopilotMessage(USER, "Can I take Paracetamol?"),
+                    CopilotMessage(ASSISTANT, "Hello", 1000),
+                )
+                .inOrder()
+        }
 }

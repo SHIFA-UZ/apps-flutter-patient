@@ -1,7 +1,9 @@
 package shifa.uz.ui.documents
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,9 +24,12 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
@@ -43,11 +48,14 @@ import shifa.composeapp.generated.resources.deleteDocumentConfirmation
 import shifa.composeapp.generated.resources.document
 import shifa.composeapp.generated.resources.download
 import shifa.composeapp.generated.resources.errorOpeningDocument
+import shifa.composeapp.generated.resources.fromAppointment
 import shifa.composeapp.generated.resources.ic_download_22
 import shifa.composeapp.generated.resources.loadingDocument
 import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.unsupportedDocumentType
+import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PatientDocument
+import shifa.uz.ui.bookings.PastCard
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.MessagePopUp
 import shifa.uz.ui.theme.ShifaColors
@@ -56,29 +64,41 @@ import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSecondaryButton
+import shifa.uz.ui.widgets.ShifaSection
+import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.utils.PdfView
 import shifa.uz.utils.rememberFileSaver
 
 private const val MAX_ZOOM = 4f
 
-/** 11 (DOCS-03): one document, with Download, and Delete for the patient's own uploads. */
+/**
+ * 11 (DOCS-03): one document, with Download, and Delete for the patient's own uploads. Figma 1921:23596: the visit it
+ * came from above it, opened by [onAppointment] (no section without it); a tap on the document fills the page with it.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DocumentViewerScreen(
     document: PatientDocument,
     patientName: String?,
     onBack: () -> Unit,
     onDeleted: () -> Unit,
+    onAppointment: ((Appointment) -> Unit)? = null,
     viewModel: DocumentViewerViewModel = viewModel { DocumentViewerViewModel(document) },
 ) {
     val state by viewModel.state.collectAsState()
     val deleted by rememberUpdatedState(onDeleted)
     LaunchedEffect(viewModel) { viewModel.deleted.collect { deleted() } }
     val saver = rememberFileSaver()
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    BackHandler(expanded) { expanded = false }
     DocumentViewerContent(
         state,
         document.title.ifBlank { stringResource(Res.string.document) },
-        onBack = onBack,
+        expanded = expanded,
+        onToggleExpanded = { expanded = !expanded },
+        onAppointment = onAppointment,
+        onBack = { if (expanded) expanded = false else onBack() },
         // F3 only takes the patient's own uploads.
         onMore = viewModel::askDelete.takeIf { document.isUploadedBy(patientName) && document.id.isNotBlank() },
         onRetry = viewModel::load,
@@ -113,6 +133,9 @@ fun DocumentViewerScreen(
 internal fun DocumentViewerContent(
     state: DocumentViewerUiState,
     title: String,
+    expanded: Boolean = false,
+    onToggleExpanded: () -> Unit = {},
+    onAppointment: ((Appointment) -> Unit)? = null,
     onBack: () -> Unit = {},
     onMore: (() -> Unit)? = null,
     onRetry: () -> Unit = {},
@@ -128,8 +151,20 @@ internal fun DocumentViewerContent(
         ) {
             // Without the file, the page itself shows the error.
             if (state.bytes != null) Banners(state.error, state.notice)
+            val appointment = state.appointment
+            AnimatedVisibility(appointment != null && onAppointment != null && !expanded) {
+                if (appointment != null && onAppointment != null) {
+                    ShifaSection(stringResource(Res.string.fromAppointment), type = ShifaSectionType.CardTransparent) {
+                        PastCard(appointment, onAppointment, link = true)
+                    }
+                }
+            }
             Box(
-                Modifier.weight(1f).fillMaxWidth().background(ShifaColors.Bg.Surface).clipToBounds(),
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(ShifaColors.Bg.Surface)
+                    .clipToBounds(),
                 contentAlignment = Alignment.Center,
             ) {
                 val bytes = state.bytes
@@ -143,23 +178,27 @@ internal fun DocumentViewerContent(
                             ShifaSecondaryButton(stringResource(Res.string.retry), onRetry)
                         }
                     state.extension == null -> Message(Res.string.unsupportedDocumentType)
+                    // A tap fills the page with the document, another gives the page back; pinch and scroll still work.
                     state.extension == "pdf" ->
                         PdfView(
                             bytes,
                             Modifier.fillMaxSize(),
+                            onTap = onToggleExpanded,
                         ) { Message(Res.string.unsupportedDocumentType) }
-                    else -> ZoomableImage(bytes)
+                    else -> ZoomableImage(bytes, onToggleExpanded)
                 }
             }
         }
-        ShifaPageElement(ShifaPageElementType.ActionTray, Modifier.navigationBarsPadding()) {
-            ShifaPrimaryButton(
-                stringResource(Res.string.download),
-                onDownload,
-                Modifier.fillMaxWidth(),
-                icon = Res.drawable.ic_download_22,
-                enabled = state.canDownload,
-            )
+        if (!expanded) {
+            ShifaPageElement(ShifaPageElementType.ActionTray, Modifier.navigationBarsPadding()) {
+                ShifaPrimaryButton(
+                    stringResource(Res.string.download),
+                    onDownload,
+                    Modifier.fillMaxWidth(),
+                    icon = Res.drawable.ic_download_22,
+                    enabled = state.canDownload,
+                )
+            }
         }
     }
 }
@@ -184,9 +223,13 @@ private fun Message(
 
 // Pinch to zoom 1–4x, drag while zoomed. A file that doesn't decode is unsupported.
 @Composable
-private fun ZoomableImage(bytes: ByteArray) {
+private fun ZoomableImage(
+    bytes: ByteArray,
+    onTap: () -> Unit,
+) {
     val image = remember(bytes) { runCatching { bytes.decodeToImageBitmap() }.getOrNull() }
     if (image == null) return Message(Res.string.unsupportedDocumentType)
+    val tap by rememberUpdatedState(onTap)
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     Image(
@@ -195,6 +238,7 @@ private fun ZoomableImage(bytes: ByteArray) {
         modifier =
             Modifier
                 .fillMaxSize()
+                .pointerInput(Unit) { detectTapGestures(onTap = { tap() }) }
                 .pointerInput(Unit) {
                     detectTransformGestures { _, pan, zoom, _ ->
                         scale = (scale * zoom).coerceIn(1f, MAX_ZOOM)

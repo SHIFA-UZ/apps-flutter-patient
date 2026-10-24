@@ -6,6 +6,7 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,9 +19,11 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
@@ -36,8 +39,10 @@ private const val A4 = 1f / 1.414f
 actual fun PdfView(
     bytes: ByteArray,
     modifier: Modifier,
+    onTap: () -> Unit,
     fallback: @Composable () -> Unit,
 ) {
+    val tap by rememberUpdatedState(onTap)
     val context = LocalContext.current
     val renderer =
         remember(bytes) {
@@ -55,7 +60,10 @@ actual fun PdfView(
     BoxWithConstraints(modifier) {
         val width = constraints.maxWidth
         LazyColumn(
-            Modifier.fillMaxSize().background(ShifaColors.Bg.Canvas),
+            Modifier
+                .fillMaxSize()
+                .background(ShifaColors.Bg.Canvas)
+                .pointerInput(Unit) { detectTapGestures(onTap = { tap() }) },
             verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm),
         ) {
             items(renderer.pageCount) { index ->
