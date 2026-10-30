@@ -17,6 +17,7 @@ import shifa.uz.data.api.FAILED_TO_MARK_READ
 import shifa.uz.data.api.apiCall
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.api.items
+import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.AppNotification
 import shifa.uz.data.model.FcmTokenRequest
 import shifa.uz.data.model.Page
@@ -32,21 +33,28 @@ class NotificationsRepository(
 
     /**
      * N1a, newest first, [size] per 0-based [page]. Spring's `Page` shape: `content` and `last`; a bare array (an
-     * older backend) is one page.
+     * older backend) is one page. A backend without the endpoint (production until its next release answers 500
+     * NoResourceFoundException, others 404) gets N1 as the only page. The sanitized error can't tell that 500 from
+     * another, so any first-page server error degrades to N1's full list rather than an empty inbox.
      */
     suspend fun getNotificationsPage(
         page: Int,
         size: Int = PAGE_SIZE,
-    ): Result<Page<AppNotification>> =
-        apiCall<JsonElement>(FAILED_TO_LOAD_NOTIFICATIONS) {
-            client.get(ApiConfig.Endpoints.NOTIFICATIONS_PAGE) {
-                parameter("page", page)
-                parameter("size", size)
+    ): Result<Page<AppNotification>> {
+        val paged =
+            apiCall<JsonElement>(FAILED_TO_LOAD_NOTIFICATIONS) {
+                client.get(ApiConfig.Endpoints.NOTIFICATIONS_PAGE) {
+                    parameter("page", page)
+                    parameter("size", size)
+                }
             }
-        }.map { json ->
+        val missing = paged.exceptionOrNull().let { it is ApiException.NotFound || it is ApiException.ServerError }
+        if (page == 0 && missing) return getNotifications().map { Page(it, last = true) }
+        return paged.map { json ->
             val last = ((json as? JsonObject)?.get("last") as? JsonPrimitive)?.booleanOrNull ?: true
             Page(json.items<AppNotification>("content"), last)
         }
+    }
 
     /** N2. */
     suspend fun unreadCount(): Result<Int> =

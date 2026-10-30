@@ -144,7 +144,6 @@
     <string name="contactInformation">Aloqa ma'lumotlari</string>
     <string name="contacts">Aloqa</string>
     <string name="continueButton">Davom etish</string>
-    <string name="continuePayment">To'lovni davom ettirish</string>
     <string name="continueToVerification">Davom etish</string>
     <string name="continueWithEmail">Email orqali davom etish</string>
     <string name="continueWithGoogle">Google bilan davom etish</string>
@@ -949,8 +948,8 @@
     <string name="paymentCompleted">To'lov amalga oshirildi</string>
     <string name="paymentInClinic">Klinikada to'lov</string>
     <string name="paymentSlotHeld">Vaqtingiz yana %1$s saqlanadi</string>
-    <string name="paymentNotCompletedHeld">To'lov tugallanmadi. Vaqtingiz %1$s gacha saqlanadi.</string>
     <string name="paymentFailedSlotReleased">To'lov rad etildi, vaqt bo'shatildi. Iltimos, qaytadan yoziling.</string>
+    <string name="paymentCancelledSlotReleased">To'lov bekor qilindi, vaqt bo'shatildi. Qayta yozilish uchun vaqtni tanlang.</string>
     <string name="paymentExpiredSlotReleased">To'lov vaqti tugadi, vaqt bo'shatildi. Iltimos, qaytadan yoziling.</string>
     <string name="paymentRefundSlotTaken">To'lov qabul qilindi, lekin bu vaqt band. Klinika pulni qaytaradi.</string>
     <string name="bookAgain">Qaytadan yozilish</string>

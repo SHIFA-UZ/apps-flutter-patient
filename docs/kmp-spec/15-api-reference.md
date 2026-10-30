@@ -905,6 +905,9 @@ The payment gateways are **Click.uz**, the primary one for UZS, and **Stripe**, 
 - **Query**: `page` (0-based), `size` (20).
 - **Res 200**: Spring `Page` (§1.8) of §5.10 items under `content`, newest first; `last` ends the loading. A bare array
   is read as the only page.
+- **Older backend**: production (the 2026-10-20 build) has no `/page` and answers 500 `NoResourceFoundException` (a
+  newer backend without it would answer 404). Page 0 then falls back to N1 as the only page; later pages are never
+  asked for.
 
 #### N2 `GET /notifications/unread/count`
 - **Caller**: `notifications_provider.dart:62`, a FutureProvider that is re-fetched when invalidated after read actions. It is not polled.

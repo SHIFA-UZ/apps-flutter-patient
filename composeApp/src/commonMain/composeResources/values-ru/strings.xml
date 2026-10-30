@@ -144,7 +144,6 @@
     <string name="contactInformation">Контактная информация</string>
     <string name="contacts">Контакты</string>
     <string name="continueButton">Продолжить</string>
-    <string name="continuePayment">Продолжить оплату</string>
     <string name="continueToVerification">Продолжить</string>
     <string name="continueWithEmail">Продолжить с email</string>
     <string name="continueWithGoogle">Продолжить с Google</string>
@@ -951,8 +950,8 @@
     <string name="paymentCompleted">Оплата завершена</string>
     <string name="paymentInClinic">Оплата в клинике</string>
     <string name="paymentSlotHeld">Время записи сохранено ещё %1$s</string>
-    <string name="paymentNotCompletedHeld">Оплата не завершена. Время записи сохранено до %1$s.</string>
     <string name="paymentFailedSlotReleased">Оплата отклонена, время записи освобождено. Запишитесь снова.</string>
+    <string name="paymentCancelledSlotReleased">Оплата отменена, время записи освобождено. Выберите время, чтобы записаться снова.</string>
     <string name="paymentExpiredSlotReleased">Время оплаты истекло, время записи освобождено. Запишитесь снова.</string>
     <string name="paymentRefundSlotTaken">Оплата получена, но это время уже занято. Клиника вернёт деньги.</string>
     <string name="bookAgain">Записаться снова</string>
