@@ -2,6 +2,7 @@ package shifa.uz.ui.notifications
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +48,8 @@ class NotificationsViewModel(
     private val _read = Channel<Unit>(Channel.CONFLATED)
     val read: Flow<Unit> = _read.receiveAsFlow()
 
+    private var nextPage: Job? = null
+
     init {
         load()
     }
@@ -55,10 +58,11 @@ class NotificationsViewModel(
         _state.value = _state.value.transform()
     }
 
-    /** N1a's first page. The list stays on screen meanwhile. */
+    /** N1a's first page. The list stays on screen meanwhile; a page still on its way is dropped. */
     fun load() {
         if (_state.value.isLoading) return
-        update { copy(isLoading = true) }
+        nextPage?.cancel()
+        update { copy(isLoading = true, isLoadingMore = false) }
         viewModelScope.launch {
             notifications.getNotificationsPage(0).fold(
                 onSuccess = {
@@ -78,31 +82,35 @@ class NotificationsViewModel(
         }
     }
 
-    /** The next N1a page, when the list is scrolled to its end. An item already shown (a new one pushed the pages) is skipped. */
+    /**
+     * The next N1a page, when the list is scrolled to its end. An item already shown (a new one pushed the pages) is
+     * skipped. A page that fails ends the loading (no retry loop); pull to refresh starts over.
+     */
     fun loadMore() {
         val current = _state.value
         if (!current.hasMore || current.isLoadingMore || current.isLoading || current.notifications == null) return
         update { copy(isLoadingMore = true) }
-        viewModelScope.launch {
-            notifications.getNotificationsPage(current.page + 1).fold(
-                onSuccess = { next ->
-                    update {
-                        val shown = notifications.orEmpty()
-                        val ids = shown.map { it.id }.toSet()
-                        copy(
-                            notifications = shown + next.items.filter { it.id !in ids },
-                            page = current.page + 1,
-                            hasMore = !next.last,
-                            isLoadingMore = false,
-                        )
-                    }
-                },
-                onFailure = {
-                    update { copy(isLoadingMore = false) }
-                    fail(it)
-                },
-            )
-        }
+        nextPage =
+            viewModelScope.launch {
+                notifications.getNotificationsPage(current.page + 1).fold(
+                    onSuccess = { next ->
+                        update {
+                            val shown = notifications.orEmpty()
+                            val ids = shown.map { it.id }.toSet()
+                            copy(
+                                notifications = shown + next.items.filter { it.id !in ids },
+                                page = current.page + 1,
+                                hasMore = !next.last,
+                                isLoadingMore = false,
+                            )
+                        }
+                    },
+                    onFailure = {
+                        update { copy(isLoadingMore = false, hasMore = false) }
+                        fail(it)
+                    },
+                )
+            }
     }
 
     /** 13 §4.1 tap: an unread one is marked read, best effort (quirk 11), and the tray opens. */
@@ -123,8 +131,10 @@ class NotificationsViewModel(
     /** A task notification's check-in went through (T4 is the tray's own). */
     fun onCheckInSubmitted() = update { copy(error = null, notice = Res.string.checkInSubmittedSuccessfully) }
 
-    /** N4. */
+    /** N4. A page still on its way would bring items read before N4 as unread, so it is dropped. */
     fun markAllRead() {
+        nextPage?.cancel()
+        update { copy(isLoadingMore = false) }
         viewModelScope.launch {
             notifications.markAllRead().fold(
                 onSuccess = {

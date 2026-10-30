@@ -2,6 +2,7 @@ package shifa.uz.ui.notifications
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -15,6 +16,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -218,6 +220,43 @@ class NotificationsViewModelTest {
             advanceUntilIdle()
             assertThat(state.notifications).isEqualTo(all)
             assertThat(state.hasMore).isTrue()
+        }
+
+    @Test
+    fun `a failed next page stops the loading, and a refresh drops a page still on its way`() =
+        runTest {
+            wheneverBlocking { notifications.getNotificationsPage(eq(0), any()) } doReturn
+                Result.success(Page(all, false))
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doReturn
+                Result.failure(ApiException.NetworkError(NETWORK_ERROR))
+            open()
+
+            classToTest.loadMore()
+            advanceUntilIdle()
+            assertThat(state.hasMore).isFalse()
+            assertThat(state.isLoadingMore).isFalse()
+            assertThat(state.error).isEqualTo(Res.string.errorNetworkConnection)
+            assertThat(state.notifications).isEqualTo(all)
+
+            // Pull to refresh starts over; a page 1 that is still loading when it happens is dropped.
+            val gate = CompletableDeferred<Unit>()
+            val older = AppNotification(9, "", "", "NEW_DOCUMENT", "2026-09-25T07:00:00Z")
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doSuspendableAnswer {
+                gate.await()
+                Result.success(Page(listOf(older), true))
+            }
+            classToTest.load()
+            advanceUntilIdle()
+            assertThat(state.hasMore).isTrue()
+            classToTest.loadMore()
+            classToTest.load()
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertThat(state.notifications).isEqualTo(all)
+            assertThat(state.page).isEqualTo(0)
+            assertThat(state.hasMore).isTrue()
+            assertThat(state.isLoadingMore).isFalse()
         }
 
     @Test

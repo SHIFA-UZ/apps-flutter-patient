@@ -187,8 +187,10 @@ internal fun NotificationsContent(
     // The next page when the end is reached (or the list is shorter than the screen), one request at a time.
     val scroll = rememberScrollState()
     val atEnd = !scroll.canScrollForward
-    LaunchedEffect(atEnd, state.hasMore, state.isLoadingMore, state.notifications?.size) {
-        if (atEnd && state.hasMore && !state.isLoadingMore && state.notifications != null) onLoadMore()
+    LaunchedEffect(atEnd, state.hasMore, state.isLoadingMore, state.isLoading, state.notifications?.size) {
+        if (atEnd && state.hasMore && !state.isLoadingMore && !state.isLoading && state.notifications != null) {
+            onLoadMore()
+        }
     }
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaPageElement(ShifaPageElementType.Header) {

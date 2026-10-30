@@ -1071,7 +1071,7 @@ private fun page(
 ): JsonObject {
     val number = page?.toIntOrNull()?.coerceAtLeast(0) ?: 0
     val count = size?.toIntOrNull()?.coerceIn(1, 2000) ?: 20
-    val content = all.drop(number * count).take(count)
+    val content = all.drop((number.toLong() * count).coerceAtMost(all.size.toLong()).toInt()).take(count)
     val pages = (all.size + count - 1) / count
     return obj(
         "content" to content,
