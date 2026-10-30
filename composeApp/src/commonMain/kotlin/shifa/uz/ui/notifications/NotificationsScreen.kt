@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -128,6 +130,7 @@ fun NotificationsScreen(
         viewModel::load,
         viewModel::markAllRead,
         viewModel::open,
+        viewModel::loadMore,
     )
     var checkingIn by remember { mutableStateOf<RemoteCareTask?>(null) }
     state.selected?.let {
@@ -179,7 +182,25 @@ internal fun NotificationsContent(
     onRefresh: () -> Unit = {},
     onMarkAllRead: () -> Unit = {},
     onOpen: (AppNotification) -> Unit = {},
+    onLoadMore: () -> Unit = {},
 ) {
+    // The next page when the end is reached (or the list is shorter than the screen), one request at a time.
+    val scroll = rememberScrollState()
+    val atEnd = !scroll.canScrollForward
+    LaunchedEffect(
+        atEnd,
+        state.hasMore,
+        state.isLoadingMore,
+        state.isLoading,
+        state.isMarkingRead,
+        state.notifications?.size,
+    ) {
+        if (atEnd && state.hasMore && !state.isLoadingMore && !state.isLoading && !state.isMarkingRead &&
+            state.notifications != null
+        ) {
+            onLoadMore()
+        }
+    }
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaPageElement(ShifaPageElementType.Header) {
             ShifaSubHeader(stringResource(Res.string.notifications), onBack = onBack, onCheck = onMarkAllRead)
@@ -199,7 +220,7 @@ internal fun NotificationsContent(
             Column(
                 Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scroll)
                     .navigationBarsPadding()
                     .padding(ShifaSpacing.Inset.Md),
                 verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md),
@@ -238,6 +259,13 @@ internal fun NotificationsContent(
                                     onOpen(it)
                                 }
                             }
+                        }
+                        if (state.isLoadingMore) {
+                            CircularProgressIndicator(
+                                Modifier.size(ShifaSize.S24),
+                                ShifaColors.Icon.Brand,
+                                ShifaSize.S2,
+                            )
                         }
                     }
                 }

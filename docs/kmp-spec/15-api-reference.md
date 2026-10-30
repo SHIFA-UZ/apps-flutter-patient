@@ -23,7 +23,12 @@ Conventions used in this document:
 | `GOOGLE_MAPS_API_KEY` define | Defaults to `''`. See §4.1. | `app_config.dart:52` |
 | `publicBaseUrl` (media) | Hardcoded to `http://localhost:8090`, or `http://10.0.2.2:8090` on Android. See §1.12. | `api_client.dart:42-50` |
 
-> CLAUDE.md is out of date here. It describes a `FLAVOR` define with localhost:8080 and 9090 defaults. The current code has **no FLAVOR handling and no localhost API default**.
+> The table above describes the Flutter app. **KMP app (2026-10-30):** `ApiConfig.BASE_URL` is the production
+> `/api/` base, a constant with no build-time override; `ApiConfig.DEV_BASE_URL` is the development backend
+> `https://api-dev.shifa.uz/api/` (deployed from the backend's `main`, seeded with `seed.patient1@shifa.dev` /
+> `Dev12345!`). Debug builds switch between them in Profile → Debug menu → Development backend (`BackendChoice`);
+> release builds always use production. `https://api.shifa.uz` is the production name now; the Railway host above
+> stays alive for the store builds that call it. There is no media `publicBaseUrl`: file URLs come absolute from the API.
 
 All paths in this document are relative to `/api`. Example: `GET /patients/me/profile` means `GET https://…railway.app/api/patients/me/profile`.
 
@@ -100,7 +105,17 @@ No other custom headers are sent: no locale header, app-version header, device-i
 
 ### 1.6 Error body format
 
-The backend error envelope is **UNVERIFIED**. The client tolerates all of the following shapes:
+**KMP app, backend of 2026-10-30:** every error from the backend's handlers and security filters is
+`{"error": <status>, "message": "...", "status": <status>, "code": "<CODE>", "requestId": "<uuid>"}`. `code` comes
+from the backend's `shared/ErrorCode.kt` (`VALIDATION`, `MALFORMED_BODY`, `BAD_REQUEST`, `UNAUTHORIZED`,
+`PAYMENT_REQUIRED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `RATE_LIMITED`, `SESSION_INVALID`, `SESSION_EXPIRED`,
+`TOKEN_INVALID`, `ACCOUNT_DISABLED`, `INTERNAL`, `UPSTREAM`, `UNAVAILABLE`); validation errors add `errors: {field: reason}`.
+A request without a usable token on a protected route is a 401 with `UNAUTHORIZED`, `TOKEN_INVALID` or
+`SESSION_EXPIRED` (the app signs out on any 401). `ApiError` reads `code`, `ApiException.code` carries it, and
+`sanitizeError` falls back on a known code's text when the English `message` isn't a known one. The rest of this section describes
+the Flutter app's tolerant reading, which the KMP app keeps for older backends.
+
+The backend error envelope was **UNVERIFIED** when this was written. The client tolerates all of the following shapes:
 
 ```json
 { "message": "Human readable text" }
@@ -166,12 +181,17 @@ Scheduling days are computed on the device's local calendar. `day=yyyy-MM-dd` is
 
 ### 1.8 Pagination
 
-Only `GET /public/doctors` is paginated:
+`GET /public/doctors` has its own paging:
 - Query: `page` (1-based, omitted when it is 1) and `pageSize` (always sent, default 20).
 - Response: `{doctors, totalCount, page?, pageSize?}`.
 - The client also accepts a bare array for backwards compatibility.
 
-Every other list endpoint returns a full JSON array with no pagination.
+Since the backend's Phase 6 (2026-10-30) the lists that grow with a patient's history have a `/page` sibling with the
+same filters and order, returning Spring's `Page` shape, 0-based `page` and `size` (default 20, `sort` ignored):
+`{content: [...], totalElements, totalPages, number, size, first, last, empty, pageable, sort}`. Siblings the patient app
+may call: `GET /notifications/page` (N1a, used), `GET /patients/me/appointments/page` (B2's filters),
+`GET /patients/me/documents/page`, `GET /public/doctors/{doctorId}/reviews/page`. The original list endpoints stay
+unchanged and return full JSON arrays.
 
 ### 1.9 ID types
 
@@ -317,6 +337,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 | # | Method | Path | Auth | Call site | Purpose |
 |---|---|---|---|---|---|
 | N1 | GET | `/notifications` | ✔ | `notifications_repository.dart:12` | In-app notification list |
+| N1a | GET | `/notifications/page` | ✔ | `NotificationsRepository.getNotificationsPage` | One page of N1 (§1.8), newest first; the inbox uses it |
 | N2 | GET | `/notifications/unread/count` | ✔ | `notifications_repository.dart:27` | Bell badge count |
 | N3 | PUT | `/notifications/{id}/read` | ✔ | `notifications_repository.dart:37`, `:46` | Mark one read; the id may be an int or a string |
 | N4 | PUT | `/notifications/read-all` | ✔ | `notifications_repository.dart:55` | Mark all read |
@@ -878,6 +899,12 @@ The payment gateways are **Click.uz**, the primary one for UZS, and **Stripe**, 
 #### N1 `GET /notifications`
 - **Callers**: `notifications_provider.dart:57` (screen). `NotificationPollingService` would poll this every 30s, but **`startPolling` is never called**. Push (FCM) is the only real-time channel.
 - **Res 200**: `[Notification…]` (§5.10). A non-array response yields `[]`.
+
+#### N1a `GET /notifications/page`
+- **Caller**: `NotificationsViewModel.load` (page 0) and `loadMore` (the next page at the end of the list).
+- **Query**: `page` (0-based), `size` (20).
+- **Res 200**: Spring `Page` (§1.8) of §5.10 items under `content`, newest first; `last` ends the loading. A bare array
+  is read as the only page.
 
 #### N2 `GET /notifications/unread/count`
 - **Caller**: `notifications_provider.dart:62`, a FutureProvider that is re-fetched when invalidated after read actions. It is not polled.

@@ -13,6 +13,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.junit.Test
+import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.createHttpClient
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.chat.ChatRepository
@@ -46,6 +47,20 @@ class DemoBackendTest {
             TokenStorage(MapSettings()).apply { token = "t0k" },
             DemoBackend({ now }, tashkent, passthrough = { HttpClient(real) }).engine(),
         )
+
+    @Test
+    fun `the demo answers on the development host too`() =
+        runTest {
+            val dev =
+                createHttpClient(
+                    TokenStorage(MapSettings()).apply { token = "t0k" },
+                    DemoBackend({ now }, tashkent, passthrough = { HttpClient(real) }).engine(),
+                    ApiConfig.DEV_BASE_URL,
+                )
+
+            assertThat(NotificationsRepository(dev).unreadCount().getOrThrow()).isEqualTo(7)
+            assertThat(real.requestHistory).isEmpty()
+        }
 
     @Test
     fun `the seed has a visit to join now, a pending one and an unpaid one`() =
@@ -107,6 +122,12 @@ class DemoBackendTest {
             notifications.markAllRead().getOrThrow()
             assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(0)
             assertThat(notifications.getNotifications().getOrThrow()).hasSize(8)
+            val first = notifications.getNotificationsPage(0, 5).getOrThrow()
+            val second = notifications.getNotificationsPage(1, 5).getOrThrow()
+            assertThat(first.items).hasSize(5)
+            assertThat(first.last).isFalse()
+            assertThat(second.items).hasSize(3)
+            assertThat(second.last).isTrue()
         }
 
     @Test

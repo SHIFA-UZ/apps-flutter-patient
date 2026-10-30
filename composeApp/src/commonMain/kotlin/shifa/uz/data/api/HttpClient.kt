@@ -13,6 +13,8 @@ import io.ktor.http.Url
 import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import shifa.uz.data.debug.Backend
+import shifa.uz.data.debug.BackendChoice
 import shifa.uz.data.debug.DemoBackend
 import shifa.uz.data.debug.DemoMode
 import shifa.uz.data.storage.TokenStorage
@@ -35,17 +37,22 @@ internal val apiJson =
     }
 
 private val tokens by lazy { TokenStorage() }
-private val realClient by lazy { createHttpClient(tokens) }
-private val demoClient by lazy { createHttpClient(tokens, DemoBackend.shared.engine()) }
 
-/** The app-wide client; the demo backend's while Debug menu → Demo data is on. */
-val httpClient: HttpClient get() = if (DemoMode.enabled.value) demoClient else realClient
+// One client per backend (Debug menu → Development backend), built on first use.
+private val realClients = Backend.entries.associateWith { lazy { createHttpClient(tokens, baseUrl = it.baseUrl) } }
+private val demoClients =
+    Backend.entries.associateWith { lazy { createHttpClient(tokens, DemoBackend.shared.engine(), it.baseUrl) } }
+
+/** The app-wide client for the chosen backend; the demo backend's while Debug menu → Demo data is on. */
+val httpClient: HttpClient get() =
+    (if (DemoMode.enabled.value) demoClients else realClients).getValue(BackendChoice.current.value).value
 
 fun createHttpClient(
     tokenStorage: TokenStorage,
     engine: HttpClientEngine = createHttpEngine(),
+    baseUrl: String = ApiConfig.BASE_URL,
 ): HttpClient {
-    val baseUrl = getAdjustedBaseUrl(ApiConfig.BASE_URL)
+    val baseUrl = getAdjustedBaseUrl(baseUrl)
     val apiHost = Url(baseUrl).host
     return HttpClient(engine) {
         install(ContentNegotiation) { json(apiJson) }

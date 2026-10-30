@@ -19,7 +19,9 @@ data class PatientDocument(
     val url: String? = null,
     val type: String? = null, // a MIME type or extension hint
     val doctorName: String? = null,
-    val creatorLabel: String? = null, // Doctor, Patient, Unknown
+    val creatorLabel: String? = null, // the uploader's name (11 said Doctor / Patient / Unknown)
+    val uploadedByPatient: Boolean? = null, // backend Phase 1: who uploaded it, next to creatorLabel
+    val creatorType: String? = null, // PATIENT, DOCTOR, UNKNOWN
     val category: String? = null,
     @JsonNames("appointment_id") val appointmentId: String? = null,
 ) {
@@ -28,14 +30,17 @@ data class PatientDocument(
     val file get() = fileUrl?.ifBlank { null } ?: url?.ifBlank { null }
 
     /**
-     * F3 only deletes these. 11 expects `creatorLabel` "Patient", but the backend sends the uploader's full name,
-     * so the patient's own uploads carry [patientName] (P1 `fullName`).
-     *
-     * ponytail: a doctor with the patient's exact name looks like theirs; F3 then fails with an error. Needs a backend
-     * flag.
+     * F3 only deletes these. The backend's `uploadedByPatient` (or `creatorType`) decides; an older backend sends
+     * neither, only the uploader's full name in `creatorLabel`, which is then compared with [patientName] (P1
+     * `fullName`).
      */
     fun isUploadedBy(patientName: String?) =
-        creatorLabel == "Patient" || (!patientName.isNullOrBlank() && creatorLabel?.trim() == patientName.trim())
+        uploadedByPatient
+            ?: creatorType?.let { it.equals("PATIENT", ignoreCase = true) }
+            ?: (
+                creatorLabel == "Patient" ||
+                    (!patientName.isNullOrBlank() && creatorLabel?.trim() == patientName.trim())
+            )
 }
 
 /**

@@ -2,12 +2,14 @@ package shifa.uz.ui.notifications
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -15,6 +17,8 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doSuspendableAnswer
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
@@ -29,6 +33,7 @@ import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.AppNotification
 import shifa.uz.data.model.Appointment
+import shifa.uz.data.model.Page
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.data.notifications.NotificationsRepository
@@ -56,7 +61,7 @@ class NotificationsViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        wheneverBlocking { notifications.getNotifications() } doReturn Result.success(all)
+        wheneverBlocking { notifications.getNotificationsPage(any(), any()) } doReturn Result.success(Page(all, true))
         wheneverBlocking { notifications.markRead(any()) } doReturn Result.success(Unit)
         wheneverBlocking { notifications.markAllRead() } doReturn Result.success(Unit)
         wheneverBlocking { bookings.getAppointments() } doReturn Result.success(listOf(appointment))
@@ -188,10 +193,130 @@ class NotificationsViewModelTest {
         }
 
     @Test
+    fun `the next page is appended once, without repeating an item, until the last one`() =
+        runTest {
+            val older = AppNotification(9, "", "", "NEW_DOCUMENT", "2026-09-25T07:00:00Z")
+            wheneverBlocking { notifications.getNotificationsPage(eq(0), any()) } doReturn
+                Result.success(Page(all, false))
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doReturn
+                Result.success(Page(listOf(read, older), true))
+            open()
+            assertThat(state.hasMore).isTrue()
+
+            classToTest.loadMore()
+            classToTest.loadMore() // ignored while the first is in flight
+            advanceUntilIdle()
+
+            assertThat(state.notifications).isEqualTo(all + older)
+            assertThat(state.page).isEqualTo(1)
+            assertThat(state.hasMore).isFalse()
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(1), any()) }
+
+            classToTest.loadMore()
+            advanceUntilIdle()
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(1), any()) }
+
+            // A reload starts over from the first page.
+            classToTest.load()
+            advanceUntilIdle()
+            assertThat(state.notifications).isEqualTo(all)
+            assertThat(state.hasMore).isTrue()
+        }
+
+    @Test
+    fun `a failed next page stops the loading, and a refresh drops a page still on its way`() =
+        runTest {
+            wheneverBlocking { notifications.getNotificationsPage(eq(0), any()) } doReturn
+                Result.success(Page(all, false))
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doReturn
+                Result.failure(ApiException.NetworkError(NETWORK_ERROR))
+            open()
+
+            classToTest.loadMore()
+            advanceUntilIdle()
+            assertThat(state.hasMore).isFalse()
+            assertThat(state.isLoadingMore).isFalse()
+            assertThat(state.error).isEqualTo(Res.string.errorNetworkConnection)
+            assertThat(state.notifications).isEqualTo(all)
+
+            // Pull to refresh starts over; a page 1 that is still loading when it happens is dropped.
+            val gate = CompletableDeferred<Unit>()
+            val older = AppNotification(9, "", "", "NEW_DOCUMENT", "2026-09-25T07:00:00Z")
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doSuspendableAnswer {
+                gate.await()
+                Result.success(Page(listOf(older), true))
+            }
+            classToTest.load()
+            advanceUntilIdle()
+            assertThat(state.hasMore).isTrue()
+            classToTest.loadMore()
+            runCurrent() // the request is out
+            verifyBlocking(notifications, times(2)) { getNotificationsPage(eq(1), any()) }
+            classToTest.load()
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertThat(state.notifications).isEqualTo(all)
+            assertThat(state.page).isEqualTo(0)
+            assertThat(state.hasMore).isTrue()
+            assertThat(state.isLoadingMore).isFalse()
+        }
+
+    @Test
+    fun `Mark all read drops a page on its way and blocks the next until it is done`() =
+        runTest {
+            wheneverBlocking { notifications.getNotificationsPage(eq(0), any()) } doReturn
+                Result.success(Page(all, false))
+            val gate = CompletableDeferred<Unit>()
+            val unreadOlder = AppNotification(9, "", "", "NEW_DOCUMENT", "2026-09-25T07:00:00Z")
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doSuspendableAnswer {
+                gate.await()
+                Result.success(Page(listOf(unreadOlder), true))
+            }
+            val marked = CompletableDeferred<Unit>()
+            wheneverBlocking { notifications.markAllRead() } doSuspendableAnswer {
+                marked.await()
+                Result.success(Unit)
+            }
+            open()
+            classToTest.loadMore()
+            runCurrent()
+
+            classToTest.markAllRead()
+            runCurrent()
+            assertThat(state.isMarkingRead).isTrue()
+            classToTest.loadMore() // refused while N4 runs
+            classToTest.load() // so is a refresh
+            classToTest.markAllRead() // and a second N4
+            gate.complete(Unit)
+            marked.complete(Unit)
+            advanceUntilIdle()
+
+            assertThat(state.isMarkingRead).isFalse()
+            assertThat(state.notifications!!.map { it.id }).containsExactly(4, 3, 1, 2).inOrder()
+            assertThat(state.notifications!!.all { it.isRead }).isTrue()
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(1), any()) }
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(0), any()) }
+            verifyBlocking(notifications, times(1)) { markAllRead() }
+        }
+
+    @Test
+    fun `Mark all read waits for the first list`() =
+        runTest {
+            classToTest = NotificationsViewModel(notifications, bookings, documents, tasks)
+            classToTest.markAllRead() // before the first page is in: ignored, the list still loads
+            advanceUntilIdle()
+
+            assertThat(state.notifications).isEqualTo(all)
+            assertThat(state.isMarkingRead).isFalse()
+            verifyBlocking(notifications, never()) { markAllRead() }
+        }
+
+    @Test
     fun `a failed reload keeps the list and shows the error`() =
         runTest {
             open()
-            wheneverBlocking { notifications.getNotifications() } doReturn
+            wheneverBlocking { notifications.getNotificationsPage(any(), any()) } doReturn
                 Result.failure(ApiException.NetworkError(NETWORK_ERROR))
 
             classToTest.load()
@@ -204,7 +329,7 @@ class NotificationsViewModelTest {
     @Test
     fun `a 401 signs out`() =
         runTest {
-            wheneverBlocking { notifications.getNotifications() } doReturn
+            wheneverBlocking { notifications.getNotificationsPage(any(), any()) } doReturn
                 Result.failure(ApiException.Unauthorized("Unauthorized"))
             classToTest = NotificationsViewModel(notifications, bookings, documents, tasks)
 

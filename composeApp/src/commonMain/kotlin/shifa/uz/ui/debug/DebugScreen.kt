@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.ic_check_circle_16
 import shifa.composeapp.generated.resources.ic_info_16
+import shifa.uz.data.api.ApiConfig
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaBanner
@@ -45,6 +46,7 @@ fun DebugScreen(
         state,
         onBack = onBack,
         onDemoChange = viewModel::onDemoChange,
+        onDevelopmentChange = viewModel::onDevelopmentChange,
         onReset = viewModel::resetDemoData,
         onPush = { viewModel.onPushed(push(it.label, it.message, it.data)) },
     )
@@ -55,6 +57,7 @@ internal fun DebugContent(
     state: DebugUiState,
     onBack: () -> Unit = {},
     onDemoChange: (Boolean) -> Unit = {},
+    onDevelopmentChange: (Boolean) -> Unit = {},
     onReset: () -> Unit = {},
     onPush: (FakePush) -> Unit = {},
 ) {
@@ -68,6 +71,17 @@ internal fun DebugContent(
                             it,
                             if (state.noticeIsError) Res.drawable.ic_info_16 else Res.drawable.ic_check_circle_16,
                             if (state.noticeIsError) ShifaBannerType.Warning else ShifaBannerType.Success,
+                        )
+                    }
+                    ShifaSection(
+                        "Development backend",
+                        type = ShifaSectionType.CardOnColor,
+                        action = { ShifaSwitch(state.development, onDevelopmentChange) },
+                    ) {
+                        Note(
+                            "Every call goes to ${ApiConfig.DEV_BASE_URL.removeSuffix("/api/")} instead of " +
+                                "production. Its data is test data: sign in with seed.patient1@shifa.dev / " +
+                                "Dev12345!. Switching signs you out and restarts the app's screens.",
                         )
                     }
                     ShifaSection(

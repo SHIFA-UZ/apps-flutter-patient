@@ -46,17 +46,23 @@ Keep P7 working for old app versions until they're gone.
 
 ## 3. A staging backend for testing
 
+**Done (2026-10-30):** `https://api-dev.shifa.uz`, deployed from the backend's `main`, seeded with `seed.patient1@shifa.dev` / `Dev12345!` and doctors with free slots. Debug builds switch to it in Profile → Debug menu → Development backend.
+
 **Now:** the app only knows the production backend. On a real device, many flows change real data, so they're built but not tried: cancel (a hard delete, see #7), booking, task check-in, mark read, delete account, and push registration (#2).
 
 **Change:** a staging backend with its own database, and ideally its own Firebase project. If one already exists, we need its URL. Add test patients with appointments, documents, tasks and notifications, and doctors with free slots. The app then only needs a debug build that uses the staging URL.
 
 ## 4. Error codes instead of English text
 
+**Done (2026-10-30):** every error body carries `code` (15 §1.6); the app reads it (`ApiException.code`) and localizes by code when the message is unknown.
+
 **Now:** errors look like `{ "error": 400, "message": "Current password is incorrect", "status": 400 }`. `error` is the status number. The only way to tell errors apart is the English `message`. The app matches known messages (`data/api/ErrorMessages.kt`, e.g. `serviceId is required for video consultation`), translates them, and hides the rest behind a generic text. Any change of wording on the backend breaks this without warning.
 
 **Change:** send the same shape from every controller, with a stable code: `{ "status": 400, "code": "WRONG_CURRENT_PASSWORD", "message": "..." }`. The app translates by `code` and keeps `message` for logs. Please share the list of codes. For validation errors, a per-field list would help: `"fields": [{ "field": "email", "code": "ALREADY_USED" }]`.
 
 ## 5. Mark the patient's own documents
+
+**Done (2026-10-30):** `uploadedByPatient` and `creatorType` are sent; `PatientDocument.isUploadedBy` prefers them, the name comparison stays for older backends.
 
 **Now:** the patient can only delete documents they uploaded. The spec says `creatorLabel` is `"Doctor"` or `"Patient"`, but production sends the uploader's full name (seen on 2026-09-28). The app treats a document as the patient's own when `creatorLabel` equals the patient's full name. If a doctor has the same name as the patient, the delete button shows on the doctor's file, and the delete then fails.
 
@@ -150,6 +156,8 @@ The full plan is in [payment-flow.md](payment-flow.md).
 **Until then:** no From Appointment card and no Delete Entry; a submitted day only shows what was sent.
 
 ## 15. Document's visit
+
+**Done (2026-10-30):** `appointmentId` is sent on `PatientDocumentDto`; the app already read it.
 
 **Now:** the document viewer (Figma 1921:23596) shows a "From Appointment" card that opens the visit the document came from. `PatientDocumentDto` (F1) has no link to an appointment, and the appointment DTOs don't list their documents.
 

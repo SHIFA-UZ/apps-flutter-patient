@@ -55,6 +55,8 @@ const val FAILED_TO_MARK_CONVERSATION_READ = "Failed to mark as read" // Swallow
 const val FAILED_TO_SEARCH_USERS = "Failed to search users" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_UPLOAD_ATTACHMENT = "Failed to upload image"
 private const val INVALID_CREDENTIALS = "Invalid credentials"
+private const val ACCOUNT_DISABLED = "Account is disabled"
+private const val INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token"
 private const val NO_ACCOUNT_FOUND = "No account found"
 const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
 
@@ -72,12 +74,12 @@ private val MESSAGES: Map<String, StringResource> =
         "Invalid or expired email verification code" to Res.string.errorInvalidOrExpiredEmailVerificationCode,
         "Invalid or expired verification code" to Res.string.invalidVerificationCode,
         "Invalid phone number" to Res.string.errorInvalidPhoneNumber,
-        "Account is disabled" to Res.string.errorAccountIsDisabled,
+        ACCOUNT_DISABLED to Res.string.errorAccountIsDisabled,
         "Account is disabled." to Res.string.errorAccountIsDisabled,
         "Not a doctor account" to Res.string.errorNotADoctorAccount,
         "Missing Bearer token" to Res.string.errorMissingBearerToken,
         "Firebase verification not configured" to Res.string.errorFirebaseVerificationNotConfigured,
-        "Invalid or expired token" to Res.string.errorInvalidOrExpiredToken,
+        INVALID_OR_EXPIRED_TOKEN to Res.string.errorInvalidOrExpiredToken,
         "Access restricted to doctors." to Res.string.errorAccessRestrictedToDoctors,
         "Your account has been blocked." to Res.string.errorYourAccountHasBeenBlocked,
         "Invalid key" to Res.string.errorInvalidKey,
@@ -154,23 +156,35 @@ private val MESSAGES: Map<String, StringResource> =
         CONNECTION_TIMED_OUT to Res.string.errorConnectionTimedOut,
     )
 
+// The backend's error codes (its `shared/ErrorCode.kt`) with a text here, for when the message isn't a known one.
+private val CODE_MESSAGES: Map<String, String> =
+    mapOf(
+        "RATE_LIMITED" to TOO_MANY_REQUESTS,
+        "ACCOUNT_DISABLED" to ACCOUNT_DISABLED,
+        "SESSION_EXPIRED" to INVALID_OR_EXPIRED_TOKEN,
+        "SESSION_INVALID" to INVALID_OR_EXPIRED_TOKEN,
+        "TOKEN_INVALID" to INVALID_OR_EXPIRED_TOKEN,
+    )
+
 /**
- * 01 §8: a known-safe backend message passes through (a `Login error: ` prefix is unwrapped).
- * Anything else, technical or not, is replaced by a status default or [defaultMessage].
+ * 01 §8: a known-safe backend message passes through (a `Login error: ` prefix is unwrapped); on the auth paths an
+ * unknown 401 / 404 keeps its account text; else a known error [code] gives its text. Anything else, technical or not,
+ * is replaced by a status default or [defaultMessage].
  */
 fun sanitizeError(
     status: Int,
     raw: String?,
     defaultMessage: String,
     auth: Boolean = true,
+    code: String? = null,
 ): String {
     raw?.trim()?.removePrefix("Login error: ")?.takeIf { it in MESSAGES }?.let { return it }
     // The 401/404 texts are the auth sanitizer's (01 §8): elsewhere a 404 isn't "No account found".
     return when {
+        auth && status == 401 -> INVALID_CREDENTIALS
+        auth && status == 404 -> NO_ACCOUNT_FOUND
+        code in CODE_MESSAGES -> CODE_MESSAGES.getValue(code!!)
         status == 429 -> TOO_MANY_REQUESTS
-        !auth -> defaultMessage
-        status == 401 -> INVALID_CREDENTIALS
-        status == 404 -> NO_ACCOUNT_FOUND
         else -> defaultMessage
     }
 }

@@ -125,6 +125,32 @@ class CreateBookingViewModelTest {
         }
 
     @Test
+    fun `D2's next available day is asked first, and alone`() =
+        runTest {
+            wheneverBlocking { doctors.getDoctor("42") } doReturn
+                Result.success(full.copy(nextAvailableStartAt = "2026-09-30T05:00:00Z"))
+            open()
+
+            assertThat(state.date).isEqualTo(LocalDate(2026, 9, 30))
+            assertThat(state.slots).containsExactly(first, second).inOrder()
+            verifyBlocking(bookings, times(1)) { getSlots(any(), any(), anyOrNull()) }
+            verifyBlocking(bookings, never()) { getSlots("42", today, 5) }
+        }
+
+    @Test
+    fun `a next available day with nothing at this clinic goes on scanning from it`() =
+        runTest {
+            wheneverBlocking { doctors.getDoctor("42") } doReturn
+                Result.success(full.copy(nextAvailableStartAt = "2026-09-29T05:00:00Z"))
+            open()
+
+            assertThat(state.date).isEqualTo(LocalDate(2026, 9, 30))
+            assertThat(state.slot).isEqualTo(first)
+            // The hinted day alone, then the next 7 in one batch.
+            verifyBlocking(bookings, times(8)) { getSlots(any(), any(), anyOrNull()) }
+        }
+
+    @Test
     fun `no free slot in 30 days ends on the last day, empty`() =
         runTest {
             wheneverBlocking { bookings.getSlots("42", LocalDate(2026, 9, 30), 5) } doReturn Result.success(emptyList())
