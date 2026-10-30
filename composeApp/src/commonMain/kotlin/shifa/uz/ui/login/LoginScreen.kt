@@ -58,6 +58,8 @@ import shifa.composeapp.generated.resources.password
 import shifa.composeapp.generated.resources.passwordRequired
 import shifa.composeapp.generated.resources.showPassword
 import shifa.composeapp.generated.resources.signIn
+import shifa.uz.data.debug.Backend
+import shifa.uz.data.debug.BackendChoice
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -70,6 +72,7 @@ import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaTertiaryButton
+import shifa.uz.utils.isDebugBuild
 
 @Composable
 fun LoginScreen(
@@ -90,6 +93,8 @@ fun LoginScreen(
             }
         }
     }
+    // Debug builds: the backend can be switched before signing in (a tester has no production account).
+    val backend by BackendChoice.current.collectAsState()
     LoginScreenContent(
         state = state,
         onIdentifierChange = viewModel::onIdentifierChange,
@@ -99,6 +104,8 @@ fun LoginScreen(
         onForgotPassword = onForgotPassword,
         onCreateAccount = onCreateAccount,
         notice = notice,
+        debugBackend = backend.takeIf { isDebugBuild },
+        onDebugBackend = BackendChoice::set,
     )
 }
 
@@ -113,6 +120,8 @@ internal fun LoginScreenContent(
     onForgotPassword: () -> Unit,
     onCreateAccount: () -> Unit,
     notice: StringResource? = null,
+    debugBackend: Backend? = null, // debug builds: the backend in use, switchable here
+    onDebugBackend: (Backend) -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
         Column(
@@ -219,6 +228,15 @@ internal fun LoginScreenContent(
                     loading = state.isLoading,
                 )
                 ShifaTertiaryButton(stringResource(Res.string.createAccount), onCreateAccount, Modifier.fillMaxWidth())
+                debugBackend?.let { current ->
+                    // ponytail: English only, debug builds only; App re-keys on the choice.
+                    val other = if (current == Backend.Production) Backend.Development else Backend.Production
+                    ShifaTertiaryButton(
+                        "Backend: ${current.name} · switch to ${other.name}",
+                        { onDebugBackend(other) },
+                        Modifier.fillMaxWidth(),
+                    )
+                }
             }
             Spacer(Modifier.height(ShifaDimens.LoginFooterHeight))
         }
