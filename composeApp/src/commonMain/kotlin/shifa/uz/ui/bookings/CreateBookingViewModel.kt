@@ -290,7 +290,7 @@ class CreateBookingViewModel(
                 val now = clock()
                 val today = now.toLocalDateTime(zone).date
                 val hint =
-                    parseInstant(state.doctor.nextAvailableStartAt)?.toLocalDateTime(zone)?.date?.takeIf { it > today }
+                    parseInstant(state.doctor.nextAvailableStartAt)?.toLocalDateTime(zone)?.date?.takeIf { it >= today }
                 val from = hint ?: today
                 val days = day?.let(::listOf) ?: (0 until SCAN_DAYS).map { from.plus(it, DateTimeUnit.DAY) }
                 val batches =
