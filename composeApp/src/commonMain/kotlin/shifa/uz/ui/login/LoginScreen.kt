@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -58,6 +61,7 @@ import shifa.composeapp.generated.resources.password
 import shifa.composeapp.generated.resources.passwordRequired
 import shifa.composeapp.generated.resources.showPassword
 import shifa.composeapp.generated.resources.signIn
+import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.debug.Backend
 import shifa.uz.data.debug.BackendChoice
 import shifa.uz.ui.theme.ShifaColors
@@ -93,8 +97,11 @@ fun LoginScreen(
             }
         }
     }
-    // Debug builds: the backend can be switched before signing in (a tester has no production account).
+    // Debug builds: the backend can be switched before signing in (a tester has no production account). A token a
+    // timed-out restore left behind belongs to the old backend, so the session is cleared first, as in the Debug menu.
     val backend by BackendChoice.current.collectAsState()
+    val scope = rememberCoroutineScope()
+    val auth = remember { AuthRepository() }
     LoginScreenContent(
         state = state,
         onIdentifierChange = viewModel::onIdentifierChange,
@@ -105,7 +112,12 @@ fun LoginScreen(
         onCreateAccount = onCreateAccount,
         notice = notice,
         debugBackend = backend.takeIf { isDebugBuild },
-        onDebugBackend = BackendChoice::set,
+        onDebugBackend = { next ->
+            scope.launch {
+                auth.logout()
+                BackendChoice.set(next)
+            }
+        },
     )
 }
 
