@@ -36,6 +36,7 @@ import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
 import shifa.uz.data.model.Doctor
 import shifa.uz.utils.getCurrentInstant
+import shifa.uz.utils.parseInstant
 
 /**
  * 06 §3.1 (BOOK-01/03/04): B1 slots, B3 to book. With [reschedule], B3 books its new time (06 §3.5).
@@ -80,12 +81,13 @@ class CreateBookingViewModel(
     }
 
     init {
-        // D2 for the services; on failure the card's copy stays.
-        viewModelScope.launch { doctors.getDoctor(doctor.id).onSuccess { update { copy(doctor = it) } } }
-        // The primary location, else the first; Select Clinic changes it when there are several (Figma 1823:16296).
         viewModelScope.launch {
+            // D2 for the services and `nextAvailableStartAt` (the scan's starting day); on failure the card's copy stays.
+            val detail = async { doctors.getDoctor(doctor.id) }
+            // The primary location, else the first; Select Clinic changes it when there are several (Figma 1823:16296).
             val locations = doctors.getLocations(doctor.id)
             val primary = locations.firstOrNull { it.isPrimary } ?: locations.firstOrNull()
+            detail.await().onSuccess { update { copy(doctor = it) } }
             update { copy(locations = locations, locationId = reschedule?.locationId ?: primary?.id) }
             loadSlots(null)
         }
@@ -274,6 +276,8 @@ class CreateBookingViewModel(
 
     /**
      * [day] null: 06 §3.1 step 3, the first of the next 30 days with a free slot, else the last of them.
+     * The scan starts on the day of D2's `nextAvailableStartAt` when there is one (one B1 call in the usual case;
+     * it ignores the location, so the scan goes on from there when that day has nothing here), else today.
      * Days go out in batches of [BATCH] in parallel (Flutter went one by one) and are read in order.
      */
     private fun loadSlots(day: LocalDate?) {
@@ -285,8 +289,17 @@ class CreateBookingViewModel(
             viewModelScope.launch {
                 val now = clock()
                 val today = now.toLocalDateTime(zone).date
-                val days = day?.let(::listOf) ?: (0 until SCAN_DAYS).map { today.plus(it, DateTimeUnit.DAY) }
-                for (batch in days.chunked(BATCH)) {
+                val hint =
+                    parseInstant(state.doctor.nextAvailableStartAt)?.toLocalDateTime(zone)?.date?.takeIf { it > today }
+                val from = hint ?: today
+                val days = day?.let(::listOf) ?: (0 until SCAN_DAYS).map { from.plus(it, DateTimeUnit.DAY) }
+                val batches =
+                    if (day == null && hint != null) {
+                        listOf(days.take(1)) + days.drop(1).chunked(BATCH)
+                    } else {
+                        days.chunked(BATCH)
+                    }
+                for (batch in batches) {
                     val results = batch.map { async { bookings.getSlots(state.doctor.id, it, location) } }.awaitAll()
                     batch.zip(results).forEach { (d, result) ->
                         result.exceptionOrNull()?.let {
