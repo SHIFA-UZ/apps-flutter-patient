@@ -44,6 +44,12 @@ class DocumentsRepositoryTest {
             assertThat(list[0].copy(creatorLabel = "Botir Muzrabov").isUploadedBy(" Botir Muzrabov")).isTrue()
             assertThat(list[0].copy(creatorLabel = "Nigora Omarova").isUploadedBy("Botir Muzrabov")).isFalse()
             assertThat(list[0].copy(creatorLabel = null).isUploadedBy(null)).isFalse()
+            // The backend's flag wins over the name.
+            assertThat(
+                list[0].copy(creatorLabel = "Botir Muzrabov", uploadedByPatient = false).isUploadedBy("Botir Muzrabov"),
+            ).isFalse()
+            assertThat(list[0].copy(creatorLabel = "Dr. X", creatorType = "PATIENT").isUploadedBy(null)).isTrue()
+            assertThat(list[0].copy(creatorLabel = "Patient", creatorType = "DOCTOR").isUploadedBy(null)).isFalse()
         }
 
     @Test

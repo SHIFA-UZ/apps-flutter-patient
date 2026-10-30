@@ -175,6 +175,21 @@ fun sanitizeError(
     }
 }
 
-/** 01 §9.3: the localized text to show for a failure. */
-fun Throwable.toUserMessage(): StringResource =
-    (this as? ApiException)?.message?.let(MESSAGES::get) ?: Res.string.errorSomethingWentWrong
+// The backend's error codes (its `shared/ErrorCode.kt`) that have a text here; a code is stabler than the message.
+private val CODES: Map<String, StringResource> =
+    mapOf(
+        "RATE_LIMITED" to Res.string.errorTooManyRequests,
+        "ACCOUNT_DISABLED" to Res.string.errorAccountIsDisabled,
+        "SESSION_EXPIRED" to Res.string.errorInvalidOrExpiredToken,
+        "SESSION_INVALID" to Res.string.errorInvalidOrExpiredToken,
+        "TOKEN_INVALID" to Res.string.errorInvalidOrExpiredToken,
+    )
+
+/**
+ * 01 §9.3: the localized text to show for a failure: a known code first (it is more specific than the status default
+ * `sanitizeError` may have put in the message), else a known message, else the generic text.
+ */
+fun Throwable.toUserMessage(): StringResource {
+    val e = this as? ApiException ?: return Res.string.errorSomethingWentWrong
+    return e.code?.let(CODES::get) ?: e.message?.let(MESSAGES::get) ?: Res.string.errorSomethingWentWrong
+}

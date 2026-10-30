@@ -21,9 +21,13 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import org.junit.Test
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.errorAccountIsDisabled
+import shifa.composeapp.generated.resources.errorLoadingNotifications
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
 import shifa.uz.data.api.createHttpClient
+import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsQuery
 import shifa.uz.data.doctors.DoctorsRepository
@@ -139,6 +143,26 @@ class HomeRepositoriesTest {
             replyJson("""{"count":12}""")
             assertThat(NotificationsRepository(client).unreadCount().getOrThrow()).isEqualTo(12)
             assertThat(path).isEqualTo("/api/notifications/unread/count")
+        }
+
+    @Test
+    fun `an error carries the backend's code, which localizes an unknown message`() =
+        runTest {
+            replyJson(
+                """{"error":403,"message":"Account disabled by an administrator","status":403,"code":"ACCOUNT_DISABLED"}""",
+                HttpStatusCode.Forbidden,
+            )
+
+            val e = NotificationsRepository(client).unreadCount().exceptionOrNull() as ApiException
+
+            assertThat(e).isInstanceOf(ApiException.Forbidden::class.java)
+            assertThat(e.code).isEqualTo("ACCOUNT_DISABLED")
+            assertThat(e.toUserMessage()).isEqualTo(Res.string.errorAccountIsDisabled)
+
+            replyJson("""{"error":500,"message":"Unhandled","status":500}""", HttpStatusCode.InternalServerError)
+            val plain = NotificationsRepository(client).unreadCount().exceptionOrNull() as ApiException
+            assertThat(plain.code).isNull()
+            assertThat(plain.toUserMessage()).isEqualTo(Res.string.errorLoadingNotifications)
         }
 
     @Test

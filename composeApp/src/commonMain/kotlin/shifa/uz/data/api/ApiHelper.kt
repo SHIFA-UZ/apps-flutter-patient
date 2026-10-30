@@ -41,9 +41,10 @@ suspend inline fun <reified T> apiCall(
     val status = response.status.value
     if (!response.status.isSuccess()) {
         val auth = "/auth/" in response.call.request.url.encodedPath
-        val raw = errorText(response)
+        val error = errorBody(response)
+        val raw = error?.message ?: error?.error ?: errorRawText(response)
         logFailure(response, raw)
-        return Result.failure(ApiException.of(status, sanitizeError(status, raw, defaultMessage, auth)))
+        return Result.failure(ApiException.of(status, sanitizeError(status, raw, defaultMessage, auth), error?.code))
     }
     return try {
         Result.success(response.body<T>())
@@ -75,20 +76,20 @@ internal fun networkErrorMessage(e: Exception) =
         else -> NETWORK_ERROR
     }
 
-// 15 §1.6: `message`, else `error`, else the raw body. Lenient: the backend sends `error` as the status number.
+// 15 §1.6: the body as `{message, error, code}`, or null when it isn't that JSON. Lenient: `error` may be the status number.
 @PublishedApi
-internal suspend fun errorText(response: HttpResponse): String? {
-    val text =
-        try {
-            response.bodyAsText()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return null
-        }
-    val error = runCatching { apiJson.decodeFromString<ApiError>(text) }.getOrNull()
-    return error?.message ?: error?.error ?: text
-}
+internal suspend fun errorBody(response: HttpResponse): ApiError? =
+    errorRawText(response)?.let { text -> runCatching { apiJson.decodeFromString<ApiError>(text) }.getOrNull() }
+
+@PublishedApi
+internal suspend fun errorRawText(response: HttpResponse): String? =
+    try {
+        response.bodyAsText()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
+    }
 
 /** A JSON array, or the array under [key]. Items that don't decode are skipped; any other shape is empty (B2, T1). */
 internal inline fun <reified T> JsonElement.items(key: String? = null): List<T> {
