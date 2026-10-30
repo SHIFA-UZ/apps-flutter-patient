@@ -15,11 +15,13 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.accountDeletedSuccess
 import shifa.uz.data.auth.AuthRepository
+import shifa.uz.data.debug.BackendChoice
 import shifa.uz.data.debug.DemoMode
 import shifa.uz.data.storage.languageStorage
 import shifa.uz.ui.forgotpassword.ForgotPasswordScreen
 import shifa.uz.ui.login.LoginScreen
 import shifa.uz.ui.navigation.MainScreen
+import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.RegisterScreen
 import shifa.uz.ui.splash.SplashScreen
 import shifa.uz.ui.theme.ShifaTheme
@@ -32,57 +34,66 @@ private enum class Screen { Splash, Login, Register, ForgotPassword, Home }
 fun App() {
     val language by languageStorage.language.collectAsState()
     ProvideAppLocale(language.code) {
-        // Debug menu → Demo data swaps the backend; everything restarts from the splash on it.
+        // Debug menu → Demo data or Development backend swaps the backend; everything restarts from the splash on it.
         val demo by DemoMode.enabled.collectAsState()
+        val backend by BackendChoice.current.collectAsState()
         ShifaTheme {
-            key(demo) {
-                var screen by rememberSaveable { mutableStateOf(Screen.Splash) }
-                // Login says so once after the account is deleted (14 §3.5).
-                var accountDeleted by rememberSaveable { mutableStateOf(false) }
-                val auth = remember { AuthRepository() }
-                val scope = rememberCoroutineScope()
-
-                fun show(next: Screen) {
-                    accountDeleted = false
-                    screen = next
-                }
-                Crossfade(screen) {
-                    when (it) {
-                        Screen.Splash ->
-                            SplashScreen(auth::restoreSession, onFinished = { signedIn ->
-                                screen = if (signedIn) Screen.Home else Screen.Login
-                            })
-                        Screen.Login ->
-                            LoginScreen(
-                                onSignedIn = { show(Screen.Home) },
-                                onForgotPassword = { show(Screen.ForgotPassword) },
-                                onCreateAccount = { show(Screen.Register) },
-                                notice = Res.string.accountDeletedSuccess.takeIf { accountDeleted },
-                            )
-                        Screen.Register ->
-                            RegisterScreen(onRegistered = { screen = Screen.Home }, onClose = { screen = Screen.Login })
-                        Screen.ForgotPassword ->
-                            ForgotPasswordScreen(
-                                onSignedIn = { screen = Screen.Home },
-                                onClose = { screen = Screen.Login },
-                            )
-                        Screen.Home ->
-                            MainScreen(
-                                // Awaited, so the token is gone before Login shows (Flutter didn't wait).
-                                onLogOut = {
-                                    scope.launch {
-                                        auth.logout()
-                                        screen = Screen.Login
-                                    }
-                                },
-                                onAccountDeleted = {
-                                    accountDeleted = true
-                                    screen = Screen.Login
-                                },
-                            )
-                    }
+            key(demo, backend) {
+                // Fresh ViewModels too: Login's repositories hold the client of the backend they were created on.
+                ScopedViewModels {
+                    AppScreens()
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AppScreens() {
+    var screen by rememberSaveable { mutableStateOf(Screen.Splash) }
+    // Login says so once after the account is deleted (14 §3.5).
+    var accountDeleted by rememberSaveable { mutableStateOf(false) }
+    val auth = remember { AuthRepository() }
+    val scope = rememberCoroutineScope()
+
+    fun show(next: Screen) {
+        accountDeleted = false
+        screen = next
+    }
+    Crossfade(screen) {
+        when (it) {
+            Screen.Splash ->
+                SplashScreen(auth::restoreSession, onFinished = { signedIn ->
+                    screen = if (signedIn) Screen.Home else Screen.Login
+                })
+            Screen.Login ->
+                LoginScreen(
+                    onSignedIn = { show(Screen.Home) },
+                    onForgotPassword = { show(Screen.ForgotPassword) },
+                    onCreateAccount = { show(Screen.Register) },
+                    notice = Res.string.accountDeletedSuccess.takeIf { accountDeleted },
+                )
+            Screen.Register ->
+                RegisterScreen(onRegistered = { screen = Screen.Home }, onClose = { screen = Screen.Login })
+            Screen.ForgotPassword ->
+                ForgotPasswordScreen(
+                    onSignedIn = { screen = Screen.Home },
+                    onClose = { screen = Screen.Login },
+                )
+            Screen.Home ->
+                MainScreen(
+                    // Awaited, so the token is gone before Login shows (Flutter didn't wait).
+                    onLogOut = {
+                        scope.launch {
+                            auth.logout()
+                            screen = Screen.Login
+                        }
+                    },
+                    onAccountDeleted = {
+                        accountDeleted = true
+                        screen = Screen.Login
+                    },
+                )
         }
     }
 }

@@ -23,6 +23,7 @@ data class FakePush(
 @Stable
 data class DebugUiState(
     val demo: Boolean = false,
+    val development: Boolean = false, // the development backend instead of production
     val appointmentId: String? = null,
     val taskId: String? = null,
     val documentId: String? = null,

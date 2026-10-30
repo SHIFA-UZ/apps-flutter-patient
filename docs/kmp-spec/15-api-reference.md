@@ -23,7 +23,12 @@ Conventions used in this document:
 | `GOOGLE_MAPS_API_KEY` define | Defaults to `''`. See §4.1. | `app_config.dart:52` |
 | `publicBaseUrl` (media) | Hardcoded to `http://localhost:8090`, or `http://10.0.2.2:8090` on Android. See §1.12. | `api_client.dart:42-50` |
 
-> CLAUDE.md is out of date here. It describes a `FLAVOR` define with localhost:8080 and 9090 defaults. The current code has **no FLAVOR handling and no localhost API default**.
+> The table above describes the Flutter app. **KMP app (2026-10-30):** `ApiConfig.BASE_URL` is the production
+> `/api/` base, a constant with no build-time override; `ApiConfig.DEV_BASE_URL` is the development backend
+> `https://api-dev.shifa.uz/api/` (deployed from the backend's `main`, seeded with `seed.patient1@shifa.dev` /
+> `Dev12345!`). Debug builds switch between them in Profile → Debug menu → Development backend (`BackendChoice`);
+> release builds always use production. `https://api.shifa.uz` is the production name now; the Railway host above
+> stays alive for the store builds that call it. There is no media `publicBaseUrl`: file URLs come absolute from the API.
 
 All paths in this document are relative to `/api`. Example: `GET /patients/me/profile` means `GET https://…railway.app/api/patients/me/profile`.
 

@@ -41,7 +41,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
-import shifa.uz.data.api.ApiConfig.BASE_URL
 import shifa.uz.data.api.ApiConfig.Endpoints
 import shifa.uz.data.api.apiJson
 import shifa.uz.data.api.createHttpEngine
@@ -133,9 +132,11 @@ class DemoBackend(
         body: String,
     ): Reply? {
         val get = request.method == HttpMethod.Get
-        // Other hosts: files such as the demo PDF.
-        if (request.url.host != Url(BASE_URL).host) return if (get) null else refused()
-        val path = request.url.encodedPath.removePrefix(Url(BASE_URL).encodedPath)
+        // Other hosts: files such as the demo PDF. The API host is the chosen backend's (production or development).
+        val api =
+            Backend.entries.map { Url(it.baseUrl) }.firstOrNull { it.host == request.url.host }
+                ?: return if (get) null else refused()
+        val path = request.url.encodedPath.removePrefix(api.encodedPath)
         if (path.startsWith("auth/")) return null
         val p = path.split('/')
         val post = request.method == HttpMethod.Post

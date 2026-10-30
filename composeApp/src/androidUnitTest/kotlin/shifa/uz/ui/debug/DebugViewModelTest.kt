@@ -2,6 +2,7 @@ package shifa.uz.ui.debug
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.chat.ChatRepository
+import shifa.uz.data.debug.Backend
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PatientDocument
@@ -35,6 +37,9 @@ class DebugViewModelTest {
     private val now = Instant.parse("2026-10-11T09:00:00Z")
     private var demo: Boolean? = null
     private var resets = 0
+    private var backend: Backend? = null
+    private var signOuts = 0
+    private val signedOut = CompletableDeferred<Unit>()
 
     private val classToTest by lazy {
         DebugViewModel(
@@ -45,6 +50,12 @@ class DebugViewModelTest {
             MutableStateFlow(true),
             setDemo = { demo = it },
             resetDemo = { resets++ },
+            backend = MutableStateFlow(Backend.Production),
+            setBackend = { backend = it },
+            signOut = {
+                signedOut.await()
+                signOuts++
+            },
             clock = { now },
         )
     }
@@ -76,6 +87,26 @@ class DebugViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `switching the backend signs out first, then points the app at development`() =
+        runTest {
+            classToTest.state.test {
+                awaitItem()
+                advanceUntilIdle()
+                assertThat(expectMostRecentItem().development).isFalse()
+            }
+
+            classToTest.onDevelopmentChange(true)
+            advanceUntilIdle()
+            // Not switched while the sign-out (P7 "" on the old backend) is still running.
+            assertThat(backend).isNull()
+
+            signedOut.complete(Unit)
+            advanceUntilIdle()
+            assertThat(signOuts).isEqualTo(1)
+            assertThat(backend).isEqualTo(Backend.Development)
+        }
 
     @Test
     fun `fake pushes link the next open visit, an open task and the first document, without a notification id`() =

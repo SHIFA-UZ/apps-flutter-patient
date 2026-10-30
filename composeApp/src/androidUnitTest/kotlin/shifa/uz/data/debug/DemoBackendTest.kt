@@ -13,6 +13,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.junit.Test
+import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.createHttpClient
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.chat.ChatRepository
@@ -46,6 +47,20 @@ class DemoBackendTest {
             TokenStorage(MapSettings()).apply { token = "t0k" },
             DemoBackend({ now }, tashkent, passthrough = { HttpClient(real) }).engine(),
         )
+
+    @Test
+    fun `the demo answers on the development host too`() =
+        runTest {
+            val dev =
+                createHttpClient(
+                    TokenStorage(MapSettings()).apply { token = "t0k" },
+                    DemoBackend({ now }, tashkent, passthrough = { HttpClient(real) }).engine(),
+                    ApiConfig.DEV_BASE_URL,
+                )
+
+            assertThat(NotificationsRepository(dev).unreadCount().getOrThrow()).isEqualTo(7)
+            assertThat(real.requestHistory).isEmpty()
+        }
 
     @Test
     fun `the seed has a visit to join now, a pending one and an unpaid one`() =

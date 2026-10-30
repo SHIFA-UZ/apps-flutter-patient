@@ -21,6 +21,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import org.junit.Test
+import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
 import shifa.uz.data.api.createHttpClient
 import shifa.uz.data.bookings.BookingsRepository
@@ -48,6 +49,21 @@ class HomeRepositoriesTest {
     }
 
     private val path get() = engine.requestHistory.last().url.encodedPath
+
+    @Test
+    fun `a client for the development backend sends there, with the token`() =
+        runTest {
+            val storage = TokenStorage(MapSettings()).apply { token = "t0k" }
+            val dev = createHttpClient(storage, engine, ApiConfig.DEV_BASE_URL)
+            replyJson("""{"count":1}""")
+
+            NotificationsRepository(dev).unreadCount().getOrThrow()
+
+            val request = engine.requestHistory.last()
+            assertThat(request.url.host).isEqualTo("api-dev.shifa.uz")
+            assertThat(request.url.encodedPath).isEqualTo("/api/notifications/unread/count")
+            assertThat(request.headers["Authorization"]).isEqualTo("Bearer t0k")
+        }
 
     @Test
     fun `B2 reads numeric ids and a zone suffix, and skips items that don't decode`() =

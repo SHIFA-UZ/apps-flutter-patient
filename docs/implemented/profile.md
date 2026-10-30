@@ -35,6 +35,7 @@
 ## Debug menu (`ui/debug/DebugScreen.kt`, debug builds only)
 
 - Profile → Settings → "Debug menu", shown only when `isDebugBuild` (`BuildConfig.DEBUG`, `Platform.isDebugBinary`). English only; release builds have no row and ignore the saved demo flag.
+- **Development backend** (`data/debug/BackendChoice.kt`): a switch that points every call at `https://api-dev.shifa.uz` (seeded test data: `seed.patient1@shifa.dev` / `Dev12345!`) instead of production. Turning it either way signs out first (P7 `""` on the old backend, token wiped) and re-keys `App`, so the splash and Login come back on the other backend. One Ktor client per backend; the flag is kept across launches and ignored by release builds.
 - **Demo data** (`data/debug/DemoBackend.kt`): the shared `httpClient` switches to a Ktor `MockEngine` with in-memory data seeded around now:
   - a video visit whose join window is open, a REQUESTED one, an unpaid one, a cancellable one, past ones;
   - two demo doctors with the three payment kinds (a free video service, a pay-now video one, a pay-in-clinic one that can't be video; the second doctor's is pay now in person), two clinics for the first, and slots 09:00 to 16:30. `payments/methods` offers Click and Stripe for pay now; B3 with a provider holds the slot for 15 minutes, and its checkout (shifa.uz) "pays" itself 15 s later, so the payment page closes to Payment Completed;

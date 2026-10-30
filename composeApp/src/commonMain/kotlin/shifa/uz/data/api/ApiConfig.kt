@@ -1,8 +1,10 @@
 package shifa.uz.data.api
 
 object ApiConfig {
-    // 15 §1.1: every build uses production. Endpoint paths are relative to /api/.
+    // 15 §1.1: every build uses production; a debug build can switch to development (Debug menu, `BackendChoice`).
+    // Endpoint paths are relative to /api/.
     const val BASE_URL = "https://shifa-doc-backend-mvp-production.up.railway.app/api/"
+    const val DEV_BASE_URL = "https://api-dev.shifa.uz/api/"
     const val TIMEOUT_MS = 30_000L
 
     object Endpoints {
