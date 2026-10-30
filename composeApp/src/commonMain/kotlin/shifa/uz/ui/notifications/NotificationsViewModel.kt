@@ -61,7 +61,7 @@ class NotificationsViewModel(
 
     /** N1a's first page. The list stays on screen meanwhile; a page still on its way is dropped. */
     fun load() {
-        if (_state.value.isLoading) return
+        if (_state.value.isLoading || _state.value.isMarkingRead) return
         nextPage?.cancel()
         update { copy(isLoading = true, isLoadingMore = false) }
         firstPage =
@@ -134,8 +134,12 @@ class NotificationsViewModel(
     /** A task notification's check-in went through (T4 is the tray's own). */
     fun onCheckInSubmitted() = update { copy(error = null, notice = Res.string.checkInSubmittedSuccessfully) }
 
-    /** N4. A page read before it would bring back unread items, so pages on their way are dropped and none starts. */
+    /**
+     * N4, once the list is there and one at a time. A page read before it would bring back unread items, so a page
+     * on its way is dropped and none starts (no refresh either) until N4 has answered.
+     */
     fun markAllRead() {
+        if (_state.value.notifications == null || _state.value.isMarkingRead) return
         firstPage?.cancel()
         nextPage?.cancel()
         update { copy(isLoading = false, isLoadingMore = false, isMarkingRead = true) }

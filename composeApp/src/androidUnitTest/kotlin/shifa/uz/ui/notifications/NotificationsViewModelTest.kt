@@ -286,6 +286,8 @@ class NotificationsViewModelTest {
             runCurrent()
             assertThat(state.isMarkingRead).isTrue()
             classToTest.loadMore() // refused while N4 runs
+            classToTest.load() // so is a refresh
+            classToTest.markAllRead() // and a second N4
             gate.complete(Unit)
             marked.complete(Unit)
             advanceUntilIdle()
@@ -294,6 +296,20 @@ class NotificationsViewModelTest {
             assertThat(state.notifications!!.map { it.id }).containsExactly(4, 3, 1, 2).inOrder()
             assertThat(state.notifications!!.all { it.isRead }).isTrue()
             verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(1), any()) }
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(0), any()) }
+            verifyBlocking(notifications, times(1)) { markAllRead() }
+        }
+
+    @Test
+    fun `Mark all read waits for the first list`() =
+        runTest {
+            classToTest = NotificationsViewModel(notifications, bookings, documents, tasks)
+            classToTest.markAllRead() // before the first page is in: ignored, the list still loads
+            advanceUntilIdle()
+
+            assertThat(state.notifications).isEqualTo(all)
+            assertThat(state.isMarkingRead).isFalse()
+            verifyBlocking(notifications, never()) { markAllRead() }
         }
 
     @Test

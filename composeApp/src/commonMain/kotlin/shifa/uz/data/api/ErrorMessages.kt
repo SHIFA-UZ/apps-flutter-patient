@@ -167,8 +167,9 @@ private val CODE_MESSAGES: Map<String, String> =
     )
 
 /**
- * 01 §8: a known-safe backend message passes through (a `Login error: ` prefix is unwrapped), else a known error
- * [code] gives its text. Anything else, technical or not, is replaced by a status default or [defaultMessage].
+ * 01 §8: a known-safe backend message passes through (a `Login error: ` prefix is unwrapped); on the auth paths an
+ * unknown 401 / 404 keeps its account text; else a known error [code] gives its text. Anything else, technical or not,
+ * is replaced by a status default or [defaultMessage].
  */
 fun sanitizeError(
     status: Int,
@@ -178,13 +179,12 @@ fun sanitizeError(
     code: String? = null,
 ): String {
     raw?.trim()?.removePrefix("Login error: ")?.takeIf { it in MESSAGES }?.let { return it }
-    code?.let(CODE_MESSAGES::get)?.let { return it }
     // The 401/404 texts are the auth sanitizer's (01 §8): elsewhere a 404 isn't "No account found".
     return when {
+        auth && status == 401 -> INVALID_CREDENTIALS
+        auth && status == 404 -> NO_ACCOUNT_FOUND
+        code in CODE_MESSAGES -> CODE_MESSAGES.getValue(code!!)
         status == 429 -> TOO_MANY_REQUESTS
-        !auth -> defaultMessage
-        status == 401 -> INVALID_CREDENTIALS
-        status == 404 -> NO_ACCOUNT_FOUND
         else -> defaultMessage
     }
 }
