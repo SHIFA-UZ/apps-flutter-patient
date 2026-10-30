@@ -24,6 +24,7 @@ import org.junit.Test
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorAccountIsDisabled
 import shifa.composeapp.generated.resources.errorLoadingNotifications
+import shifa.composeapp.generated.resources.errorTooManyVerificationRequests
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
 import shifa.uz.data.api.createHttpClient
@@ -158,6 +159,14 @@ class HomeRepositoriesTest {
             assertThat(e).isInstanceOf(ApiException.Forbidden::class.java)
             assertThat(e.code).isEqualTo("ACCOUNT_DISABLED")
             assertThat(e.toUserMessage()).isEqualTo(Res.string.errorAccountIsDisabled)
+
+            // A known backend message is more specific than its code.
+            replyJson(
+                """{"message":"Too many verification requests. Please try again later.","status":429,"code":"RATE_LIMITED"}""",
+                HttpStatusCode.TooManyRequests,
+            )
+            val specific = NotificationsRepository(client).unreadCount().exceptionOrNull() as ApiException
+            assertThat(specific.toUserMessage()).isEqualTo(Res.string.errorTooManyVerificationRequests)
 
             replyJson("""{"error":500,"message":"Unhandled","status":500}""", HttpStatusCode.InternalServerError)
             val plain = NotificationsRepository(client).unreadCount().exceptionOrNull() as ApiException

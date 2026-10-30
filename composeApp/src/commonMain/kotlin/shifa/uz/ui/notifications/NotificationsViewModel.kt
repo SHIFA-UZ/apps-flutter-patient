@@ -48,6 +48,7 @@ class NotificationsViewModel(
     private val _read = Channel<Unit>(Channel.CONFLATED)
     val read: Flow<Unit> = _read.receiveAsFlow()
 
+    private var firstPage: Job? = null
     private var nextPage: Job? = null
 
     init {
@@ -63,23 +64,24 @@ class NotificationsViewModel(
         if (_state.value.isLoading) return
         nextPage?.cancel()
         update { copy(isLoading = true, isLoadingMore = false) }
-        viewModelScope.launch {
-            notifications.getNotificationsPage(0).fold(
-                onSuccess = {
-                    update {
-                        copy(
-                            notifications = it.items,
-                            page = 0,
-                            hasMore = !it.last,
-                            isLoadingMore = false,
-                            isLoading = false,
-                            error = null,
-                        )
-                    }
-                },
-                onFailure = { fail(it) },
-            )
-        }
+        firstPage =
+            viewModelScope.launch {
+                notifications.getNotificationsPage(0).fold(
+                    onSuccess = {
+                        update {
+                            copy(
+                                notifications = it.items,
+                                page = 0,
+                                hasMore = !it.last,
+                                isLoadingMore = false,
+                                isLoading = false,
+                                error = null,
+                            )
+                        }
+                    },
+                    onFailure = { fail(it) },
+                )
+            }
     }
 
     /**
@@ -88,7 +90,8 @@ class NotificationsViewModel(
      */
     fun loadMore() {
         val current = _state.value
-        if (!current.hasMore || current.isLoadingMore || current.isLoading || current.notifications == null) return
+        if (current.notifications == null) return
+        if (!current.hasMore || current.isLoadingMore || current.isLoading || current.isMarkingRead) return
         update { copy(isLoadingMore = true) }
         nextPage =
             viewModelScope.launch {
@@ -131,18 +134,28 @@ class NotificationsViewModel(
     /** A task notification's check-in went through (T4 is the tray's own). */
     fun onCheckInSubmitted() = update { copy(error = null, notice = Res.string.checkInSubmittedSuccessfully) }
 
-    /** N4. A page still on its way would bring items read before N4 as unread, so it is dropped. */
+    /** N4. A page read before it would bring back unread items, so pages on their way are dropped and none starts. */
     fun markAllRead() {
+        firstPage?.cancel()
         nextPage?.cancel()
-        update { copy(isLoadingMore = false) }
+        update { copy(isLoading = false, isLoadingMore = false, isMarkingRead = true) }
         viewModelScope.launch {
             notifications.markAllRead().fold(
                 onSuccess = {
                     markedRead { true }
-                    update { copy(error = null, notice = Res.string.allNotificationsMarkedAsRead) }
+                    update {
+                        copy(
+                            error = null,
+                            notice = Res.string.allNotificationsMarkedAsRead,
+                            isMarkingRead = false,
+                        )
+                    }
                     _read.send(Unit)
                 },
-                onFailure = { fail(it) },
+                onFailure = {
+                    update { copy(isMarkingRead = false) }
+                    fail(it)
+                },
             )
         }
     }

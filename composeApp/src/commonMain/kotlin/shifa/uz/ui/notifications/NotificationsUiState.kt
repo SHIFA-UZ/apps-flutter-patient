@@ -63,6 +63,7 @@ data class NotificationsUiState(
     val page: Int = 0,
     val hasMore: Boolean = false,
     val isLoadingMore: Boolean = false,
+    val isMarkingRead: Boolean = false, // N4 in flight: no page may land meanwhile
     val error: StringResource? = null,
     val notice: StringResource? = null,
     val selected: AppNotification? = null,

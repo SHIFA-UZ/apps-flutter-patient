@@ -187,8 +187,17 @@ internal fun NotificationsContent(
     // The next page when the end is reached (or the list is shorter than the screen), one request at a time.
     val scroll = rememberScrollState()
     val atEnd = !scroll.canScrollForward
-    LaunchedEffect(atEnd, state.hasMore, state.isLoadingMore, state.isLoading, state.notifications?.size) {
-        if (atEnd && state.hasMore && !state.isLoadingMore && !state.isLoading && state.notifications != null) {
+    LaunchedEffect(
+        atEnd,
+        state.hasMore,
+        state.isLoadingMore,
+        state.isLoading,
+        state.isMarkingRead,
+        state.notifications?.size,
+    ) {
+        if (atEnd && state.hasMore && !state.isLoadingMore && !state.isLoading && !state.isMarkingRead &&
+            state.notifications != null
+        ) {
             onLoadMore()
         }
     }

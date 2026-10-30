@@ -55,6 +55,8 @@ const val FAILED_TO_MARK_CONVERSATION_READ = "Failed to mark as read" // Swallow
 const val FAILED_TO_SEARCH_USERS = "Failed to search users" // No l10n key: shows as errorSomethingWentWrong.
 const val FAILED_TO_UPLOAD_ATTACHMENT = "Failed to upload image"
 private const val INVALID_CREDENTIALS = "Invalid credentials"
+private const val ACCOUNT_DISABLED = "Account is disabled"
+private const val INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token"
 private const val NO_ACCOUNT_FOUND = "No account found"
 const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
 
@@ -72,12 +74,12 @@ private val MESSAGES: Map<String, StringResource> =
         "Invalid or expired email verification code" to Res.string.errorInvalidOrExpiredEmailVerificationCode,
         "Invalid or expired verification code" to Res.string.invalidVerificationCode,
         "Invalid phone number" to Res.string.errorInvalidPhoneNumber,
-        "Account is disabled" to Res.string.errorAccountIsDisabled,
+        ACCOUNT_DISABLED to Res.string.errorAccountIsDisabled,
         "Account is disabled." to Res.string.errorAccountIsDisabled,
         "Not a doctor account" to Res.string.errorNotADoctorAccount,
         "Missing Bearer token" to Res.string.errorMissingBearerToken,
         "Firebase verification not configured" to Res.string.errorFirebaseVerificationNotConfigured,
-        "Invalid or expired token" to Res.string.errorInvalidOrExpiredToken,
+        INVALID_OR_EXPIRED_TOKEN to Res.string.errorInvalidOrExpiredToken,
         "Access restricted to doctors." to Res.string.errorAccessRestrictedToDoctors,
         "Your account has been blocked." to Res.string.errorYourAccountHasBeenBlocked,
         "Invalid key" to Res.string.errorInvalidKey,
@@ -154,17 +156,29 @@ private val MESSAGES: Map<String, StringResource> =
         CONNECTION_TIMED_OUT to Res.string.errorConnectionTimedOut,
     )
 
+// The backend's error codes (its `shared/ErrorCode.kt`) with a text here, for when the message isn't a known one.
+private val CODE_MESSAGES: Map<String, String> =
+    mapOf(
+        "RATE_LIMITED" to TOO_MANY_REQUESTS,
+        "ACCOUNT_DISABLED" to ACCOUNT_DISABLED,
+        "SESSION_EXPIRED" to INVALID_OR_EXPIRED_TOKEN,
+        "SESSION_INVALID" to INVALID_OR_EXPIRED_TOKEN,
+        "TOKEN_INVALID" to INVALID_OR_EXPIRED_TOKEN,
+    )
+
 /**
- * 01 §8: a known-safe backend message passes through (a `Login error: ` prefix is unwrapped).
- * Anything else, technical or not, is replaced by a status default or [defaultMessage].
+ * 01 §8: a known-safe backend message passes through (a `Login error: ` prefix is unwrapped), else a known error
+ * [code] gives its text. Anything else, technical or not, is replaced by a status default or [defaultMessage].
  */
 fun sanitizeError(
     status: Int,
     raw: String?,
     defaultMessage: String,
     auth: Boolean = true,
+    code: String? = null,
 ): String {
     raw?.trim()?.removePrefix("Login error: ")?.takeIf { it in MESSAGES }?.let { return it }
+    code?.let(CODE_MESSAGES::get)?.let { return it }
     // The 401/404 texts are the auth sanitizer's (01 §8): elsewhere a 404 isn't "No account found".
     return when {
         status == 429 -> TOO_MANY_REQUESTS
@@ -175,21 +189,6 @@ fun sanitizeError(
     }
 }
 
-// The backend's error codes (its `shared/ErrorCode.kt`) that have a text here; a code is stabler than the message.
-private val CODES: Map<String, StringResource> =
-    mapOf(
-        "RATE_LIMITED" to Res.string.errorTooManyRequests,
-        "ACCOUNT_DISABLED" to Res.string.errorAccountIsDisabled,
-        "SESSION_EXPIRED" to Res.string.errorInvalidOrExpiredToken,
-        "SESSION_INVALID" to Res.string.errorInvalidOrExpiredToken,
-        "TOKEN_INVALID" to Res.string.errorInvalidOrExpiredToken,
-    )
-
-/**
- * 01 §9.3: the localized text to show for a failure: a known code first (it is more specific than the status default
- * `sanitizeError` may have put in the message), else a known message, else the generic text.
- */
-fun Throwable.toUserMessage(): StringResource {
-    val e = this as? ApiException ?: return Res.string.errorSomethingWentWrong
-    return e.code?.let(CODES::get) ?: e.message?.let(MESSAGES::get) ?: Res.string.errorSomethingWentWrong
-}
+/** 01 §9.3: the localized text to show for a failure. */
+fun Throwable.toUserMessage(): StringResource =
+    (this as? ApiException)?.message?.let(MESSAGES::get) ?: Res.string.errorSomethingWentWrong

@@ -112,7 +112,7 @@ from the backend's `shared/ErrorCode.kt` (`VALIDATION`, `MALFORMED_BODY`, `BAD_R
 `TOKEN_INVALID`, `ACCOUNT_DISABLED`, `INTERNAL`, `UPSTREAM`, `UNAVAILABLE`); validation errors add `errors: {field: reason}`.
 A request without a usable token on a protected route is a 401 with `UNAUTHORIZED`, `TOKEN_INVALID` or
 `SESSION_EXPIRED` (the app signs out on any 401). `ApiError` reads `code`, `ApiException.code` carries it, and
-`toUserMessage()` falls back on it when the English `message` isn't a known one. The rest of this section describes
+`sanitizeError` falls back on a known code's text when the English `message` isn't a known one. The rest of this section describes
 the Flutter app's tolerant reading, which the KMP app keeps for older backends.
 
 The backend error envelope was **UNVERIFIED** when this was written. The client tolerates all of the following shapes:

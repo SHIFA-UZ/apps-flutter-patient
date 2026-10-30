@@ -44,7 +44,8 @@ suspend inline fun <reified T> apiCall(
         val error = errorBody(response)
         val raw = error?.message ?: error?.error ?: errorRawText(response)
         logFailure(response, raw)
-        return Result.failure(ApiException.of(status, sanitizeError(status, raw, defaultMessage, auth), error?.code))
+        val code = error?.code
+        return Result.failure(ApiException.of(status, sanitizeError(status, raw, defaultMessage, auth, code), code))
     }
     return try {
         Result.success(response.body<T>())

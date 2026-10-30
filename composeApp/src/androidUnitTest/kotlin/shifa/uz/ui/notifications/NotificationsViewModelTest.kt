@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -249,6 +250,8 @@ class NotificationsViewModelTest {
             advanceUntilIdle()
             assertThat(state.hasMore).isTrue()
             classToTest.loadMore()
+            runCurrent() // the request is out
+            verifyBlocking(notifications, times(2)) { getNotificationsPage(eq(1), any()) }
             classToTest.load()
             gate.complete(Unit)
             advanceUntilIdle()
@@ -257,6 +260,40 @@ class NotificationsViewModelTest {
             assertThat(state.page).isEqualTo(0)
             assertThat(state.hasMore).isTrue()
             assertThat(state.isLoadingMore).isFalse()
+        }
+
+    @Test
+    fun `Mark all read drops a page on its way and blocks the next until it is done`() =
+        runTest {
+            wheneverBlocking { notifications.getNotificationsPage(eq(0), any()) } doReturn
+                Result.success(Page(all, false))
+            val gate = CompletableDeferred<Unit>()
+            val unreadOlder = AppNotification(9, "", "", "NEW_DOCUMENT", "2026-09-25T07:00:00Z")
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doSuspendableAnswer {
+                gate.await()
+                Result.success(Page(listOf(unreadOlder), true))
+            }
+            val marked = CompletableDeferred<Unit>()
+            wheneverBlocking { notifications.markAllRead() } doSuspendableAnswer {
+                marked.await()
+                Result.success(Unit)
+            }
+            open()
+            classToTest.loadMore()
+            runCurrent()
+
+            classToTest.markAllRead()
+            runCurrent()
+            assertThat(state.isMarkingRead).isTrue()
+            classToTest.loadMore() // refused while N4 runs
+            gate.complete(Unit)
+            marked.complete(Unit)
+            advanceUntilIdle()
+
+            assertThat(state.isMarkingRead).isFalse()
+            assertThat(state.notifications!!.map { it.id }).containsExactly(4, 3, 1, 2).inOrder()
+            assertThat(state.notifications!!.all { it.isRead }).isTrue()
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(1), any()) }
         }
 
     @Test
