@@ -18,6 +18,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.atLeast
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.mock
@@ -30,9 +31,11 @@ import shifa.composeapp.generated.resources.bookingSelectService
 import shifa.composeapp.generated.resources.bookingSelectServiceForVideo
 import shifa.composeapp.generated.resources.bookingSlotTaken
 import shifa.composeapp.generated.resources.bookingVideoNoServicesOffered
+import shifa.composeapp.generated.resources.paymentCancelledSlotReleased
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.documents.DocumentsRepository
+import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
@@ -310,17 +313,55 @@ class CreateBookingViewModelTest {
             assertThat(state.pending).isEqualTo(held)
             assertThat(state.paying).isTrue()
 
-            // Back on the booking page the slot stays held, and Complete Payment goes back to the same checkout.
+            // Leaving the page while unpaid releases the held booking (B5) and rescans the day; the slot is free again.
+            wheneverBlocking { bookings.getAppointment("50") } doReturn Result.success(held)
+            wheneverBlocking { bookings.cancel("50") } doReturn Result.success(Unit)
             classToTest.onPaymentClosed()
-            assertThat(state.isHeld(now)).isTrue()
-            classToTest.book()
-            assertThat(state.paying).isTrue()
+            advanceUntilIdle()
+            assertThat(state.pending).isNull()
+            assertThat(state.paying).isFalse()
+            assertThat(state.notice).isEqualTo(Res.string.paymentCancelledSlotReleased)
+            verifyBlocking(bookings) { cancel("50") }
             verifyBlocking(bookings, times(1)) { book(any()) }
+            verifyBlocking(bookings, atLeast(2)) { getSlots("42", LocalDate(2026, 9, 30), 5) }
 
+            // Booked again and paid between the page's last poll and the back press: paid, never cancelled.
+            classToTest.onSlotSelect(first)
+            classToTest.book()
+            advanceUntilIdle()
+            classToTest.onProviderSelect("STRIPE")
+            classToTest.pay()
+            advanceUntilIdle()
+            assertThat(state.pending).isEqualTo(held)
+            val paid = held.copy(status = "CONFIRMED", paymentStatus = Appointment.PAID)
+            wheneverBlocking { bookings.getAppointment("50") } doReturn Result.success(paid)
             classToTest.paid.test {
-                classToTest.onPaymentDone(held.copy(status = "CONFIRMED", paymentStatus = Appointment.PAID))
+                classToTest.onPaymentClosed()
+                advanceUntilIdle()
                 assertThat(awaitItem().id).isEqualTo("50")
+                // The page's own late PAID report is not a second one.
+                classToTest.onPaymentDone(paid)
+                expectNoEvents()
             }
+            assertThat(state.pending).isNull()
+            verifyBlocking(bookings, times(1)) { cancel("50") }
+
+            // When B4 can't answer, nothing is cancelled: a payment may have landed, and the hold expires by itself.
+            classToTest.onSlotSelect(first)
+            classToTest.book()
+            advanceUntilIdle()
+            classToTest.onProviderSelect("STRIPE")
+            classToTest.pay()
+            advanceUntilIdle()
+            wheneverBlocking { bookings.getAppointment("50") } doReturn Result.failure(ApiException.NetworkError("x"))
+            classToTest.onPaymentClosed()
+            classToTest.onPaymentClosed()
+            // A changed choice while the close resolves has no hold left to drop.
+            classToTest.onSlotSelect(second)
+            advanceUntilIdle()
+            assertThat(state.pending).isNull()
+            assertThat(state.paying).isFalse()
+            verifyBlocking(bookings, times(1)) { cancel("50") }
         }
 
     @Test

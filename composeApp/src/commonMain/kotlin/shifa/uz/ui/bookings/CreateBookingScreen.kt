@@ -59,7 +59,6 @@ import shifa.composeapp.generated.resources.completeBooking
 import shifa.composeapp.generated.resources.completePayment
 import shifa.composeapp.generated.resources.confirmPayment
 import shifa.composeapp.generated.resources.consultationServiceFreeBadge
-import shifa.composeapp.generated.resources.continuePayment
 import shifa.composeapp.generated.resources.createBooking
 import shifa.composeapp.generated.resources.documentsAttached
 import shifa.composeapp.generated.resources.ic_check_12
@@ -71,7 +70,6 @@ import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.noAvailableTimeSlots
 import shifa.composeapp.generated.resources.payNow
 import shifa.composeapp.generated.resources.paymentInClinic
-import shifa.composeapp.generated.resources.paymentNotCompletedHeld
 import shifa.composeapp.generated.resources.reason
 import shifa.composeapp.generated.resources.reasonForVisitOptional
 import shifa.composeapp.generated.resources.select
@@ -255,23 +253,9 @@ internal fun CreateBookingContent(
         }
         ShifaPageElement(ShifaPageElementType.ActionTray, Modifier.navigationBarsPadding()) {
             // Above the button, so a booking error stays in sight.
-            Banners(state.error.takeIf { state.methods == null })
-            val held = state.isHeld(now)
-            state.holdEnd?.takeIf { held }?.let {
-                ShifaBanner(
-                    stringResource(Res.string.paymentNotCompletedHeld, formatTime(it)),
-                    Res.drawable.ic_info_16,
-                    ShifaBannerType.Warning,
-                )
-            }
+            Banners(state.error.takeIf { state.methods == null }, state.notice)
             ShifaPrimaryButton(
-                stringResource(
-                    when {
-                        held -> Res.string.continuePayment
-                        state.isPayNow -> Res.string.completePayment
-                        else -> Res.string.completeBooking
-                    },
-                ),
+                stringResource(if (state.isPayNow) Res.string.completePayment else Res.string.completeBooking),
                 onBook,
                 Modifier.fillMaxWidth(),
                 enabled = state.canBook,

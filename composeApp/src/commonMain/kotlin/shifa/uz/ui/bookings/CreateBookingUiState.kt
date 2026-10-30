@@ -1,7 +1,6 @@
 package shifa.uz.ui.bookings
 
 import androidx.compose.runtime.Stable
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 import shifa.uz.data.model.Appointment
@@ -10,7 +9,6 @@ import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.DoctorLocation
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.data.model.PaymentMethod
-import shifa.uz.utils.parseInstant
 
 /**
  * The booking page. The chosen [service] decides the payment (MOBILE_BOOKING_PAYMENT): free and pay later book at
@@ -31,6 +29,7 @@ data class CreateBookingUiState(
     val isUploading: Boolean = false,
     val isBooking: Boolean = false,
     val error: StringResource? = null,
+    val notice: StringResource? = null, // a released hold
     val methods: List<PaymentMethod>? = null, // non-null: the Confirm Payment tray is open
     val provider: String? = null,
     val pending: Appointment? = null, // the PENDING_PAYMENT booking, held until its holdExpiresAt
@@ -56,11 +55,6 @@ data class CreateBookingUiState(
     val price get() = service?.price(locationId.takeUnless { isVideo })?.text
 
     val canAttach get() = documents.size < MAX_BOOKING_DOCUMENTS && !isUploading && !isBooking
-
-    /** The held slot's end; the payment can go on until then. */
-    val holdEnd get() = pending?.let { parseInstant(it.holdExpiresAt) ?: parseInstant(it.payment?.expiresAt) }
-
-    fun isHeld(now: Instant) = pending?.payment?.checkoutUrl != null && holdEnd?.let { now < it } ?: false
 }
 
 // 06 §3.1 step 9.

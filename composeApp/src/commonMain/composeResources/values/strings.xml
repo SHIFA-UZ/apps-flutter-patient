@@ -144,7 +144,6 @@
     <string name="contactInformation">Contact Information</string>
     <string name="contacts">Contacts</string>
     <string name="continueButton">Continue</string>
-    <string name="continuePayment">Continue payment</string>
     <string name="continueToVerification">Continue</string>
     <string name="continueWithEmail">Continue with email</string>
     <string name="continueWithGoogle">Continue with Google</string>
@@ -949,8 +948,8 @@
     <string name="paymentCompleted">Payment Completed</string>
     <string name="paymentInClinic">Payment in clinic</string>
     <string name="paymentSlotHeld">Your slot is held for %1$s</string>
-    <string name="paymentNotCompletedHeld">Payment isn't complete. Your slot is held until %1$s.</string>
     <string name="paymentFailedSlotReleased">The payment was declined, so the slot was released. Please book again.</string>
+    <string name="paymentCancelledSlotReleased">Payment cancelled, so the slot was released. Pick a time to book again.</string>
     <string name="paymentExpiredSlotReleased">Time ran out, so the slot was released. Please book again.</string>
     <string name="paymentRefundSlotTaken">Payment received, but the slot is no longer available. The clinic will refund it.</string>
     <string name="bookAgain">Book again</string>

@@ -201,7 +201,7 @@ Returned by booking, `GET /api/patients/me/appointments` and `GET /api/patients/
   - Booking with `rescheduleAppointmentId` pointing at a locked visit → same `409`
 - Hide/disable the buttons using `canCancel` / `canReschedule`; show a "Contact the clinic to change this visit" hint when `isLocked24h` is true.
 - Cancelling a **paid** visit is allowed (outside 24 h) and sets `refundRequired = true`. Show "Refund will be processed by the clinic".
-- Cancelling a `PENDING_PAYMENT` visit releases the slot. If the patient then pays anyway on the open checkout page, the backend flags `refundRequired = true`.
+- Cancelling a `PENDING_PAYMENT` visit releases the slot. If the patient then pays anyway on the open checkout page, the backend flags `refundRequired = true`. Since 2026-10-30 an **unpaid** `PENDING_PAYMENT` visit can be cancelled inside the 24 h window too (`canCancel` is true for it): closing the checkout must not leave a booking behind. The lock keeps protecting confirmed and paid visits.
 
 ---
 

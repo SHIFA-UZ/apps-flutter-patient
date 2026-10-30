@@ -26,6 +26,7 @@ import shifa.composeapp.generated.resources.bookingSelectServiceForVideo
 import shifa.composeapp.generated.resources.bookingSlotTaken
 import shifa.composeapp.generated.resources.bookingVideoNoServicesOffered
 import shifa.composeapp.generated.resources.failedToBookAppointment
+import shifa.composeapp.generated.resources.paymentCancelledSlotReleased
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
@@ -144,12 +145,11 @@ class CreateBookingViewModel(
         }
     }
 
-    /** 06 §3.1 step 11. A pay-now service opens the Confirm Payment tray instead; a held one opens its payment. */
+    /** 06 §3.1 step 11. A pay-now service opens the Confirm Payment tray instead. */
     fun book() {
         val state = _state.value
         val slot = state.slot ?: return
         if (!state.canBook) return
-        if (state.isHeld(clock())) return update { copy(paying = true, error = null) }
         val missing =
             when {
                 state.isVideo && state.services.isEmpty() -> Res.string.bookingVideoNoServicesOffered
@@ -165,7 +165,7 @@ class CreateBookingViewModel(
                     error = Res.string.failedToBookAppointment,
                 )
             }
-        update { copy(isBooking = true, error = null) }
+        update { copy(isBooking = true, error = null, notice = null) }
         viewModelScope.launch {
             // No second visit at the same start; if B2 fails, the backend decides.
             val taken =
@@ -212,14 +212,52 @@ class CreateBookingViewModel(
         viewModelScope.launch { submit(request(state, slot, doctorId, provider)) }
     }
 
-    /** The payment page closed before an answer: the slot stays held, Complete Payment goes back to it. */
-    fun onPaymentClosed() = update { copy(paying = false) }
+    /**
+     * The payment page closed without PAID (back, or the provider's cancel page): the held booking is released with
+     * B5 and the day rescanned, so no pending visit is left behind. B4 is asked first, because the payment may have
+     * landed since the page's last poll: a paid booking goes on as paid instead of being cancelled for a refund, and
+     * when B4 can't answer nothing is cancelled (the hold expires by itself). A refused B5 (an older backend inside
+     * the 24 h lock) leaves the hold to expire the same way.
+     */
+    fun onPaymentClosed() {
+        val pending = _state.value.pending ?: return update { copy(paying = false) }
+        if (closing == pending.id) return
+        closing = pending.id
+        // The form is free at once, and nothing else (a changed choice, a second close) touches this hold again.
+        update { copy(pending = null, paying = false) }
+        viewModelScope.launch {
+            try {
+                val latest = bookings.getAppointment(pending.id).getOrNull()
+                if (latest != null && latest.isPaid && !latest.isPaymentDead) return@launch reportPaid(latest)
+                if (latest != null) {
+                    bookings.cancel(pending.id).onSuccess {
+                        update { copy(notice = Res.string.paymentCancelledSlotReleased) }
+                    }
+                }
+                loadSlots(_state.value.date)
+            } finally {
+                closing = null
+            }
+        }
+    }
+
+    /** The held booking whose close is being resolved; a second close for it does nothing. */
+    private var closing: String? = null
+
+    /** The booking already reported as paid: the page's own poll and the close-time check can both see PAID. */
+    private var reportedPaid: String? = null
+
+    private fun reportPaid(appointment: Appointment) {
+        if (reportedPaid == appointment.id) return
+        reportedPaid = appointment.id
+        _paid.trySend(appointment)
+    }
 
     /** The payment page saw the booking end: PAID, or the hold / payment died and the slot is free again. */
     fun onPaymentDone(appointment: Appointment) {
         if (appointment.isPaid && !appointment.isPaymentDead) {
-            update { copy(paying = false) }
-            _paid.trySend(appointment)
+            update { copy(pending = null, paying = false) }
+            reportPaid(appointment)
             return
         }
         update { copy(pending = null, paying = false) }

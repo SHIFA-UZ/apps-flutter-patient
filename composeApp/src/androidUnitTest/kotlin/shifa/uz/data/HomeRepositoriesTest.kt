@@ -197,6 +197,46 @@ class HomeRepositoriesTest {
         }
 
     @Test
+    fun `N1a without the endpoint (production's 500, an older 404) falls back to N1 as the only page`() =
+        runTest {
+            reply = {
+                if (it.url.encodedPath.endsWith("/page")) {
+                    respond(
+                        """{"error":500,"message":"Internal server error: NoResourceFoundException","status":500}""",
+                        HttpStatusCode.InternalServerError,
+                        headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                } else {
+                    respond(
+                        """[{"id":5,"title":"t","message":"m","type":"X","createdAt":"2026-09-28T08:00:00Z"}]""",
+                        HttpStatusCode.OK,
+                        headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
+            }
+
+            val page = NotificationsRepository(client).getNotificationsPage(0).getOrThrow()
+
+            assertThat(page.items.map { it.id }).containsExactly(5)
+            assertThat(page.last).isTrue()
+            assertThat(engine.requestHistory.map { it.url.encodedPath })
+                .containsExactly("/api/notifications/page", "/api/notifications").inOrder()
+
+            // A 404 from a newer backend without the endpoint falls back the same way.
+            reply = {
+                if (it.url.encodedPath.endsWith("/page")) {
+                    respond("""{"error":404,"message":"Not found","status":404}""", HttpStatusCode.NotFound)
+                } else {
+                    respond("[]", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                }
+            }
+            assertThat(NotificationsRepository(client).getNotificationsPage(0).getOrThrow().items).isEmpty()
+
+            // Only the first page falls back: a later page failing is a failure.
+            assertThat(NotificationsRepository(client).getNotificationsPage(1).isFailure).isTrue()
+        }
+
+    @Test
     fun `N1 reads linked ids from any spot, and skips items without a date`() =
         runTest {
             replyJson(
