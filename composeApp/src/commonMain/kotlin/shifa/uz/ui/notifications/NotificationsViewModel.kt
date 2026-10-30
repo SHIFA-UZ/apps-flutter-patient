@@ -55,14 +55,52 @@ class NotificationsViewModel(
         _state.value = _state.value.transform()
     }
 
-    /** N1. The list stays on screen meanwhile. */
+    /** N1a's first page. The list stays on screen meanwhile. */
     fun load() {
         if (_state.value.isLoading) return
         update { copy(isLoading = true) }
         viewModelScope.launch {
-            notifications.getNotifications().fold(
-                onSuccess = { update { copy(notifications = it, isLoading = false, error = null) } },
+            notifications.getNotificationsPage(0).fold(
+                onSuccess = {
+                    update {
+                        copy(
+                            notifications = it.items,
+                            page = 0,
+                            hasMore = !it.last,
+                            isLoadingMore = false,
+                            isLoading = false,
+                            error = null,
+                        )
+                    }
+                },
                 onFailure = { fail(it) },
+            )
+        }
+    }
+
+    /** The next N1a page, when the list is scrolled to its end. An item already shown (a new one pushed the pages) is skipped. */
+    fun loadMore() {
+        val current = _state.value
+        if (!current.hasMore || current.isLoadingMore || current.isLoading || current.notifications == null) return
+        update { copy(isLoadingMore = true) }
+        viewModelScope.launch {
+            notifications.getNotificationsPage(current.page + 1).fold(
+                onSuccess = { next ->
+                    update {
+                        val shown = notifications.orEmpty()
+                        val ids = shown.map { it.id }.toSet()
+                        copy(
+                            notifications = shown + next.items.filter { it.id !in ids },
+                            page = current.page + 1,
+                            hasMore = !next.last,
+                            isLoadingMore = false,
+                        )
+                    }
+                },
+                onFailure = {
+                    update { copy(isLoadingMore = false) }
+                    fail(it)
+                },
             )
         }
     }

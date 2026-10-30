@@ -178,6 +178,8 @@ class DemoBackend(
                 ) && p[3] == "check-in" -> data.submitCheckIn(p[2], body)
             get && path == Endpoints.PAYMENT_METHODS -> ok(data.paymentMethods(request.url.parameters["serviceId"]))
             get && path == Endpoints.NOTIFICATIONS -> ok(JsonArray(data.notifications))
+            get && path == Endpoints.NOTIFICATIONS_PAGE ->
+                ok(page(data.notifications, request.url.parameters["page"], request.url.parameters["size"]))
             get && path == Endpoints.UNREAD_NOTIFICATIONS_COUNT -> ok(obj("count" to data.unread()))
             request.method == HttpMethod.Put && path == Endpoints.NOTIFICATIONS_READ_ALL -> data.readAll()
             request.method == HttpMethod.Put && p.size == 3 && p[0] == "notifications" && p[2] == "read" ->
@@ -1059,6 +1061,28 @@ class DemoBackend(
         private const val DEMO_TRANSCRIPT = "This is a demo transcript of your voice message."
         private const val DEMO_CHECKOUT = "https://shifa.uz/"
     }
+}
+
+/** Spring's `Page` shape for a 0-based [page] of [size] (defaults 0 and 20), as the backend's `/page` siblings send it. */
+private fun page(
+    all: List<JsonElement>,
+    page: String?,
+    size: String?,
+): JsonObject {
+    val number = page?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+    val count = size?.toIntOrNull()?.coerceIn(1, 2000) ?: 20
+    val content = all.drop(number * count).take(count)
+    val pages = (all.size + count - 1) / count
+    return obj(
+        "content" to content,
+        "number" to number,
+        "size" to count,
+        "totalElements" to all.size,
+        "totalPages" to pages,
+        "first" to (number == 0),
+        "last" to (number >= pages - 1),
+        "empty" to content.isEmpty(),
+    )
 }
 
 private fun obj(vararg pairs: Pair<String, Any?>) = JsonObject(pairs.associate { it.first to json(it.second) })

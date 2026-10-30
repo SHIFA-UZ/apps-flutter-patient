@@ -13,6 +13,12 @@ import kotlinx.serialization.json.contentOrNull
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.parseInstant
 
+/** One page of a list (N1a and the backend's other `/page` siblings): the items and whether it is the last one. */
+data class Page<T>(
+    val items: List<T>,
+    val last: Boolean,
+)
+
 /** N2. */
 @Serializable
 data class UnreadCount(

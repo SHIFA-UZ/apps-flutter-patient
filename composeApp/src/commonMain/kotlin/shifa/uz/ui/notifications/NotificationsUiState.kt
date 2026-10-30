@@ -52,11 +52,17 @@ sealed interface NotificationLink {
     data object ToMessages : NotificationLink
 }
 
-/** [notifications] is null until the first load; a failed reload keeps the previous list. */
+/**
+ * [notifications] is null until the first load; a failed reload keeps the previous list. The pages loaded so far are
+ * [page] + 1; [hasMore] while the backend says the last one isn't in yet.
+ */
 @Stable
 data class NotificationsUiState(
     val notifications: List<AppNotification>? = null,
     val isLoading: Boolean = false,
+    val page: Int = 0,
+    val hasMore: Boolean = false,
+    val isLoadingMore: Boolean = false,
     val error: StringResource? = null,
     val notice: StringResource? = null,
     val selected: AppNotification? = null,

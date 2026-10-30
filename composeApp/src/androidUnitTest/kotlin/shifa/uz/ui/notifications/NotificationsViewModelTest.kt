@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
@@ -29,6 +30,7 @@ import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.AppNotification
 import shifa.uz.data.model.Appointment
+import shifa.uz.data.model.Page
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.data.notifications.NotificationsRepository
@@ -56,7 +58,7 @@ class NotificationsViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        wheneverBlocking { notifications.getNotifications() } doReturn Result.success(all)
+        wheneverBlocking { notifications.getNotificationsPage(any(), any()) } doReturn Result.success(Page(all, true))
         wheneverBlocking { notifications.markRead(any()) } doReturn Result.success(Unit)
         wheneverBlocking { notifications.markAllRead() } doReturn Result.success(Unit)
         wheneverBlocking { bookings.getAppointments() } doReturn Result.success(listOf(appointment))
@@ -188,10 +190,41 @@ class NotificationsViewModelTest {
         }
 
     @Test
+    fun `the next page is appended once, without repeating an item, until the last one`() =
+        runTest {
+            val older = AppNotification(9, "", "", "NEW_DOCUMENT", "2026-09-25T07:00:00Z")
+            wheneverBlocking { notifications.getNotificationsPage(eq(0), any()) } doReturn
+                Result.success(Page(all, false))
+            wheneverBlocking { notifications.getNotificationsPage(eq(1), any()) } doReturn
+                Result.success(Page(listOf(read, older), true))
+            open()
+            assertThat(state.hasMore).isTrue()
+
+            classToTest.loadMore()
+            classToTest.loadMore() // ignored while the first is in flight
+            advanceUntilIdle()
+
+            assertThat(state.notifications).isEqualTo(all + older)
+            assertThat(state.page).isEqualTo(1)
+            assertThat(state.hasMore).isFalse()
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(1), any()) }
+
+            classToTest.loadMore()
+            advanceUntilIdle()
+            verifyBlocking(notifications, times(1)) { getNotificationsPage(eq(1), any()) }
+
+            // A reload starts over from the first page.
+            classToTest.load()
+            advanceUntilIdle()
+            assertThat(state.notifications).isEqualTo(all)
+            assertThat(state.hasMore).isTrue()
+        }
+
+    @Test
     fun `a failed reload keeps the list and shows the error`() =
         runTest {
             open()
-            wheneverBlocking { notifications.getNotifications() } doReturn
+            wheneverBlocking { notifications.getNotificationsPage(any(), any()) } doReturn
                 Result.failure(ApiException.NetworkError(NETWORK_ERROR))
 
             classToTest.load()
@@ -204,7 +237,7 @@ class NotificationsViewModelTest {
     @Test
     fun `a 401 signs out`() =
         runTest {
-            wheneverBlocking { notifications.getNotifications() } doReturn
+            wheneverBlocking { notifications.getNotificationsPage(any(), any()) } doReturn
                 Result.failure(ApiException.Unauthorized("Unauthorized"))
             classToTest = NotificationsViewModel(notifications, bookings, documents, tasks)
 

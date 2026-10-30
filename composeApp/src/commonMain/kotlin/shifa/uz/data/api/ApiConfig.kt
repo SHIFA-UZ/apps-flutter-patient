@@ -25,6 +25,7 @@ object ApiConfig {
         const val APPOINTMENTS = "patients/me/appointments"
         const val MY_TASKS = "tasks/my-tasks"
         const val NOTIFICATIONS = "notifications"
+        const val NOTIFICATIONS_PAGE = "notifications/page"
         const val UNREAD_NOTIFICATIONS_COUNT = "notifications/unread/count"
         const val NOTIFICATIONS_READ_ALL = "notifications/read-all"
         const val DOCUMENTS = "patients/me/documents"

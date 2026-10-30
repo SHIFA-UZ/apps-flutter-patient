@@ -2,11 +2,15 @@ package shifa.uz.data.notifications
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.FAILED_TO_LOAD_NOTIFICATIONS
 import shifa.uz.data.api.FAILED_TO_MARK_READ
@@ -15,6 +19,7 @@ import shifa.uz.data.api.httpClient
 import shifa.uz.data.api.items
 import shifa.uz.data.model.AppNotification
 import shifa.uz.data.model.FcmTokenRequest
+import shifa.uz.data.model.Page
 import shifa.uz.data.model.UnreadCount
 
 class NotificationsRepository(
@@ -24,6 +29,24 @@ class NotificationsRepository(
     suspend fun getNotifications(): Result<List<AppNotification>> =
         apiCall<JsonElement>(FAILED_TO_LOAD_NOTIFICATIONS) { client.get(ApiConfig.Endpoints.NOTIFICATIONS) }
             .map { it.items<AppNotification>() }
+
+    /**
+     * N1a, newest first, [size] per 0-based [page]. Spring's `Page` shape: `content` and `last`; a bare array (an
+     * older backend) is one page.
+     */
+    suspend fun getNotificationsPage(
+        page: Int,
+        size: Int = PAGE_SIZE,
+    ): Result<Page<AppNotification>> =
+        apiCall<JsonElement>(FAILED_TO_LOAD_NOTIFICATIONS) {
+            client.get(ApiConfig.Endpoints.NOTIFICATIONS_PAGE) {
+                parameter("page", page)
+                parameter("size", size)
+            }
+        }.map { json ->
+            val last = ((json as? JsonObject)?.get("last") as? JsonPrimitive)?.booleanOrNull ?: true
+            Page(json.items<AppNotification>("content"), last)
+        }
 
     /** N2. */
     suspend fun unreadCount(): Result<Int> =
@@ -48,3 +71,5 @@ class NotificationsRepository(
             }
         }.map {}
 }
+
+private const val PAGE_SIZE = 20

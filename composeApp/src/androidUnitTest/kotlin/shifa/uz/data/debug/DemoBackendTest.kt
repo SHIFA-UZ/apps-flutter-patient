@@ -122,6 +122,12 @@ class DemoBackendTest {
             notifications.markAllRead().getOrThrow()
             assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(0)
             assertThat(notifications.getNotifications().getOrThrow()).hasSize(8)
+            val first = notifications.getNotificationsPage(0, 5).getOrThrow()
+            val second = notifications.getNotificationsPage(1, 5).getOrThrow()
+            assertThat(first.items).hasSize(5)
+            assertThat(first.last).isFalse()
+            assertThat(second.items).hasSize(3)
+            assertThat(second.last).isTrue()
         }
 
     @Test

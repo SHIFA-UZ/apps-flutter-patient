@@ -142,6 +142,28 @@ class HomeRepositoriesTest {
         }
 
     @Test
+    fun `N1a reads a Spring page, and a bare array as the only page`() =
+        runTest {
+            replyJson(
+                """{"content":[{"id":1,"title":"t","message":"m","type":"X","createdAt":"2026-09-28T08:00:00Z"}],""" +
+                    """"number":2,"size":20,"last":false,"totalElements":41}""",
+            )
+
+            val page = NotificationsRepository(client).getNotificationsPage(2).getOrThrow()
+
+            assertThat(page.items.map { it.id }).containsExactly(1)
+            assertThat(page.last).isFalse()
+            assertThat(path).isEqualTo("/api/notifications/page")
+            assertThat(engine.requestHistory.last().url.parameters["page"]).isEqualTo("2")
+            assertThat(engine.requestHistory.last().url.parameters["size"]).isEqualTo("20")
+
+            replyJson("""[{"id":3,"title":"t","message":"m","type":"X","createdAt":"2026-09-28T08:00:00Z"}]""")
+            val only = NotificationsRepository(client).getNotificationsPage(0).getOrThrow()
+            assertThat(only.items.map { it.id }).containsExactly(3)
+            assertThat(only.last).isTrue()
+        }
+
+    @Test
     fun `N1 reads linked ids from any spot, and skips items without a date`() =
         runTest {
             replyJson(
