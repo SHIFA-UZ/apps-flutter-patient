@@ -244,13 +244,13 @@ class DemoBackend(
                         online = true,
                         services =
                             listOf(
-                                // The three payment kinds (MOBILE_BOOKING_PAYMENT §1); UZS amounts are so'm.
+                                // The three payment kinds (MOBILE_BOOKING_PAYMENT §1); amounts are tiyin (so'm × 100).
                                 service(9201, "Free video consultation (demo)", free = true),
-                                service(9202, "Video check-up, pay now (demo)", 150_000, location = null),
+                                service(9202, "Video check-up, pay now (demo)", 15_000_000, location = null),
                                 service(
                                     9203,
                                     "Filling, pay in clinic (demo)",
-                                    90_000,
+                                    9_000_000,
                                     location = 9301,
                                     payLater = true,
                                 ),
@@ -263,7 +263,7 @@ class DemoBackend(
                         "Rahimova",
                         "Cardiologist",
                         online = false,
-                        services = listOf(service(9204, "Consultation, pay now (demo)", 200_000, location = 9302)),
+                        services = listOf(service(9204, "Consultation, pay now (demo)", 20_000_000, location = 9302)),
                     ),
             )
 
@@ -419,7 +419,7 @@ class DemoBackend(
                 "reason" to reason,
                 "status" to status,
                 "paymentStatus" to payment,
-                "paymentAmountMinor" to 150_000.takeIf { payment == "PENDING" },
+                "paymentAmountMinor" to 15_000_000.takeIf { payment == "PENDING" },
                 "paymentCurrency" to "UZS".takeIf { payment == "PENDING" },
             )
         }
