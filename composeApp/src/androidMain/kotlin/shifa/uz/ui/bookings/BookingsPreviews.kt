@@ -232,7 +232,7 @@ internal fun AppointmentDetailsPayInClinicPreview() =
                     serviceTitle = "Check up",
                     paymentStatus = Appointment.PAY_IN_CLINIC,
                     paymentBadge = Appointment.PAY_IN_CLINIC,
-                    paymentAmountMinor = 300_000,
+                    paymentAmountMinor = 30_000_000,
                     paymentCurrency = "UZS",
                 ),
                 now,

@@ -58,13 +58,13 @@ class CreateBookingViewModelTest {
         card.copy(
             serviceItems =
                 listOf(
-                    DoctorService("7", "Video visit", prices = listOf(DoctorPrice(100_000, "UZS"))),
-                    DoctorService("8", "Filling", prices = listOf(DoctorPrice(9_000_000, "UZS", locationId = 14))),
+                    DoctorService("7", "Video visit", prices = listOf(DoctorPrice(10_000_000, "UZS"))),
+                    DoctorService("8", "Filling", prices = listOf(DoctorPrice(900_000_000, "UZS", locationId = 14))),
                     DoctorService("3", "Free video visit", isFreeConsultation = true),
                     DoctorService(
                         "9",
                         "Cleaning",
-                        prices = listOf(DoctorPrice(90_000, "UZS", locationId = 5)),
+                        prices = listOf(DoctorPrice(9_000_000, "UZS", locationId = 5)),
                         paymentType = "PAY_LATER",
                     ),
                 ),
@@ -294,7 +294,9 @@ class CreateBookingViewModelTest {
             val request =
                 BookingRequest(42, first.startAt, 30, false, serviceId = 7, locationId = 3, paymentProvider = "STRIPE")
             wheneverBlocking { bookings.getPaymentMethods("7", 5) } doReturn
-                Result.success(listOf(PaymentMethod("CLICK", 150_000, "UZS"), PaymentMethod("STRIPE", 150_000, "UZS")))
+                Result.success(
+                    listOf(PaymentMethod("CLICK", 15_000_000, "UZS"), PaymentMethod("STRIPE", 15_000_000, "UZS")),
+                )
             wheneverBlocking { bookings.book(request) } doReturn Result.success(held)
             open()
             classToTest.onServiceChange("7")

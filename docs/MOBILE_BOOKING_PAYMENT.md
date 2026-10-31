@@ -19,7 +19,7 @@ Services come from `GET /api/public/doctors/{id}` → `serviceItems[]`:
   "isFreeConsultation": false,
   "paymentType": "PAY_NOW",
   "videoAllowed": true,
-  "prices": [{ "amountMinor": 300000, "currency": "UZS", "locationId": null }]
+  "prices": [{ "amountMinor": 30000000, "currency": "UZS", "locationId": null }]
 }
 ```
 
@@ -31,7 +31,7 @@ Services come from `GET /api/public/doctors/{id}` → `serviceItems[]`:
 
 **Video rule:** video is only allowed for free or pay-now services. Use `videoAllowed` to hide/disable the video option. Booking video on a pay-later service returns `400 Video consultation is not allowed for this service`.
 
-**Amounts:** `amountMinor` for UZS is already in so'm (UZS has no subunit). `300000` → show `300 000 UZS`. Online payment is UZS-only.
+**Amounts:** every `amountMinor` is in hundredths of the currency, UZS included (tiyin): the doctor app stores a typed price × 100; Click is charged `amountMinor / 100` so'm and Stripe receives `amountMinor` as its unit amount. `30000000` → show `300 000 UZS`. Online payment is UZS-only. (Corrected 2026-10-31; this line used to say UZS had no subunit, and the patient app showed UZS prices ×100 too large.) Stripe refuses amounts under about 50 US cents (`amount_too_small`), roughly 6 000 so'm.
 
 ---
 
@@ -65,8 +65,8 @@ Poll GET /api/patients/me/appointments/{id}  until status leaves PENDING_PAYMENT
 
 ```json
 [
-  { "provider": "CLICK",  "amountMinor": 300000, "currency": "UZS" },
-  { "provider": "STRIPE", "amountMinor": 300000, "currency": "UZS" }
+  { "provider": "CLICK",  "amountMinor": 30000000, "currency": "UZS" },
+  { "provider": "STRIPE", "amountMinor": 30000000, "currency": "UZS" }
 ]
 ```
 
@@ -101,7 +101,7 @@ Response (pay-now):
   "status": "PENDING_PAYMENT",
   "paymentStatus": "PENDING",
   "paymentType": "PAY_NOW",
-  "paymentAmountMinor": 300000,
+  "paymentAmountMinor": 30000000,
   "paymentCurrency": "UZS",
   "holdExpiresAt": "2026-10-20T10:15:00Z",
   "isVideoConsultation": true,

@@ -80,11 +80,16 @@ private val paying =
     doctor.copy(
         serviceItems =
             listOf(
-                DoctorService("8", "Check up", prices = listOf(DoctorPrice(300_000, "UZS")), paymentType = "PAY_NOW"),
+                DoctorService(
+                    "8",
+                    "Check up",
+                    prices = listOf(DoctorPrice(30_000_000, "UZS")),
+                    paymentType = "PAY_NOW",
+                ),
                 DoctorService(
                     "9",
                     "Cleaning",
-                    prices = listOf(DoctorPrice(90_000, "UZS", locationId = 1)),
+                    prices = listOf(DoctorPrice(9_000_000, "UZS", locationId = 1)),
                     paymentType = "PAY_LATER",
                 ),
             ),
@@ -134,7 +139,7 @@ internal fun ConfirmPaymentTrayPreview() =
             ConfirmPaymentTray(
                 CreateBookingUiState(
                     paying,
-                    methods = listOf(PaymentMethod("STRIPE", 300_000, "UZS")),
+                    methods = listOf(PaymentMethod("STRIPE", 30_000_000, "UZS")),
                     provider = "STRIPE",
                 ),
             )

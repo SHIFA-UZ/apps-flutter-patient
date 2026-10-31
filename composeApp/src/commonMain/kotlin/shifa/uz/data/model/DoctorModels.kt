@@ -121,16 +121,15 @@ data class DoctorPrice(
 }
 
 /**
- * Figma's "300000.00 UZS": always 2 decimals. UZS has no subunit, so its `amountMinor` is already so'm
- * (MOBILE_BOOKING_PAYMENT §1); other currencies are in cents.
+ * Figma's "300000.00 UZS": always 2 decimals. Every `amountMinor` is in hundredths of the currency, UZS included
+ * (tiyin): the doctor app stores a typed price × 100, Click is charged `amountMinor / 100` so'm and Stripe gets
+ * `amountMinor` as its unit amount (15 §1.6). Until 2026-10-31 UZS was shown ×100 too large here, while the
+ * provider charged the right amount.
  */
 fun moneyText(
     amountMinor: Long,
     currency: String,
-): String {
-    val major = if (currency.equals("UZS", ignoreCase = true)) amountMinor * 100 else amountMinor
-    return "${major / 100}.${(major % 100).toString().padStart(2, '0')} $currency".trim()
-}
+): String = "${amountMinor / 100}.${(amountMinor % 100).toString().padStart(2, '0')} $currency".trim()
 
 /** D3 item (15 §5.4), only the keys booking reads. */
 @Serializable
