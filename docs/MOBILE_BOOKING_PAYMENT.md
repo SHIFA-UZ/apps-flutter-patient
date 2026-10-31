@@ -31,7 +31,7 @@ Services come from `GET /api/public/doctors/{id}` → `serviceItems[]`:
 
 **Video rule:** video is only allowed for free or pay-now services. Use `videoAllowed` to hide/disable the video option. Booking video on a pay-later service returns `400 Video consultation is not allowed for this service`.
 
-**Amounts:** every `amountMinor` is in hundredths of the currency, UZS included (tiyin): the doctor app stores a typed price × 100; Click is charged `amountMinor / 100` so'm and Stripe receives `amountMinor` as its unit amount. `30000000` → show `300 000 UZS`. Online payment is UZS-only. (Corrected 2026-10-31; this line used to say UZS had no subunit, and the patient app showed UZS prices ×100 too large.) Stripe refuses amounts under about 50 US cents (`amount_too_small`), roughly 6 000 so'm.
+**Amounts:** every `amountMinor` is in hundredths of the currency, UZS included (tiyin): the doctor app stores a typed price × 100; Click is charged `amountMinor / 100` so'm and Stripe receives `amountMinor` as its unit amount. `30000000` → show `300 000 UZS`. Online payment: Click takes UZS only; Stripe takes UZS, USD, EUR and RUB (backend 2026-10-31, `feature/stripe-foreign-currency`), so `payments/methods` lists Click and Stripe for a UZS price and Stripe alone for the others, and answers `400 Online payment is not available in <CUR>.` for anything else. (Corrected 2026-10-31; this line used to say UZS had no subunit, and the patient app showed UZS prices ×100 too large.) Stripe refuses amounts under about 50 US cents (`amount_too_small`), roughly 6 000 so'm.
 
 ---
 
