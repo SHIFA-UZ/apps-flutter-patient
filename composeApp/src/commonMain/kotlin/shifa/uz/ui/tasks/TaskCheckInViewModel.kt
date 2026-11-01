@@ -100,11 +100,13 @@ class TaskCheckInViewModel(
         }
     }
 
-    /** Today's PENDING check-in, else the next one, else the latest. */
+    /**
+     * Today's PENDING check-in only. With today finished, another day's form would look like the same task asked
+     * again, so nothing is due and the task page opens instead; its calendar still reaches the other days.
+     */
     private fun openDueDay() {
         val today = clock().toLocalDateTime(zone).date
-        val pending = _state.value.checkIns.orEmpty().filter { it.isPending }.mapNotNull { it.date }.sorted()
-        (pending.firstOrNull { it >= today } ?: pending.lastOrNull())?.let(::openDay)
+        if (_state.value.on(today).any { it.isPending }) openDay(today)
         if (_state.value.day == null) _nothingDue.trySend(Unit)
     }
 

@@ -80,11 +80,23 @@ class ForgotPasswordViewModel(
                 timers?.cancel()
                 update { ForgotPasswordUiState(identifier = identifier) }
             }
-            ForgotPasswordStep.NewPassword ->
-                update { copy(step = ForgotPasswordStep.Code, showErrors = false, error = null) }
+            ForgotPasswordStep.NewPassword -> update { backToCode().copy(error = null) }
         }
         return true
     }
+
+    /**
+     * The passwords go too: kept, the masked fields look empty enough to retype, and the new text is appended, which
+     * reads as "passwords do not match" (one field) or silently sets a doubled password (both).
+     */
+    private fun ForgotPasswordUiState.backToCode() =
+        copy(
+            step = ForgotPasswordStep.Code,
+            password = "",
+            confirmPassword = "",
+            isPasswordVisible = false,
+            showErrors = false,
+        )
 
     /** Drops everything, the password included. The ViewModel outlives the screen. */
     fun reset() {
@@ -165,7 +177,7 @@ class ForgotPasswordViewModel(
                     val message = e.toUserMessage()
                     // A wrong code only shows up here (05 Q12): go back to the code screen, where resend is.
                     if (message in CODE_ERRORS) {
-                        update { copy(isLoading = false, error = message, step = ForgotPasswordStep.Code, otp = "") }
+                        update { backToCode().copy(isLoading = false, error = message, otp = "") }
                     } else {
                         update { copy(isLoading = false, error = message) }
                     }
