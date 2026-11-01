@@ -164,7 +164,37 @@ class ForgotPasswordViewModelTest {
             assertThat(state.step).isEqualTo(ForgotPasswordStep.Code)
             assertThat(state.error).isEqualTo(Res.string.invalidVerificationCode)
             assertThat(state.otp).isEmpty()
-            assertThat(state.password).isEqualTo("Secret1!")
+        }
+
+    @Test
+    fun `returning to the code screen empties the passwords, so retyping can't append to them`() =
+        runTest {
+            wheneverBlocking { auth.resetForgottenPassword(any(), any(), any(), any()) } doReturn
+                Result.failure(ApiException.ValidationError("Invalid or expired verification code"))
+            reachNewPassword()
+            classToTest.onPasswordChange("Secret1!")
+            classToTest.onConfirmPasswordChange("Secret1!")
+            classToTest.onTogglePasswordVisibility()
+            classToTest.next()
+            runCurrent()
+
+            assertThat(state.step).isEqualTo(ForgotPasswordStep.Code)
+            assertThat(state.password).isEmpty()
+            assertThat(state.confirmPassword).isEmpty()
+            assertThat(state.isPasswordVisible).isFalse()
+            assertThat(state.showErrors).isFalse()
+
+            classToTest.onOtpChange("654321")
+            classToTest.next()
+            classToTest.onPasswordChange("Secret1!")
+            classToTest.onConfirmPasswordChange("Secret1!")
+            assertThat(state.step).isEqualTo(ForgotPasswordStep.NewPassword)
+            assertThat(state.confirmPasswordError).isNull()
+
+            assertThat(classToTest.back()).isTrue()
+            assertThat(state.step).isEqualTo(ForgotPasswordStep.Code)
+            assertThat(state.password).isEmpty()
+            assertThat(state.confirmPassword).isEmpty()
         }
 
     @Test

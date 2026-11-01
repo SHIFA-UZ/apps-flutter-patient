@@ -68,6 +68,7 @@
 - A10 sends the identifier under its own key (`email` or `phone`) and the code under the channel's (`emailOtp` or `smsOtp`). Flutter sent a phone as `email` (Q13). The backend's handling of phone + `emailOtp` is unverified. The returned token is saved and the app goes to Home.
 - A code error from A10 goes back to step 2 with the code cleared (Q12). Other errors stay on step 3.
 - Back walks the steps; back from step 2 clears the code and timers; from step 1 it returns to Login. Leaving drops everything.
+- Returning from step 3 to step 2, by a code error or Back, empties both passwords and hides them. Kept, retyping into a masked field appended to the old text: "passwords do not match" with one field retyped, a silently doubled password with both.
 - Not built: the `passwordResetSuccess` SnackBar (needs a snackbar host on Home). Not yet tried against the backend.
 
 ## Home placeholder (`ui/home/`)

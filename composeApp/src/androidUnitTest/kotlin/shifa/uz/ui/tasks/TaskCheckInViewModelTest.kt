@@ -227,7 +227,7 @@ class TaskCheckInViewModelTest {
         }
 
     @Test
-    fun `a notification's Submit Check in opens the due day, or says nothing is due`() =
+    fun `a notification's Submit Check in opens today's check-in, or says nothing is due`() =
         runTest {
             val next = TaskCheckIn(6, "2026-09-30", "09:00:00")
             wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(done, next, soon))
@@ -243,5 +243,20 @@ class TaskCheckInViewModelTest {
                 awaitItem()
             }
             assertThat(state.day).isNull()
+        }
+
+    @Test
+    fun `with today finished, a notification doesn't open another day's check-ins`() =
+        runTest {
+            val tomorrow = TaskCheckIn(6, "2026-09-29", "05:00:00")
+            val yesterday = TaskCheckIn(7, "2026-09-27", "05:00:00")
+            wheneverBlocking { tasks.getCheckIns("7") } doReturn Result.success(listOf(yesterday, done, tomorrow))
+            classToTest = TaskCheckInViewModel(numeric, tasks, { now }, tashkent, openDue = true)
+            classToTest.nothingDue.test {
+                advanceUntilIdle()
+                awaitItem()
+            }
+            assertThat(state.day).isNull()
+            assertThat(state.entry).isNull()
         }
 }
