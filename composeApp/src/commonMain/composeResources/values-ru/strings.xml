@@ -713,6 +713,7 @@
     <string name="shifaAiCardSubtitle">Ваш помощник — вопросы, симптомы, поиск врачей</string>
     <string name="shifaAiDisclaimer">Shifa AI даёт только общую информацию. Это не замена профессиональной медицинской консультации, диагностики или лечения.</string>
     <string name="shifaAiTitle">Shifa AI</string>
+    <string name="shareUsageData">Делиться данными об использовании</string>
     <string name="showPassword">Показать пароль</string>
     <string name="signAppointmentSummary">Подписать сводку приёма</string>
     <string name="signIn">Войти</string>

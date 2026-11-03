@@ -1,6 +1,7 @@
 import ComposeApp
 import FirebaseCore
 import FirebaseMessaging
+import PostHog
 import UIKit
 import UserNotifications
 
@@ -18,7 +19,31 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         application.registerForRemoteNotifications()
         // 06 §3.6: the shared call screens make their Daily calls through this.
         VideoCalls.shared.factory = { DailyVideoCall() }
+        setUpAnalytics()
         return true
+    }
+
+    /// docs/posthog/setup.md §5. No key (Secrets.xcconfig missing) means analytics stays off.
+    private func setUpAnalytics() {
+        guard let key = Bundle.main.object(forInfoDictionaryKey: "PostHogApiKey") as? String, !key.isEmpty else { return }
+        let config = PostHogConfig(projectToken: key, host: "https://eu.i.posthog.com")
+        config.captureApplicationLifecycleEvents = true
+        config.captureScreenViews = false // UIKit only sees the one Compose controller (README D6)
+        config.captureElementInteractions = false
+        // Our own push events (events.md §11); the SDK's would carry the push payload.
+        config.capturePushNotificationSubscriptions = false
+        config.capturePushNotificationOpened = false
+        config.sessionReplay = false // README D5
+        config.surveys = false // README D12
+        config.personProfiles = .identifiedOnly
+        let off = AnalyticsBridgeKt.analyticsStartsOptedOut() // privacy.md §4, README D8
+        config.preloadFeatureFlags = !off // README D10; not while off, or setup would still ask PostHog for flags
+        config.optOut = off
+        #if DEBUG
+        config.debug = true
+        #endif
+        PostHogSDK.shared.setup(config)
+        AnalyticsBridgeKt.registerAnalytics(sink: PostHogAnalytics())
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {

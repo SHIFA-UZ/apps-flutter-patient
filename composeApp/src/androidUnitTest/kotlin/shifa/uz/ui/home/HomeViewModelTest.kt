@@ -44,6 +44,7 @@ class HomeViewModelTest {
     private val tasks = mock<TasksRepository>()
     private val notifications = mock<NotificationsRepository>()
     private val now = Instant.parse("2026-09-27T09:00:00Z")
+    private val identified = mutableListOf<PatientProfile>()
     private lateinit var classToTest: HomeViewModel
 
     @Before
@@ -62,7 +63,7 @@ class HomeViewModelTest {
     }
 
     private fun create() {
-        classToTest = HomeViewModel(profile, bookings, doctors, tasks, notifications) { now }
+        classToTest = HomeViewModel(profile, bookings, doctors, tasks, notifications, { now }) { identified += it }
     }
 
     private val state get() = classToTest.state.value
@@ -231,5 +232,17 @@ class HomeViewModelTest {
             assertThat(state.fullName).isEqualTo("Sardor Aliyev")
             assertThat(state.photoUrl).isEqualTo("https://x/p.jpg")
             verifyBlocking(profile) { getProfile() }
+        }
+
+    @Test
+    fun `the patient is identified for analytics after P1 and again after a profile change`() =
+        runTest {
+            create()
+            advanceUntilIdle()
+            val changed = PatientProfile(fullName = "Sardor Aliyev")
+
+            classToTest.onProfileChanged(changed)
+
+            assertThat(identified).containsExactly(PatientProfile(fullName = "  Aziz  Karimov "), changed).inOrder()
         }
 }

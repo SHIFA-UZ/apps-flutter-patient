@@ -13,6 +13,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.COULD_NOT_SEND_EMAIL_OTP
 import shifa.uz.data.api.COULD_NOT_SEND_SMS_OTP
@@ -56,6 +57,7 @@ class AuthRepository(
     private val tokenStorage: TokenStorage = TokenStorage(),
     private val settings: Settings = Settings(),
     private val copilot: CopilotStorage = CopilotStorage(),
+    private val resetAnalytics: () -> Unit = Analytics::reset,
 ) {
     /** A1. Saves the token on success. */
     suspend fun login(
@@ -184,6 +186,7 @@ class AuthRepository(
                 if (!settings.getBoolean(KEY_HAS_LAUNCHED, false)) {
                     tokenStorage.clear()
                     copilot.clear()
+                    resetAnalytics()
                     settings[KEY_HAS_LAUNCHED] = true
                 }
                 if (tokenStorage.token == null) return@withContext false
@@ -191,6 +194,7 @@ class AuthRepository(
                 if (rejected is ApiException.Unauthorized) {
                     tokenStorage.clear()
                     copilot.clear()
+                    resetAnalytics()
                 }
                 rejected !is ApiException.Unauthorized
             } catch (e: CancellationException) {
@@ -210,6 +214,8 @@ class AuthRepository(
         }
         tokenStorage.clear()
         copilot.clear()
+        // The analytics identity goes with the session (docs/posthog/events.md §1.2).
+        resetAnalytics()
     }
 }
 

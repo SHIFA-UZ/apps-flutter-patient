@@ -15,6 +15,7 @@ internal fun DebugPreview() =
                 taskId = "9401",
                 documentId = "9701",
                 notice = "Sent: tap it in the notification shade.",
+                analyticsEvents = listOf("analytics_opted_in", "debug_marked_internal"),
             ),
         )
     }

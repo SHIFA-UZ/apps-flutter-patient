@@ -713,6 +713,7 @@
     <string name="shifaAiCardSubtitle">Yordamchingiz — savollar, simptomlar, shifokorlarni topish</string>
     <string name="shifaAiDisclaimer">Shifa AI faqat umumiy ma'lumot beradi. U professional tibbiy maslahat, tashxis yoki davolarning o'rnini bosmaydi.</string>
     <string name="shifaAiTitle">Shifa AI</string>
+    <string name="shareUsageData">Foydalanish ma'lumotlarini ulashish</string>
     <string name="showPassword">Parolni ko'rsatish</string>
     <string name="signAppointmentSummary">Qabul xulosasini imzolash</string>
     <string name="signIn">Tizimga kirish</string>

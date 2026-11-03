@@ -6,3 +6,12 @@ PRODUCT_BUNDLE_IDENTIFIER=uz.shifa.patient
 CURRENT_PROJECT_VERSION=1
 // The version for iOS and Android (composeApp/build.gradle.kts reads it). Bump it here only.
 MARKETING_VERSION=1.2.4
+
+// PostHog project keys (docs/posthog/setup.md §2): Debug builds get the Dev project's, Release the Prod one, so a
+// debug build can never write to Prod. Empty means analytics off. Secrets.xcconfig (gitignored; CI writes the Prod
+// key there for release builds) overrides these.
+POSTHOG_API_KEY_DEV=
+POSTHOG_API_KEY_PROD=
+#include? "Secrets.xcconfig"
+POSTHOG_API_KEY[config=Debug]=$(POSTHOG_API_KEY_DEV)
+POSTHOG_API_KEY[config=Release]=$(POSTHOG_API_KEY_PROD)

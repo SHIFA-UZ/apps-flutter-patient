@@ -713,6 +713,7 @@
     <string name="shifaAiCardSubtitle">Your co-pilot — ask questions, describe symptoms, find doctors</string>
     <string name="shifaAiDisclaimer">Shifa AI provides general information only. It is not a substitute for professional medical advice, diagnosis, or treatment.</string>
     <string name="shifaAiTitle">Shifa AI</string>
+    <string name="shareUsageData">Share usage data</string>
     <string name="showPassword">Show password</string>
     <string name="signAppointmentSummary">Sign Appointment Summary</string>
     <string name="signIn">Sign In</string>

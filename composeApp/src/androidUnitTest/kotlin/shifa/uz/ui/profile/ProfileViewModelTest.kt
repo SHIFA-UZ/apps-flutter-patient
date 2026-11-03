@@ -25,6 +25,9 @@ import shifa.composeapp.generated.resources.errorSomethingWentWrong
 import shifa.composeapp.generated.resources.failedToUploadPhoto
 import shifa.composeapp.generated.resources.languageChanged
 import shifa.composeapp.generated.resources.profilePhotoUpdatedSuccessfully
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsSettings
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_UPLOAD_PHOTO
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.DeleteAccountChallenge
@@ -40,6 +43,10 @@ class ProfileViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val profile = mock<ProfileRepository>()
     private val languages = LanguageStorage(MapSettings(), "en")
+    private val analyticsSettings = AnalyticsSettings(MapSettings())
+    private val tracker = RecordingTracker()
+    private val optOuts = mutableListOf<Pair<Boolean, PatientProfile?>>()
+    private val identified = mutableListOf<PatientProfile>()
     private val patient = PatientProfile(fullName = "Aziz Karimov", email = "aziz@example.com", language = "ru")
     private lateinit var classToTest: ProfileViewModel
 
@@ -56,7 +63,10 @@ class ProfileViewModelTest {
     }
 
     private fun create() {
-        classToTest = ProfileViewModel(profile, languages)
+        classToTest =
+            ProfileViewModel(profile, languages, analyticsSettings, tracker, { out, p -> optOuts += out to p }) {
+                identified += it
+            }
     }
 
     private val state get() = classToTest.state.value
@@ -71,6 +81,48 @@ class ProfileViewModelTest {
             assertThat(state.isLoading).isFalse()
             assertThat(state.profile).isEqualTo(patient)
             assertThat(state.language).isEqualTo(AppLanguage.English)
+        }
+
+    @Test
+    fun `a new language re-identifies the patient so the person's language follows`() =
+        runTest {
+            create()
+            advanceUntilIdle()
+
+            classToTest.selectLanguage(AppLanguage.Uzbek)
+
+            assertThat(identified).containsExactly(patient)
+        }
+
+    @Test
+    fun `turning share usage data off sends the opt-out event last, then saves and opts the SDK out`() =
+        runTest {
+            create()
+            advanceUntilIdle()
+            assertThat(state.shareUsageData).isTrue()
+
+            classToTest.setShareUsageData(false)
+
+            assertThat(state.shareUsageData).isFalse()
+            assertThat(analyticsSettings.optedOut).isTrue()
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.AnalyticsOptedOut)
+            assertThat(optOuts).containsExactly(true to null)
+        }
+
+    @Test
+    fun `turning share usage data back on opts in with the profile, then sends the opt-in event`() =
+        runTest {
+            analyticsSettings.optedOut = true
+            create()
+            advanceUntilIdle()
+            assertThat(state.shareUsageData).isFalse()
+
+            classToTest.setShareUsageData(true)
+            classToTest.setShareUsageData(true) // no change: nothing more
+
+            assertThat(analyticsSettings.optedOut).isFalse()
+            assertThat(optOuts).containsExactly(false to patient)
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.AnalyticsOptedIn)
         }
 
     @Test

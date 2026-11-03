@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.chat.ChatRepository
@@ -32,12 +35,22 @@ class DebugViewModel(
     private val setBackend: (Backend) -> Unit = BackendChoice::set,
     private val signOut: suspend () -> Unit = { AuthRepository().logout() },
     private val clock: () -> Instant = ::getCurrentInstant,
+    private val analytics: AnalyticsTracker = Analytics,
+    analyticsReady: Boolean = Analytics.platform != null,
+    recentEvents: StateFlow<List<String>> = Analytics.recent,
 ) : ViewModel() {
     private val _state =
-        MutableStateFlow(DebugUiState(demo = demo.value, development = backend.value == Backend.Development))
+        MutableStateFlow(
+            DebugUiState(
+                demo = demo.value,
+                development = backend.value == Backend.Development,
+                analyticsReady = analyticsReady,
+            ),
+        )
     val state: StateFlow<DebugUiState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch { recentEvents.collect { _state.value = _state.value.copy(analyticsEvents = it) } }
         load()
     }
 
@@ -70,6 +83,13 @@ class DebugViewModel(
             signOut()
             setBackend(if (on) Backend.Development else Backend.Production)
         }
+    }
+
+    /** docs/posthog/development.md §5: the person property `internal = true`, which Prod's filters exclude. */
+    fun markInternal() {
+        analytics.track(AnalyticsEvent.MarkedInternal)
+        _state.value =
+            _state.value.copy(notice = "Marked as internal: Prod dashboards will leave you out.", noticeIsError = false)
     }
 
     fun resetDemoData() {

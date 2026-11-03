@@ -18,6 +18,8 @@ import org.junit.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.chat.ChatRepository
 import shifa.uz.data.debug.Backend
@@ -40,6 +42,7 @@ class DebugViewModelTest {
     private var backend: Backend? = null
     private var signOuts = 0
     private val signedOut = CompletableDeferred<Unit>()
+    private val tracker = RecordingTracker()
 
     private val classToTest by lazy {
         DebugViewModel(
@@ -57,6 +60,9 @@ class DebugViewModelTest {
                 signOuts++
             },
             clock = { now },
+            analytics = tracker,
+            analyticsReady = true,
+            recentEvents = MutableStateFlow(listOf("analytics_opted_in")),
         )
     }
 
@@ -149,5 +155,19 @@ class DebugViewModelTest {
 
             classToTest.onPushed(false)
             assertThat(classToTest.state.value.noticeIsError).isTrue()
+        }
+
+    @Test
+    fun `mark me as internal sends the marker event and shows the analytics state`() =
+        runTest {
+            classToTest
+            advanceUntilIdle()
+
+            classToTest.markInternal()
+
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.MarkedInternal)
+            assertThat(classToTest.state.value.analyticsReady).isTrue()
+            assertThat(classToTest.state.value.analyticsEvents).containsExactly("analytics_opted_in")
+            assertThat(classToTest.state.value.notice).startsWith("Marked as internal")
         }
 }

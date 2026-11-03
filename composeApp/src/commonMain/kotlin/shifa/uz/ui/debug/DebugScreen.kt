@@ -49,6 +49,7 @@ fun DebugScreen(
         onDevelopmentChange = viewModel::onDevelopmentChange,
         onReset = viewModel::resetDemoData,
         onPush = { viewModel.onPushed(push(it.label, it.message, it.data)) },
+        onMarkInternal = viewModel::markInternal,
     )
 }
 
@@ -60,6 +61,7 @@ internal fun DebugContent(
     onDevelopmentChange: (Boolean) -> Unit = {},
     onReset: () -> Unit = {},
     onPush: (FakePush) -> Unit = {},
+    onMarkInternal: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaPageElement(ShifaPageElementType.Header) { ShifaSubHeader("Debug menu", onBack = onBack) }
@@ -98,6 +100,19 @@ internal fun DebugContent(
                         )
                         ShifaSecondaryButton("Reset demo data", onReset, Modifier.fillMaxWidth(), enabled = state.demo)
                     }
+                    ShifaSection("Analytics", type = ShifaSectionType.CardOnColor) {
+                        Note(
+                            if (state.analyticsReady) {
+                                "PostHog is on with this build's key (Dev project). Events this session, newest first:"
+                            } else {
+                                "No PostHog key in this build (local.properties posthog.apiKey.dev), so nothing is " +
+                                    "sent. Events this session, newest first:"
+                            },
+                        )
+                        ShifaSecondaryButton("Mark me as internal", onMarkInternal, Modifier.fillMaxWidth())
+                        if (state.analyticsEvents.isEmpty()) Note("None yet.")
+                        state.analyticsEvents.forEach { Note(it) }
+                    }
                     ShifaSection("Fake pushes", type = ShifaSectionType.CardOnColor) {
                         Note(
                             "Each shows as a real notification; tap it to test where it leads. It links to the first " +
@@ -122,4 +137,4 @@ internal fun DebugContent(
 
 @Composable
 private fun Note(text: String) =
-    Text(text, style = MaterialTheme.typography.bodyMedium, color = ShifaColors.Text.Tertiary)
+    Text(text, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, color = ShifaColors.Text.Tertiary)
