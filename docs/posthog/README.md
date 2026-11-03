@@ -33,17 +33,17 @@ Near me and App Lock. See [What changed since the first plan](#what-changed-sinc
 
 ## Decisions
 
-Dated 2026-11-03. The ones marked *needs sign-off* wait for the user or legal.
+Dated 2026-11-03. D1 and D7 were signed off by the user on 2026-11-03 (legal review done: EU hosting and opt-out are fine).
 
 | # | Decision | Recommendation | Why |
 |---|---|---|---|
-| D1 | Hosting | PostHog Cloud **EU** (`https://eu.i.posthog.com`), *needs legal sign-off*; otherwise self-hosted in Uzbekistan | Uzbekistan's personal data law has a localization rule (privacy.md §5). The EU cloud has GDPR terms and a DPA. |
+| D1 | Hosting | PostHog Cloud **EU** (`https://eu.i.posthog.com`), *signed off 2026-11-03* | Uzbekistan's personal data law has a localization rule (privacy.md §5). The EU cloud has GDPR terms and a DPA. |
 | D2 | SDK | PostHog's **native** SDKs (`posthog-android` 3.75.1, `posthog-ios` 3.93.3, both released 2026-11-02) behind our own small `Analytics` facade in `commonMain` | The official `posthog-kmp` is still 0.x (0.10.0, 2026-10-27) and its iOS linking needs Kotlin 2.4.0+; we're on Kotlin 2.3.0. The facade follows the Daily pattern (`NativeVideoCall`). Switching to `posthog-kmp` after the Kotlin upgrade only changes the two platform files. |
 | D3 | Identity | `distinct_id` = `patient_<P1 id>`, identified after login. Anonymous before that | Joins a patient's events across reinstalls and devices without sending a name, phone or email |
 | D4 | Projects and builds | One PostHog organization **Shifa** with one project, **Shifa**, fed by **release builds only**. Debug builds carry no key and never send anything (the user's decision, 2026-11-03: no development data is needed). The doctor app shares the project, told apart by `app = doctor` and `doctor_<id>` distinct ids, until a paid plan makes a second project worth it (setup.md §1.7) | One project fits the free plan; nothing from emulators, test accounts or the development backend ever lands in the numbers. Events are checked in debug builds through the Debug menu's event list, and in PostHog from a TestFlight / internal-track build on an account listed in the internal-users filter; see setup.md §1.4, §1.6-1.7 and §7 |
 | D5 | Session replay | **Off** at launch | Compose screens hold health data, and iOS Compose can't be masked reliably (privacy.md §6) |
 | D6 | Autocapture | Lifecycle events **on**, automatic screen views **off**, element autocapture **off** | One Activity and one `UIViewController`, with our own overlay navigation: automatic screen views would all say `MainActivity`. Screens are sent by hand (events.md §2). |
-| D7 | Consent | On by default, with an opt-out switch in Profile → Settings, plus a line in the privacy policy. *Needs legal sign-off* on whether it must be opt-in | privacy.md §4 |
+| D7 | Consent | On by default, with an opt-out switch in Profile → Settings, plus a line in the privacy policy. *Signed off 2026-11-03*: opt-out, not opt-in | privacy.md §4 |
 | D8 | Demo data | Analytics is **off** while Debug → Demo data is on: the facade is disabled **and** the SDK is opted out, so its automatic lifecycle and exception events stop too. (Belt and braces: demo data exists only in debug builds, which have no key anyway, D4) | Fake bookings and visits must never reach PostHog |
 | D9 | Development backend | Nothing to do: only debug builds can switch to `api-dev.shifa.uz`, and debug builds never send (D4) | No `backend` property is needed |
 | D10 | Feature flags | Plumbing built in ANL-02 (`Flags` object, flags preloaded at launch, safe defaults). No flag used until personalisation.md says so | Flags are how personalisation and experiments ship later without a release per change |

@@ -54,8 +54,8 @@ changes one gets the checklist in development.md §4.
 - The privacy policy (`https://shifa.uz/#privacy`, opened from Profile) must say what's collected, by whom (PostHog,
   the EU region), why (improving the app, personalising it, fixing errors), and how to opt out. Update the policy
   before the key ships in a release build.
-- **Legal decides** whether Uzbekistan's law requires explicit opt-in consent instead (see §5). If it does, the
-  default flips to off, and a one-time consent prompt after login turns it on. The SDK starts opted out until then.
+- **Decided 2026-11-03 (legal review done):** opt-out stays; no explicit opt-in consent is required (see §5). Had it
+  gone the other way, the default would flip to off with a one-time consent prompt after login.
 - iOS App Tracking Transparency: not needed. We don't track across other companies' apps or share data with data
   brokers, and PostHog doesn't use the IDFA. In the App Store privacy labels declare "Product Interaction" and
   "Crash Data" as **linked to the user** (Apple counts data tied to an account id, which `patient_<id>` is) and
@@ -70,7 +70,8 @@ changes one gets the checklist in development.md §4.
 - The Law of the Republic of Uzbekistan "On Personal Data" (ZRU-547, 2019), with its 2021 amendment
   (Article 27¹), requires personal data of Uzbekistan's citizens, when processed with information technology, to be
   stored on servers physically in Uzbekistan and registered in the state register of personal data bases. **This
-  must be confirmed by a lawyer before any decision is final.**
+  must be confirmed by a lawyer before any decision is final.** Confirmed 2026-11-03: the user's legal review cleared
+  PostHog Cloud EU with pseudonymous ids, so the options below are kept only as the record of what was weighed.
 - What this means for us:
   - Our events carry a pseudonymous `distinct_id` and no direct identifiers (§3). Legal must decide whether that is
     still personal data under the law (it can be linked back through our backend, so it probably is).

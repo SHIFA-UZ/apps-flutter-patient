@@ -459,11 +459,11 @@ a test account, or put your `patient_<id>` in the internal-users filter first (�
 
 ## 8. Go-live checklist
 
-- [ ] Legal has signed off on D1 (hosting) and D7 (consent), privacy.md §4-5.
+- [x] Legal has signed off on D1 (hosting) and D7 (consent), privacy.md §4-5 (2026-11-03).
 - [ ] The privacy policy at `https://shifa.uz/#privacy` names PostHog, the region, what's collected and how to opt out.
 - [ ] App Store privacy labels declare "Product interaction" and "Crash data" as linked to the user and not used
       for tracking; Play's Data safety form declares "App interactions", "Crash logs" and "Diagnostics" (privacy.md §4).
 - [ ] The project has IP discarding on, replay off and the internal-user filter on (a billing limit once on Paid).
-- [ ] `POSTHOG_API_KEY_PROD` is in GitHub, and both deploy workflows pass it.
+- [x] `POSTHOG_API_KEY_PROD` is in GitHub, and both deploy workflows pass it (2026-11-03).
 - [ ] The team's `patient_<id>`s are in the internal-users filter.
 - [ ] The account-deletion runbook includes deleting the person in PostHog (privacy.md §4).

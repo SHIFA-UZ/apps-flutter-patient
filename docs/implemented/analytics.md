@@ -8,8 +8,9 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   timezone `Asia/Tashkent`, client IPs discarded, session replay off, autocapture / heatmaps / web vitals / console
   logs / performance off, surveys off, exception autocapture off (ANL-06 turns it on), the internal-users filter on
   by default for new insights, weeks start on Monday. Person profiles "identified only" is set in the SDK.
-- Still to do: the team's `patient_<id>`s in the internal-users filter (setup.md §1.4), `POSTHOG_API_KEY_PROD` in
-  GitHub (setup.md §2.1), legal sign-off (privacy.md §4-5), the privacy policy text.
+- `POSTHOG_API_KEY_PROD` is in GitHub (2026-11-03) and legal signed off on EU hosting and opt-out (README D1, D7).
+  Still to do: the team's `patient_<id>`s in the internal-users filter (setup.md §1.4), the privacy policy text, the
+  store privacy labels (setup.md §8).
 
 ## Foundation (`data/analytics/`, ANL-02)
 
