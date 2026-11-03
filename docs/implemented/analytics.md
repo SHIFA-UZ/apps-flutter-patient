@@ -36,6 +36,16 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
 - Debug menu → Analytics: your analytics id (`patient_<id>`, to add to PostHog's internal-users filter, since a
   debug build can't send a marker) and the session's last 50 events (`Analytics.recent`, debug builds only): the
   way to check events, since debug builds never send.
+- Checked on the iOS simulator (2026-11-03, Release build with the key): `Application Installed` / `Opened`,
+  `$screen`, `session_restored` and the signup events arrive with `app`, `app_language`, `$os = iOS`. Two fixes came
+  out of it. **Booleans on iOS:** a Kotlin `Boolean` crosses into Swift as `KotlinBoolean`, which the SDK's
+  `JSONSerialization` wrote as `1` / `0` (Android sends `true` / `false`), so `= true` filters and the cohorts on
+  `has_*` person properties missed iOS; `PostHogAnalytics.swift` turns every one into a Swift `Bool` (Kotlin can't:
+  it turns even `kCFBooleanTrue` back into a `KotlinBoolean`). The one test event that arrived as `0` had typed
+  `is_doctor_link` as Numeric in PostHog; it was set back to Boolean. **A second patient:** both SDKs ignore an
+  identify with a new id once identified, and Login can show without a logout (the splash's 5 s cap, a failed
+  restore), so the next patient's events landed on the previous one; `Analytics.identify` now resets first when the
+  SDK holds a different `patient_<id>` (`AnalyticsSink.distinctId()`).
 ## Screens (ANL-03)
 
 - `AnalyticsScreen` lists every `$screen` id (events.md §2); `TrackScreen(screen, properties…, step)` in each

@@ -41,6 +41,9 @@ interface AnalyticsSink {
 
     fun reset()
 
+    /** The SDK's current distinct id: `patient_<id>` once identified, its anonymous id before. */
+    fun distinctId(): String
+
     /** The SDK's own opt-out: also stops its automatic lifecycle and exception events. */
     fun optOut(out: Boolean)
 
@@ -103,13 +106,20 @@ object Analytics : AnalyticsTracker {
     /**
      * After P1 loads (Home) and after a profile save. The distinct id is `patient_<id>`; the person properties are
      * the usage facts events.md §1.2 allows, never a name, phone or email.
+     *
+     * Both SDKs ignore an identify with a new id once identified, so a different patient still held by the SDK is
+     * reset first. Login can show without a logout (the splash's 5 s cap, a failed restore), and the next patient's
+     * events would otherwise land on the previous one.
      */
     fun identify(
         profile: PatientProfile,
         language: String = languageProvider(),
     ) {
         val id = profile.id?.trim()?.takeIf { it.isNotEmpty() } ?: return
-        sink?.identify(
+        val sink = sink ?: return
+        val current = sink.distinctId()
+        if (current.startsWith("patient_") && current != "patient_$id") reset()
+        sink.identify(
             "patient_$id",
             listOf(
                 "app" to ANALYTICS_APP,
