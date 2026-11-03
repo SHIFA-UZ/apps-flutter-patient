@@ -7,8 +7,10 @@ import kotlinx.datetime.Instant
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.noUpcomingAppointments
 import shifa.composeapp.generated.resources.upcomingAppointments
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Appointment
 import shifa.uz.ui.bookings.ListPage
+import shifa.uz.ui.widgets.TrackScreen
 
 /** Home's upcoming visits in full, behind the section's arrow. No Figma frame: laid out like Past (1655:15892). */
 @Composable
@@ -18,6 +20,7 @@ fun UpcomingScreen(
     onAppointment: (Appointment) -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Upcoming)
     val now by rememberNow()
     UpcomingContent(state, now, onBack, onAppointment)
 }

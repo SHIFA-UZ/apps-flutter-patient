@@ -15,6 +15,8 @@ data class ProfileUiState(
     val isLoading: Boolean = false,
     val isUploading: Boolean = false,
     val isRequestingDeletion: Boolean = false,
+    /** Profile → Settings → "Share usage data" (docs/posthog/privacy.md §4); off is the analytics opt-out. */
+    val shareUsageData: Boolean = true,
     val dialog: ProfileDialog? = null,
     /** Set once P5 answers: opens the code page (14 §3.5). */
     val deletion: DeleteAccountChallenge? = null,

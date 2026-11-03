@@ -156,6 +156,12 @@ jobs:
 
       # Xcode's "Compile Kotlin Framework" phase reuses this; building it here prints Kotlin errors in full
       # (fastlane only shows Xcode's summary).
+      # docs/posthog/setup.md §2: release builds read the PostHog key from this gitignored xcconfig.
+      - name: Write PostHog key
+        env:
+          POSTHOG_API_KEY_PROD: ${{ secrets.POSTHOG_API_KEY_PROD }}
+        run: echo "POSTHOG_API_KEY_PROD = $POSTHOG_API_KEY_PROD" > iosApp/Configuration/Secrets.xcconfig
+
       - name: Build Kotlin framework
         run: ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --no-daemon
 

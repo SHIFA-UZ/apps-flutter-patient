@@ -26,6 +26,7 @@ import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.myTasks
 import shifa.composeapp.generated.resources.noTasksFound
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.ui.home.HomeSection
 import shifa.uz.ui.home.TaskCard
@@ -36,6 +37,7 @@ import shifa.uz.ui.widgets.ShifaActionButton
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.getCurrentInstant
 
 /**
@@ -50,6 +52,7 @@ fun TasksScreen(
     onSignedOut: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.MyTasks)
     val signedOut by rememberUpdatedState(onSignedOut)
     var tab by rememberSaveable { mutableStateOf(TasksTab.Open) }
     LaunchedEffect(viewModel) {

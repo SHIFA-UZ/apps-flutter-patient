@@ -2,6 +2,7 @@ package shifa.uz
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -14,6 +15,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.accountDeletedSuccess
+import shifa.uz.data.analytics.ANALYTICS_APP
+import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.debug.BackendChoice
 import shifa.uz.data.debug.DemoMode
@@ -33,10 +36,14 @@ private enum class Screen { Splash, Login, Register, ForgotPassword, Home }
 @Preview
 fun App() {
     val language by languageStorage.language.collectAsState()
+    // docs/posthog/events.md §1.3: the super properties, and demo data keeps analytics off (README D8).
+    LaunchedEffect(Unit) { Analytics.register("app", ANALYTICS_APP) }
+    LaunchedEffect(language) { Analytics.register("app_language", language.code) }
     ProvideAppLocale(language.code) {
         // Debug menu → Demo data or Development backend swaps the backend; everything restarts from the splash on it.
         val demo by DemoMode.enabled.collectAsState()
         val backend by BackendChoice.current.collectAsState()
+        LaunchedEffect(demo) { Analytics.setDemo(demo) }
         ShifaTheme {
             key(demo, backend) {
                 // Fresh ViewModels too: Login's repositories hold the client of the backend they were created on.

@@ -67,9 +67,11 @@ import shifa.composeapp.generated.resources.profile
 import shifa.composeapp.generated.resources.profileUpdatedSuccessfully
 import shifa.composeapp.generated.resources.selectLanguage
 import shifa.composeapp.generated.resources.settingsTitle
+import shifa.composeapp.generated.resources.shareUsageData
 import shifa.composeapp.generated.resources.signOutConfirm
 import shifa.composeapp.generated.resources.uploadPhoto
 import shifa.composeapp.generated.resources.uploading
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.storage.AppLanguage
 import shifa.uz.ui.debug.DebugScreen
@@ -94,6 +96,8 @@ import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaSettingsItem
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.ShifaSwitch
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.isDebugBuild
 import shifa.uz.utils.rememberImagePickerLauncher
 import shifa.uz.utils.rememberInAppBrowser
@@ -113,6 +117,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel { ProfileViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Profile)
     val logOut by rememberUpdatedState(onLogOut)
     val changed by rememberUpdatedState(onProfileChanged)
     LaunchedEffect(viewModel) {
@@ -138,6 +143,7 @@ fun ProfileScreen(
         onDebug = { page = ProfilePage.Debug }.takeIf { isDebugBuild },
         onLogOut = { viewModel.showDialog(ProfileDialog.LogOut) },
         onDeleteAccount = { viewModel.showDialog(ProfileDialog.DeleteAccount) },
+        onShareUsageData = viewModel::setShareUsageData,
     )
     state.dialog?.let {
         Dialog(viewModel::dismissDialog) {
@@ -206,6 +212,7 @@ internal fun ProfileContent(
     onLogOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onDebug: (() -> Unit)? = null, // debug builds only
+    onShareUsageData: (Boolean) -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaPageElement(ShifaPageElementType.Header) {
@@ -251,6 +258,13 @@ internal fun ProfileContent(
                                     stringResource(Res.string.privacy),
                                     onPrivacy,
                                     icon = Res.drawable.ic_shield_24,
+                                )
+                                // Not in Figma: the analytics opt-out (docs/posthog/privacy.md §4).
+                                ShifaSettingsItem(
+                                    stringResource(Res.string.shareUsageData),
+                                    { onShareUsageData(!state.shareUsageData) },
+                                    icon = Res.drawable.ic_shield_24,
+                                    trailing = { ShifaSwitch(state.shareUsageData, onShareUsageData) },
                                 )
                                 onDebug?.let { ShifaSettingsItem("Debug menu", it) }
                             }

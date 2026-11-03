@@ -62,6 +62,7 @@ import shifa.composeapp.generated.resources.signature
 import shifa.composeapp.generated.resources.videoConsultation
 import shifa.composeapp.generated.resources.weekdays
 import shifa.composeapp.generated.resources.yes
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.ui.doctors.DoctorHeaderCard
@@ -83,6 +84,7 @@ import shifa.uz.ui.widgets.ShifaSignaturePad
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.ShifaTray
 import shifa.uz.ui.widgets.SignatureStroke
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.ui.widgets.signaturePng
 import shifa.uz.utils.formatVisit
 import shifa.uz.utils.parseInstant
@@ -101,6 +103,11 @@ fun LiveAppointmentScreen(
     viewModel: LiveAppointmentViewModel = viewModel { LiveAppointmentViewModel(appointment) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(
+        AnalyticsScreen.LiveAppointment,
+        "is_video" to state.appointment.isVideo,
+        "signature_due" to state.appointment.needsSignature,
+    )
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
     LiveAppointmentContent(

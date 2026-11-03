@@ -73,6 +73,9 @@ import shifa.composeapp.generated.resources.videoConsultation
 import shifa.composeapp.generated.resources.weekdays
 import shifa.composeapp.generated.resources.yes
 import shifa.composeapp.generated.resources.yourReview
+import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.appointmentState
+import shifa.uz.data.analytics.paymentBadge
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.ui.doctors.DoctorHeaderCard
@@ -100,6 +103,7 @@ import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.ShifaTray
 import shifa.uz.ui.widgets.ShifaUpcomingAppointmentCard
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatDate
 import shifa.uz.utils.formatTime
 import shifa.uz.utils.formatVisit
@@ -121,6 +125,12 @@ fun AppointmentDetailsScreen(
     viewModel: AppointmentDetailsViewModel = viewModel { AppointmentDetailsViewModel(appointment) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(
+        AnalyticsScreen.AppointmentDetails,
+        "state" to appointmentState(state.appointment, state.isUpcoming),
+        "is_video" to state.appointment.isVideo,
+        "payment_badge" to state.appointment.paymentBadge(),
+    )
     val cancelled by rememberUpdatedState(onCancelled)
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) { viewModel.cancelled.collect { cancelled() } }

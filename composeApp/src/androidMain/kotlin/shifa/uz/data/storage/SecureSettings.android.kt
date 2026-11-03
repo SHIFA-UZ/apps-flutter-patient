@@ -12,7 +12,7 @@ import com.russhwolf.settings.SharedPreferencesSettings
 private const val FILE = "shifa_auth_secure"
 private lateinit var appContext: Context
 
-/** Call from MainActivity before anything reads the token. */
+/** Called from ShifaApp before anything reads the token. */
 fun initSecureSettings(context: Context) {
     appContext = context.applicationContext
 }

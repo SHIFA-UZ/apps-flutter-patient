@@ -98,6 +98,16 @@ internal fun DebugContent(
                         )
                         ShifaSecondaryButton("Reset demo data", onReset, Modifier.fillMaxWidth(), enabled = state.demo)
                     }
+                    ShifaSection("Analytics", type = ShifaSectionType.CardOnColor) {
+                        Note(
+                            "Debug builds never send to PostHog; release builds do. To keep your own release builds " +
+                                "out of the dashboards, add your analytics id to PostHog's internal-users filter " +
+                                "(docs/posthog/setup.md §1.4): ${state.analyticsId ?: "sign in to see it"}.",
+                        )
+                        Note("Every event still goes through the app's analytics. This session, newest first:")
+                        if (state.analyticsEvents.isEmpty()) Note("None yet.")
+                        state.analyticsEvents.forEach { Note(it) }
+                    }
                     ShifaSection("Fake pushes", type = ShifaSectionType.CardOnColor) {
                         Note(
                             "Each shows as a real notification; tap it to test where it leads. It links to the first " +
@@ -122,4 +132,4 @@ internal fun DebugContent(
 
 @Composable
 private fun Note(text: String) =
-    Text(text, style = MaterialTheme.typography.bodyMedium, color = ShifaColors.Text.Tertiary)
+    Text(text, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, color = ShifaColors.Text.Tertiary)

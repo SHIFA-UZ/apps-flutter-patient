@@ -32,9 +32,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.img_logo
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaSize
+import shifa.uz.ui.widgets.TrackScreen
 
 private const val SPLASH_MS = 1600 // 02 §8: animation length and minimum on-screen time
 
@@ -47,6 +49,7 @@ fun SplashScreen(
     onFinished: (signedIn: Boolean) -> Unit,
 ) {
     val finish by rememberUpdatedState(onFinished)
+    TrackScreen(AnalyticsScreen.Splash)
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         val signedIn = async { withTimeoutOrNull(RESTORE_TIMEOUT_MS) { restoreSession() } ?: false }

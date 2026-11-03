@@ -53,6 +53,8 @@ import shifa.composeapp.generated.resources.ic_download_22
 import shifa.composeapp.generated.resources.loadingDocument
 import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.unsupportedDocumentType
+import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.fileType
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.ui.bookings.PastCard
@@ -67,6 +69,7 @@ import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.PdfView
 import shifa.uz.utils.rememberFileSaver
 
@@ -87,6 +90,8 @@ fun DocumentViewerScreen(
     viewModel: DocumentViewerViewModel = viewModel { DocumentViewerViewModel(document) },
 ) {
     val state by viewModel.state.collectAsState()
+    // From the document's own hint: the file (and its visit) load after the screen appears.
+    TrackScreen(AnalyticsScreen.DocumentViewer, "file_type" to fileType(document.type))
     val deleted by rememberUpdatedState(onDeleted)
     LaunchedEffect(viewModel) { viewModel.deleted.collect { deleted() } }
     val saver = rememberFileSaver()

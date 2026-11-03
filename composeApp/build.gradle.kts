@@ -40,6 +40,7 @@ kotlin {
             implementation(libs.firebase.messaging)
             implementation(libs.androidx.core.ktx)
             implementation(libs.daily.client) // video calls (06 §3.6)
+            implementation(libs.posthog.android) // analytics (docs/posthog)
         }
 
         androidUnitTest.dependencies {
@@ -118,6 +119,10 @@ val appVersionCode = versionBuild
 
 println("Building Shifa v$appVersionName (Build $appVersionCode)")
 
+// The PostHog project key (docs/posthog/setup.md §2): release builds only, from CI's Gradle property. Missing means
+// analytics off. Debug builds never get one (README D4: no development data is tracked).
+val postHogProdKey = project.findProperty("posthog.apiKey.prod")?.toString().orEmpty()
+
 // Written by CI (google_play_deploy.yml); absent locally, so release stays unsigned.
 val keystoreProperties =
     Properties().apply {
@@ -154,11 +159,13 @@ android {
         getByName("debug") {
             versionNameSuffix = "-debug"
             isDebuggable = true
+            buildConfigField("String", "POSTHOG_API_KEY", "\"\"") // never tracked (README D4)
         }
 
         getByName("release") {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("release")
+            buildConfigField("String", "POSTHOG_API_KEY", "\"$postHogProdKey\"")
         }
     }
     // BuildConfig.DEBUG gates the HTTP logs (01 §7).

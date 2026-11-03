@@ -24,7 +24,9 @@ import shifa.uz.data.debug.Backend
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PatientDocument
+import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.RemoteCareTask
+import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.data.tasks.TasksRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,6 +42,7 @@ class DebugViewModelTest {
     private var backend: Backend? = null
     private var signOuts = 0
     private val signedOut = CompletableDeferred<Unit>()
+    private val profile = mock<ProfileRepository>()
 
     private val classToTest by lazy {
         DebugViewModel(
@@ -47,6 +50,7 @@ class DebugViewModelTest {
             tasks,
             documents,
             chat,
+            profile,
             MutableStateFlow(true),
             setDemo = { demo = it },
             resetDemo = { resets++ },
@@ -57,6 +61,7 @@ class DebugViewModelTest {
                 signOuts++
             },
             clock = { now },
+            recentEvents = MutableStateFlow(listOf("analytics_opted_in")),
         )
     }
 
@@ -149,5 +154,16 @@ class DebugViewModelTest {
 
             classToTest.onPushed(false)
             assertThat(classToTest.state.value.noticeIsError).isTrue()
+        }
+
+    @Test
+    fun `the analytics id and the session's events show`() =
+        runTest {
+            wheneverBlocking { profile.getProfile() } doReturn Result.success(PatientProfile(id = " 42 "))
+            classToTest
+            advanceUntilIdle()
+
+            assertThat(classToTest.state.value.analyticsId).isEqualTo("patient_42")
+            assertThat(classToTest.state.value.analyticsEvents).containsExactly("analytics_opted_in")
         }
 }

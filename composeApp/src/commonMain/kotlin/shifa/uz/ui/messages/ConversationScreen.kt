@@ -47,6 +47,7 @@ import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.photo
 import shifa.composeapp.generated.resources.typeMessage
 import shifa.composeapp.generated.resources.voiceMessage
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.ChatMessage
 import shifa.uz.data.model.MessageType
 import shifa.uz.data.model.PatientDocument
@@ -65,6 +66,7 @@ import shifa.uz.ui.widgets.ShifaChatSkeleton
 import shifa.uz.ui.widgets.ShifaChatTray
 import shifa.uz.ui.widgets.ShifaChatVoiceBubble
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.Playback
 import shifa.uz.utils.formatSentTime
 import shifa.uz.utils.getCurrentInstant
@@ -90,6 +92,7 @@ fun ConversationScreen(
     viewModel: ConversationViewModel = viewModel { ConversationViewModel(target) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Conversation, "is_new" to (target.conversationId == null))
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) {
         launch { viewModel.poll() }

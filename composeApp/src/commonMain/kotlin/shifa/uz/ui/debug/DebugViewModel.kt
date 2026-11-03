@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.chat.ChatRepository
@@ -16,6 +17,7 @@ import shifa.uz.data.debug.BackendChoice
 import shifa.uz.data.debug.DemoBackend
 import shifa.uz.data.debug.DemoMode
 import shifa.uz.data.documents.DocumentsRepository
+import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.data.tasks.TasksRepository
 import shifa.uz.utils.getCurrentInstant
 
@@ -25,6 +27,7 @@ class DebugViewModel(
     private val tasks: TasksRepository = TasksRepository(),
     private val documents: DocumentsRepository = DocumentsRepository(),
     private val chat: ChatRepository = ChatRepository(),
+    private val profile: ProfileRepository = ProfileRepository(),
     demo: StateFlow<Boolean> = DemoMode.enabled,
     private val setDemo: (Boolean) -> Unit = DemoMode::set,
     private val resetDemo: suspend () -> Unit = { DemoBackend.shared.reset() },
@@ -32,12 +35,16 @@ class DebugViewModel(
     private val setBackend: (Backend) -> Unit = BackendChoice::set,
     private val signOut: suspend () -> Unit = { AuthRepository().logout() },
     private val clock: () -> Instant = ::getCurrentInstant,
+    recentEvents: StateFlow<List<String>> = Analytics.recent,
 ) : ViewModel() {
     private val _state =
-        MutableStateFlow(DebugUiState(demo = demo.value, development = backend.value == Backend.Development))
+        MutableStateFlow(
+            DebugUiState(demo = demo.value, development = backend.value == Backend.Development),
+        )
     val state: StateFlow<DebugUiState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch { recentEvents.collect { _state.value = _state.value.copy(analyticsEvents = it) } }
         load()
     }
 
@@ -48,6 +55,7 @@ class DebugViewModel(
             val openTasks = async { tasks.getMyTasks().getOrNull().orEmpty().filter { it.isOpen } }
             val docs = async { documents.getDocuments().getOrNull().orEmpty() }
             val chats = async { chat.conversations().getOrNull().orEmpty() }
+            val me = async { profile.getProfile().getOrNull()?.id?.trim()?.takeIf { it.isNotEmpty() } }
             val now = clock()
             val visit =
                 appointments.await().filter { it.isOpen && !it.isOver(now) }.minByOrNull { it.startAt }
@@ -58,6 +66,7 @@ class DebugViewModel(
                     taskId = openTasks.await().firstOrNull()?.id,
                     documentId = docs.await().firstOrNull()?.id,
                     chatId = chats.await().firstOrNull()?.id,
+                    analyticsId = me.await()?.let { "patient_$it" },
                 )
         }
     }

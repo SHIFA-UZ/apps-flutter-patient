@@ -29,6 +29,8 @@ import shifa.composeapp.generated.resources.noAppointmentsFound
 import shifa.composeapp.generated.resources.noDoctorsFound
 import shifa.composeapp.generated.resources.pastAppointments
 import shifa.composeapp.generated.resources.recommendedDoctors
+import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.ui.doctors.DoctorHeaderCard
@@ -40,6 +42,7 @@ import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatDate
 import shifa.uz.utils.getCurrentInstant
 
@@ -61,6 +64,7 @@ fun BookingsListScreen(
     onSignedOut: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.BookingsList, "list" to list.analyticsName())
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) {
         if (viewModel.state.value.past == null) viewModel.load()

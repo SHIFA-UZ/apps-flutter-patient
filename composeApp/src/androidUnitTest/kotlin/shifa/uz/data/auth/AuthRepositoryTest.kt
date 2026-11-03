@@ -37,7 +37,8 @@ class AuthRepositoryTest {
     private val engine = MockEngine { reply(it) }
     private val client = createHttpClient(tokens, engine)
     private val chats = CopilotStorage(MapSettings()).apply { save(listOf(CopilotChat("1"))) }
-    private val classToTest = AuthRepository(client, tokens, settings, chats)
+    private var analyticsResets = 0
+    private val classToTest = AuthRepository(client, tokens, settings, chats) { analyticsResets++ }
 
     private fun replyJson(
         status: HttpStatusCode,
@@ -305,6 +306,7 @@ class AuthRepositoryTest {
             assertThat(requestJson).isEqualTo(Json.parseToJsonElement("""{"fcmToken":""}"""))
             assertThat(tokens.token).isNull()
             assertThat(chats.load()).isEmpty()
+            assertThat(analyticsResets).isEqualTo(1)
         }
 
     @Test

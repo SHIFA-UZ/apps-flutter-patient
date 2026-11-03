@@ -18,11 +18,13 @@ import shifa.composeapp.generated.resources.confirmPassword
 import shifa.composeapp.generated.resources.currentPassword
 import shifa.composeapp.generated.resources.newPassword
 import shifa.composeapp.generated.resources.save
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.Field
 import shifa.uz.ui.register.PasswordChecklist
 import shifa.uz.ui.register.PasswordEye
 import shifa.uz.ui.register.RegisterPage
+import shifa.uz.ui.widgets.TrackScreen
 
 /** 14 §3.4 (no Figma): the registration form layout. */
 @Composable
@@ -32,6 +34,7 @@ fun ChangePasswordScreen(
     viewModel: ChangePasswordViewModel = viewModel { ChangePasswordViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.ChangePassword)
     val changed by rememberUpdatedState(onChanged)
     LaunchedEffect(viewModel) { viewModel.changed.collect { changed() } }
     ChangePasswordContent(

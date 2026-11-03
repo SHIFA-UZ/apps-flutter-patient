@@ -49,6 +49,7 @@ import shifa.composeapp.generated.resources.patient
 import shifa.composeapp.generated.resources.phoneNumber
 import shifa.composeapp.generated.resources.priceNotSet
 import shifa.composeapp.generated.resources.retry
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.ui.bookings.InfoSection
@@ -69,6 +70,7 @@ import shifa.uz.ui.widgets.ShifaReviewCard
 import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatDay
 import shifa.uz.utils.getCurrentInstant
 
@@ -86,6 +88,7 @@ fun DoctorProfileScreen(
     viewModel: DoctorProfileViewModel = viewModel { DoctorProfileViewModel(doctor) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.DoctorProfile)
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
     val uri = LocalUriHandler.current

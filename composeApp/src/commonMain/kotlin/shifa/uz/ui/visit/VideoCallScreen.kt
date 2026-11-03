@@ -68,6 +68,7 @@ import shifa.composeapp.generated.resources.switchCamera
 import shifa.composeapp.generated.resources.unknownDoctor
 import shifa.composeapp.generated.resources.videoAppointment
 import shifa.composeapp.generated.resources.waitingForDoctorToStart
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Appointment
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
@@ -82,6 +83,7 @@ import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.VideoCall
 import shifa.uz.utils.VideoTile
 import shifa.uz.utils.formatTime
@@ -120,6 +122,7 @@ fun VideoCallScreen(
     } else {
         // Added on each expand, so it beats the pages opened while the call was small.
         BackHandler { back() }
+        TrackScreen(AnalyticsScreen.VideoCall)
         VideoCallContent(
             state,
             viewModel.call,

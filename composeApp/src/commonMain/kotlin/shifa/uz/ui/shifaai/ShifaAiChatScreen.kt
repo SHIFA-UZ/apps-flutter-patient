@@ -47,6 +47,7 @@ import shifa.composeapp.generated.resources.microphonePermissionDenied
 import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.shifaAiDisclaimer
 import shifa.composeapp.generated.resources.transcribing
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.CopilotMessage
 import shifa.uz.ui.documents.UploadTray
 import shifa.uz.ui.register.Banners
@@ -62,6 +63,7 @@ import shifa.uz.ui.widgets.ShifaChatTray
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatSentTime
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.rememberMicPermission
@@ -80,6 +82,7 @@ fun ShifaAiChatScreen(
     onSignedOut: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.AiChat, "is_new" to state.chat?.messages.isNullOrEmpty())
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
     var adding by rememberSaveable { mutableStateOf(false) }

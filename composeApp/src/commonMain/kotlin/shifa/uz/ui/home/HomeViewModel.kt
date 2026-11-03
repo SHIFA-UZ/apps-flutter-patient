@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
+import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
@@ -35,6 +36,7 @@ class HomeViewModel(
     private val tasks: TasksRepository = TasksRepository(),
     private val notifications: NotificationsRepository = NotificationsRepository(),
     private val clock: () -> Instant = ::getCurrentInstant,
+    private val identify: (PatientProfile) -> Unit = Analytics::identify,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
@@ -84,7 +86,9 @@ class HomeViewModel(
         return null
     }
 
+    // Also the analytics identity (docs/posthog/events.md §1.2): after P1 and after a profile save.
     private fun show(patient: PatientProfile) {
+        identify(patient)
         val fullName = patient.fullName.trim()
         update {
             copy(

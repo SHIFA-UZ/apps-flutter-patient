@@ -488,7 +488,7 @@ fun ShifaReviewCard(
     }
 }
 
-/** Figma display-card, type settings: a plain row, no card chrome. */
+/** Figma display-card, type settings: a plain row, no card chrome. [trailing] replaces the chevron (a switch). */
 @Composable
 fun ShifaSettingsItem(
     title: String,
@@ -496,6 +496,7 @@ fun ShifaSettingsItem(
     modifier: Modifier = Modifier,
     icon: DrawableResource? = null,
     destructive: Boolean = false,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = ShifaSpacing.Inset.Xs),
@@ -505,7 +506,7 @@ fun ShifaSettingsItem(
         val tint = if (destructive) ShifaColors.Icon.Error else ShifaColors.Icon.Primary
         icon?.let { Icon(painterResource(it), null, tint = tint) }
         CardTitle(title, Modifier.weight(1f), if (destructive) ShifaColors.Text.Error else ShifaColors.Text.Primary)
-        Chevron()
+        if (trailing != null) trailing() else Chevron()
     }
 }
 

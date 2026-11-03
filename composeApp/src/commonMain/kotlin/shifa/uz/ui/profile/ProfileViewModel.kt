@@ -15,6 +15,10 @@ import shifa.composeapp.generated.resources.emailRequired
 import shifa.composeapp.generated.resources.languageChanged
 import shifa.composeapp.generated.resources.passwordChangedSuccess
 import shifa.composeapp.generated.resources.profilePhotoUpdatedSuccessfully
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsSettings
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.PatientProfile
@@ -30,8 +34,15 @@ enum class ProfileEvent { SignedOut, Changed }
 class ProfileViewModel(
     private val profile: ProfileRepository = ProfileRepository(),
     private val languages: LanguageStorage = languageStorage,
+    private val analyticsSettings: AnalyticsSettings = AnalyticsSettings(),
+    private val analytics: AnalyticsTracker = Analytics,
+    private val setAnalyticsOptedOut: (Boolean, PatientProfile?) -> Unit = Analytics::setOptedOut,
+    private val identify: (PatientProfile) -> Unit = Analytics::identify,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(ProfileUiState(language = languages.language.value))
+    private val _state =
+        MutableStateFlow(
+            ProfileUiState(language = languages.language.value, shareUsageData = !analyticsSettings.optedOut),
+        )
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
 
     // SignedOut: P1 answered 401, as on Home. Changed: Home's name and avatar are stale.
@@ -71,8 +82,27 @@ class ProfileViewModel(
     /** 14 §3.1.1. The app language is local; the PATCH only tells the backend, errors ignored. */
     fun selectLanguage(language: AppLanguage) {
         languages.set(language)
+        // The person's `language` follows (docs/posthog/events.md §1.2); Edit profile's path goes through Home.
+        _state.value.profile?.let(identify)
         update { copy(dialog = null, error = null, notice = Res.string.languageChanged) }
         viewModelScope.launch { profile.updateProfile(ProfileUpdate(language = language.code)) }
+    }
+
+    /**
+     * docs/posthog/privacy.md §4: off sends `analytics_opted_out` as the last event, then opts the SDK out; on opts
+     * back in (re-identifying the patient) and sends `analytics_opted_in` as the first.
+     */
+    fun setShareUsageData(on: Boolean) {
+        if (on == _state.value.shareUsageData) return
+        analyticsSettings.optedOut = !on
+        update { copy(shareUsageData = on) }
+        if (on) {
+            setAnalyticsOptedOut(false, _state.value.profile)
+            analytics.track(AnalyticsEvent.AnalyticsOptedIn)
+        } else {
+            analytics.track(AnalyticsEvent.AnalyticsOptedOut)
+            setAnalyticsOptedOut(true, null)
+        }
     }
 
     /** 14 §2.3. Null is a cancelled pick. */

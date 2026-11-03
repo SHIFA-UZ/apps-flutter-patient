@@ -81,6 +81,7 @@ import shifa.composeapp.generated.resources.uploadingDocument
 import shifa.composeapp.generated.resources.videoConsultation
 import shifa.composeapp.generated.resources.videoConsultationServiceLabel
 import shifa.composeapp.generated.resources.weekdays
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.Doctor
@@ -107,6 +108,7 @@ import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.ShifaSwitch
 import shifa.uz.ui.widgets.ShifaTray
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatShortDate
 import shifa.uz.utils.formatTime
 import shifa.uz.utils.formatVisit
@@ -131,6 +133,7 @@ fun CreateBookingScreen(
     viewModel: CreateBookingViewModel = viewModel { CreateBookingViewModel(doctor) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.CreateBooking)
     val booked by rememberUpdatedState(onBooked)
     val paid by rememberUpdatedState(onPaid)
     val signedOut by rememberUpdatedState(onSignedOut)

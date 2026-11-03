@@ -29,6 +29,7 @@ import shifa.composeapp.generated.resources.confirm
 import shifa.composeapp.generated.resources.rescheduleAppointment
 import shifa.composeapp.generated.resources.selectNewDate
 import shifa.composeapp.generated.resources.videoConsultation
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.shownDoctor
@@ -42,6 +43,7 @@ import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.getCurrentInstant
 
 /**
@@ -59,6 +61,7 @@ fun RescheduleScreen(
         viewModel { CreateBookingViewModel(appointment.shownDoctor(null), reschedule = appointment) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Reschedule, "is_video" to appointment.isVideo)
     val rescheduled by rememberUpdatedState(onRescheduled)
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) { viewModel.booked.collect { rescheduled() } }

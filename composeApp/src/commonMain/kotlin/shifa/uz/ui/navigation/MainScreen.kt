@@ -74,6 +74,7 @@ import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.visit.LiveAppointmentScreen
 import shifa.uz.ui.visit.VideoCallScreen
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.PushSetup
 
 // Pages over the tabs.
@@ -172,6 +173,7 @@ fun MainScreen(
             }
         }
         Box(Modifier.fillMaxSize()) {
+            TrackScreen(tab.analyticsScreen)
             tabs.SaveableStateProvider(tab) {
                 when (tab) {
                     ShifaTab.Home ->
