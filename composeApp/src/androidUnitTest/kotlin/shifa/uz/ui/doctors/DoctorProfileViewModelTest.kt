@@ -15,6 +15,8 @@ import org.junit.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
@@ -27,7 +29,8 @@ class DoctorProfileViewModelTest {
     private val doctors = mock<DoctorsRepository>()
     private val card = Doctor(id = "d1", fullName = "Ali")
     private val full = card.copy(biography = "Cardiologist")
-    private val classToTest by lazy { DoctorProfileViewModel(card, doctors) }
+    private val tracker = RecordingTracker()
+    private val classToTest by lazy { DoctorProfileViewModel(card, doctors, tracker) }
 
     @Before
     fun setUp() {
@@ -40,6 +43,21 @@ class DoctorProfileViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `the profile and its tabs are tracked`() =
+        runTest {
+            classToTest
+            advanceUntilIdle()
+            classToTest.selectTab(DoctorTab.Services)
+            classToTest.selectTab(DoctorTab.Services)
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.DoctorProfileViewed(hasReviews = false, supportsOnline = false, servicesCount = 0),
+                    AnalyticsEvent.DoctorProfileTabViewed("services"),
+                ).inOrder()
+        }
 
     private val state get() = classToTest.state.value
 

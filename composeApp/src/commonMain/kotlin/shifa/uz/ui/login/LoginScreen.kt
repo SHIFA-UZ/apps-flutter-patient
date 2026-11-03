@@ -117,7 +117,7 @@ fun LoginScreen(
         debugBackend = backend.takeIf { isDebugBuild },
         onDebugBackend = { next ->
             scope.launch {
-                auth.logout()
+                auth.logout("backend_switch")
                 BackendChoice.set(next)
             }
         },

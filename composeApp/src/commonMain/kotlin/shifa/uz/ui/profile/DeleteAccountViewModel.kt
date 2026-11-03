@@ -78,7 +78,7 @@ class DeleteAccountViewModel(
         viewModelScope.launch {
             profile.confirmDeletion(challenge.challengeId, email, s.otp).fold(
                 onSuccess = {
-                    auth.logout()
+                    auth.logout("account_deleted")
                     _deleted.send(Unit)
                 },
                 onFailure = { update { copy(isDeleting = false, error = it.toUserMessage()) } },

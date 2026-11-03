@@ -16,15 +16,22 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.codeSentAgain
 import shifa.composeapp.generated.resources.emailRequired
 import shifa.composeapp.generated.resources.invalidVerificationCode
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsName
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.auth.needsEmailFallback
+import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.model.ProfileUpdate
 import shifa.uz.data.model.RegisterPatientRequest
 import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.utils.Country
 import shifa.uz.utils.ImagePickerResult
+import shifa.uz.utils.getCurrentInstant
 
 internal const val MAX_SMS_SENDS = 3 // 05 §7, per registration
 internal const val RESEND_COOLDOWN_S = 300 // 05 §7
@@ -32,6 +39,7 @@ internal const val RESEND_COOLDOWN_S = 300 // 05 §7
 class RegisterViewModel(
     private val auth: AuthRepository = AuthRepository(),
     private val profile: ProfileRepository = ProfileRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(RegisterUiState())
     val state: StateFlow<RegisterUiState> = _state.asStateFlow()
@@ -95,7 +103,23 @@ class RegisterViewModel(
         if (_state.value.isLoading) return
         when (_state.value.step) {
             RegisterStep.Account -> checkAccount()
-            RegisterStep.Info -> update { copy(step = RegisterStep.Photo) }
+            RegisterStep.Info -> {
+                val s = _state.value
+                analytics.track(
+                    AnalyticsEvent.SignupStepCompleted(
+                        "info",
+                        hasEmail = s.email.isNotBlank(),
+                        hasPhone = s.phoneOrNull != null,
+                        filledOptional =
+                            listOf(
+                                s.birthDate != null,
+                                s.country != null,
+                                s.address.isNotBlank(),
+                            ).count { it },
+                    ),
+                )
+                update { copy(step = RegisterStep.Photo) }
+            }
             RegisterStep.Photo -> sendOtp()
             RegisterStep.Otp -> verify()
         }
@@ -117,6 +141,12 @@ class RegisterViewModel(
         return true
     }
 
+    /** Close from a step: the flow is given up (events.md §3), then dropped. */
+    fun abandon() {
+        analytics.track(AnalyticsEvent.SignupAbandoned(_state.value.step.analyticsName()))
+        reset()
+    }
+
     /** Drops everything, the password included (05 §6.5). The ViewModel outlives the screen. */
     fun reset() {
         cooldown?.cancel()
@@ -133,12 +163,25 @@ class RegisterViewModel(
             auth.checkIdentifier(s.phoneOrNull, s.email.trim().ifEmpty { null }).fold(
                 onSuccess = {
                     when (it.type) {
-                        "patient" -> update { copy(isLoading = false, dialog = RegisterDialog.ExistingPatient) }
+                        "patient" -> {
+                            analytics.track(AnalyticsEvent.SignupIdentifierConflict("patient_exists"))
+                            update { copy(isLoading = false, dialog = RegisterDialog.ExistingPatient) }
+                        }
                         "doctor" -> {
+                            analytics.track(AnalyticsEvent.SignupIdentifierConflict("doctor_exists"))
                             val name = listOfNotNull(it.firstName, it.lastName).joinToString(" ")
                             update { copy(isLoading = false, dialog = RegisterDialog.ExistingDoctor(name)) }
                         }
-                        else -> update { copy(isLoading = false, step = RegisterStep.Info) }
+                        else -> {
+                            analytics.track(
+                                AnalyticsEvent.SignupStepCompleted(
+                                    "account",
+                                    hasEmail = s.email.isNotBlank(),
+                                    hasPhone = s.phoneOrNull != null,
+                                ),
+                            )
+                            update { copy(isLoading = false, step = RegisterStep.Info) }
+                        }
                     }
                 },
                 onFailure = ::fail,
@@ -163,7 +206,10 @@ class RegisterViewModel(
         val email = s.otpEmail
         when {
             email != null -> sendEmailOtp(email)
-            smsSends >= MAX_SMS_SENDS -> update { copy(dialog = RegisterDialog.EmailFallback) }
+            smsSends >= MAX_SMS_SENDS -> {
+                analytics.track(AnalyticsEvent.SignupSmsUnavailable("limit"))
+                update { copy(dialog = RegisterDialog.EmailFallback) }
+            }
             else ->
                 launchLoading {
                     // No email means validation passed an Uzbek phone.
@@ -171,11 +217,25 @@ class RegisterViewModel(
                         onSuccess = { channel ->
                             // The server can only email a code it has an address for, and none was sent: ask for one.
                             // The Flutter app waited for that email, which never came.
-                            if (channel == OtpChannel.Email) return@fold showEmailFallback()
+                            if (channel == OtpChannel.Email) {
+                                analytics.track(AnalyticsEvent.SignupSmsUnavailable("channel_email"))
+                                return@fold showEmailFallback()
+                            }
                             smsSends++
                             otpSent(OtpChannel.Sms)
                         },
-                        onFailure = { if (it.needsEmailFallback()) showEmailFallback() else fail(it) },
+                        onFailure = {
+                            if (it.needsEmailFallback()) {
+                                analytics.track(
+                                    AnalyticsEvent.SignupSmsUnavailable(
+                                        if (it is ApiException.RateLimit) "429" else "503",
+                                    ),
+                                )
+                                showEmailFallback()
+                            } else {
+                                fail(it)
+                            }
+                        },
                     )
                 }
         }
@@ -186,6 +246,7 @@ class RegisterViewModel(
     fun onContinueWithEmail() {
         val email = _state.value.fallbackEmailInput.trim().lowercase()
         if (!isValidEmail(email)) return update { copy(fallbackEmailInputError = true) }
+        analytics.track(AnalyticsEvent.SignupFallbackEmail)
         update { copy(dialog = null, fallbackEmail = email) }
         sendEmailOtp(email)
     }
@@ -196,7 +257,19 @@ class RegisterViewModel(
         }
 
     private fun otpSent(channel: OtpChannel) {
-        val resent = _state.value.step == RegisterStep.Otp
+        val s = _state.value
+        val resent = s.step == RegisterStep.Otp
+        if (!resent && !s.isDoctorLink) {
+            analytics.track(
+                AnalyticsEvent.SignupStepCompleted(
+                    "photo",
+                    hasEmail = s.email.isNotBlank(),
+                    hasPhone = s.phoneOrNull != null,
+                    hasPhoto = s.photo != null,
+                ),
+            )
+        }
+        analytics.track(AnalyticsEvent.SignupCodeSent(channel.analyticsName(), isResend = resent))
         update {
             copy(
                 isLoading = false,
@@ -243,6 +316,14 @@ class RegisterViewModel(
                 onSuccess = {
                     // ponytail: the PIN setup prompt (05 §2.4 step 9) comes with app lock (LOCK-01).
                     if (!s.isDoctorLink) saveProfile(s)
+                    analytics.track(
+                        AnalyticsEvent.SignupCompleted(
+                            s.otpChannel.analyticsName(),
+                            isDoctorLink = s.isDoctorLink,
+                            hasPhoto = s.photo != null,
+                            at = getCurrentInstant().toString(),
+                        ),
+                    )
                     reset()
                     _registered.send(Unit)
                 },
@@ -271,5 +352,16 @@ class RegisterViewModel(
         viewModelScope.launch { block() }
     }
 
-    private fun fail(e: Throwable) = update { copy(isLoading = false, error = e.toUserMessage()) }
+    private fun fail(e: Throwable) {
+        val step = _state.value.step
+        // The backend checks the code inside A7 / A6: a refused code is a 400 or 401 on the code step.
+        val reason =
+            if (step == RegisterStep.Otp && (e is ApiException.ValidationError || e is ApiException.Unauthorized)) {
+                "invalid_code"
+            } else {
+                e.analyticsReason()
+            }
+        analytics.track(AnalyticsEvent.SignupFailed(step.analyticsName(), reason))
+        update { copy(isLoading = false, error = e.toUserMessage()) }
+    }
 }

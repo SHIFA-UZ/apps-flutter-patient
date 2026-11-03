@@ -12,6 +12,13 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.thankYouForYourRating
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
+import shifa.uz.data.analytics.appointmentState
+import shifa.uz.data.analytics.hoursAhead
+import shifa.uz.data.analytics.paymentBadge
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
@@ -26,7 +33,8 @@ class AppointmentDetailsViewModel(
     appointment: Appointment,
     private val doctors: DoctorsRepository = DoctorsRepository(),
     private val bookings: BookingsRepository = BookingsRepository(),
-    clock: () -> Instant = ::getCurrentInstant,
+    private val analytics: AnalyticsTracker = Analytics,
+    private val clock: () -> Instant = ::getCurrentInstant,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AppointmentDetailsUiState(appointment, clock()))
     val state: StateFlow<AppointmentDetailsUiState> = _state.asStateFlow()
@@ -42,6 +50,17 @@ class AppointmentDetailsViewModel(
     }
 
     init {
+        _state.value.let { s ->
+            analytics.track(
+                AnalyticsEvent.AppointmentDetailsViewed(
+                    state = appointmentState(s.appointment, s.isUpcoming),
+                    isVideo = s.appointment.isVideo,
+                    paymentBadge = s.appointment.paymentBadge(),
+                    canCancel = s.canCancel,
+                    canReschedule = s.canReschedule,
+                ),
+            )
+        }
         // A failed D2 only loses the rating, contacts and tags; the card keeps B2's copy.
         appointment.doctorId?.ifBlank { null }?.let { id ->
             viewModelScope.launch {
@@ -59,14 +78,24 @@ class AppointmentDetailsViewModel(
         }
     }
 
-    fun toggleDetails() = update { copy(detailsOpen = !detailsOpen) }
+    fun toggleDetails() {
+        analytics.track(AnalyticsEvent.AppointmentDetailsToggled(!_state.value.detailsOpen, "details"))
+        update { copy(detailsOpen = !detailsOpen) }
+    }
+
+    private fun daysAfterVisit() = hoursAhead(_state.value.appointment.start, clock())?.let { -it / 24 }
 
     fun openReview() {
-        if (_state.value.canReview) update { copy(reviewOpen = true, reviewError = null) }
+        if (!_state.value.canReview) return
+        analytics.track(AnalyticsEvent.ReviewStarted(daysAfterVisit()))
+        update { copy(reviewOpen = true, reviewError = null) }
     }
 
     fun closeReview() {
-        if (!_state.value.isReviewing) update { copy(reviewOpen = false) }
+        val s = _state.value
+        if (s.isReviewing) return
+        if (s.reviewOpen) analytics.track(AnalyticsEvent.ReviewAbandoned(hadRating = s.rating > 0))
+        update { copy(reviewOpen = false) }
     }
 
     fun onRate(rating: Int) = update { copy(rating = rating, reviewError = null) }
@@ -83,6 +112,7 @@ class AppointmentDetailsViewModel(
         viewModelScope.launch {
             doctors.submitReview(doctorId, ReviewRequest(s.rating, comment, s.appointment.id.toLongOrNull())).fold(
                 onSuccess = {
+                    analytics.track(AnalyticsEvent.ReviewSubmitted(s.rating, comment != null, daysAfterVisit()))
                     update {
                         copy(
                             review = Review(rating = s.rating, comment = comment),
@@ -92,13 +122,18 @@ class AppointmentDetailsViewModel(
                         )
                     }
                 },
-                onFailure = { update { copy(isReviewing = false, reviewError = it.toUserMessage()) } },
+                onFailure = {
+                    analytics.track(AnalyticsEvent.ReviewFailed(it.analyticsReason()))
+                    update { copy(isReviewing = false, reviewError = it.toUserMessage()) }
+                },
             )
         }
     }
 
     fun askCancel() {
-        if (_state.value.canCancel) update { copy(confirmCancel = true, error = null) }
+        if (!_state.value.canCancel) return
+        analytics.track(AnalyticsEvent.AppointmentCancelStarted(hoursAhead(_state.value.appointment.start, clock())))
+        update { copy(confirmCancel = true, error = null) }
     }
 
     fun dismissCancel() {
@@ -109,9 +144,24 @@ class AppointmentDetailsViewModel(
         if (_state.value.isCancelling) return
         update { copy(isCancelling = true) }
         viewModelScope.launch {
-            bookings.cancel(_state.value.appointment.id).fold(
-                onSuccess = { _cancelled.send(Unit) },
+            val a = _state.value.appointment
+            bookings.cancel(a.id).fold(
+                onSuccess = {
+                    analytics.track(
+                        AnalyticsEvent.AppointmentCancelled(hoursAhead(a.start, clock()), a.isVideo, a.isPaid),
+                    )
+                    _cancelled.send(Unit)
+                },
                 onFailure = {
+                    analytics.track(
+                        AnalyticsEvent.AppointmentCancelFailed(
+                            if (it is ApiException && it.code == "APPOINTMENT_LOCKED_24H") {
+                                "locked_24h"
+                            } else {
+                                it.analyticsReason()
+                            },
+                        ),
+                    )
                     update { copy(isCancelling = false, confirmCancel = false, error = it.toUserMessage()) }
                     if (it is ApiException.Unauthorized) _signedOut.send(Unit)
                 },

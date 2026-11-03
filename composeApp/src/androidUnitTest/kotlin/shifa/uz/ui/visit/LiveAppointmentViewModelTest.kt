@@ -22,6 +22,8 @@ import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.pleaseSignAbove
 import shifa.composeapp.generated.resources.signatureSubmittedSuccess
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
@@ -37,8 +39,9 @@ class LiveAppointmentViewModelTest {
     private val detailed = listed.copy(signatureRequested = true)
     private val png = byteArrayOf(1)
 
+    private val tracker = RecordingTracker()
     private val classToTest by lazy {
-        LiveAppointmentViewModel(listed, doctors, bookings) { Instant.parse("2026-10-19T09:05:00Z") }
+        LiveAppointmentViewModel(listed, doctors, bookings, tracker) { Instant.parse("2026-10-19T09:05:00Z") }
     }
 
     @Before
@@ -52,6 +55,25 @@ class LiveAppointmentViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `the live page and the signing are tracked`() =
+        runTest {
+            wheneverBlocking { bookings.submitSignature(any(), any()) } doReturn Result.success(Unit)
+            advanceUntilIdle()
+            classToTest.openSign()
+            classToTest.sign(null)
+            classToTest.sign(png)
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.LiveAppointmentViewed(minutesToStart = -5, isVideo = false, signatureDue = false),
+                    AnalyticsEvent.SignatureStarted,
+                    AnalyticsEvent.SignatureFailed("empty"),
+                    AnalyticsEvent.SignatureSubmitted,
+                ).inOrder()
+        }
 
     @Test
     fun `B4 brings the signature request and D2 the doctor`() =

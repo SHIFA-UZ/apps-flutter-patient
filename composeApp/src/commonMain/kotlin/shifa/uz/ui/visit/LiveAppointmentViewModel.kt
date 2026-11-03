@@ -13,6 +13,10 @@ import kotlinx.datetime.Instant
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.pleaseSignAbove
 import shifa.composeapp.generated.resources.signatureSubmittedSuccess
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
@@ -25,6 +29,7 @@ class LiveAppointmentViewModel(
     appointment: Appointment,
     private val doctors: DoctorsRepository = DoctorsRepository(),
     private val bookings: BookingsRepository = BookingsRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
     clock: () -> Instant = ::getCurrentInstant,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LiveAppointmentUiState(appointment, clock()))
@@ -38,6 +43,13 @@ class LiveAppointmentViewModel(
     }
 
     init {
+        analytics.track(
+            AnalyticsEvent.LiveAppointmentViewed(
+                minutesToStart = appointment.start?.let { (it - clock()).inWholeMinutes },
+                isVideo = appointment.isVideo,
+                signatureDue = appointment.needsSignature,
+            ),
+        )
         // A failed D2 only loses the rating and tags; the card keeps the list's copy.
         appointment.doctorId?.ifBlank { null }?.let { id ->
             viewModelScope.launch {
@@ -61,22 +73,35 @@ class LiveAppointmentViewModel(
         if (e is ApiException.Unauthorized) _signedOut.trySend(Unit)
     }
 
-    fun toggleDetails() = update { copy(detailsOpen = !detailsOpen) }
+    fun toggleDetails() {
+        analytics.track(AnalyticsEvent.AppointmentDetailsToggled(!_state.value.detailsOpen, "live_appointment"))
+        update { copy(detailsOpen = !detailsOpen) }
+    }
 
-    fun openSign() = update { copy(signing = true, signError = null) }
+    fun openSign() {
+        analytics.track(AnalyticsEvent.SignatureStarted)
+        update { copy(signing = true, signError = null) }
+    }
 
     fun closeSign() {
-        if (!_state.value.isSubmitting) update { copy(signing = false) }
+        val s = _state.value
+        if (s.isSubmitting) return
+        if (s.signing) analytics.track(AnalyticsEvent.SignatureAbandoned)
+        update { copy(signing = false) }
     }
 
     /** [png] is null while the pad is empty. */
     fun sign(png: ByteArray?) {
         if (_state.value.isSubmitting) return
-        if (png == null) return update { copy(signError = Res.string.pleaseSignAbove) }
+        if (png == null) {
+            analytics.track(AnalyticsEvent.SignatureFailed("empty"))
+            return update { copy(signError = Res.string.pleaseSignAbove) }
+        }
         update { copy(isSubmitting = true, signError = null) }
         viewModelScope.launch {
             bookings.submitSignature(_state.value.appointment.id, png).fold(
                 onSuccess = {
+                    analytics.track(AnalyticsEvent.SignatureSubmitted)
                     update {
                         copy(
                             appointment = appointment.copy(alreadySigned = true),
@@ -88,6 +113,7 @@ class LiveAppointmentViewModel(
                     reload()
                 },
                 onFailure = {
+                    analytics.track(AnalyticsEvent.SignatureFailed(it.analyticsReason()))
                     update { copy(isSubmitting = false, signError = it.toUserMessage()) }
                     failed(it)
                 },

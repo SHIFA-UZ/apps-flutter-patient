@@ -17,6 +17,8 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Test
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.LOGIN_FAILED
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.api.NO_TOKEN_RECEIVED
@@ -38,7 +40,9 @@ class AuthRepositoryTest {
     private val client = createHttpClient(tokens, engine)
     private val chats = CopilotStorage(MapSettings()).apply { save(listOf(CopilotChat("1"))) }
     private var analyticsResets = 0
-    private val classToTest = AuthRepository(client, tokens, settings, chats) { analyticsResets++ }
+    private val tracker = RecordingTracker()
+    private val classToTest =
+        AuthRepository(client, tokens, settings, chats, resetAnalytics = { analyticsResets++ }, analytics = tracker)
 
     private fun replyJson(
         status: HttpStatusCode,
@@ -370,5 +374,26 @@ class AuthRepositoryTest {
             client.get("https://files.example.com/api/patients/me/profile")
 
             assertThat(request.headers[HttpHeaders.Authorization]).isNull()
+        }
+
+    @Test
+    fun `session restore reports its result, and logout its source`() =
+        runTest {
+            assertThat(classToTest.restoreSession()).isFalse()
+            tokens.token = "t"
+            assertThat(classToTest.restoreSession()).isTrue()
+            replyJson(HttpStatusCode.Unauthorized, "{}")
+            assertThat(classToTest.restoreSession()).isFalse()
+            tokens.token = "t"
+            reply = { respondOk() }
+            classToTest.logout("account_deleted")
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.SessionRestored("no_token"),
+                    AnalyticsEvent.SessionRestored("signed_in"),
+                    AnalyticsEvent.SessionRestored("expired"),
+                    AnalyticsEvent.LoggedOut("account_deleted"),
+                ).inOrder()
         }
 }

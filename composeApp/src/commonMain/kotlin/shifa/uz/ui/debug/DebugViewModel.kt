@@ -33,7 +33,7 @@ class DebugViewModel(
     private val resetDemo: suspend () -> Unit = { DemoBackend.shared.reset() },
     backend: StateFlow<Backend> = BackendChoice.current,
     private val setBackend: (Backend) -> Unit = BackendChoice::set,
-    private val signOut: suspend () -> Unit = { AuthRepository().logout() },
+    private val signOut: suspend () -> Unit = { AuthRepository().logout("backend_switch") },
     private val clock: () -> Instant = ::getCurrentInstant,
     recentEvents: StateFlow<List<String>> = Analytics.recent,
 ) : ViewModel() {

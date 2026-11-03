@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.Instant
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -20,6 +21,8 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorVideoCallMediaPermissionRequired
 import shifa.composeapp.generated.resources.errorVideoCallPaymentRequired
 import shifa.composeapp.generated.resources.failedToStartVideoCall
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.VideoToken
@@ -33,12 +36,15 @@ class VideoCallViewModelTest {
     private val videos = mock<VideoRepository>()
     private val call = FakeCall()
 
+    private val tracker = RecordingTracker()
+    private val now = Instant.parse("2026-10-19T09:02:00Z")
     private val classToTest by lazy {
         VideoCallViewModel(
             Appointment("7", startAt = "2026-10-19T09:00:00Z"),
             call,
             videos,
-        )
+            tracker,
+        ) { now }
     }
 
     @Before
@@ -50,6 +56,50 @@ class VideoCallViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `a failure after joining ends the call as an error, not as a failed join`() =
+        runTest {
+            classToTest
+            advanceUntilIdle()
+            call.state.value = VideoCallState(VideoCallState.Phase.Joined)
+            advanceUntilIdle()
+            call.state.value = VideoCallState(VideoCallState.Phase.Joined, failed = true)
+            advanceUntilIdle()
+            classToTest.leave()
+
+            assertThat(tracker.events.filterIsInstance<AnalyticsEvent.VideoJoinFailed>()).isEmpty()
+            assertThat(tracker.events.last())
+                .isEqualTo(
+                    AnalyticsEvent.VideoCallEnded("error", durationS = 0, doctorJoined = false, wasMinimized = false),
+                )
+        }
+
+    @Test
+    fun `the call's timeline is tracked from the tap to the end`() =
+        runTest {
+            wheneverBlocking { videos.token("7") } doReturn Result.success(VideoToken("t", "https://shifa.daily.co/r"))
+            classToTest.onPermissions(true)
+            classToTest.join()
+            advanceUntilIdle()
+            call.state.value = VideoCallState(VideoCallState.Phase.Joined)
+            advanceUntilIdle()
+            call.state.value = VideoCallState(VideoCallState.Phase.Joined, doctorJoined = true)
+            advanceUntilIdle()
+            classToTest.onMinimize()
+            classToTest.leave()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.VideoCallOpened(minutesToStart = -2, isVideo = false),
+                    AnalyticsEvent.VideoPermissionsResult(true),
+                    AnalyticsEvent.VideoJoinTapped,
+                    AnalyticsEvent.VideoJoined(joinMs = 0, at = now.toString()),
+                    AnalyticsEvent.VideoDoctorJoined(waitedS = 0),
+                    AnalyticsEvent.VideoCallMinimized,
+                    AnalyticsEvent.VideoCallEnded("patient", durationS = 0, doctorJoined = true, wasMinimized = true),
+                ).inOrder()
+        }
 
     @Test
     fun `the preview starts once both permissions are granted`() =

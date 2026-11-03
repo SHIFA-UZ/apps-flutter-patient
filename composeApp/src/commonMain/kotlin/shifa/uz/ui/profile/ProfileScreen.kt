@@ -114,16 +114,17 @@ fun ProfileScreen(
     onLogOut: () -> Unit,
     onAccountDeleted: () -> Unit,
     onProfileChanged: (PatientProfile) -> Unit,
+    onSignedOut: () -> Unit = onLogOut, // P1 answered 401 (events.md §3: `session_expired`, not `profile`)
     viewModel: ProfileViewModel = viewModel { ProfileViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
     TrackScreen(AnalyticsScreen.Profile)
-    val logOut by rememberUpdatedState(onLogOut)
+    val signedOut by rememberUpdatedState(onSignedOut)
     val changed by rememberUpdatedState(onProfileChanged)
     LaunchedEffect(viewModel) {
         viewModel.events.collect {
             when (it) {
-                ProfileEvent.SignedOut -> logOut()
+                ProfileEvent.SignedOut -> signedOut()
                 ProfileEvent.Changed -> viewModel.state.value.profile?.let(changed)
             }
         }

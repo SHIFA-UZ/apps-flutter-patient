@@ -143,10 +143,15 @@ fun CreateBookingScreen(
     val pickFile = rememberDocumentPickerLauncher { it?.let { viewModel.attach(it.fileName, it.fileBytes) } }
     var pickingDate by remember { mutableStateOf(false) }
     val now = getCurrentInstant()
+    val back = {
+        viewModel.abandon()
+        onBack()
+    }
+    BackHandler(onBack = back) // the system Back too, over MainScreen's
     CreateBookingContent(
         state,
         now,
-        onBack = onBack,
+        onBack = back,
         onLocationChange = viewModel::onLocationChange,
         onVideoChange = viewModel::onVideoChange,
         onServiceChange = viewModel::onServiceChange,

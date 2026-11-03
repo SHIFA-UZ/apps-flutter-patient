@@ -73,6 +73,8 @@ import shifa.composeapp.generated.resources.videoConsultation
 import shifa.composeapp.generated.resources.weekdays
 import shifa.composeapp.generated.resources.yes
 import shifa.composeapp.generated.resources.yourReview
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.analytics.appointmentState
 import shifa.uz.data.analytics.paymentBadge
@@ -140,7 +142,14 @@ fun AppointmentDetailsScreen(
         state,
         onBack = onBack,
         onDoctor = onDoctor,
-        onContact = { state.contactUri?.let { runCatching { uri.openUri(it) } } },
+        onContact = {
+            state.contactUri?.let {
+                Analytics.track(
+                    AnalyticsEvent.AppointmentContactTapped(if (it.startsWith("tel:")) "phone" else "email"),
+                )
+                runCatching { uri.openUri(it) }
+            }
+        },
         onToggleDetails = viewModel::toggleDetails,
         onReschedule = { onReschedule(state.appointment) },
         onCancel = viewModel::askCancel,

@@ -14,6 +14,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.COULD_NOT_SEND_EMAIL_OTP
 import shifa.uz.data.api.COULD_NOT_SEND_SMS_OTP
@@ -58,6 +60,7 @@ class AuthRepository(
     private val settings: Settings = Settings(),
     private val copilot: CopilotStorage = CopilotStorage(),
     private val resetAnalytics: () -> Unit = Analytics::reset,
+    private val analytics: AnalyticsTracker = Analytics,
 ) {
     /** A1. Saves the token on success. */
     suspend fun login(
@@ -183,19 +186,34 @@ class AuthRepository(
         withContext(Dispatchers.Default) {
             try {
                 // The iOS Keychain survives a reinstall; drop its token on the first launch.
+                var wiped = false
                 if (!settings.getBoolean(KEY_HAS_LAUNCHED, false)) {
+                    wiped = tokenStorage.token != null
                     tokenStorage.clear()
                     copilot.clear()
                     resetAnalytics()
                     settings[KEY_HAS_LAUNCHED] = true
                 }
-                if (tokenStorage.token == null) return@withContext false
+                if (tokenStorage.token == null) {
+                    analytics.track(AnalyticsEvent.SessionRestored(if (wiped) "reinstall_wipe" else "no_token"))
+                    return@withContext false
+                }
                 val rejected = apiCall<Unit>("") { client.get(ApiConfig.Endpoints.PROFILE) }.exceptionOrNull()
                 if (rejected is ApiException.Unauthorized) {
                     tokenStorage.clear()
                     copilot.clear()
                     resetAnalytics()
                 }
+                analytics.track(
+                    AnalyticsEvent.SessionRestored(
+                        when (rejected) {
+                            null -> "signed_in"
+                            is ApiException.Unauthorized -> "expired"
+                            is ApiException.NetworkError -> "offline"
+                            else -> "server"
+                        },
+                    ),
+                )
                 rejected !is ApiException.Unauthorized
             } catch (e: CancellationException) {
                 throw e
@@ -204,8 +222,11 @@ class AuthRepository(
             }
         }
 
-    /** 05 §2.8: unregisters push (P7 with "", errors ignored), then drops the token and the Shifa AI chats. No logout endpoint. */
-    suspend fun logout() {
+    /** 05 §2.8: unregisters push (P7 with "", errors ignored), then drops the token and the Shifa AI chats. No logout endpoint.
+     * [source]: `profile` / `account_deleted` / `backend_switch` (events.md §3).
+     */
+    suspend fun logout(source: String = "profile") {
+        analytics.track(AnalyticsEvent.LoggedOut(source))
         apiCall<String>("") {
             client.put(ApiConfig.Endpoints.FCM_TOKEN) {
                 contentType(ContentType.Application.Json)

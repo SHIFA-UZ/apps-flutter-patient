@@ -22,6 +22,8 @@ import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorNetworkConnection
 import shifa.composeapp.generated.resources.errorSomethingWentWrong
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_LOAD_DOCTOR
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.bookings.BookingsRepository
@@ -45,6 +47,7 @@ class HomeViewModelTest {
     private val notifications = mock<NotificationsRepository>()
     private val now = Instant.parse("2026-09-27T09:00:00Z")
     private val identified = mutableListOf<PatientProfile>()
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: HomeViewModel
 
     @Before
@@ -62,8 +65,20 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test
+    fun `pull to refresh is tracked`() =
+        runTest {
+            create()
+            advanceUntilIdle()
+            classToTest.refresh()
+            advanceUntilIdle()
+
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.HomeRefreshed)
+        }
+
     private fun create() {
-        classToTest = HomeViewModel(profile, bookings, doctors, tasks, notifications, { now }) { identified += it }
+        classToTest =
+            HomeViewModel(profile, bookings, doctors, tasks, notifications, tracker, { now }) { identified += it }
     }
 
     private val state get() = classToTest.state.value

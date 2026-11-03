@@ -19,7 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
@@ -52,6 +54,7 @@ import shifa.uz.utils.getCurrentInstant
  * say which one was booked, and B3 needs it.
  */
 @Composable
+@OptIn(ExperimentalComposeUiApi::class)
 fun RescheduleScreen(
     appointment: Appointment,
     onBack: () -> Unit,
@@ -69,12 +72,17 @@ fun RescheduleScreen(
     var pickingDate by remember { mutableStateOf(false) }
     var detailsOpen by rememberSaveable { mutableStateOf(true) }
     val now = getCurrentInstant()
+    val back = {
+        viewModel.abandon()
+        onBack()
+    }
+    BackHandler(onBack = back) // the system Back too, over MainScreen's
     RescheduleContent(
         appointment,
         state,
         now,
         detailsOpen,
-        onBack = onBack,
+        onBack = back,
         onToggleDetails = { detailsOpen = !detailsOpen },
         onServiceChange = viewModel::onServiceChange,
         onPickDate = { pickingDate = true },

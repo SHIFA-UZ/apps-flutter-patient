@@ -22,6 +22,8 @@ import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorInvalidCredentials
 import shifa.composeapp.generated.resources.errorNetworkConnection
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.auth.LoginAttempts
@@ -33,18 +35,38 @@ class LoginViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repository = mock<AuthRepository>()
     private val attempts = LoginAttempts(MapSettings()) { 0L }
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: LoginViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        classToTest = LoginViewModel(repository, attempts)
+        classToTest = LoginViewModel(repository, attempts, tracker)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `sign in is tracked by its outcome`() =
+        runTest {
+            classToTest.signIn()
+            loginReturns(Result.failure(ApiException.Unauthorized("Invalid credentials")))
+            fillAndSignIn()
+            advanceUntilIdle()
+            loginReturns(Result.success(LoginResponse(token = "t")))
+            fillAndSignIn()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.LoginFailed("empty_fields"),
+                    AnalyticsEvent.LoginFailed("invalid_credentials"),
+                    AnalyticsEvent.LoginSucceeded("email"),
+                ).inOrder()
+        }
 
     private fun loginReturns(result: Result<LoginResponse>) {
         wheneverBlocking { repository.login(any(), any()) } doReturn result
