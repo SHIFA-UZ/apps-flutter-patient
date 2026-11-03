@@ -8,8 +8,9 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   timezone `Asia/Tashkent`, client IPs discarded, session replay off, autocapture / heatmaps / web vitals / console
   logs / performance off, surveys off, exception autocapture off (ANL-06 turns it on), the internal-users filter on
   by default for new insights, weeks start on Monday. Person profiles "identified only" is set in the SDK.
-- Still to do: the team's `patient_<id>`s in the internal-users filter (setup.md §1.4), `POSTHOG_API_KEY_PROD` in
-  GitHub (setup.md §2.1), legal sign-off (privacy.md §4-5), the privacy policy text.
+- `POSTHOG_API_KEY_PROD` is in GitHub (2026-11-03) and legal signed off on EU hosting and opt-out (README D1, D7).
+  Still to do: the team's `patient_<id>`s in the internal-users filter (setup.md §1.4), the privacy policy text, the
+  store privacy labels (setup.md §8).
 
 ## Foundation (`data/analytics/`, ANL-02)
 
@@ -120,11 +121,15 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
 
 Created in the Shifa project through the API, empty until the first release build sends events:
 
-- **Eight dashboards**, one per dashboards.md section, 103 insights in all: Patient · Journey (activation funnel,
+- **Nine dashboards**, one per dashboards.md section, 122 insights in all: Patient · Journey (activation funnel,
   login vs signup, first-visit funnel, weekly retention, stickiness, feature reach, path to booking, platform /
   version / language splits), Booking, Payments, Video visit, Tasks, Shifa AI, Notifications chat and documents,
-  Reliability. Insight names are `<dashboard> · <title>`. Ratios use formulas (`A/B`), timings use median and p90
-  of the event's `*_ms` / `*_s` property; the Personalisation dashboard (dashboards.md §9) waits for ANL-08 flags.
+  Reliability, and Personalisation (one insight per flag, broken down by `$feature/<flag>`, empty until a flag is
+  on). Insight names are `<dashboard> · <title>`. Two actions stand in for event groups: **Booking done**
+  (`booking_completed` or `payment_completed`) ends every booking funnel, **Came back** (booking, payment, check-in,
+  Shifa AI, chat, document viewed) is the retention return event. Ratios use formulas (`A/B`), timings use median
+  and p90 of the event's `*_ms` / `*_s` property. Plan rows that need a property the app doesn't send (`during_call`,
+  `cold_start`, `chat_opened.source`, `turn` averages, crash-free sessions) are left out, as analytics.md records.
 - **Sixteen cohorts**: the fourteen from personalisation.md §3 plus Android and iOS. "Lapsed" uses PostHog's "stopped
   performing" condition (opened in the 30 days before, not in the last 30).
 - **Five alerts**, the free plan's limit, with fixed daily bounds (dashboards.md §10), mailed to the project owner.
