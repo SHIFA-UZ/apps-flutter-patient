@@ -146,5 +146,8 @@ Created in the Shifa project through the API, empty until the first release buil
   event-based cohorts), `home-first-week-tips` (New this week, `{"tip": ...}` payload), `video-permission-explainer`
   (`camera_mic_granted = false`), `ai-intro-tip` (AI-eligible never tried), `booking-scan-start-test` (variants
   `control` / `next_available`). P7 is a survey, off until surveys are decided (README D12).
-- Not built yet: the `Flags` accessors and the ViewModel reads. They come one personalisation at a time, each on its
-  own branch, once the user picks which to wire; until then the flags change nothing.
+- **Postponed (the user's decision, 2026-11-03):** no personalisation ships until asked for. The seven flags and
+  the Personalisation dashboard were archived in PostHog the same day (soft-deleted through the API; restorable by
+  setting `deleted = false`, or recreated from personalisation.md §6 and dashboards.md §9). A round-1 implementation
+  of P1, P2 and P5 was built, reviewed and then discarded uncommitted; its design is in the session notes, not the
+  repo. The `Flags` accessors don't exist; `AnalyticsSink` keeps the flag methods for when they do.

@@ -147,7 +147,8 @@ until then, every flag is app-side.
 ## 6. Round 1 candidates (ANL-08)
 
 What the data supports first, after about four weeks of Prod events. Each one is a flag plus the data it reads;
-none needs new tracking beyond events.md.
+none needs new tracking beyond events.md. **Status 2026-11-03: postponed.** The flags and the Personalisation
+dashboard were created in PostHog and archived again the same day; nothing is in the app until the user asks.
 
 | # | Personalisation | Reads | Mechanism | Primary metric |
 |---|---|---|---|---|
