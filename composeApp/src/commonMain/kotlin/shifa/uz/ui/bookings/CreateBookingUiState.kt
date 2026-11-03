@@ -50,6 +50,15 @@ data class CreateBookingUiState(
 
     val isPayNow get() = service?.isPayNow == true
 
+    /** events.md §5.0: `free` / `pay_in_clinic` / `pay_now` / `none`. */
+    val paymentKind get() =
+        when {
+            service == null -> "none"
+            service!!.isFreeConsultation -> "free"
+            service!!.isPayLater -> "pay_in_clinic"
+            else -> "pay_now"
+        }
+
     val isPayInClinic get() = service?.isPayLater == true
 
     val price get() = service?.price(locationId.takeUnless { isVideo })?.text

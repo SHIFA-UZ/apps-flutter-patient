@@ -22,6 +22,8 @@ import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorCancellingAppointment
 import shifa.composeapp.generated.resources.thankYouForYourRating
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_CANCEL_APPOINTMENT
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
@@ -40,6 +42,7 @@ class AppointmentDetailsViewModelTest {
     private val inThreeDays =
         Appointment(id = "1", doctorId = "d1", doctorName = "Ali", startAt = "2026-09-30T09:00:00Z")
     private val tomorrow = inThreeDays.copy(startAt = "2026-09-28T09:00:00Z")
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: AppointmentDetailsViewModel
 
     @Before
@@ -55,8 +58,31 @@ class AppointmentDetailsViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test
+    fun `the details and a cancellation are tracked`() =
+        runTest {
+            wheneverBlocking { bookings.cancel("1") } doReturn Result.success(Unit)
+            create()
+            classToTest.askCancel()
+            classToTest.cancel()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.AppointmentDetailsViewed(
+                        state = "upcoming",
+                        isVideo = false,
+                        paymentBadge = "none",
+                        canCancel = true,
+                        canReschedule = true,
+                    ),
+                    AnalyticsEvent.AppointmentCancelStarted(hoursAhead = 72),
+                    AnalyticsEvent.AppointmentCancelled(hoursAhead = 72, isVideo = false, wasPaid = false),
+                ).inOrder()
+        }
+
     private fun create(appointment: Appointment = inThreeDays) {
-        classToTest = AppointmentDetailsViewModel(appointment, doctors, bookings) { now }
+        classToTest = AppointmentDetailsViewModel(appointment, doctors, bookings, tracker) { now }
     }
 
     private val state get() = classToTest.state.value

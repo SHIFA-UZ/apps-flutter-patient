@@ -118,7 +118,7 @@ class DeleteAccountViewModelTest {
             }
             inOrder(profile, auth) {
                 verifyBlocking(profile) { confirmDeletion("c1", "aziz@example.com", "123456") }
-                verifyBlocking(auth) { logout() }
+                verifyBlocking(auth) { logout("account_deleted") }
             }
         }
 
@@ -135,6 +135,6 @@ class DeleteAccountViewModelTest {
 
             assertThat(state.isDeleting).isFalse()
             assertThat(state.error).isEqualTo(Res.string.errorSomethingWentWrong)
-            verifyBlocking(auth, never()) { logout() }
+            verifyBlocking(auth, never()) { logout("account_deleted") }
         }
 }

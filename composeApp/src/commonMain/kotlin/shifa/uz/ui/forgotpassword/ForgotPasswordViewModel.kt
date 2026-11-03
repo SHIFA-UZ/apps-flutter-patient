@@ -15,6 +15,11 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.codeSentAgain
 import shifa.composeapp.generated.resources.errorInvalidOrExpiredEmailVerificationCode
 import shifa.composeapp.generated.resources.invalidVerificationCode
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsName
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.auth.AuthRepository
 
@@ -26,6 +31,7 @@ private val CODE_ERRORS =
 
 class ForgotPasswordViewModel(
     private val auth: AuthRepository = AuthRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ForgotPasswordUiState())
     val state: StateFlow<ForgotPasswordUiState> = _state.asStateFlow()
@@ -114,6 +120,7 @@ class ForgotPasswordViewModel(
             auth.sendForgotPasswordOtp(s.normalizedIdentifier).fold(
                 onSuccess = { channel ->
                     val resent = s.step == ForgotPasswordStep.Code
+                    analytics.track(AnalyticsEvent.PasswordResetRequested(channel.analyticsName(), isResend = resent))
                     update {
                         copy(
                             isLoading = false,
@@ -170,11 +177,18 @@ class ForgotPasswordViewModel(
             auth.resetForgottenPassword(s.normalizedIdentifier, s.channel, s.otp, s.password).fold(
                 onSuccess = {
                     // ponytail: the passwordResetSuccess SnackBar (05 §2.6) needs a snackbar host on Home.
+                    analytics.track(AnalyticsEvent.PasswordResetCompleted)
                     reset()
                     _signedIn.send(Unit)
                 },
                 onFailure = { e ->
                     val message = e.toUserMessage()
+                    analytics.track(
+                        AnalyticsEvent.PasswordResetFailed(
+                            "new_password",
+                            if (message in CODE_ERRORS) "invalid_code" else e.analyticsReason(),
+                        ),
+                    )
                     // A wrong code only shows up here (05 Q12): go back to the code screen, where resend is.
                     if (message in CODE_ERRORS) {
                         update { backToCode().copy(isLoading = false, error = message, otp = "") }
@@ -186,5 +200,8 @@ class ForgotPasswordViewModel(
         }
     }
 
-    private fun fail(e: Throwable) = update { copy(isLoading = false, error = e.toUserMessage()) }
+    private fun fail(e: Throwable) {
+        analytics.track(AnalyticsEvent.PasswordResetFailed(_state.value.step.analyticsName(), e.analyticsReason()))
+        update { copy(isLoading = false, error = e.toUserMessage()) }
+    }
 }

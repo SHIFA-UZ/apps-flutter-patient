@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
 import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
@@ -35,6 +37,7 @@ class HomeViewModel(
     private val doctors: DoctorsRepository = DoctorsRepository(),
     private val tasks: TasksRepository = TasksRepository(),
     private val notifications: NotificationsRepository = NotificationsRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
     private val clock: () -> Instant = ::getCurrentInstant,
     private val identify: (PatientProfile) -> Unit = Analytics::identify,
 ) : ViewModel() {
@@ -52,7 +55,10 @@ class HomeViewModel(
     }
 
     /** Pull to refresh: the lists stay on screen meanwhile. */
-    fun refresh() = load(refreshing = true)
+    fun refresh() {
+        analytics.track(AnalyticsEvent.HomeRefreshed)
+        load(refreshing = true)
+    }
 
     /** Profile saved a change (P2 or a photo): the greeting and avatar follow it without a refetch. */
     fun onProfileChanged(updated: PatientProfile) = show(updated)

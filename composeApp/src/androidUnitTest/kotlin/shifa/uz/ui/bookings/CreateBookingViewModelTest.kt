@@ -32,6 +32,9 @@ import shifa.composeapp.generated.resources.bookingSelectServiceForVideo
 import shifa.composeapp.generated.resources.bookingSlotTaken
 import shifa.composeapp.generated.resources.bookingVideoNoServicesOffered
 import shifa.composeapp.generated.resources.paymentCancelledSlotReleased
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.PaymentReports
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.documents.DocumentsRepository
@@ -78,11 +81,15 @@ class CreateBookingViewModelTest {
     private val first = AvailableSlot("2026-09-30T05:00:00Z", "2026-09-30T05:30:00Z", 30, locationId = 3)
     private val second = AvailableSlot("2026-09-30T05:30:00Z", "2026-09-30T06:00:00Z")
 
-    private val classToTest by lazy { CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent) }
+    private val tracker = RecordingTracker()
+    private val classToTest by lazy {
+        CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent, analytics = tracker)
+    }
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
+        PaymentReports.clearForTests()
         wheneverBlocking { doctors.getDoctor("42") } doReturn Result.success(full)
         wheneverBlocking {
             doctors.getLocations(
@@ -105,6 +112,121 @@ class CreateBookingViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `a payment the page already reported is not reported again on close`() =
+        runTest {
+            PaymentReports.claim("9") // the payment page's poll saw PAID first
+            wheneverBlocking { bookings.getPaymentMethods(any(), anyOrNull()) } doReturn
+                Result.success(listOf(PaymentMethod(provider = "CLICK", amountMinor = 10_000_000, currency = "UZS")))
+            val paid =
+                Appointment(id = "9", startAt = first.startAt, status = "CONFIRMED", paymentStatus = Appointment.PAID)
+            wheneverBlocking { bookings.book(any()) } doReturn
+                Result.success(
+                    paid.copy(
+                        status = Appointment.PENDING_PAYMENT,
+                        paymentStatus = "PENDING",
+                        payment = PaymentCheckout("880", "CLICK", "https://pay/880"),
+                    ),
+                )
+            wheneverBlocking { bookings.getAppointment("9") } doReturn Result.success(paid)
+            open()
+            classToTest.onServiceChange("7")
+            classToTest.book()
+            advanceUntilIdle()
+            classToTest.pay()
+            advanceUntilIdle()
+            classToTest.onPaymentClosed()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.filterIsInstance<AnalyticsEvent.PaymentCompleted>()).isEmpty()
+        }
+
+    @Test
+    fun `a reschedule that fails its checks is a reschedule failure`() =
+        runTest {
+            wheneverBlocking { bookings.getSlots("42", LocalDate(2026, 9, 30), null) } doReturn
+                Result.success(listOf(first))
+            val old = Appointment(id = "77", startAt = first.startAt, isVideoConsultation = true)
+            val reschedule =
+                CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent, old, analytics = tracker)
+            advanceUntilIdle()
+            reschedule.onVideoChange(true)
+            advanceUntilIdle()
+            reschedule.book()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.first()).isInstanceOf(AnalyticsEvent.RescheduleStarted::class.java)
+            assertThat(tracker.events.filterIsInstance<AnalyticsEvent.BookingFailed>()).isEmpty()
+            assertThat(tracker.events.filterIsInstance<AnalyticsEvent.RescheduleFailed>()).isNotEmpty()
+        }
+
+    @Test
+    fun `a free booking is tracked from the scan to the outcome`() =
+        runTest {
+            wheneverBlocking { bookings.book(any()) } doReturn
+                Result.success(Appointment(id = "9", startAt = first.startAt, status = "CONFIRMED"))
+            open()
+            classToTest.onServiceChange("3")
+            classToTest.book()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.take(2))
+                .containsExactly(
+                    AnalyticsEvent.BookingStarted,
+                    AnalyticsEvent.BookingSlotsLoaded(daysToFirstSlot = 2, isVideo = false, scanStart = "today"),
+                ).inOrder()
+            val service = tracker.events.filterIsInstance<AnalyticsEvent.BookingServiceSelected>().single()
+            assertThat(service.paymentKind).isEqualTo("free")
+            assertThat(service.servicesCount).isEqualTo(3)
+            assertThat(tracker.events.last())
+                .isEqualTo(
+                    AnalyticsEvent.BookingCompleted(
+                        isVideo = false,
+                        daysAhead = 1,
+                        hourOfDay = 10,
+                        paymentKind = "free",
+                        hasReason = false,
+                        attachments = 0,
+                        at = now.toString(),
+                    ),
+                )
+            assertThat(tracker.events.last().userProperties).containsEntry("has_booked", true)
+        }
+
+    @Test
+    fun `pay now tracks the providers, the checkout, and the back button as an abandonment`() =
+        runTest {
+            wheneverBlocking { bookings.getPaymentMethods(any(), anyOrNull()) } doReturn
+                Result.success(listOf(PaymentMethod(provider = "CLICK", amountMinor = 10_000_000, currency = "UZS")))
+            wheneverBlocking { bookings.book(any()) } doReturn
+                Result.success(
+                    Appointment(
+                        id = "9",
+                        startAt = first.startAt,
+                        status = Appointment.PENDING_PAYMENT,
+                        paymentStatus = "PENDING",
+                        holdExpiresAt = "2026-09-28T09:15:00Z",
+                        paymentAmountMinor = 10_000_000,
+                        paymentCurrency = "UZS",
+                        payment = PaymentCheckout("880", "CLICK", "https://pay/880"),
+                    ),
+                )
+            open()
+            classToTest.onServiceChange("7")
+            classToTest.book()
+            advanceUntilIdle()
+            classToTest.pay()
+            advanceUntilIdle()
+            classToTest.abandon()
+
+            assertThat(tracker.events)
+                .containsAtLeast(
+                    AnalyticsEvent.PaymentMethodsLoaded(1, listOf("click"), "50k-150k", "UZS"),
+                    AnalyticsEvent.PaymentCheckoutOpened("click", 900, "50k-150k", "UZS", isVideo = false),
+                    AnalyticsEvent.BookingAbandoned("checkout", isReschedule = false),
+                ).inOrder()
+        }
 
     private val state get() = classToTest.state.value
 

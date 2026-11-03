@@ -24,6 +24,8 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.appointmentCancelledSuccessfully
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsQuery
 import shifa.uz.data.doctors.DoctorsRepository
@@ -44,7 +46,8 @@ class BookingsViewModelTest {
     private val upcoming = Appointment(id = "4", doctorId = "d1", startAt = "2026-10-01T09:00:00Z")
     private val ali = Doctor(id = "d1", fullName = "Ali")
     private val vali = Doctor(id = "d2", fullName = "Vali")
-    private val classToTest by lazy { BookingsViewModel(bookings, doctors) { now } }
+    private val tracker = RecordingTracker()
+    private val classToTest by lazy { BookingsViewModel(bookings, doctors, tracker) { now } }
 
     @Before
     fun setUp() {
@@ -59,6 +62,20 @@ class BookingsViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `a chip and a typed search are tracked with their results`() =
+        runTest {
+            classToTest.filterBy(DoctorFilter.Remote)
+            classToTest.search("ali")
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.DoctorFilterSelected("remote"),
+                    AnalyticsEvent.DoctorSearchPerformed(queryLength = 3, resultsCount = 1, chip = "remote"),
+                ).inOrder()
+        }
 
     private val state get() = classToTest.state.value
 

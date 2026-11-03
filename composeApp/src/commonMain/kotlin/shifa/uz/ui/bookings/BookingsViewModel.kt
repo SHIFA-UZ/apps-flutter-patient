@@ -21,6 +21,10 @@ import shifa.composeapp.generated.resources.appointmentCancelledSuccessfully
 import shifa.composeapp.generated.resources.appointmentRescheduledSuccessfully
 import shifa.composeapp.generated.resources.appointmentSlotBooked
 import shifa.composeapp.generated.resources.paymentPendingMessage
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsQuery
@@ -33,6 +37,7 @@ import shifa.uz.utils.getCurrentInstant
 class BookingsViewModel(
     private val bookings: BookingsRepository = BookingsRepository(),
     private val doctors: DoctorsRepository = DoctorsRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
     private val clock: () -> Instant = ::getCurrentInstant,
 ) : ViewModel() {
     private val _state = MutableStateFlow(BookingsUiState())
@@ -74,6 +79,7 @@ class BookingsViewModel(
 
     fun filterBy(filter: DoctorFilter) {
         if (filter == _state.value.filter) return
+        analytics.track(AnalyticsEvent.DoctorFilterSelected(filter.analyticsName()))
         update { copy(filter = filter) }
         research(0)
     }
@@ -123,6 +129,15 @@ class BookingsViewModel(
                 return fail(it)
             }
         update { copy(recommended = found) }
+        if (state.query.isNotBlank()) {
+            analytics.track(
+                AnalyticsEvent.DoctorSearchPerformed(
+                    state.query.trim().length,
+                    found.size,
+                    state.filter.analyticsName(),
+                ),
+            )
+        }
         return null
     }
 

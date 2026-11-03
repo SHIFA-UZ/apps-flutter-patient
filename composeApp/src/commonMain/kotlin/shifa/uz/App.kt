@@ -90,9 +90,9 @@ private fun AppScreens() {
             Screen.Home ->
                 MainScreen(
                     // Awaited, so the token is gone before Login shows (Flutter didn't wait).
-                    onLogOut = {
+                    onLogOut = { source ->
                         scope.launch {
-                            auth.logout()
+                            auth.logout(source)
                             screen = Screen.Login
                         }
                     },

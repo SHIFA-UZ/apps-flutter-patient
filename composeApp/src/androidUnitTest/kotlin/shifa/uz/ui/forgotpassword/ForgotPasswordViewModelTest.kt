@@ -7,6 +7,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -28,6 +29,8 @@ import shifa.composeapp.generated.resources.errorFailedToResetPassword
 import shifa.composeapp.generated.resources.invalidPhone
 import shifa.composeapp.generated.resources.invalidVerificationCode
 import shifa.composeapp.generated.resources.passwordsDoNotMatch
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_RESET_PASSWORD
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.model.ApiException
@@ -37,6 +40,7 @@ import shifa.uz.data.model.OtpChannel
 class ForgotPasswordViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val auth = mock<AuthRepository>()
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: ForgotPasswordViewModel
 
     @Before
@@ -44,13 +48,29 @@ class ForgotPasswordViewModelTest {
         Dispatchers.setMain(dispatcher)
         wheneverBlocking { auth.sendForgotPasswordOtp(any()) } doReturn Result.success(OtpChannel.Email)
         wheneverBlocking { auth.resetForgottenPassword(any(), any(), any(), any()) } doReturn Result.success(Unit)
-        classToTest = ForgotPasswordViewModel(auth)
+        classToTest = ForgotPasswordViewModel(auth, tracker)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `the reset is tracked when the code goes out and when the password is set`() =
+        runTest {
+            reachNewPassword()
+            classToTest.onPasswordChange("Secret1!")
+            classToTest.onConfirmPasswordChange("Secret1!")
+            classToTest.next()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.PasswordResetRequested("email", isResend = false),
+                    AnalyticsEvent.PasswordResetCompleted,
+                ).inOrder()
+        }
 
     private val state get() = classToTest.state.value
 

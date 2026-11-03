@@ -125,6 +125,8 @@ import shifa.composeapp.generated.resources.smsUnavailableTitle
 import shifa.composeapp.generated.resources.surname
 import shifa.composeapp.generated.resources.upload
 import shifa.composeapp.generated.resources.verifyAndCreate
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.OtpChannel
@@ -171,9 +173,10 @@ fun RegisterScreen(
     )
     val registered by rememberUpdatedState(onRegistered)
     LaunchedEffect(viewModel) { viewModel.registered.collect { registered() } }
+    LaunchedEffect(Unit) { Analytics.track(AnalyticsEvent.SignupStarted) }
     val onBack = {
         if (!viewModel.back()) {
-            viewModel.reset()
+            viewModel.abandon()
             onClose()
         }
     }

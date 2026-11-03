@@ -21,6 +21,9 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.paymentExpiredSlotReleased
 import shifa.composeapp.generated.resources.paymentRefundSlotTaken
 import shifa.composeapp.generated.resources.paymentStillPendingConfirmBooking
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.PaymentReports
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PaymentCheckout
@@ -30,6 +33,7 @@ import kotlin.time.Duration.Companion.minutes
 class PaymentViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val bookings = mock<BookingsRepository>()
+    private val tracker = RecordingTracker()
     private val now = Instant.parse("2026-09-28T09:00:00Z")
     private val held =
         Appointment(
@@ -43,6 +47,7 @@ class PaymentViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
+        PaymentReports.clearForTests()
         wheneverBlocking { bookings.getAppointment("50") } doReturn Result.success(held.copy(payment = null))
     }
 
@@ -52,9 +57,61 @@ class PaymentViewModelTest {
     }
 
     @Test
+    fun `the provider's success redirect is tracked as a redirect, not as a button tap`() =
+        runTest {
+            wheneverBlocking { bookings.getAppointment("50") } doReturn
+                Result.success(held.copy(status = "CONFIRMED", paymentStatus = Appointment.PAID, payment = null))
+            val classToTest = PaymentViewModel(held, bookings, tracker) { now }
+            classToTest.done.test {
+                classToTest.onRedirect("success")
+                awaitItem()
+            }
+
+            assertThat(tracker.events.map { it.name })
+                .containsExactly("payment_redirect_seen", "payment_completed")
+                .inOrder()
+            assertThat(tracker.events.filterIsInstance<AnalyticsEvent.PaymentCompleted>().single().via)
+                .isEqualTo("redirect")
+        }
+
+    @Test
+    fun `the page tracks a check, the poll that confirms, and a dead booking`() =
+        runTest {
+            val classToTest = PaymentViewModel(held, bookings, tracker) { now }
+            classToTest.check()
+            runCurrent()
+            wheneverBlocking { bookings.getAppointment("50") } doReturn
+                Result.success(held.copy(status = "CONFIRMED", paymentStatus = Appointment.PAID, payment = null))
+            classToTest.done.test {
+                advanceTimeBy(3_100)
+                awaitItem()
+            }
+
+            assertThat(tracker.events.take(2))
+                .containsExactly(
+                    AnalyticsEvent.PaymentCheckTapped("pending", secondsOpen = 0),
+                    AnalyticsEvent.PaymentStillPendingShown,
+                ).inOrder()
+            val paid = tracker.events.filterIsInstance<AnalyticsEvent.PaymentCompleted>().single()
+            assertThat(paid.via).isEqualTo("poll")
+            assertThat(paid.provider).isEqualTo("click")
+            assertThat(paid.userProperties).containsEntry("has_paid", true)
+
+            tracker.events.clear()
+            wheneverBlocking { bookings.getAppointment("50") } doReturn
+                Result.success(held.copy(status = Appointment.EXPIRED, paymentStatus = "FAILED"))
+            val expired = PaymentViewModel(held, bookings, tracker) { now }
+            expired.done.test {
+                advanceTimeBy(3_100)
+                awaitItem()
+            }
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.PaymentFailed("expired", "click", 0))
+        }
+
+    @Test
     fun `it polls until the backend says PAID, keeping the checkout and the countdown`() =
         runTest {
-            val classToTest = PaymentViewModel(held, bookings) { now }
+            val classToTest = PaymentViewModel(held, bookings, tracker) { now }
             assertThat(classToTest.state.value.holdLeft).isEqualTo(15.minutes)
 
             classToTest.check()
@@ -75,7 +132,7 @@ class PaymentViewModelTest {
         runTest {
             wheneverBlocking { bookings.getAppointment("50") } doReturn
                 Result.success(held.copy(status = Appointment.EXPIRED, paymentStatus = "FAILED"))
-            val classToTest = PaymentViewModel(held, bookings) { now }
+            val classToTest = PaymentViewModel(held, bookings, tracker) { now }
             classToTest.done.test {
                 advanceTimeBy(3_100)
                 awaitItem()

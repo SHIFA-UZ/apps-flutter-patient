@@ -116,9 +116,19 @@ fun VideoCallScreen(
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
     val askPermissions = rememberCallPermissions(viewModel::onPermissions)
     LaunchedEffect(Unit) { askPermissions() }
-    val back = { if (state.inCall) onMinimize() else viewModel.leave() }
+    val back = {
+        if (state.inCall) {
+            viewModel.onMinimize()
+            onMinimize()
+        } else {
+            viewModel.leave()
+        }
+    }
     if (minimized) {
-        CallPip(state, viewModel.call, onExpand)
+        CallPip(state, viewModel.call) {
+            viewModel.onExpand()
+            onExpand()
+        }
     } else {
         // Added on each expand, so it beats the pages opened while the call was small.
         BackHandler { back() }

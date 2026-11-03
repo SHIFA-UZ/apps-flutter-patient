@@ -27,6 +27,15 @@ import shifa.composeapp.generated.resources.bookingSlotTaken
 import shifa.composeapp.generated.resources.bookingVideoNoServicesOffered
 import shifa.composeapp.generated.resources.failedToBookAppointment
 import shifa.composeapp.generated.resources.paymentCancelledSlotReleased
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.PaymentReports
+import shifa.uz.data.analytics.amountBucket
+import shifa.uz.data.analytics.analyticsReason
+import shifa.uz.data.analytics.daysAhead
+import shifa.uz.data.analytics.hourOfDay
+import shifa.uz.data.analytics.hoursAhead
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
@@ -52,6 +61,7 @@ class CreateBookingViewModel(
     private val clock: () -> Instant = ::getCurrentInstant,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
     private val reschedule: Appointment? = null,
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
@@ -77,11 +87,18 @@ class CreateBookingViewModel(
 
     private var slotsJob: Job? = null
 
+    /** When the payment page opened, for `seconds_to_pay` on a close-time PAID (events.md §5). */
+    private var checkoutOpenedAt: Instant? = null
+
     private fun update(transform: CreateBookingUiState.() -> CreateBookingUiState) {
         _state.value = _state.value.transform()
     }
 
     init {
+        analytics.track(
+            reschedule?.let { AnalyticsEvent.RescheduleStarted(it.isVideo, hoursAhead(it.start, clock())) }
+                ?: AnalyticsEvent.BookingStarted,
+        )
         viewModelScope.launch {
             // D2 for the services and `nextAvailableStartAt` (the scan's starting day); on failure the card's copy stays.
             val detail = async { doctors.getDoctor(doctor.id) }
@@ -95,6 +112,7 @@ class CreateBookingViewModel(
     }
 
     fun onLocationChange(id: Int) {
+        analytics.track(AnalyticsEvent.BookingLocationSelected(_state.value.locations.size))
         discardPending()
         update { copy(locationId = id, error = null).let { s -> s.copy(serviceId = s.service?.id) } }
         loadSlots(null)
@@ -102,6 +120,7 @@ class CreateBookingViewModel(
 
     /** Video keeps a service that allows it; pay later never does (§1). */
     fun onVideoChange(on: Boolean) {
+        analytics.track(AnalyticsEvent.BookingVisitTypeChanged(on))
         discardPending()
         update { copy(isVideo = on, error = null).let { s -> s.copy(serviceId = s.service?.id) } }
         loadSlots(null)
@@ -110,19 +129,51 @@ class CreateBookingViewModel(
     fun onServiceChange(id: String) {
         discardPending()
         update { copy(serviceId = id, error = null) }
+        _state.value.let { s ->
+            s.service?.let {
+                analytics.track(
+                    AnalyticsEvent.BookingServiceSelected(
+                        paymentKind = s.paymentKind,
+                        hasPrice = it.isFreeConsultation || it.prices.isNotEmpty(),
+                        allowsVideo = it.canVideo,
+                        servicesCount = s.services.size,
+                    ),
+                )
+            }
+        }
         // A pay-later service is in person only.
         if (_state.value.isVideo && _state.value.service?.canVideo == false) onVideoChange(false)
     }
 
     fun onDateChange(date: LocalDate) {
+        analytics.track(AnalyticsEvent.BookingDatePicked((date.toEpochDays() - today().toEpochDays()).toInt()))
         discardPending()
         loadSlots(date)
     }
 
     fun onSlotSelect(slot: AvailableSlot) {
+        analytics.track(
+            AnalyticsEvent.BookingSlotSelected(hoursAhead(slot.start, clock()) ?: 0, hourOfDay(slot.start, zone) ?: 0),
+        )
         discardPending()
         update { copy(slot = slot) }
     }
+
+    /** Back from the page: how far the patient got (events.md §4). */
+    fun abandon() {
+        val s = _state.value
+        val step =
+            when {
+                s.pending != null || s.paying -> "checkout"
+                s.methods != null -> "payment_methods"
+                s.slot != null -> "slot"
+                s.service != null -> "service"
+                else -> "opened"
+            }
+        analytics.track(AnalyticsEvent.BookingAbandoned(step, isReschedule = reschedule != null))
+    }
+
+    private fun today() = clock().toLocalDateTime(zone).date
 
     fun onReasonChange(reason: String) = update { copy(reason = reason) }
 
@@ -136,8 +187,12 @@ class CreateBookingViewModel(
         update { copy(isUploading = true, error = null) }
         viewModelScope.launch {
             documents.upload(bytes, fileName, fileName, PRE_APPOINTMENT).fold(
-                onSuccess = { update { copy(isUploading = false, documents = documents + it) } },
+                onSuccess = {
+                    update { copy(isUploading = false, documents = documents + it) }
+                    analytics.track(AnalyticsEvent.BookingAttachmentAdded(_state.value.documents.size))
+                },
                 onFailure = {
+                    analytics.track(AnalyticsEvent.BookingAttachmentFailed(it.analyticsReason()))
                     val error = fail(it)
                     update { copy(isUploading = false, error = error) }
                 },
@@ -158,7 +213,10 @@ class CreateBookingViewModel(
                     Res.string.bookingSelectService
                 else -> null
             }
-        if (missing != null) return update { copy(error = missing) }
+        if (missing != null) {
+            bookingFailed(if (state.isVideo) "needs_video_service" else "needs_service")
+            return update { copy(error = missing) }
+        }
         val doctorId =
             state.doctor.id.toLongOrNull() ?: return update {
                 copy(
@@ -172,7 +230,10 @@ class CreateBookingViewModel(
                 bookings.getAppointments().getOrNull().orEmpty().any {
                     it.isOpen && it.start != null && it.start == slot.start && it.id != reschedule?.id
                 }
-            if (taken) return@launch update { copy(isBooking = false, error = Res.string.bookingSlotTaken) }
+            if (taken) {
+                bookingFailed("double_booking")
+                return@launch update { copy(isBooking = false, error = Res.string.bookingSlotTaken) }
+            }
             // Reschedule keeps the visit's payment, so it never asks for one.
             val service = state.service
             if (service == null || !state.isPayNow || reschedule != null) {
@@ -180,6 +241,15 @@ class CreateBookingViewModel(
             }
             bookings.getPaymentMethods(service.id, state.locationId.takeUnless { state.isVideo }).fold(
                 onSuccess = { methods ->
+                    val price = service.price(state.locationId.takeUnless { state.isVideo })
+                    analytics.track(
+                        AnalyticsEvent.PaymentMethodsLoaded(
+                            methods.size,
+                            methods.map { it.provider.lowercase() },
+                            amountBucket(price?.amountMinor, price?.currency),
+                            price?.currency?.uppercase(),
+                        ),
+                    )
                     // None: the backend treats it as free or pay later after all (§2.1).
                     if (methods.isEmpty()) {
                         submit(request(state, slot, doctorId, null))
@@ -188,6 +258,7 @@ class CreateBookingViewModel(
                     }
                 },
                 onFailure = {
+                    analytics.track(AnalyticsEvent.PaymentMethodsFailed(it.analyticsReason()))
                     val error = fail(it)
                     update { copy(isBooking = false, error = error) }
                 },
@@ -195,10 +266,15 @@ class CreateBookingViewModel(
         }
     }
 
-    fun onProviderSelect(provider: String) = update { copy(provider = provider) }
+    fun onProviderSelect(provider: String) {
+        analytics.track(AnalyticsEvent.PaymentProviderSelected(provider.lowercase(), _state.value.methods?.size ?: 0))
+        update { copy(provider = provider) }
+    }
 
     fun closeMethods() {
-        if (!_state.value.isBooking) update { copy(methods = null) }
+        if (_state.value.isBooking) return
+        analytics.track(AnalyticsEvent.PaymentMethodsClosed(hadProvider = _state.value.provider != null))
+        update { copy(methods = null) }
     }
 
     /** Pay Now: B3 with the provider (§2.2). A failure books nothing, so the tray stays to try again. */
@@ -228,12 +304,20 @@ class CreateBookingViewModel(
         viewModelScope.launch {
             try {
                 val latest = bookings.getAppointment(pending.id).getOrNull()
-                if (latest != null && latest.isPaid && !latest.isPaymentDead) return@launch reportPaid(latest)
+                if (latest != null && latest.isPaid && !latest.isPaymentDead) {
+                    return@launch reportPaid(
+                        latest,
+                        "close_check",
+                    )
+                }
+                var released = false
                 if (latest != null) {
                     bookings.cancel(pending.id).onSuccess {
+                        released = true
                         update { copy(notice = Res.string.paymentCancelledSlotReleased) }
                     }
                 }
+                analytics.track(AnalyticsEvent.PaymentAbandoned(released))
                 loadSlots(_state.value.date)
             } finally {
                 closing = null
@@ -247,9 +331,14 @@ class CreateBookingViewModel(
     /** The booking already reported as paid: the page's own poll and the close-time check can both see PAID. */
     private var reportedPaid: String? = null
 
-    private fun reportPaid(appointment: Appointment) {
+    /** [via] names how this ViewModel saw PAID; null when the payment page already reported it. */
+    private fun reportPaid(
+        appointment: Appointment,
+        via: String? = null,
+    ) {
         if (reportedPaid == appointment.id) return
         reportedPaid = appointment.id
+        if (via != null && PaymentReports.claim(appointment.id)) analytics.track(paymentCompleted(appointment, via))
         _paid.trySend(appointment)
     }
 
@@ -283,22 +372,100 @@ class CreateBookingViewModel(
     )
 
     private suspend fun submit(request: BookingRequest) {
+        val state = _state.value
         bookings.book(request).fold(
             onSuccess = {
                 when {
-                    it.isAwaitingPayment && it.payment?.checkoutUrl != null ->
+                    it.isAwaitingPayment && it.payment?.checkoutUrl != null -> {
+                        val now = clock()
+                        analytics.track(
+                            AnalyticsEvent.PaymentCheckoutOpened(
+                                provider = it.payment.provider?.lowercase() ?: request.paymentProvider?.lowercase(),
+                                holdSeconds =
+                                    (parseInstant(it.holdExpiresAt) ?: parseInstant(it.payment.expiresAt))
+                                        ?.let { ends -> (ends - now).inWholeSeconds },
+                                amountBucket = amountBucket(it.paymentAmountMinor, it.paymentCurrency),
+                                currency = it.paymentCurrency?.uppercase(),
+                                isVideo = it.isVideo,
+                            ),
+                        )
+                        checkoutOpenedAt = now
                         update { copy(isBooking = false, methods = null, pending = it, paying = true) }
+                    }
                     request.paymentProvider != null && it.isPaid -> {
                         update { copy(isBooking = false, methods = null) }
-                        _paid.send(it)
+                        reportPaid(it, "immediate")
                     }
-                    else -> _booked.send(it.paymentStatus.equals("PENDING", ignoreCase = true))
+                    else -> {
+                        val now = clock()
+                        analytics.track(
+                            if (reschedule != null) {
+                                AnalyticsEvent.AppointmentRescheduled(
+                                    daysMoved =
+                                        it.start?.let {
+                                                new ->
+                                            reschedule.start?.let { old -> (new - old).inWholeDays.toInt() }
+                                        },
+                                    isVideo = it.isVideo,
+                                )
+                            } else {
+                                AnalyticsEvent.BookingCompleted(
+                                    isVideo = it.isVideo,
+                                    daysAhead = daysAhead(it.start, now),
+                                    hourOfDay = hourOfDay(it.start, zone),
+                                    paymentKind = state.paymentKind,
+                                    hasReason = request.reason != null,
+                                    attachments = request.documentIds?.size ?: 0,
+                                    at = now.toString(),
+                                )
+                            },
+                        )
+                        _booked.send(it.paymentStatus.equals("PENDING", ignoreCase = true))
+                    }
                 }
             },
             onFailure = {
+                val reason =
+                    when {
+                        it is ApiException.Conflict && it.code == "APPOINTMENT_LOCKED_24H" -> "locked_24h"
+                        it is ApiException.Conflict -> "slot_taken"
+                        else -> it.analyticsReason()
+                    }
+                analytics.track(
+                    when {
+                        request.paymentProvider != null ->
+                            AnalyticsEvent.PaymentCheckoutFailed(request.paymentProvider.lowercase(), reason)
+                        reschedule != null -> AnalyticsEvent.RescheduleFailed(reason)
+                        else -> AnalyticsEvent.BookingFailed(reason)
+                    },
+                )
                 val error = fail(it)
                 update { copy(isBooking = false, error = error) }
             },
+        )
+    }
+
+    private fun bookingFailed(reason: String) =
+        analytics.track(
+            if (reschedule != null) AnalyticsEvent.RescheduleFailed(reason) else AnalyticsEvent.BookingFailed(reason),
+        )
+
+    /** A pay-now booking the backend reported PAID without the payment page's poll (events.md §5). */
+    private fun paymentCompleted(
+        appointment: Appointment,
+        via: String,
+    ): AnalyticsEvent {
+        val now = clock()
+        return AnalyticsEvent.PaymentCompleted(
+            provider = appointment.payment?.provider?.lowercase() ?: _state.value.provider?.lowercase(),
+            secondsToPay = if (via == "immediate") 0 else checkoutOpenedAt?.let { (now - it).inWholeSeconds } ?: 0,
+            via = via,
+            amountBucket = amountBucket(appointment.paymentAmountMinor, appointment.paymentCurrency),
+            currency = appointment.paymentCurrency?.uppercase(),
+            isVideo = appointment.isVideo,
+            daysAhead = daysAhead(appointment.start, now),
+            hourOfDay = hourOfDay(appointment.start, zone),
+            at = now.toString(),
         )
     }
 
@@ -347,6 +514,21 @@ class CreateBookingViewModel(
                         // Today: only slots still ahead; the filter holds for any day.
                         val free = result.getOrThrow().filter { slot -> slot.start?.let { it > now } == true }
                         if (free.isNotEmpty() || d == days.last()) {
+                            analytics.track(
+                                AnalyticsEvent.BookingSlotsLoaded(
+                                    daysToFirstSlot =
+                                        (d.toEpochDays() - today.toEpochDays()).toInt().takeIf { free.isNotEmpty() },
+                                    isVideo = state.isVideo,
+                                    scanStart =
+                                        if (day != null) {
+                                            "picked"
+                                        } else if (hint != null) {
+                                            "next_available"
+                                        } else {
+                                            "today"
+                                        },
+                                ),
+                            )
                             return@launch update { copy(date = d, slots = free, slot = free.firstOrNull()) }
                         }
                     }

@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.auth.LoginAttempts
@@ -18,6 +22,7 @@ import shifa.uz.data.model.ApiException
 class LoginViewModel(
     private val repository: AuthRepository = AuthRepository(),
     private val attempts: LoginAttempts = LoginAttempts(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
@@ -57,8 +62,13 @@ class LoginViewModel(
         if (!s.isSignInEnabled) return
         // 05 §2.2: both fields must be non-empty; the identifier is trimmed, the password is not.
         _state.value = s.copy(identifierError = s.identifier.isBlank(), passwordError = s.password.isEmpty())
-        if (s.identifier.isBlank() || s.password.isEmpty()) return
-        if (attempts.lockoutRemainingMs() > 0) return refreshLockout()
+        if (s.identifier.isBlank() || s.password.isEmpty()) {
+            return analytics.track(AnalyticsEvent.LoginFailed("empty_fields"))
+        }
+        if (attempts.lockoutRemainingMs() > 0) {
+            analytics.track(AnalyticsEvent.LoginFailed("locked_out"))
+            return refreshLockout()
+        }
 
         _state.value =
             _state.value.copy(
@@ -72,12 +82,19 @@ class LoginViewModel(
                 onSuccess = {
                     // ponytail: forcePasswordReset isn't routed until AUTH-07 (reset password) exists.
                     attempts.clear()
+                    analytics.track(AnalyticsEvent.LoginSucceeded(if ('@' in s.identifier) "email" else "phone"))
                     _state.value = LoginUiState()
                     _signedIn.send(Unit)
                 },
                 onFailure = { e ->
                     // No response means the password was never checked, so it doesn't count (fixes 05 Q11).
                     if (e !is ApiException.NetworkError) attempts.recordFailure()
+                    analytics.track(
+                        AnalyticsEvent.LoginFailed(
+                            if (e is ApiException.Unauthorized) "invalid_credentials" else e.analyticsReason(),
+                        ),
+                    )
+                    if (attempts.lockedMinutes() > 0) analytics.track(AnalyticsEvent.LoginLockedOut)
                     _state.value =
                         _state.value.copy(
                             isLoading = false,

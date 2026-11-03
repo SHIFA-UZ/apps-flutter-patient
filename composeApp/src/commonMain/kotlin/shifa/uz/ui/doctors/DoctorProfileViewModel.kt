@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
@@ -18,6 +22,7 @@ import shifa.uz.data.model.Doctor
 class DoctorProfileViewModel(
     doctor: Doctor,
     private val doctors: DoctorsRepository = DoctorsRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DoctorProfileUiState(doctor))
     val state: StateFlow<DoctorProfileUiState> = _state.asStateFlow()
@@ -45,7 +50,16 @@ class DoctorProfileViewModel(
         update { copy(isLoading = true, error = null) }
         viewModelScope.launch {
             doctors.getDoctor(_state.value.doctor.id).fold(
-                onSuccess = { update { copy(doctor = it, isLoaded = true, isLoading = false) } },
+                onSuccess = {
+                    analytics.track(
+                        AnalyticsEvent.DoctorProfileViewed(
+                            hasReviews = it.reviewCount > 0,
+                            supportsOnline = it.supportsOnline,
+                            servicesCount = it.serviceItems.size,
+                        ),
+                    )
+                    update { copy(doctor = it, isLoaded = true, isLoading = false) }
+                },
                 onFailure = {
                     update { copy(isLoading = false, error = it.toUserMessage()) }
                     if (it is ApiException.Unauthorized) _signedOut.send(Unit)
@@ -54,5 +68,8 @@ class DoctorProfileViewModel(
         }
     }
 
-    fun selectTab(tab: DoctorTab) = update { copy(tab = tab) }
+    fun selectTab(tab: DoctorTab) {
+        if (tab != _state.value.tab) analytics.track(AnalyticsEvent.DoctorProfileTabViewed(tab.analyticsName()))
+        update { copy(tab = tab) }
+    }
 }

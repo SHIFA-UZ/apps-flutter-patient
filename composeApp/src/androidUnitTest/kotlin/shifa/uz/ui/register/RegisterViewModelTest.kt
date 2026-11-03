@@ -34,6 +34,8 @@ import shifa.composeapp.generated.resources.passwordRequirementUppercase
 import shifa.composeapp.generated.resources.passwordsDoNotMatch
 import shifa.composeapp.generated.resources.phoneOrEmailRequired
 import shifa.composeapp.generated.resources.required
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.REGISTRATION_FAILED
 import shifa.uz.data.api.SMS_COULD_NOT_BE_SENT
 import shifa.uz.data.auth.AuthRepository
@@ -52,6 +54,7 @@ class RegisterViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val auth = mock<AuthRepository>()
     private val profile = mock<ProfileRepository>()
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: RegisterViewModel
 
     @Before
@@ -69,13 +72,45 @@ class RegisterViewModelTest {
         wheneverBlocking { auth.createPatientForDoctor(anyOrNull(), any(), any()) } doReturn Result.success(Unit)
         wheneverBlocking { profile.updateProfile(any()) } doReturn Result.success(PatientProfile())
         wheneverBlocking { profile.uploadPhoto(any(), any()) } doReturn Result.success("https://cdn/p.jpg")
-        classToTest = RegisterViewModel(auth, profile)
+        classToTest = RegisterViewModel(auth, profile, tracker)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `the signup funnel is tracked step by step, then completed`() =
+        runTest {
+            reachCode()
+            classToTest.onOtpChange("123456")
+            classToTest.next()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.take(4))
+                .containsExactly(
+                    AnalyticsEvent.SignupStepCompleted("account", hasEmail = false, hasPhone = true),
+                    AnalyticsEvent.SignupStepCompleted("info", hasEmail = false, hasPhone = true, filledOptional = 0),
+                    AnalyticsEvent.SignupStepCompleted("photo", hasEmail = false, hasPhone = true, hasPhoto = false),
+                    AnalyticsEvent.SignupCodeSent("sms", isResend = false),
+                ).inOrder()
+            val completed = tracker.events.filterIsInstance<AnalyticsEvent.SignupCompleted>().single()
+            assertThat(completed.channel).isEqualTo("sms")
+            assertThat(completed.userPropertiesSetOnce["signup_method"]).isEqualTo("sms")
+        }
+
+    @Test
+    fun `closing the flow is an abandonment at the current step`() =
+        runTest {
+            fillAccount()
+            classToTest.next()
+            advanceUntilIdle()
+            classToTest.abandon()
+
+            assertThat(tracker.events.last()).isEqualTo(AnalyticsEvent.SignupAbandoned("info"))
+            assertThat(state.step).isEqualTo(RegisterStep.Account)
+        }
 
     private val state get() = classToTest.state.value
 

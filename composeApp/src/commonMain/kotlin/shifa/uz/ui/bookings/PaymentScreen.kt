@@ -25,7 +25,10 @@ import shifa.composeapp.generated.resources.completePayment
 import shifa.composeapp.generated.resources.ic_alert_circle_16
 import shifa.composeapp.generated.resources.payment
 import shifa.composeapp.generated.resources.paymentSlotHeld
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.paymentFailureReason
 import shifa.uz.data.model.Appointment
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
@@ -64,13 +67,19 @@ fun PaymentScreen(
     PaymentContent(
         state,
         onBack,
-        onCheck = viewModel::check,
-        onBookAgain = { onDone(state.appointment) },
+        onCheck = { viewModel.check() },
+        onBookAgain = {
+            Analytics.track(AnalyticsEvent.PaymentBookAgainTapped(state.appointment.paymentFailureReason()))
+            onDone(state.appointment)
+        },
         onNavigate = { url ->
             // The provider's redirects (Flutter's checkout screen): the backend's pages aren't shown.
             when {
-                CHECKOUT_SUCCESS in url -> viewModel.check()
-                CHECKOUT_CANCEL in url -> onBack()
+                CHECKOUT_SUCCESS in url -> viewModel.onRedirect("success")
+                CHECKOUT_CANCEL in url -> {
+                    viewModel.onRedirect("cancel")
+                    onBack()
+                }
                 else -> return@PaymentContent false
             }
             true

@@ -47,5 +47,34 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   and `create_booking` (the screens don't know where they were opened from; the ANL-04 events carry it) and
   `is_certificate` / `has_visit` on `document_viewer` (a certificate and a chat file look the same to the viewer,
   and the visit loads after the screen appears; the `document_viewed` event will say).
-- Not built: journey and engagement events (ANL-04/05), reliability events and exception autocapture (ANL-06), the
-  `Flags` accessors (first flag in ANL-08; the sink methods exist).
+## Journey events (ANL-04)
+
+- events.md §3-6 as `AnalyticsEvent` data classes, fired from the ViewModels after the outcome: session restore
+  and logout (`AuthRepository`, with `logout(source)`), login, the signup wizard (steps, conflicts, codes, the SMS
+  fallback, completion, abandonment), password reset, Home (refresh, section taps), the Bookings tab (chips, typed
+  searches, list arrows), the doctor profile (view, tabs, services, contacts, certificates), Create Booking and
+  Reschedule (every choice, the slot scan, the outcome, Back as an abandonment with the step reached), payments
+  (methods, provider, checkout, check, redirects, completion by `via`, failure, abandonment, Book again), the
+  details page (view, toggle, cancel, contact, review), the live page (view, toggle, signing) and the video call
+  (open, permissions, join, doctor joined, controls, small window, end with who ended it).
+- Person properties set by the outcomes: `has_booked`, `last_visit_type`, `first_booking_at`, `has_paid`,
+  `last_payment_provider`, `first_payment_at`, `has_reviewed`, `camera_mic_granted`, `has_video_visit`,
+  `first_video_visit_at`, `signup_method`, `signed_up_at`. The `*_count` counters from personalisation.md are not
+  kept (cohorts count events exactly).
+- `PaymentReports` keeps one `payment_completed` per booking across the payment page's poll and the booking page's
+  close-time check, whichever sees PAID first.
+- Helpers in `AnalyticsEvent.kt`: `analyticsReason()` (an `ApiException` as a fixed reason), `amountBucket`,
+  `hoursAhead`, `daysAhead`, `hourOfDay`, `paymentFailureReason`; `CreateBookingUiState.paymentKind`.
+- Left out, with the reason: `source` on `doctor_profile_viewed` / `booking_started` / `appointment_details_viewed`
+  / `video_call_opened` (the ViewModels don't know the route; the `$screen` sequence shows it), `seconds_on_page`
+  and `signup_abandoned.seconds_spent`, `during_call` and `strokes` on signing, `via` on `payment_abandoned`,
+  `results_count` on `doctor_filter_selected`, `slots_count` on `booking_date_picked`, `bookings_refreshed`,
+  `has_price` / `payment_kind` on `doctor_service_expanded`, `is_reschedule` on the booking choice events (the
+  `reschedule` screen says it), `scan_days`, `booking_reason_entered`, `session_restored = timeout` (the splash's
+  cap cancels the call), Home's `target`: the task card and arrow share one callback (both `card`) and an Upcoming
+  card's Join opens the details (`card`),
+  `appointment_end_tapped` (no such control reaches the ViewModel), `login_locked_out` fires on the failure that
+  locks, `video_join_failed.reason` is the API reason or `daily_failed` (no `not_in_window` / `payment_required`
+  mapping; the backend's message isn't sent).
+- Not built: engagement events (ANL-05: tasks, documents, chat, Shifa AI, notifications, profile), reliability
+  events and exception autocapture (ANL-06), the `Flags` accessors (first flag in ANL-08; the sink methods exist).

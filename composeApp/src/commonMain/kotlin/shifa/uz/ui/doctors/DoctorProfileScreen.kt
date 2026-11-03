@@ -49,6 +49,8 @@ import shifa.composeapp.generated.resources.patient
 import shifa.composeapp.generated.resources.phoneNumber
 import shifa.composeapp.generated.resources.priceNotSet
 import shifa.composeapp.generated.resources.retry
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.PatientDocument
@@ -98,11 +100,28 @@ fun DoctorProfileScreen(
         onBack = onBack,
         onTab = viewModel::selectTab,
         onRetry = viewModel::load,
-        onCertificate = onCertificate,
-        onOpen = { runCatching { uri.openUri(it) } },
+        onCertificate = {
+            Analytics.track(AnalyticsEvent.DoctorCertificateOpened)
+            onCertificate(it)
+        },
+        onOpen = {
+            Analytics.track(AnalyticsEvent.DoctorContactTapped(contactChannel(it)))
+            runCatching { uri.openUri(it) }
+        },
+        onServiceExpanded = { Analytics.track(AnalyticsEvent.DoctorServiceExpanded) },
         onBook = onBook,
     )
 }
+
+// events.md §4: the link's kind, never the link.
+private fun contactChannel(uri: String) =
+    when {
+        uri.startsWith("tel:") -> "phone"
+        uri.startsWith("mailto:") -> "email"
+        "t.me" in uri -> "telegram"
+        "instagram" in uri -> "instagram"
+        else -> "other"
+    }
 
 @Composable
 internal fun DoctorProfileContent(
@@ -113,6 +132,7 @@ internal fun DoctorProfileContent(
     onRetry: () -> Unit = {},
     onCertificate: (PatientDocument) -> Unit = {},
     onOpen: (String) -> Unit = {},
+    onServiceExpanded: () -> Unit = {},
     onBook: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
@@ -137,7 +157,7 @@ internal fun DoctorProfileContent(
         ) {
             val error = state.error
             when {
-                state.isLoaded -> TabContent(state, onCertificate, onOpen)
+                state.isLoaded -> TabContent(state, onCertificate, onOpen, onServiceExpanded)
                 error != null -> {
                     Empty(error)
                     ShifaSecondaryButton(stringResource(Res.string.retry), onRetry)
@@ -156,6 +176,7 @@ private fun ColumnScope.TabContent(
     state: DoctorProfileUiState,
     onCertificate: (PatientDocument) -> Unit,
     onOpen: (String) -> Unit,
+    onServiceExpanded: () -> Unit,
 ) {
     val doctor = state.doctor
     when (state.tab) {
@@ -196,7 +217,10 @@ private fun ColumnScope.TabContent(
                             price,
                             description = it.description,
                             expanded = i in open,
-                            onToggle = { open = if (i in open) open - i else open + i },
+                            onToggle = {
+                                if (i !in open) onServiceExpanded()
+                                open = if (i in open) open - i else open + i
+                            },
                         )
                     }
                 }

@@ -84,7 +84,7 @@ private enum class Page { Account, Notifications }
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun MainScreen(
-    onLogOut: () -> Unit,
+    onLogOut: (source: String) -> Unit, // events.md §3: `profile` or `session_expired`
     onAccountDeleted: () -> Unit,
 ) {
     // ViewModels live as long as this session, so nothing of it outlives a logout.
@@ -186,7 +186,7 @@ fun MainScreen(
                             onTasks = { tasksOpen = true },
                             onDoctors = { list = BookingsList.MyDoctors },
                             onDoctor = { doctor = it },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                             contentPadding = navPadding,
                             viewModel = home,
                         )
@@ -198,7 +198,7 @@ fun MainScreen(
                             onNotifications = { page = Page.Notifications },
                             onAccount = { page = Page.Account },
                             onOpen = { viewing = it },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                             contentPadding = navPadding,
                             viewModel = documents,
                         )
@@ -211,7 +211,7 @@ fun MainScreen(
                             onAppointment = { appointment = it },
                             onDoctor = { doctor = it },
                             onList = { list = it },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                             contentPadding = navPadding,
                             viewModel = bookings,
                         )
@@ -231,7 +231,7 @@ fun MainScreen(
                             onNotifications = { page = Page.Notifications },
                             onAccount = { page = Page.Account },
                             onOpen = { chat = it },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                             contentPadding = navPadding,
                             viewModel = messages,
                         )
@@ -251,7 +251,7 @@ fun MainScreen(
             // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a certificate / document → a call.
             if (aiState.chat != null) {
                 BackHandler { shifaAi.close() }
-                ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = onLogOut)
+                ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = { onLogOut("session_expired") })
             }
             chat?.let {
                 // Back on the list, its unread counts and last messages are refetched.
@@ -260,7 +260,17 @@ fun MainScreen(
                     messages.load()
                 }
                 BackHandler { close() }
-                key(it) { ScopedViewModels { ConversationScreen(it, onBack = close, onSignedOut = onLogOut) } }
+                key(
+                    it,
+                ) {
+                    ScopedViewModels {
+                        ConversationScreen(
+                            it,
+                            onBack = close,
+                            onSignedOut = { onLogOut("session_expired") },
+                        )
+                    }
+                }
             }
             list?.let {
                 BackHandler { list = null }
@@ -270,7 +280,7 @@ fun MainScreen(
                     onBack = { list = null },
                     onDoctor = { doctor = it },
                     onAppointment = { appointment = it },
-                    onSignedOut = onLogOut,
+                    onSignedOut = { onLogOut("session_expired") },
                 )
             }
             if (upcomingOpen) {
@@ -283,7 +293,7 @@ fun MainScreen(
                     tasks,
                     onBack = { tasksOpen = false },
                     onTask = { checkIn = it },
-                    onSignedOut = onLogOut,
+                    onSignedOut = { onLogOut("session_expired") },
                 )
             }
             checkIn?.let {
@@ -297,7 +307,7 @@ fun MainScreen(
                                 tasks.onSubmitted()
                                 home.refresh()
                             },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                         )
                     }
                 }
@@ -316,7 +326,7 @@ fun MainScreen(
                                 bookings.onCancelled()
                                 home.refresh()
                             },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                         )
                     }
                 }
@@ -336,7 +346,7 @@ fun MainScreen(
                                 bookings.onRescheduled()
                                 home.refresh()
                             },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                         )
                     }
                 }
@@ -353,7 +363,7 @@ fun MainScreen(
                                 call = it
                                 callMinimized = false
                             },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                         )
                     }
                 }
@@ -367,7 +377,7 @@ fun MainScreen(
                             onBack = { doctor = null },
                             onCertificate = { viewing = it },
                             onBook = { booking = it },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                         )
                     }
                 }
@@ -398,7 +408,7 @@ fun MainScreen(
                                 bookings.load()
                                 home.refresh()
                             },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                         )
                     }
                 }
@@ -412,7 +422,8 @@ fun MainScreen(
                             Page.Account ->
                                 ProfileScreen(
                                     onBack = { page = null },
-                                    onLogOut = onLogOut,
+                                    onLogOut = { onLogOut("profile") },
+                                    onSignedOut = { onLogOut("session_expired") },
                                     onAccountDeleted = onAccountDeleted,
                                     onProfileChanged = home::onProfileChanged,
                                 )
@@ -426,7 +437,7 @@ fun MainScreen(
                                         tasks.onSubmitted()
                                         home.refresh()
                                     },
-                                    onSignedOut = onLogOut,
+                                    onSignedOut = { onLogOut("session_expired") },
                                 )
                         }
                     }
@@ -466,7 +477,7 @@ fun MainScreen(
                                 call = null
                                 callMinimized = false
                             },
-                            onSignedOut = onLogOut,
+                            onSignedOut = { onLogOut("session_expired") },
                         )
                     }
                 }

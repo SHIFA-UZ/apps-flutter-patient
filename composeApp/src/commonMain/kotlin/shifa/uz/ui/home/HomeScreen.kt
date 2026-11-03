@@ -57,6 +57,8 @@ import shifa.composeapp.generated.resources.unknownDoctor
 import shifa.composeapp.generated.resources.upcomingAppointments
 import shifa.composeapp.generated.resources.videoConsultation
 import shifa.composeapp.generated.resources.view
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.RemoteCareTask
@@ -107,14 +109,24 @@ fun HomeScreen(
         onRefresh = viewModel::refresh,
         onNotifications = onNotifications,
         onAccount = onAccount,
-        onUpcoming = onUpcoming,
-        onAppointment = onAppointment,
-        onLive = onLive,
-        onTasks = onTasks,
-        onDoctors = onDoctors,
-        onDoctor = onDoctor,
+        onUpcoming = { tapped("upcoming", "arrow", onUpcoming) },
+        onAppointment = { tapped("upcoming", "card") { onAppointment(it) } },
+        onLive = { tapped("live", "view") { onLive(it) } },
+        onTasks = { tapped("tasks", "card", onTasks) },
+        onDoctors = { tapped("my_doctors", "arrow", onDoctors) },
+        onDoctor = { tapped("my_doctors", "card") { onDoctor(it) } },
         contentPadding = contentPadding,
     )
+}
+
+// events.md §4: a Home card or arrow, then its route.
+private inline fun tapped(
+    section: String,
+    target: String,
+    go: () -> Unit,
+) {
+    Analytics.track(AnalyticsEvent.HomeSectionTapped(section, target))
+    go()
 }
 
 /** "Now" and Join follow the clock between loads. */

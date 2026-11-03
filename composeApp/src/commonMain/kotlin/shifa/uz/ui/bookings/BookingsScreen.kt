@@ -33,6 +33,9 @@ import shifa.composeapp.generated.resources.recommendedDoctors
 import shifa.composeapp.generated.resources.search
 import shifa.composeapp.generated.resources.unknownDoctor
 import shifa.composeapp.generated.resources.videoConsultation
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.ui.doctors.DoctorHeaderCard
@@ -92,7 +95,10 @@ fun BookingsScreen(
         onAccount = onAccount,
         onAppointment = onAppointment,
         onDoctor = onDoctor,
-        onList = onList,
+        onList = {
+            Analytics.track(AnalyticsEvent.BookingsListOpened(it.analyticsName()))
+            onList(it)
+        },
         contentPadding = contentPadding,
     )
 }
