@@ -168,3 +168,4 @@ The analytics plan (PostHog, ANL-01..08; ANL-01..07 built, ANL-08 postponed; rew
 - 2026-11-03: Personalisation (ANL-08) postponed on the user's decision: the PostHog flags and the Personalisation dashboard archived, no app code.
 - 2026-11-03: Analytics checked on the iOS simulator (Release build): booleans now reach PostHog as `true` / `false` on iOS (`PostHogAnalytics.swift`), and `Analytics.identify` resets a different patient the SDK still holds.
 - 2026-11-03: `booking_slots_loaded` sends `has_slots` and a numeric-only `days_to_first_slot` (no more `none`); the two "No slots" insights filter on `has_slots = false`.
+- 2026-11-03: Version 1.2.5 (`MARKETING_VERSION`), for the release with the analytics fixes.
