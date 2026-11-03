@@ -15,6 +15,8 @@ import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.notificationChannelDescription
 import shifa.composeapp.generated.resources.notificationChannelName
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 
 /** 13 §8.1. Also the manifest's `default_notification_channel_id`. */
 internal const val PUSH_CHANNEL = "shifa_patient_channel"
@@ -35,7 +37,10 @@ actual fun PushSetup() {
         )
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+        val ask =
+            rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                Analytics.track(AnalyticsEvent.PushPermissionResult(it))
+            }
         LaunchedEffect(Unit) {
             val permission = Manifest.permission.POST_NOTIFICATIONS
             if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {

@@ -93,8 +93,14 @@ class HomeViewModel(
     }
 
     // Also the analytics identity (docs/posthog/events.md §1.2): after P1 and after a profile save.
+    private var gatedSeen = false
+
     private fun show(patient: PatientProfile) {
         identify(patient)
+        if (!patient.canUseShifaAi && !gatedSeen) {
+            gatedSeen = true
+            analytics.track(AnalyticsEvent.AiGatedSeen(patient.subscriptionTier))
+        }
         val fullName = patient.fullName.trim()
         update {
             copy(

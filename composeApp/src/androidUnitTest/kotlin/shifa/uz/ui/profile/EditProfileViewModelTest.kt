@@ -24,6 +24,8 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.failedToUpdateProfile
 import shifa.composeapp.generated.resources.invalidPhone
 import shifa.composeapp.generated.resources.required
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_UPDATE_PROFILE
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.PatientProfile
@@ -47,6 +49,7 @@ class EditProfileViewModelTest {
             address = "Tashkent",
             locationStreetAddress = "Amir Temur 1",
         )
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: EditProfileViewModel
 
     @Before
@@ -59,8 +62,20 @@ class EditProfileViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test
+    fun `a saved profile is tracked by the fields that changed, never their values`() =
+        runTest {
+            wheneverBlocking { profile.updateProfile(any()) } doReturn Result.success(patient)
+            create()
+            classToTest.onPhoneChange("+998901111111")
+            classToTest.save()
+            advanceUntilIdle()
+
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.ProfileUpdated(listOf("phone")))
+        }
+
     private fun create(initial: PatientProfile? = patient) {
-        classToTest = EditProfileViewModel(initial, profile, languages)
+        classToTest = EditProfileViewModel(initial, profile, languages, tracker)
     }
 
     private val state get() = classToTest.state.value

@@ -71,6 +71,8 @@ import shifa.composeapp.generated.resources.shareUsageData
 import shifa.composeapp.generated.resources.signOutConfirm
 import shifa.composeapp.generated.resources.uploadPhoto
 import shifa.composeapp.generated.resources.uploading
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.storage.AppLanguage
@@ -135,15 +137,20 @@ fun ProfileScreen(
     ProfileContent(
         state,
         onBack = onBack,
-        onRefresh = viewModel::load,
+        onRefresh = viewModel::refresh,
         onChangePhoto = pickPhoto,
-        onEdit = { page = ProfilePage.Edit },
-        onLanguage = { viewModel.showDialog(ProfileDialog.Language) },
-        onChangePassword = { page = ProfilePage.ChangePassword },
-        onPrivacy = { openUrl(PRIVACY_URL) },
-        onDebug = { page = ProfilePage.Debug }.takeIf { isDebugBuild },
-        onLogOut = { viewModel.showDialog(ProfileDialog.LogOut) },
-        onDeleteAccount = { viewModel.showDialog(ProfileDialog.DeleteAccount) },
+        onEdit = { row("edit_profile") { page = ProfilePage.Edit } },
+        onLanguage = { row("language") { viewModel.showDialog(ProfileDialog.Language) } },
+        onChangePassword = { row("change_password") { page = ProfilePage.ChangePassword } },
+        onPrivacy = {
+            row("privacy") {
+                Analytics.track(AnalyticsEvent.PrivacyPolicyOpened)
+                openUrl(PRIVACY_URL)
+            }
+        },
+        onDebug = { row("debug") { page = ProfilePage.Debug } }.takeIf { isDebugBuild },
+        onLogOut = { row("logout") { viewModel.showDialog(ProfileDialog.LogOut) } },
+        onDeleteAccount = { row("delete_account") { viewModel.showDialog(ProfileDialog.DeleteAccount) } },
         onShareUsageData = viewModel::setShareUsageData,
     )
     state.dialog?.let {
@@ -196,6 +203,15 @@ fun ProfileScreen(
             }
         }
     }
+}
+
+// events.md §12: the row, then what it opens.
+private inline fun row(
+    name: String,
+    open: () -> Unit,
+) {
+    Analytics.track(AnalyticsEvent.ProfileRowTapped(name))
+    open()
 }
 
 /** Figma profile-settings (`1703:16707`). No version footer: Figma has none. */

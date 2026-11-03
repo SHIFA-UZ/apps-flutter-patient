@@ -42,11 +42,11 @@ import shifa.composeapp.generated.resources.copied
 import shifa.composeapp.generated.resources.delete
 import shifa.composeapp.generated.resources.deleteChatMessage
 import shifa.composeapp.generated.resources.deleteChatTitle
-import shifa.composeapp.generated.resources.errorRecordingVoice
-import shifa.composeapp.generated.resources.microphonePermissionDenied
 import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.shifaAiDisclaimer
 import shifa.composeapp.generated.resources.transcribing
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.CopilotMessage
 import shifa.uz.ui.documents.UploadTray
@@ -90,15 +90,16 @@ fun ShifaAiChatScreen(
     BackHandler(adding) { adding = false }
     val soon = {
         adding = false
+        Analytics.track(AnalyticsEvent.ComingSoonTapped("ai_attachment"))
         viewModel.showNotice(Res.string.comingSoon)
     }
     val recorder = rememberVoiceRecorder()
     val askMic =
         rememberMicPermission { granted ->
             when {
-                !granted -> viewModel.showError(Res.string.microphonePermissionDenied)
+                !granted -> viewModel.onMicDenied()
                 recorder.start() -> viewModel.onRecording()
-                else -> viewModel.showError(Res.string.errorRecordingVoice)
+                else -> viewModel.onRecordFailed()
             }
         }
 
@@ -123,11 +124,15 @@ fun ShifaAiChatScreen(
         onCloseAdd = { adding = false },
         onAdd = soon,
         onCopy = {
-            clipboard.setText(AnnotatedString(it))
+            viewModel.onReplyAction("copy", it)
+            clipboard.setText(AnnotatedString(it.content))
             viewModel.showNotice(Res.string.copied)
         },
         onRegenerate = viewModel::regenerate,
-        onShare = share,
+        onShare = {
+            viewModel.onReplyAction("share", it)
+            share(it.content)
+        },
     )
     if (deleting) {
         Dialog({ deleting = false }) {
@@ -161,9 +166,9 @@ internal fun ShifaAiChatContent(
     onAttach: () -> Unit = {},
     onCloseAdd: () -> Unit = {},
     onAdd: () -> Unit = {},
-    onCopy: (String) -> Unit = {},
+    onCopy: (CopilotMessage) -> Unit = {},
     onRegenerate: () -> Unit = {},
-    onShare: (String) -> Unit = {},
+    onShare: (CopilotMessage) -> Unit = {},
     now: Instant = getCurrentInstant(),
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
@@ -204,9 +209,9 @@ internal fun ShifaAiChatContent(
                     ShifaChatReplyBubble(
                         it.content,
                         time = timeOf(it),
-                        onCopy = { onCopy(it.content) },
+                        onCopy = { onCopy(it) },
                         onRegenerate = onRegenerate.takeIf { newest },
-                        onShare = { onShare(it.content) },
+                        onShare = { onShare(it) },
                     )
                 }
             }

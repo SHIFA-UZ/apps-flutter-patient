@@ -40,6 +40,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         config.sessionReplay = false // README D5
         config.surveys = false // README D12
         config.personProfiles = .identifiedOnly
+        config.errorTrackingConfig.autoCapture = true // README D11
         let off = AnalyticsBridgeKt.analyticsStartsOptedOut() // privacy.md §4, README D8
         config.preloadFeatureFlags = !off // README D10; not while off, or setup would still ask PostHog for flags
         config.optOut = off
@@ -62,7 +63,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        PushBridgeKt.onPushArrived()
+        PushBridgeKt.onPushArrived(type: notification.request.content.userInfo["type"] as? String)
         completionHandler([.banner, .list, .sound])
     }
 

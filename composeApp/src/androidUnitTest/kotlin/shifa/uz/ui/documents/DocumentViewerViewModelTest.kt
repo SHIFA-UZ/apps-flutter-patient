@@ -22,6 +22,8 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.documentSaved
 import shifa.composeapp.generated.resources.errorOpeningDocument
 import shifa.composeapp.generated.resources.errorSomethingWentWrong
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_DELETE_DOCUMENT
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
@@ -39,6 +41,7 @@ class DocumentViewerViewModelTest {
     private val pdf = "%PDF-1.4".encodeToByteArray()
     private val document =
         PatientDocument(id = "5", title = "Lab: result", fileUrl = "https://f/5", creatorLabel = "Patient")
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: DocumentViewerViewModel
 
     @Before
@@ -53,8 +56,27 @@ class DocumentViewerViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test
+    fun `a document with its visit reports has_visit once the lookup is in`() =
+        runTest {
+            create(document.copy(appointmentId = "42"))
+            advanceUntilIdle()
+
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.DocumentViewed("pdf", "unknown", true))
+        }
+
+    @Test
+    fun `a viewed document is tracked by its type and owner, never its title`() =
+        runTest {
+            create()
+            advanceUntilIdle()
+
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.DocumentViewed("pdf", "unknown", false))
+            assertThat(tracker.events.single().properties.values).doesNotContain("Lab: result")
+        }
+
     private fun create(doc: PatientDocument = document) {
-        classToTest = DocumentViewerViewModel(doc, documents, bookings)
+        classToTest = DocumentViewerViewModel(doc, documents, bookings, tracker)
     }
 
     private val state get() = classToTest.state.value

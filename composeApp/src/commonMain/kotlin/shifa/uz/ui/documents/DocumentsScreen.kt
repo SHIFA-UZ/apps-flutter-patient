@@ -183,15 +183,15 @@ fun DocumentsScreen(
         viewModel.signedOut.collect { signedOut() }
     }
     var tray by rememberSaveable { mutableStateOf(false) }
-    val takePhoto = rememberCameraLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes) } }
-    val pickPhoto = rememberImagePickerLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes) } }
-    val pickFile = rememberDocumentPickerLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes) } }
+    val takePhoto = rememberCameraLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes, "camera") } }
+    val pickPhoto = rememberImagePickerLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes, "photo") } }
+    val pickFile = rememberDocumentPickerLauncher { it?.let { viewModel.pick(it.fileName, it.fileBytes, "file") } }
     DocumentsContent(
         state,
         avatarUrl = avatarUrl,
         patientName = patientName,
         notificationCount = notificationCount,
-        onRefresh = viewModel::load,
+        onRefresh = viewModel::refresh,
         onSearch = viewModel::search,
         onFilter = viewModel::filterBy,
         onNotifications = onNotifications,

@@ -76,5 +76,42 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   `appointment_end_tapped` (no such control reaches the ViewModel), `login_locked_out` fires on the failure that
   locks, `video_join_failed.reason` is the API reason or `daily_failed` (no `not_in_window` / `payment_required`
   mapping; the backend's message isn't sent).
-- Not built: engagement events (ANL-05: tasks, documents, chat, Shifa AI, notifications, profile), reliability
-  events and exception autocapture (ANL-06), the `Flags` accessors (first flag in ANL-08; the sink methods exist).
+## Engagement events (ANL-05)
+
+- events.md §7-12 from the ViewModels and the pure-UI taps in the screens: My Tasks and the task page (view, refresh,
+  month, day, a check-in's validation, outcome and abandonment, nothing due), Documents (refresh, chip, the upload
+  tray's source through `pick(..., source)`, upload outcome, viewer open / expand / visit / download / delete),
+  Messages (refresh, doctor search, chat opened, sends by type with duration and size buckets, upload and send
+  failures, recording, voice played, attachment opened), Shifa AI (chat started, question by input and length,
+  reply timing, failures and the rate limit, abandonment, Copy / Regenerate / Share, voice, delete, the gated tab),
+  push (permission, token, foreground arrival with its `type`, tap with `routed_to`) and the inbox (view, pages,
+  refresh, chips, card, tray button, mark all), Profile (refresh, rows, language, photo, edit outcome with the
+  changed field names, password, account deletion steps, privacy, Coming soon, Retry).
+- `Push.arrived` now carries the push's `type` (Android service, iOS `onPushArrived(type:)`), analytics only.
+- Person properties set: `has_checked_in` / `first_checkin_at`, `has_uploaded` / `first_upload_at`,
+  `has_messaged` / `first_message_at`, `has_used_ai` / `first_ai_message_at`, `push_granted`, `has_photo`.
+- Left out, with the reason: `documents_searched` and `ai_searched` (both filter locally on every keystroke; the
+  Documents and Shifa AI screens show the result), `chat_opened.source` (the ViewModel doesn't know the route),
+  `chat_voice_played.is_own` (the player gets a URL), `coming_soon_tapped` on the Shifa AI tray is `ai_attachment`
+  (one callback for camera, photo and file), `notification_action_tapped` has `checkin_tray` for the check-in
+  button, `notification_link_missing`, `push_opened.cold_start` / `was_signed_out`, `task_opened.progress_pct`
+  when the task has no progress, `retry_tapped` on Messages and Notifications (their Retry is the refresh),
+  `source` on `tasks_viewed` / `task_opened` / `checkin_submitted` / `document_viewed` / `notifications_viewed` (the
+  ViewModels don't know the route), `chat_opened.unread_count`, `chat_voice_played.duration_s_bucket`,
+  `notification_opened.has_link` and `notification_action_tapped.action` (`routed_to` says where it went),
+  `reason` on `document_download_failed` and `chat_recording_failed` (the platform reports no cause).
+  `notifications_all_read.unread_count` counts the pages loaded so far, not the whole inbox (N4 clears it all).
+  `document_viewed` waits for both the file and the visit lookup, so `has_visit` is final; an unsupported file is a
+  `document_view_failed` with `unsupported`.
+## Reliability (ANL-06)
+
+- `api_error` from both failure branches of `apiCall` (and an unreadable body), with the path as a template
+  (`endpointTemplate`: numeric, UUID-like and long segments become `{id}`), the method, the status, the
+  `ApiException` kind and the backend's `code`; never the message. A call with no response has no endpoint (there
+  is no request object in that branch), only the exception's class. `api_slow` for a successful call over 5 s.
+- `ai_stream_error` from `CopilotRepository.stream`: `connect` with the status for a non-200, `stream` for a
+  dropped stream. `webview_error` from the payment WebView's main-frame load failure on both platforms, with the
+  provider and the platform's error code (iOS reports the provisional-navigation failure only).
+- Exception autocapture is on in both SDK configs (README D11) and in the PostHog project. No "Crash now" row:
+  release builds have no Debug menu and debug builds never send, so it couldn't verify anything.
+- Not built: the `Flags` accessors (first flag in ANL-08; the sink methods exist).

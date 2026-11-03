@@ -84,6 +84,7 @@ fun PaymentScreen(
             }
             true
         },
+        onError = { Analytics.track(AnalyticsEvent.WebviewError(appointment.payment?.provider?.lowercase(), it)) },
     )
 }
 
@@ -97,6 +98,7 @@ internal fun PaymentContent(
     onCheck: () -> Unit = {},
     onBookAgain: () -> Unit = {},
     onNavigate: (String) -> Boolean = { false },
+    onError: (Int) -> Unit = {},
 ) {
     val failure = state.failure
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
@@ -105,7 +107,7 @@ internal fun PaymentContent(
         }
         Box(Modifier.weight(1f).fillMaxWidth().background(ShifaColors.Bg.Canvas), contentAlignment = Alignment.Center) {
             if (failure == null) {
-                PaymentWebView(state.checkoutUrl, Modifier.fillMaxSize(), onNavigate)
+                PaymentWebView(state.checkoutUrl, Modifier.fillMaxSize(), onNavigate, onError)
             } else {
                 ShifaBanner(
                     stringResource(failure),

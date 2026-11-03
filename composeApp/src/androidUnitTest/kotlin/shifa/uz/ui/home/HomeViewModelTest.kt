@@ -66,6 +66,18 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a profile shut out of Shifa AI is tracked once`() =
+        runTest {
+            wheneverBlocking { profile.getProfile() } doReturn
+                Result.success(PatientProfile(fullName = "Aziz", subscriptionTier = "PRO"))
+            create()
+            advanceUntilIdle()
+            classToTest.onProfileChanged(PatientProfile(fullName = "Aziz", subscriptionTier = "PRO"))
+
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.AiGatedSeen("PRO"))
+        }
+
+    @Test
     fun `pull to refresh is tracked`() =
         runTest {
             create()

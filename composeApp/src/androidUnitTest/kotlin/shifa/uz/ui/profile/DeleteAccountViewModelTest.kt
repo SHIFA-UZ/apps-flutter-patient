@@ -27,6 +27,8 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.codeSentAgain
 import shifa.composeapp.generated.resources.errorSomethingWentWrong
 import shifa.composeapp.generated.resources.invalidVerificationCode
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_DELETE_ACCOUNT
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.model.ApiException
@@ -39,6 +41,7 @@ class DeleteAccountViewModelTest {
     private val profile = mock<ProfileRepository>()
     private val auth = mock<AuthRepository>()
     private val challenge = DeleteAccountChallenge("c1", expiresInSeconds = 3)
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: DeleteAccountViewModel
 
     @Before
@@ -52,8 +55,26 @@ class DeleteAccountViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test
+    fun `a short code and a confirmed deletion are tracked`() =
+        runTest {
+            wheneverBlocking { profile.confirmDeletion(any(), any(), any()) } doReturn Result.success(Unit)
+            create()
+            classToTest.onOtpChange("123")
+            classToTest.confirm()
+            classToTest.onOtpChange("123456")
+            classToTest.confirm()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.AccountDeletionFailed("confirm", "invalid_code"),
+                    AnalyticsEvent.AccountDeleted,
+                ).inOrder()
+        }
+
     private fun create() {
-        classToTest = DeleteAccountViewModel(challenge, "aziz@example.com", profile, auth)
+        classToTest = DeleteAccountViewModel(challenge, "aziz@example.com", profile, auth, tracker)
     }
 
     private val state get() = classToTest.state.value

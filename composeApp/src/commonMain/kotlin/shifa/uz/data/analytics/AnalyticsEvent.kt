@@ -420,6 +420,349 @@ sealed class AnalyticsEvent(
 
     data object SignatureAbandoned : AnalyticsEvent("signature_abandoned")
 
+    // ---- events.md §7: tasks and check-ins ----
+
+    /** [tab]: `open` / `completed`. */
+    data class TasksViewed(val tab: String, val openCount: Int?, val completedCount: Int?) :
+        AnalyticsEvent("tasks_viewed", "tab" to tab, "open_count" to openCount, "completed_count" to completedCount)
+
+    data object TasksRefreshed : AnalyticsEvent("tasks_refreshed")
+
+    data class TaskOpened(val category: String, val inputType: String, val status: String, val progressPct: Int?) :
+        AnalyticsEvent(
+            "task_opened",
+            "category" to category,
+            "input_type" to inputType,
+            "status" to status,
+            "progress_pct" to progressPct,
+        )
+
+    data object TaskRefreshed : AnalyticsEvent("task_refreshed")
+
+    /** [direction]: `prev` / `next`. */
+    data class TaskMonthChanged(val direction: String, val monthsFromNow: Int) :
+        AnalyticsEvent("task_month_changed", "direction" to direction, "months_from_now" to monthsFromNow)
+
+    /** [state]: `due` / `not_yet_due` / `submitted`. */
+    data class CheckinDayOpened(val state: String, val daysFromToday: Int) :
+        AnalyticsEvent("checkin_day_opened", "state" to state, "days_from_today" to daysFromToday)
+
+    data class CheckinSubmitted(
+        val inputType: String,
+        val category: String,
+        val hasNotes: Boolean,
+        val minutesFromScheduled: Long?,
+        val hourOfDay: Int,
+        val at: String,
+    ) : AnalyticsEvent(
+            "checkin_submitted",
+            "input_type" to inputType,
+            "category" to category,
+            "has_notes" to hasNotes,
+            "minutes_from_scheduled" to minutesFromScheduled,
+            "hour_of_day" to hourOfDay,
+            userProperties = mapOf("has_checked_in" to true),
+            userPropertiesSetOnce = mapOf("first_checkin_at" to at),
+        )
+
+    /** [field]: `value` / `notes`; [rule]: `required` / `not_a_number` / `yes_no`. */
+    data class CheckinValidationFailed(val field: String, val rule: String) :
+        AnalyticsEvent("checkin_validation_failed", "field" to field, "rule" to rule)
+
+    data class CheckinFailed(val reason: String) : AnalyticsEvent("checkin_failed", "reason" to reason)
+
+    data object CheckinNothingDue : AnalyticsEvent("checkin_nothing_due")
+
+    data class CheckinAbandoned(val inputType: String) : AnalyticsEvent("checkin_abandoned", "input_type" to inputType)
+
+    // ---- events.md §8: documents ----
+
+    data object DocumentsRefreshed : AnalyticsEvent("documents_refreshed")
+
+    data class DocumentsSearched(val queryLength: Int, val resultsCount: Int) :
+        AnalyticsEvent("documents_searched", "query_length" to queryLength, "results_count" to resultsCount)
+
+    data class DocumentsFiltered(val category: String, val resultsCount: Int) :
+        AnalyticsEvent("documents_filtered", "category" to category, "results_count" to resultsCount)
+
+    /** [source]: `camera` / `photo` / `file`. */
+    data class DocumentUploadStarted(val source: String) : AnalyticsEvent("document_upload_started", "source" to source)
+
+    data object DocumentUploadChanged : AnalyticsEvent("document_upload_changed")
+
+    data class DocumentUploaded(
+        val source: String?,
+        val fileType: String,
+        val category: String,
+        val sizeKbBucket: String,
+        val titleEdited: Boolean,
+        val at: String,
+    ) : AnalyticsEvent(
+            "document_uploaded",
+            "source" to source,
+            "file_type" to fileType,
+            "category" to category,
+            "size_kb_bucket" to sizeKbBucket,
+            "title_edited" to titleEdited,
+            userProperties = mapOf("has_uploaded" to true),
+            userPropertiesSetOnce = mapOf("first_upload_at" to at),
+        )
+
+    /** `title_missing` / an API reason. */
+    data class DocumentUploadFailed(val reason: String) : AnalyticsEvent("document_upload_failed", "reason" to reason)
+
+    data object DocumentUploadCancelled : AnalyticsEvent("document_upload_cancelled")
+
+    /** [uploadedBy]: `self` / `doctor` / `unknown`. */
+    data class DocumentViewed(val fileType: String, val uploadedBy: String, val hasVisit: Boolean) :
+        AnalyticsEvent(
+            "document_viewed",
+            "file_type" to fileType,
+            "uploaded_by" to uploadedBy,
+            "has_visit" to hasVisit,
+        )
+
+    data class DocumentViewFailed(val reason: String) : AnalyticsEvent("document_view_failed", "reason" to reason)
+
+    data class DocumentExpanded(val expanded: Boolean) : AnalyticsEvent("document_expanded", "expanded" to expanded)
+
+    data object DocumentVisitOpened : AnalyticsEvent("document_visit_opened")
+
+    data class DocumentDownloaded(val fileType: String) : AnalyticsEvent("document_downloaded", "file_type" to fileType)
+
+    data object DocumentDownloadFailed : AnalyticsEvent("document_download_failed")
+
+    /** [via]: `swipe` / `viewer`. */
+    data class DocumentDeleted(val via: String) : AnalyticsEvent("document_deleted", "via" to via)
+
+    data class DocumentDeleteFailed(val via: String, val reason: String) :
+        AnalyticsEvent("document_delete_failed", "via" to via, "reason" to reason)
+
+    // ---- events.md §9: messages ----
+
+    data object ChatsRefreshed : AnalyticsEvent("chats_refreshed")
+
+    data class ChatDoctorSearched(val queryLength: Int, val resultsCount: Int) :
+        AnalyticsEvent("chat_doctor_searched", "query_length" to queryLength, "results_count" to resultsCount)
+
+    /** [source]: `list` / `search` / `notification` / `push`. */
+    data class ChatOpened(val source: String?, val isNew: Boolean) :
+        AnalyticsEvent("chat_opened", "source" to source, "is_new" to isNew)
+
+    /** [type]: `text` / `image` / `voice` / `document`. */
+    data class ChatMessageSent(
+        val type: String,
+        val isFirstInChat: Boolean,
+        val hasCaption: Boolean?,
+        val durationSBucket: String?,
+        val sizeKbBucket: String?,
+        val at: String,
+    ) : AnalyticsEvent(
+            "chat_message_sent",
+            "type" to type,
+            "is_first_in_chat" to isFirstInChat,
+            "has_caption" to hasCaption,
+            "duration_s_bucket" to durationSBucket,
+            "size_kb_bucket" to sizeKbBucket,
+            userProperties = mapOf("has_messaged" to true),
+            userPropertiesSetOnce = mapOf("first_message_at" to at),
+        )
+
+    /** [stage]: `upload` / `send`. */
+    data class ChatMessageFailed(val type: String, val stage: String, val reason: String) :
+        AnalyticsEvent("chat_message_failed", "type" to type, "stage" to stage, "reason" to reason)
+
+    data object ChatRecordingStarted : AnalyticsEvent("chat_recording_started")
+
+    data object ChatRecordingFailed : AnalyticsEvent("chat_recording_failed")
+
+    data class ChatAttachmentOpened(val type: String) : AnalyticsEvent("chat_attachment_opened", "type" to type)
+
+    data class ChatVoicePlayed(val isOwn: Boolean?) : AnalyticsEvent("chat_voice_played", "is_own" to isOwn)
+
+    // ---- events.md §10: Shifa AI ----
+
+    data class AiChatStarted(val isNew: Boolean, val savedChats: Int) :
+        AnalyticsEvent("ai_chat_started", "is_new" to isNew, "saved_chats" to savedChats)
+
+    /** [input]: `typed` / `voice`; [lengthBucket]: `<50` / `50-200` / `>200`. */
+    data class AiMessageSent(val turn: Int, val input: String, val lengthBucket: String, val at: String) :
+        AnalyticsEvent(
+            "ai_message_sent",
+            "turn" to turn,
+            "input" to input,
+            "length_bucket" to lengthBucket,
+            userProperties = mapOf("has_used_ai" to true),
+            userPropertiesSetOnce = mapOf("first_ai_message_at" to at),
+        )
+
+    data class AiReplyReceived(
+        val firstTokenMs: Long?,
+        val totalMs: Long,
+        val replyCharsBucket: String,
+        val isRegenerate: Boolean,
+    ) :
+        AnalyticsEvent(
+                "ai_reply_received",
+                "first_token_ms" to firstTokenMs,
+                "total_ms" to totalMs,
+                "reply_chars_bucket" to replyCharsBucket,
+                "is_regenerate" to isRegenerate,
+            )
+
+    /** `rate_limit` / `empty` / an API reason. */
+    data class AiReplyFailed(val reason: String, val isRegenerate: Boolean) :
+        AnalyticsEvent("ai_reply_failed", "reason" to reason, "is_regenerate" to isRegenerate)
+
+    data class AiRateLimited(val turn: Int) : AnalyticsEvent("ai_rate_limited", "turn" to turn)
+
+    data class AiReplyAbandoned(val elapsedMs: Long) : AnalyticsEvent("ai_reply_abandoned", "elapsed_ms" to elapsedMs)
+
+    /** [action]: `copy` / `regenerate` / `share`. */
+    data class AiReplyAction(val action: String, val turn: Int) :
+        AnalyticsEvent("ai_reply_action", "action" to action, "turn" to turn)
+
+    data class AiVoiceRecorded(val durationS: Long?) : AnalyticsEvent("ai_voice_recorded", "duration_s" to durationS)
+
+    data class AiVoiceTranscribed(val transcribeMs: Long, val transcriptCharsBucket: String) :
+        AnalyticsEvent(
+            "ai_voice_transcribed",
+            "transcribe_ms" to transcribeMs,
+            "transcript_chars_bucket" to transcriptCharsBucket,
+        )
+
+    /** `permission_denied` / `record_failed` / `rate_limit` / an API reason. */
+    data class AiVoiceFailed(val reason: String) : AnalyticsEvent("ai_voice_failed", "reason" to reason)
+
+    data class AiChatDeleted(val messages: Int) : AnalyticsEvent("ai_chat_deleted", "messages" to messages)
+
+    data class AiSearched(val queryLength: Int, val resultsCount: Int) :
+        AnalyticsEvent("ai_searched", "query_length" to queryLength, "results_count" to resultsCount)
+
+    data class AiGatedSeen(val subscriptionTier: String?) :
+        AnalyticsEvent("ai_gated_seen", "subscription_tier" to subscriptionTier)
+
+    // ---- events.md §11: notifications and push ----
+
+    data class PushPermissionResult(val granted: Boolean) :
+        AnalyticsEvent(
+            "push_permission_result",
+            "granted" to granted,
+            userProperties = mapOf("push_granted" to granted),
+        )
+
+    data object PushTokenRegistered : AnalyticsEvent("push_token_registered")
+
+    data class PushReceived(val type: String?) : AnalyticsEvent("push_received", "type" to type)
+
+    /**
+     * [routedTo]: `appointment` / `live_appointment` / `document` / `documents_tab` / `task` / `tasks_list` / `chat` /
+     * `messages_tab` / `bookings_tab` / `inbox`.
+     */
+    data class PushOpened(val type: String?, val routedTo: String) :
+        AnalyticsEvent("push_opened", "type" to type, "routed_to" to routedTo)
+
+    data class NotificationsViewed(val count: Int, val unreadCount: Int) :
+        AnalyticsEvent("notifications_viewed", "count" to count, "unread_count" to unreadCount)
+
+    data class NotificationsPageLoaded(val page: Int) : AnalyticsEvent("notifications_page_loaded", "page" to page)
+
+    data object NotificationsRefreshed : AnalyticsEvent("notifications_refreshed")
+
+    /** [filter]: `all` / `appointments` / `tasks` / `documents` / `payments`. */
+    data class NotificationFilterSelected(val filter: String) :
+        AnalyticsEvent("notification_filter_selected", "filter" to filter)
+
+    /** [ageHoursBucket]: `<1` / `1-24` / `1-7d` / `>7d`. */
+    data class NotificationOpened(val type: String, val wasUnread: Boolean, val ageHoursBucket: String) :
+        AnalyticsEvent(
+            "notification_opened",
+            "type" to type,
+            "was_unread" to wasUnread,
+            "age_hours_bucket" to ageHoursBucket,
+        )
+
+    data class NotificationActionTapped(val type: String, val routedTo: String) :
+        AnalyticsEvent("notification_action_tapped", "type" to type, "routed_to" to routedTo)
+
+    data class NotificationsAllRead(val unreadCount: Int) :
+        AnalyticsEvent("notifications_all_read", "unread_count" to unreadCount)
+
+    // ---- events.md §13: reliability ----
+
+    /** [endpoint]: the path template with ids replaced (`patients/me/appointments/{id}`); null when no request was made. */
+    data class ApiError(
+        val endpoint: String?,
+        val method: String?,
+        val status: Int,
+        val error: String,
+        val code: String?,
+    ) :
+        AnalyticsEvent(
+                "api_error",
+                "endpoint" to endpoint,
+                "method" to method,
+                "status" to status,
+                "error" to error,
+                "code" to code,
+            )
+
+    data class ApiSlow(val endpoint: String, val method: String, val ms: Long) :
+        AnalyticsEvent("api_slow", "endpoint" to endpoint, "method" to method, "ms" to ms)
+
+    /** [stage]: `connect` / `stream`. */
+    data class AiStreamError(val stage: String, val status: Int) :
+        AnalyticsEvent("ai_stream_error", "stage" to stage, "status" to status)
+
+    /** [errorCode]: the platform's WebView error code, never the URL. */
+    data class WebviewError(val provider: String?, val errorCode: Int) :
+        AnalyticsEvent("webview_error", "provider" to provider, "error_code" to errorCode)
+
+    // ---- events.md §12: profile and settings ----
+
+    data object ProfileRefreshed : AnalyticsEvent("profile_refreshed")
+
+    /** [row]: `edit_profile` / `change_password` / `language` / `privacy` / `debug` / `delete_account` / `logout`. */
+    data class ProfileRowTapped(val row: String) : AnalyticsEvent("profile_row_tapped", "row" to row)
+
+    /** [source]: `profile` / `edit_profile`. */
+    data class LanguageChanged(val from: String, val to: String, val source: String) :
+        AnalyticsEvent("language_changed", "from" to from, "to" to to, "source" to source)
+
+    /** [fields]: the changed fields' names, never their values. */
+    data class ProfileUpdated(val fields: List<String>) : AnalyticsEvent("profile_updated", "fields" to fields)
+
+    data class ProfileUpdateFailed(val reason: String) : AnalyticsEvent("profile_update_failed", "reason" to reason)
+
+    data class ProfilePhotoUpdated(val source: String) :
+        AnalyticsEvent("profile_photo_updated", "source" to source, userProperties = mapOf("has_photo" to true))
+
+    data class ProfilePhotoFailed(val source: String, val reason: String) :
+        AnalyticsEvent("profile_photo_failed", "source" to source, "reason" to reason)
+
+    data object PasswordChanged : AnalyticsEvent("password_changed")
+
+    /** `wrong_current` / `policy` / an API reason. */
+    data class PasswordChangeFailed(val reason: String) : AnalyticsEvent("password_change_failed", "reason" to reason)
+
+    data object AccountDeletionStarted : AnalyticsEvent("account_deletion_started")
+
+    data object AccountDeletionCodeResent : AnalyticsEvent("account_deletion_code_resent")
+
+    /** [step]: `request` / `confirm`; [reason]: `email_required` / `invalid_code` / an API reason. */
+    data class AccountDeletionFailed(val step: String, val reason: String) :
+        AnalyticsEvent("account_deletion_failed", "step" to step, "reason" to reason)
+
+    data object AccountDeleted : AnalyticsEvent("account_deleted")
+
+    data object PrivacyPolicyOpened : AnalyticsEvent("privacy_policy_opened")
+
+    /** [feature]: `map` / `ai_camera` / `ai_photo` / `ai_file`. */
+    data class ComingSoonTapped(val feature: String) : AnalyticsEvent("coming_soon_tapped", "feature" to feature)
+
+    /** [screen]: `doctor_profile` / `document_viewer` / `messages` / `notifications`. */
+    data class RetryTapped(val screen: String) : AnalyticsEvent("retry_tapped", "screen" to screen)
+
     // ---- events.md §12: profile ----
 
     // The "Share usage data" switch. Opted out is the last event sent, opted in the first.
@@ -452,6 +795,56 @@ fun shifa.uz.data.model.Appointment.paymentFailureReason(): String? =
         isPaid -> "expired_paid_refund"
         else -> "expired"
     }
+
+/** `<500` / `500-2000` / `2000-10000` / `>10000` KB. */
+fun sizeKbBucket(bytes: Long): String {
+    val kb = bytes / 1024
+    return when {
+        kb < 500 -> "<500"
+        kb < 2_000 -> "500-2000"
+        kb < 10_000 -> "2000-10000"
+        else -> ">10000"
+    }
+}
+
+/** `<10` / `10-30` / `30-60` / `>60` seconds. */
+fun durationSBucket(seconds: Int): String =
+    when {
+        seconds < 10 -> "<10"
+        seconds < 30 -> "10-30"
+        seconds < 60 -> "30-60"
+        else -> ">60"
+    }
+
+/** `<50` / `50-200` / `>200` characters, for text whose content never travels. */
+fun charsBucket(length: Int): String =
+    when {
+        length < 50 -> "<50"
+        length < 200 -> "50-200"
+        else -> ">200"
+    }
+
+/** `<300` / `300-1000` / `>1000` characters of a reply. */
+fun replyCharsBucket(length: Int): String =
+    when {
+        length < 300 -> "<300"
+        length < 1_000 -> "300-1000"
+        else -> ">1000"
+    }
+
+/** `<1` / `1-24` / `1-7d` / `>7d` hours since [at]. */
+fun ageHoursBucket(
+    at: Instant,
+    now: Instant,
+): String {
+    val hours = (now - at).inWholeHours
+    return when {
+        hours < 1 -> "<1"
+        hours < 24 -> "1-24"
+        hours < 24 * 7 -> "1-7d"
+        else -> ">7d"
+    }
+}
 
 /** UZS so'm buckets (privacy.md §2: never the exact amount); other currencies are `foreign`. */
 fun amountBucket(

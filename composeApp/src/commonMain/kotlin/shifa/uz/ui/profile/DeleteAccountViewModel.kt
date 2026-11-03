@@ -14,8 +14,13 @@ import kotlinx.coroutines.launch
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.codeSentAgain
 import shifa.composeapp.generated.resources.invalidVerificationCode
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.auth.AuthRepository
+import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.DeleteAccountChallenge
 import shifa.uz.data.profile.ProfileRepository
 
@@ -27,6 +32,7 @@ class DeleteAccountViewModel(
     private val email: String,
     private val profile: ProfileRepository = ProfileRepository(),
     private val auth: AuthRepository = AuthRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DeleteAccountUiState())
     val state: StateFlow<DeleteAccountUiState> = _state.asStateFlow()
@@ -47,7 +53,9 @@ class DeleteAccountViewModel(
     fun onOtpChange(value: String) = update { copy(otp = value.filter(Char::isDigit).take(6), error = null) }
 
     fun resend() {
-        if (_state.value.canResend) sendCode(resent = true)
+        if (!_state.value.canResend) return
+        analytics.track(AnalyticsEvent.AccountDeletionCodeResent)
+        sendCode(resent = true)
     }
 
     // The cooldown is the challenge's lifetime, not Flutter's fixed 5 min (14 Q17).
@@ -73,15 +81,31 @@ class DeleteAccountViewModel(
     fun confirm() {
         val s = _state.value
         if (s.isDeleting) return
-        if (s.otp.length != 6) return update { copy(error = Res.string.invalidVerificationCode, notice = null) }
+        if (s.otp.length != 6) {
+            analytics.track(AnalyticsEvent.AccountDeletionFailed("confirm", "invalid_code"))
+            return update { copy(error = Res.string.invalidVerificationCode, notice = null) }
+        }
         update { copy(isDeleting = true, error = null, notice = null) }
         viewModelScope.launch {
             profile.confirmDeletion(challenge.challengeId, email, s.otp).fold(
                 onSuccess = {
+                    analytics.track(AnalyticsEvent.AccountDeleted)
                     auth.logout("account_deleted")
                     _deleted.send(Unit)
                 },
-                onFailure = { update { copy(isDeleting = false, error = it.toUserMessage()) } },
+                onFailure = {
+                    analytics.track(
+                        AnalyticsEvent.AccountDeletionFailed(
+                            "confirm",
+                            if (it is ApiException.ValidationError || it is ApiException.Unauthorized) {
+                                "invalid_code"
+                            } else {
+                                it.analyticsReason()
+                            },
+                        ),
+                    )
+                    update { copy(isDeleting = false, error = it.toUserMessage()) }
+                },
             )
         }
     }

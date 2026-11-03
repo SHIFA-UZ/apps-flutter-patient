@@ -41,12 +41,13 @@ import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.addToChat
 import shifa.composeapp.generated.resources.document
-import shifa.composeapp.generated.resources.errorRecordingVoice
 import shifa.composeapp.generated.resources.microphonePermissionDenied
 import shifa.composeapp.generated.resources.monthsShort
 import shifa.composeapp.generated.resources.photo
 import shifa.composeapp.generated.resources.typeMessage
 import shifa.composeapp.generated.resources.voiceMessage
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.ChatMessage
 import shifa.uz.data.model.MessageType
@@ -110,7 +111,7 @@ fun ConversationScreen(
             when {
                 !granted -> viewModel.showError(Res.string.microphonePermissionDenied)
                 recorder.start() -> viewModel.onRecording()
-                else -> viewModel.showError(Res.string.errorRecordingVoice)
+                else -> viewModel.onRecordFailed()
             }
         }
     val pick = { launch: () -> Unit ->
@@ -125,7 +126,14 @@ fun ConversationScreen(
         state,
         adding,
         playback = player.playback,
-        onToggleVoice = player::toggle,
+        onToggleVoice = {
+            // A play (or a resume), not the pause of the one already playing.
+            val playing = player.playback
+            if (playing == null || playing.url != it || !playing.playing) {
+                Analytics.track(AnalyticsEvent.ChatVoicePlayed(isOwn = null))
+            }
+            player.toggle(it)
+        },
         onBack = onBack,
         onInput = viewModel::edit,
         onSend = viewModel::send,
@@ -140,7 +148,10 @@ fun ConversationScreen(
         onCamera = { pick(takePhoto) },
         onPhoto = { pick(pickPhoto) },
         onFile = { pick(pickFile) },
-        onOpenFile = { url, name -> viewing = PatientDocument(title = name ?: photo, fileUrl = url) },
+        onOpenFile = { url, name, type ->
+            Analytics.track(AnalyticsEvent.ChatAttachmentOpened(type.name.lowercase()))
+            viewing = PatientDocument(title = name ?: photo, fileUrl = url)
+        },
     )
     // No id, so the viewer offers no Delete; Download saves it.
     viewing?.let {
@@ -163,7 +174,7 @@ internal fun ConversationContent(
     onCamera: () -> Unit = {},
     onPhoto: () -> Unit = {},
     onFile: () -> Unit = {},
-    onOpenFile: (url: String, name: String?) -> Unit = { _, _ -> },
+    onOpenFile: (url: String, name: String?, type: MessageType) -> Unit = { _, _, _ -> },
     now: Instant = getCurrentInstant(),
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
@@ -218,12 +229,12 @@ private fun Message(
     message: ChatMessage,
     time: String,
     playback: Playback?,
-    onOpenFile: (url: String, name: String?) -> Unit,
+    onOpenFile: (url: String, name: String?, type: MessageType) -> Unit,
     onToggleVoice: (String) -> Unit,
 ) {
     val type = if (message.isMine) ShifaChatBubbleType.Sent else ShifaChatBubbleType.Received
     val url = message.fileUrl
-    val open = url?.let { Modifier.clickable { onOpenFile(it, message.fileName) } } ?: Modifier
+    val open = url?.let { Modifier.clickable { onOpenFile(it, message.fileName, message.type) } } ?: Modifier
     when (message.type) {
         MessageType.Text -> ShifaChatBubble(message.body.orEmpty(), type, time = time)
         MessageType.Image ->

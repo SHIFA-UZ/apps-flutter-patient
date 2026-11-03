@@ -87,7 +87,7 @@ fun MessagesScreen(
         notificationCount = notificationCount,
         onNotifications = onNotifications,
         onAccount = onAccount,
-        onRefresh = viewModel::load,
+        onRefresh = viewModel::refresh,
         onSearch = viewModel::search,
         onOpen = { onOpen(ChatTarget(it.id, name = it.participantName, photoUrl = it.participantPhotoUrl)) },
         onStart = viewModel::start,

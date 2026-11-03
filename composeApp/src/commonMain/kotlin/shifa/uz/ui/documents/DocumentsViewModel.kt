@@ -13,10 +13,17 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.documentDeleted
 import shifa.composeapp.generated.resources.documentUploadedSuccessfully
 import shifa.composeapp.generated.resources.enterDocumentTitle
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
+import shifa.uz.data.analytics.fileType
+import shifa.uz.data.analytics.sizeKbBucket
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.PatientDocument
+import shifa.uz.utils.getCurrentInstant
 
 private val EXTENSION = Regex("\\.(pdf|jpe?g|png|gif|webp|heic)$", RegexOption.IGNORE_CASE)
 
@@ -24,8 +31,16 @@ private fun defaultTitle(fileName: String) = fileName.replace(EXTENSION, "")
 
 class DocumentsViewModel(
     private val documents: DocumentsRepository = DocumentsRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DocumentsUiState())
+
+    /** Pull to refresh (events.md §8). */
+    fun refresh() {
+        analytics.track(AnalyticsEvent.DocumentsRefreshed)
+        load()
+    }
+
     val state: StateFlow<DocumentsUiState> = _state.asStateFlow()
 
     // F1 answered 401, as on Home.
@@ -54,15 +69,22 @@ class DocumentsViewModel(
     fun search(query: String) = update { copy(query = query) }
 
     /** Null is All. */
-    fun filterBy(category: String?) = update { copy(category = category) }
+    fun filterBy(category: String?) {
+        update { copy(category = category) }
+        analytics.track(AnalyticsEvent.DocumentsFiltered(category ?: "all", _state.value.shown.size))
+    }
 
     /** A picked file opens the popup, or replaces the popup's file ("Change"). A title the user typed is kept. */
     fun pick(
         fileName: String,
         bytes: ByteArray,
+        source: String = "file", // `camera` / `photo` / `file` (events.md §8)
     ) {
         val draft = _state.value.draft
         if (_state.value.isUploading) return
+        analytics.track(
+            if (draft == null) AnalyticsEvent.DocumentUploadStarted(source) else AnalyticsEvent.DocumentUploadChanged,
+        )
         val title = draft?.title?.takeIf { it != defaultTitle(draft.fileName) } ?: defaultTitle(fileName)
         update {
             copy(
@@ -72,7 +94,8 @@ class DocumentsViewModel(
                         bytes = bytes,
                         title = title,
                         error = null,
-                    ) ?: UploadDraft(fileName, bytes, title),
+                        source = source,
+                    ) ?: UploadDraft(fileName, bytes, title, source = source),
                 error = null,
                 notice = null,
             )
@@ -91,7 +114,9 @@ class DocumentsViewModel(
         update { copy(draft = draft?.copy(category = code.takeIf { it != draft.category })) }
 
     fun cancelUpload() {
-        if (!_state.value.isUploading) update { copy(draft = null) }
+        if (_state.value.isUploading) return
+        if (_state.value.draft != null) analytics.track(AnalyticsEvent.DocumentUploadCancelled)
+        update { copy(draft = null) }
     }
 
     /** F2. A failure keeps the popup open and the list as it was (11 quirk 6). */
@@ -101,6 +126,7 @@ class DocumentsViewModel(
         if (s.isUploading) return
         val title = draft.title.trim()
         if (title.isEmpty()) {
+            analytics.track(AnalyticsEvent.DocumentUploadFailed("title_missing"))
             return update {
                 copy(draft = draft.copy(titleMissing = true, error = Res.string.enterDocumentTitle))
             }
@@ -109,6 +135,16 @@ class DocumentsViewModel(
         viewModelScope.launch {
             documents.upload(draft.bytes, draft.fileName, title, draft.category).fold(
                 onSuccess = {
+                    analytics.track(
+                        AnalyticsEvent.DocumentUploaded(
+                            source = draft.source,
+                            fileType = fileType(draft.fileName.substringAfterLast('.', "")),
+                            category = draft.category ?: "none",
+                            sizeKbBucket = sizeKbBucket(draft.bytes.size.toLong()),
+                            titleEdited = title != defaultTitle(draft.fileName),
+                            at = getCurrentInstant().toString(),
+                        ),
+                    )
                     update {
                         copy(
                             isUploading = false,
@@ -120,6 +156,7 @@ class DocumentsViewModel(
                     }
                 },
                 onFailure = {
+                    analytics.track(AnalyticsEvent.DocumentUploadFailed(it.analyticsReason()))
                     update {
                         copy(
                             isUploading = false,
@@ -138,8 +175,12 @@ class DocumentsViewModel(
         update { copy(deleting = deleting + id, error = null, notice = null) }
         viewModelScope.launch {
             documents.delete(id).fold(
-                onSuccess = { onDeleted(id) },
+                onSuccess = {
+                    analytics.track(AnalyticsEvent.DocumentDeleted("swipe"))
+                    onDeleted(id)
+                },
                 onFailure = {
+                    analytics.track(AnalyticsEvent.DocumentDeleteFailed("swipe", it.analyticsReason()))
                     update { copy(deleting = deleting - id, error = it.toUserMessage()) }
                     if (it is ApiException.Unauthorized) _signedOut.send(Unit)
                 },

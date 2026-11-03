@@ -26,7 +26,10 @@ import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.myTasks
 import shifa.composeapp.generated.resources.noTasksFound
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.ui.home.HomeSection
 import shifa.uz.ui.home.TaskCard
@@ -59,7 +62,19 @@ fun TasksScreen(
         viewModel.open()
         viewModel.signedOut.collect { signedOut() }
     }
-    TasksContent(state, tab, getCurrentInstant(), onBack, { tab = it }, viewModel::load, onTask)
+    TasksContent(
+        state,
+        tab,
+        getCurrentInstant(),
+        onBack,
+        {
+            tab = it
+            val open = state.tasks?.count { t -> t.isOpen }
+            Analytics.track(AnalyticsEvent.TasksViewed(it.analyticsName(), open, state.tasks?.size?.minus(open ?: 0)))
+        },
+        viewModel::refresh,
+        onTask,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

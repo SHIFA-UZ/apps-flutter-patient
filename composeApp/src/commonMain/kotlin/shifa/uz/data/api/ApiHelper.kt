@@ -10,6 +10,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.Url
 import io.ktor.http.defaultForFilePath
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
@@ -17,8 +18,14 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.model.ApiError
 import shifa.uz.data.model.ApiException
+import shifa.uz.utils.getAdjustedBaseUrl
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 /**
  * Sends [request] and reads a [T]. Failures are [ApiException]s with a display-safe message:
@@ -29,6 +36,7 @@ suspend inline fun <reified T> apiCall(
     defaultMessage: String,
     request: () -> HttpResponse,
 ): Result<T> {
+    val started = TimeSource.Monotonic.markNow()
     val response =
         try {
             request()
@@ -36,26 +44,95 @@ suspend inline fun <reified T> apiCall(
             throw e
         } catch (e: Exception) {
             httpLogger.log("FAILED $defaultMessage, no response: $e")
+            // events.md §13: no request object here, so no endpoint; the exception's class says what happened.
+            apiAnalytics.track(AnalyticsEvent.ApiError(null, null, 0, e::class.simpleName ?: "Exception", null))
             return Result.failure(ApiException.NetworkError(networkErrorMessage(e)))
         }
     val status = response.status.value
+    val isBackend = response.call.request.url.host in BACKEND_HOSTS
+    val endpoint = if (isBackend) endpointTemplate(response.call.request.url.encodedPath) else "external"
+    val method = response.call.request.method.value
     if (!response.status.isSuccess()) {
         val auth = "/auth/" in response.call.request.url.encodedPath
         val error = errorBody(response)
         val raw = error?.message ?: error?.error ?: errorRawText(response)
         logFailure(response, raw)
         val code = error?.code
-        return Result.failure(ApiException.of(status, sanitizeError(status, raw, defaultMessage, auth, code), code))
+        val failure = ApiException.of(status, sanitizeError(status, raw, defaultMessage, auth, code), code)
+        apiAnalytics.track(
+            AnalyticsEvent.ApiError(
+                endpoint,
+                method,
+                status,
+                failure::class.simpleName ?: "ApiException",
+                code?.takeIf { isBackend && BACKEND_CODE.matches(it) },
+            ),
+        )
+        return Result.failure(failure)
     }
     return try {
-        Result.success(response.body<T>())
+        val body = response.body<T>()
+        val elapsed = started.elapsedNow()
+        if (elapsed > SLOW_CALL) {
+            apiAnalytics.track(
+                AnalyticsEvent.ApiSlow(endpoint, method, elapsed.inWholeMilliseconds),
+            )
+        }
+        Result.success(body)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
         logFailure(response, "unreadable body: ${e.message}")
+        apiAnalytics.track(AnalyticsEvent.ApiError(endpoint, method, status, "UnreadableBody", null))
         Result.failure(ApiException.ServerError(defaultMessage))
     }
 }
+
+/** events.md §13: a call that took longer than this, and still succeeded, is `api_slow`. */
+@PublishedApi
+internal val SLOW_CALL = 5.seconds
+
+/** Tests swap it for a recording one; the app uses [Analytics]. */
+@PublishedApi
+internal var apiAnalytics: AnalyticsTracker = Analytics
+
+/** Our backend's hosts; a call anywhere else (a file host) is reported as `external`, with no path or code. */
+@PublishedApi
+internal val BACKEND_HOSTS: Set<String> =
+    setOf(
+        Url(ApiConfig.BASE_URL).host,
+        Url(ApiConfig.DEV_BASE_URL).host,
+        Url(getAdjustedBaseUrl(ApiConfig.BASE_URL)).host,
+    )
+
+/** The backend's error codes look like `APPOINTMENT_LOCKED_24H`; anything else isn't sent (privacy.md §3). */
+@PublishedApi
+internal val BACKEND_CODE = Regex("[A-Z][A-Z0-9_]{1,39}")
+
+/**
+ * `/api/patients/me/appointments/123` → `patients/me/appointments/{id}` (events.md §13). Only the path words the
+ * API is made of survive; every other segment (an id, a file name, anything unexpected) becomes `{id}`, so a path
+ * can never carry data (privacy.md §3).
+ */
+@PublishedApi
+internal fun endpointTemplate(path: String): String =
+    path
+        .removePrefix("/api/")
+        .removePrefix("/")
+        .split('/')
+        .joinToString("/") { segment -> if (segment in ENDPOINT_WORDS) segment else "{id}" }
+
+// The literal segments of ApiConfig.Endpoints. A new endpoint's words go here, or its path shows as {id}s.
+private val ENDPOINT_WORDS =
+    setOf(
+        "auth", "login", "check-identifier", "send-email-otp", "send-sms-otp", "register-patient",
+        "create-patient-for-doctor", "send-forgot-password-otp", "forgot-password-reset", "reset-password",
+        "change-password", "patients", "me", "profile", "photo", "delete-account", "request", "confirm", "fcm-token",
+        "appointments", "submit-signature", "review", "tasks", "my-tasks", "check-ins", "check-in", "notifications",
+        "page", "unread", "count", "read-all", "read", "documents", "public", "doctors", "reviews", "locations",
+        "schedule", "available", "copilot", "stream", "transcribe", "messages", "conversations", "send", "search",
+        "upload-attachment", "video", "token", "payments", "methods",
+    )
 
 // The backend's own reason, as the UI shows only the sanitized text. 01 §7: 300 characters at most.
 // ponytail: the reason is logged as sent, not key-redacted; only debug builds log (httpLogger).

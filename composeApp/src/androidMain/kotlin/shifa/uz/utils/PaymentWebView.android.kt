@@ -2,6 +2,7 @@ package shifa.uz.utils
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -19,6 +20,7 @@ actual fun PaymentWebView(
     url: String,
     modifier: Modifier,
     onNavigate: (String) -> Boolean,
+    onError: (code: Int) -> Unit,
 ) {
     if (LocalInspectionMode.current) return Box(modifier)
     val navigate by rememberUpdatedState(onNavigate)
@@ -29,6 +31,14 @@ actual fun PaymentWebView(
                 settings.domStorageEnabled = true
                 webViewClient =
                     object : WebViewClient() {
+                        override fun onReceivedError(
+                            view: WebView,
+                            request: WebResourceRequest,
+                            error: WebResourceError,
+                        ) {
+                            if (request.isForMainFrame) onError(error.errorCode)
+                        }
+
                         override fun shouldOverrideUrlLoading(
                             view: WebView,
                             request: WebResourceRequest,

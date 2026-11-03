@@ -9,12 +9,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.auth.AuthRepository
+import shifa.uz.data.model.ApiException
 
 /** A8. A wrong current password is a 400 "Current password is incorrect"; the session stays. */
 class ChangePasswordViewModel(
     private val auth: AuthRepository = AuthRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChangePasswordUiState())
     val state: StateFlow<ChangePasswordUiState> = _state.asStateFlow()
@@ -41,8 +47,19 @@ class ChangePasswordViewModel(
         update { copy(isSaving = true, error = null) }
         viewModelScope.launch {
             auth.changePassword(s.currentPassword, s.newPassword).fold(
-                onSuccess = { _changed.send(Unit) },
-                onFailure = { update { copy(isSaving = false, error = it.toUserMessage()) } },
+                onSuccess = {
+                    analytics.track(AnalyticsEvent.PasswordChanged)
+                    _changed.send(Unit)
+                },
+                onFailure = {
+                    // A8's 400 is "Current password is incorrect".
+                    analytics.track(
+                        AnalyticsEvent.PasswordChangeFailed(
+                            if (it is ApiException.ValidationError) "wrong_current" else it.analyticsReason(),
+                        ),
+                    )
+                    update { copy(isSaving = false, error = it.toUserMessage()) }
+                },
             )
         }
     }

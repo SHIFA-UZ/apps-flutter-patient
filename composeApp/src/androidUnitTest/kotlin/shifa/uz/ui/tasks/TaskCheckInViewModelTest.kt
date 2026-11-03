@@ -29,6 +29,8 @@ import shifa.composeapp.generated.resources.checkInPleaseSelectYesOrNo
 import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
 import shifa.composeapp.generated.resources.checkInValueInvalidNumber
 import shifa.composeapp.generated.resources.checkInValueRequired
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CheckInRequest
 import shifa.uz.data.model.RemoteCareTask
@@ -50,6 +52,7 @@ class TaskCheckInViewModelTest {
     private val later = TaskCheckIn(3, "2026-09-28", "14:15:00")
     private val done = TaskCheckIn(4, "2026-09-28", "12:00:00", status = "COMPLETED")
     private val unparseable = TaskCheckIn(5, "tomorrow")
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: TaskCheckInViewModel
 
     @Before
@@ -64,6 +67,31 @@ class TaskCheckInViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `the task page, the day and a check-in are tracked`() =
+        runTest {
+            classToTest = TaskCheckInViewModel(numeric, tasks, { now }, tashkent, analytics = tracker)
+            advanceUntilIdle()
+            classToTest.openDay(LocalDate(2026, 9, 28))
+            classToTest.onValueChange("36,6")
+            classToTest.submit()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.TaskOpened("OTHER", "NUMERIC", "ACTIVE", null),
+                    AnalyticsEvent.CheckinDayOpened("due", 0),
+                    AnalyticsEvent.CheckinSubmitted(
+                        inputType = "NUMERIC",
+                        category = "OTHER",
+                        hasNotes = false,
+                        minutesFromScheduled = 60,
+                        hourOfDay = 14,
+                        at = now.toString(),
+                    ),
+                ).inOrder()
+        }
 
     private val state get() = classToTest.state.value
 

@@ -14,6 +14,12 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
+import shifa.uz.data.analytics.durationSBucket
+import shifa.uz.data.analytics.sizeKbBucket
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.chat.ChatRepository
 import shifa.uz.data.model.ApiException
@@ -27,6 +33,7 @@ class ConversationViewModel(
     target: ChatTarget,
     private val chat: ChatRepository = ChatRepository(),
     private val pollMs: Long = 5_000,
+    private val analytics: AnalyticsTracker = Analytics,
     private val clock: () -> Instant = ::getCurrentInstant,
 ) : ViewModel() {
     private val _state =
@@ -53,6 +60,10 @@ class ConversationViewModel(
 
     private fun update(transform: ConversationUiState.() -> ConversationUiState) {
         _state.value = _state.value.transform()
+    }
+
+    init {
+        analytics.track(AnalyticsEvent.ChatOpened(source = null, isNew = target.conversationId == null))
     }
 
     private fun shown() = (server + sent.filter { s -> server.none { it.id == s.id } }).sortedBy { it.createdAt }
@@ -105,7 +116,14 @@ class ConversationViewModel(
         viewModelScope.launch { deliver(state.input.trim()) }
     }
 
+    /** The recorder refused to start. */
+    fun onRecordFailed() {
+        analytics.track(AnalyticsEvent.ChatRecordingFailed)
+        showError(Res.string.errorRecordingVoice)
+    }
+
     fun onRecording() {
+        analytics.track(AnalyticsEvent.ChatRecordingStarted)
         recordingSince = clock()
         update { copy(recording = true, error = null, notice = null) }
     }
@@ -115,7 +133,10 @@ class ConversationViewModel(
         val seconds = recordingSince?.let { (clock() - it).inWholeSeconds.toInt() } ?: 0
         recordingSince = null
         update { copy(recording = false) }
-        if (audio == null) return showError(Res.string.errorRecordingVoice)
+        if (audio == null) {
+            analytics.track(AnalyticsEvent.ChatRecordingFailed)
+            return showError(Res.string.errorRecordingVoice)
+        }
         attach("voice_${clock().toEpochMilliseconds()}.m4a", audio, MessageType.Voice, seconds)
     }
 
@@ -137,7 +158,12 @@ class ConversationViewModel(
                 onSuccess = {
                     deliver(_state.value.input.trim(), Attachment(it, fileName, type, bytes.size.toLong(), duration))
                 },
-                onFailure = { fail(it) { copy(isSending = false) } },
+                onFailure = {
+                    analytics.track(
+                        AnalyticsEvent.ChatMessageFailed(type.name.lowercase(), "upload", it.analyticsReason()),
+                    )
+                    fail(it) { copy(isSending = false) }
+                },
             )
         }
     }
@@ -174,6 +200,17 @@ class ConversationViewModel(
                 ),
             ).fold(
                 onSuccess = { message ->
+                    val type = attachment?.type?.name?.lowercase() ?: "text"
+                    analytics.track(
+                        AnalyticsEvent.ChatMessageSent(
+                            type = type,
+                            isFirstInChat = state.messages?.isEmpty() == true, // null: history not loaded yet
+                            hasCaption = attachment?.let { text.isNotBlank() },
+                            durationSBucket = attachment?.duration?.takeIf { type == "voice" }?.let(::durationSBucket),
+                            sizeKbBucket = attachment?.takeIf { type != "voice" }?.let { sizeKbBucket(it.size) },
+                            at = clock().toString(),
+                        ),
+                    )
                     message?.let { sent = sent + it }
                     val id = state.conversationId ?: message?.chatId
                     update {
@@ -188,7 +225,16 @@ class ConversationViewModel(
                     // Its echo didn't parse: the fetch brings it.
                     if (message == null) id?.let { refresh(it) }
                 },
-                onFailure = { fail(it) { copy(isSending = false) } },
+                onFailure = {
+                    analytics.track(
+                        AnalyticsEvent.ChatMessageFailed(
+                            attachment?.type?.name?.lowercase() ?: "text",
+                            "send",
+                            it.analyticsReason(),
+                        ),
+                    )
+                    fail(it) { copy(isSending = false) }
+                },
             )
     }
 

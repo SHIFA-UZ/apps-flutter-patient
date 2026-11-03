@@ -13,6 +13,9 @@ import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.CancellationException
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.COPILOT_FAILED
 import shifa.uz.data.api.FAILED_TO_TRANSCRIBE
@@ -36,14 +39,18 @@ private const val RATE_LIMIT = "RATE_LIMIT"
 // Open for the ViewModel test's fake: Mockito's answers can't return a Result from a suspend fun.
 open class CopilotRepository(
     private val client: HttpClient = httpClient,
+    private val analytics: AnalyticsTracker = Analytics,
 ) {
     /** X1 (09 §2.1): each SSE token goes to [onToken] as it arrives; the result is the whole reply, trimmed. */
     open suspend fun stream(
         messages: List<CopilotMessage>,
         language: String,
         onToken: (String) -> Unit,
-    ): Result<String> =
-        try {
+    ): Result<String> {
+        // events.md §13: `connect` until the 200 lands, `stream` after; the non-200 branch reports itself.
+        var connected = false
+        var tracked = false
+        return try {
             client.preparePost(ApiConfig.Endpoints.COPILOT_STREAM) {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Text.EventStream)
@@ -55,12 +62,15 @@ open class CopilotRepository(
                     val text = response.bodyAsText()
                     val error = decode(text)
                     logFailure(response, error?.message ?: text)
+                    tracked = true
+                    analytics.track(AnalyticsEvent.AiStreamError("connect", status))
                     if (status == 429 || error?.code == RATE_LIMIT) throw ApiException.RateLimit(TOO_MANY_REQUESTS)
                     throw ApiException.of(
                         status,
                         sanitizeError(status, error?.message ?: text, COPILOT_FAILED, auth = false),
                     )
                 }
+                connected = true
                 val reply = StringBuilder()
                 readEvents(response.bodyAsChannel()) {
                     reply.append(it)
@@ -71,11 +81,15 @@ open class CopilotRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: ApiException) {
+            // An SSE `error` event (09 §8), unless the non-200 branch already reported.
+            if (!tracked) analytics.track(AnalyticsEvent.AiStreamError(if (connected) "stream" else "connect", 0))
             Result.failure(e)
         } catch (e: Exception) {
             httpLogger.log("FAILED $COPILOT_FAILED, no response: $e")
+            analytics.track(AnalyticsEvent.AiStreamError(if (connected) "stream" else "connect", 0))
             Result.failure(ApiException.NetworkError(networkErrorMessage(e)))
         }
+    }
 
     /** X2 (09 §2.5): the recording's text, trimmed. [language] is `uz`, `ru` or `en`, for Whisper. */
     open suspend fun transcribe(

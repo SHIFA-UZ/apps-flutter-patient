@@ -10,9 +10,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.allNotificationsMarkedAsRead
 import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.ageHoursBucket
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
@@ -29,6 +34,7 @@ import shifa.uz.ui.notifications.NotificationLink.ToMessages
 import shifa.uz.ui.notifications.NotificationLink.ToSigning
 import shifa.uz.ui.notifications.NotificationLink.ToTask
 import shifa.uz.ui.notifications.NotificationLink.ToTasks
+import shifa.uz.utils.getCurrentInstant
 
 /** 13 (NOTIF-01): the inbox and its details tray. Loads on each open, like Flutter. */
 class NotificationsViewModel(
@@ -36,8 +42,11 @@ class NotificationsViewModel(
     bookings: BookingsRepository = BookingsRepository(),
     documents: DocumentsRepository = DocumentsRepository(),
     tasks: TasksRepository = TasksRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
+    private val clock: () -> Instant = ::getCurrentInstant,
 ) : ViewModel() {
     private val links = NotificationLinks(bookings, documents, tasks)
+    private var viewed = false
     private val _state = MutableStateFlow(NotificationsUiState())
     val state: StateFlow<NotificationsUiState> = _state.asStateFlow()
 
@@ -59,6 +68,12 @@ class NotificationsViewModel(
         _state.value = _state.value.transform()
     }
 
+    /** Pull to refresh (events.md §11). */
+    fun refresh() {
+        analytics.track(AnalyticsEvent.NotificationsRefreshed)
+        load()
+    }
+
     /** N1a's first page. The list stays on screen meanwhile; a page still on its way is dropped. */
     fun load() {
         if (_state.value.isLoading || _state.value.isMarkingRead) return
@@ -68,6 +83,18 @@ class NotificationsViewModel(
             viewModelScope.launch {
                 notifications.getNotificationsPage(0).fold(
                     onSuccess = {
+                        if (!viewed) {
+                            viewed = true
+                            analytics.track(
+                                AnalyticsEvent.NotificationsViewed(
+                                    it.items.size,
+                                    it.items.count {
+                                            n ->
+                                        !n.isRead
+                                    },
+                                ),
+                            )
+                        }
                         update {
                             copy(
                                 notifications = it.items,
@@ -97,6 +124,7 @@ class NotificationsViewModel(
             viewModelScope.launch {
                 notifications.getNotificationsPage(current.page + 1).fold(
                     onSuccess = { next ->
+                        analytics.track(AnalyticsEvent.NotificationsPageLoaded(current.page + 2))
                         update {
                             val shown = notifications.orEmpty()
                             val ids = shown.map { it.id }.toSet()
@@ -118,6 +146,13 @@ class NotificationsViewModel(
 
     /** 13 §4.1 tap: an unread one is marked read, best effort (quirk 11), and the tray opens. */
     fun open(notification: AppNotification) {
+        analytics.track(
+            AnalyticsEvent.NotificationOpened(
+                notification.kind,
+                wasUnread = !notification.isRead,
+                ageHoursBucket = ageHoursBucket(notification.createdAt, clock()),
+            ),
+        )
         update { copy(selected = notification, link = null) }
         if (!notification.isRead && notification.id > 0) {
             markedRead { it.id == notification.id }
@@ -142,10 +177,12 @@ class NotificationsViewModel(
         if (_state.value.notifications == null || _state.value.isMarkingRead) return
         firstPage?.cancel()
         nextPage?.cancel()
+        val unread = _state.value.notifications.orEmpty().count { !it.isRead }
         update { copy(isLoading = false, isLoadingMore = false, isMarkingRead = true) }
         viewModelScope.launch {
             notifications.markAllRead().fold(
                 onSuccess = {
+                    analytics.track(AnalyticsEvent.NotificationsAllRead(unread))
                     markedRead { true }
                     update {
                         copy(

@@ -107,7 +107,7 @@ fun TaskCheckInScreen(
         state,
         now,
         onBack = onBack,
-        onRefresh = viewModel::load,
+        onRefresh = viewModel::refresh,
         onPrev = viewModel::prevMonth,
         onNext = viewModel::nextMonth,
         onDay = viewModel::openDay,

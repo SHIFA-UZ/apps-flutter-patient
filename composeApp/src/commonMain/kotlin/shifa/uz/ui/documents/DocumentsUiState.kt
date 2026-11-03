@@ -46,6 +46,7 @@ data class UploadDraft(
     val bytes: ByteArray,
     val title: String,
     val category: String? = null,
+    val source: String = "file", // how the file was picked (events.md §8)
     val titleMissing: Boolean = false,
     val error: StringResource? = null,
 )

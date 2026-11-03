@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.Instant
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -27,6 +28,8 @@ import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.allNotificationsMarkedAsRead
 import shifa.composeapp.generated.resources.errorNetworkConnection
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
@@ -56,6 +59,8 @@ class NotificationsViewModelTest {
     private val appointment = Appointment(id = "a1")
     private val file = PatientDocument("d1", fileUrl = "https://f/1")
     private val care = RemoteCareTask(id = "t1", startDate = "2026-09-20")
+    private val tracker = RecordingTracker()
+    private val now = Instant.parse("2026-09-28T09:00:00Z")
     private lateinit var classToTest: NotificationsViewModel
 
     @Before
@@ -74,10 +79,47 @@ class NotificationsViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test
+    fun `the next page is tracked by its number`() =
+        runTest {
+            wheneverBlocking {
+                notifications.getNotificationsPage(
+                    any(),
+                    any(),
+                )
+            } doReturn Result.success(Page(all, false))
+            open()
+            classToTest.loadMore()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.filterIsInstance<AnalyticsEvent.NotificationsPageLoaded>())
+                .containsExactly(AnalyticsEvent.NotificationsPageLoaded(2))
+        }
+
+    @Test
+    fun `the inbox, a tapped card and mark all read are tracked`() =
+        runTest {
+            open()
+            tap(reminder)
+            classToTest.markAllRead()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.NotificationsViewed(count = 4, unreadCount = 3),
+                    AnalyticsEvent.NotificationOpened(
+                        "APPOINTMENT_REMINDER",
+                        wasUnread = true,
+                        ageHoursBucket = "1-24",
+                    ),
+                    AnalyticsEvent.NotificationsAllRead(unreadCount = 2),
+                ).inOrder()
+        }
+
     private val state get() = classToTest.state.value
 
     private fun TestScope.open() {
-        classToTest = NotificationsViewModel(notifications, bookings, documents, tasks)
+        classToTest = NotificationsViewModel(notifications, bookings, documents, tasks, tracker) { now }
         advanceUntilIdle()
     }
 

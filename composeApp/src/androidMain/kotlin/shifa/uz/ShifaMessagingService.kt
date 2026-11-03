@@ -22,8 +22,8 @@ class ShifaMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        Push.arrived.tryEmit(Unit)
         val data = message.data
+        Push.arrived.tryEmit(data["type"])
         // Tray id = server id (13 §11.8).
         val id = (data["notificationId"] ?: data["id"])?.toIntOrNull() ?: System.currentTimeMillis().toInt()
         showPush(id, message.notification?.title ?: data["title"], message.notification?.body ?: data["message"], data)

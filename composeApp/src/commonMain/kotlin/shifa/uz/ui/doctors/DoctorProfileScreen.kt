@@ -99,7 +99,10 @@ fun DoctorProfileScreen(
         now = getCurrentInstant(),
         onBack = onBack,
         onTab = viewModel::selectTab,
-        onRetry = viewModel::load,
+        onRetry = {
+            Analytics.track(AnalyticsEvent.RetryTapped("doctor_profile"))
+            viewModel.load()
+        },
         onCertificate = {
             Analytics.track(AnalyticsEvent.DoctorCertificateOpened)
             onCertificate(it)
