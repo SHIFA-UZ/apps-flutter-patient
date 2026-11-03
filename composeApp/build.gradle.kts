@@ -119,11 +119,18 @@ val appVersionCode = versionBuild
 
 println("Building Shifa v$appVersionName (Build $appVersionCode)")
 
-// The PostHog project key (docs/posthog/setup.md §2): release builds only, from CI's Gradle property. Missing means
-// analytics off. Debug builds never get one (README D4: no development data is tracked).
-val postHogProdKey = project.findProperty("posthog.apiKey.prod")?.toString().orEmpty()
+// The PostHog project key (docs/posthog/setup.md §2): release builds only, from CI's Gradle property or, for a local
+// release build to test tracking with, `posthog.apiKey.prod` in local.properties. Missing means analytics off. Debug
+// builds never get one (README D4: no development data is tracked).
+val localProperties =
+    Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+    }
+val postHogProdKey =
+    project.findProperty("posthog.apiKey.prod")?.toString()
+        ?: localProperties.getProperty("posthog.apiKey.prod").orEmpty()
 
-// Written by CI (google_play_deploy.yml); absent locally, so release stays unsigned.
+// Written by CI (google_play_deploy.yml); absent locally, so a local release build is debug-signed (see below).
 val keystoreProperties =
     Properties().apply {
         rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
@@ -164,7 +171,9 @@ android {
 
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.findByName("release")
+            // CI signs with the upload key; a local release build (to test tracking, setup.md §7) is debug-signed so
+            // it installs on a device. Never upload one.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             buildConfigField("String", "POSTHOG_API_KEY", "\"$postHogProdKey\"")
         }
     }
