@@ -40,12 +40,12 @@ Dated 2026-11-03. The ones marked *needs sign-off* wait for the user or legal.
 | D1 | Hosting | PostHog Cloud **EU** (`https://eu.i.posthog.com`), *needs legal sign-off*; otherwise self-hosted in Uzbekistan | Uzbekistan's personal data law has a localization rule (privacy.md §5). The EU cloud has GDPR terms and a DPA. |
 | D2 | SDK | PostHog's **native** SDKs (`posthog-android` 3.75.1, `posthog-ios` 3.93.3, both released 2026-11-02) behind our own small `Analytics` facade in `commonMain` | The official `posthog-kmp` is still 0.x (0.10.0, 2026-10-27) and its iOS linking needs Kotlin 2.4.0+; we're on Kotlin 2.3.0. The facade follows the Daily pattern (`NativeVideoCall`). Switching to `posthog-kmp` after the Kotlin upgrade only changes the two platform files. |
 | D3 | Identity | `distinct_id` = `patient_<P1 id>`, identified after login. Anonymous before that | Joins a patient's events across reinstalls and devices without sending a name, phone or email |
-| D4 | Projects | Two PostHog projects: **Shifa Patient (Dev)** and **Shifa Patient (Prod)** | Debug builds never pollute production numbers. The free plan allows one project; see setup.md §1.6 |
+| D4 | Projects and builds | One PostHog organization **Shifa** with one project, **Shifa**, fed by **release builds only**. Debug builds carry no key and never send anything (the user's decision, 2026-11-03: no development data is needed). The doctor app shares the project, told apart by `app = doctor` and `doctor_<id>` distinct ids, until a paid plan makes a second project worth it (setup.md §1.7) | One project fits the free plan; nothing from emulators, test accounts or the development backend ever lands in the numbers. Events are checked in debug builds through the Debug menu's event list, and in PostHog from a TestFlight / internal-track build on an account listed in the internal-users filter; see setup.md §1.4, §1.6-1.7 and §7 |
 | D5 | Session replay | **Off** at launch | Compose screens hold health data, and iOS Compose can't be masked reliably (privacy.md §6) |
 | D6 | Autocapture | Lifecycle events **on**, automatic screen views **off**, element autocapture **off** | One Activity and one `UIViewController`, with our own overlay navigation: automatic screen views would all say `MainActivity`. Screens are sent by hand (events.md §2). |
 | D7 | Consent | On by default, with an opt-out switch in Profile → Settings, plus a line in the privacy policy. *Needs legal sign-off* on whether it must be opt-in | privacy.md §4 |
-| D8 | Demo data | Analytics is **off** while Debug → Demo data is on: the facade is disabled **and** the SDK is opted out, so its automatic lifecycle and exception events stop too | Fake bookings and visits must never reach PostHog |
-| D9 | Development backend | Stays on, in the **Dev** project, with the super property `backend = development` | Debug builds only ever carry the Dev key, so testing against `api-dev.shifa.uz` can't reach Prod. The property lets Dev charts separate the two backends. |
+| D8 | Demo data | Analytics is **off** while Debug → Demo data is on: the facade is disabled **and** the SDK is opted out, so its automatic lifecycle and exception events stop too. (Belt and braces: demo data exists only in debug builds, which have no key anyway, D4) | Fake bookings and visits must never reach PostHog |
+| D9 | Development backend | Nothing to do: only debug builds can switch to `api-dev.shifa.uz`, and debug builds never send (D4) | No `backend` property is needed |
 | D10 | Feature flags | Plumbing built in ANL-02 (`Flags` object, flags preloaded at launch, safe defaults). No flag used until personalisation.md says so | Flags are how personalisation and experiments ship later without a release per change |
 | D11 | Error tracking | PostHog exception autocapture **on** (ANL-06), replacing the never-wired Crashlytics | A crash then sits in the same timeline as the taps before it. `apiCall` already sanitizes error messages; privacy.md §3 applies to anything thrown. |
 | D12 | Surveys | Off until the first personalisation round (ANL-08) | App questions only, never health questions (privacy.md §7) |
@@ -63,7 +63,7 @@ The 2026-10-19 plan was written before these shipped. events.md covers them now.
 | Document viewer: From Appointment card, tap to expand | 2026-10-24 | `document_visit_opened`, `document_expanded` |
 | Near me removed; App Lock dropped; the AI visit-summary page dropped (summaries open the Documents tab) | 2026-10-19 to 2026-10-24 | `near_me_result`, the `near_me` chip and `coming_soon_tapped.feature = app_lock` are gone; `push_opened.routed_to` gains `documents_tab` and `live_appointment` |
 | Notification inbox paged (`/notifications/page`, N1 fallback), Payments filter chip | 2026-09-28, 2026-10-30 | `notifications_page_loaded`; `notification_filter_selected.filter` gains `payments` |
-| Debug menu: Development backend switch, also on Login | 2026-10-30 | D9 |
+| Debug menu: Development backend switch, also on Login | 2026-10-30 | D9: nothing to track, debug builds never send |
 | Task notification's Submit Check in opens today's PENDING check-in only | 2026-11-01 | `checkin_nothing_due` fires more precisely |
 | PostHog itself: error tracking and surveys matured on the native SDKs; `posthog-kmp` reached 0.10.0 (still 0.x) | 2026 | D11, D12, D2 versions |
 
@@ -73,7 +73,7 @@ Ticket IDs continue the style in `docs/kmp-spec/16-implementation-plan.md`.
 
 | Ticket | Scope | Depends on |
 |---|---|---|
-| ANL-01 | PostHog account, organization, projects, settings, keys, CI secrets, privacy and legal sign-off (setup.md §1-3, privacy.md) | - |
+| ANL-01 | PostHog account, organization, the project, settings, the key, the CI secret, privacy and legal sign-off (setup.md §1-3, privacy.md) | - |
 | ANL-02 | The SDKs and the facade: an Android `Application` class, the iOS Swift bridge, identify / reset, super properties, opt-out, the demo-mode off switch, the `Flags` object (setup.md §4-6) | ANL-01 |
 | ANL-03 | Screen tracking for every screen and overlay (events.md §2) | ANL-02 |
 | ANL-04 | Core journey events: auth, doctors and booking, payments, the live visit and video, signing (events.md §3-6) | ANL-02 |

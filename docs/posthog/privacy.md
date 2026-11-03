@@ -53,7 +53,7 @@ changes one gets the checklist in development.md §4.
   keep applying to a patient who opted out. With the guard, `Flags` sees no sink and the defaults apply.
 - The privacy policy (`https://shifa.uz/#privacy`, opened from Profile) must say what's collected, by whom (PostHog,
   the EU region), why (improving the app, personalising it, fixing errors), and how to opt out. Update the policy
-  before the Prod key ships.
+  before the key ships in a release build.
 - **Legal decides** whether Uzbekistan's law requires explicit opt-in consent instead (see §5). If it does, the
   default flips to off, and a one-time consent prompt after login turns it on. The SDK starts opted out until then.
 - iOS App Tracking Transparency: not needed. We don't track across other companies' apps or share data with data
@@ -118,3 +118,4 @@ to the auth and booking screens that show no health data, with a legal review fi
 - Exports: no CSV export of persons. Share insight links within the organization only.
 - Retention: the plan's 1 year (setup.md §1.3). Review this file once a year, and whenever a new kind of data is
   proposed.
+- Debug builds never send (README D4), so emulator and test-account activity never becomes data to protect.
