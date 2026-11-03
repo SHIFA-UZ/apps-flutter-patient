@@ -163,7 +163,7 @@ and local runs can't write to the project.
 |---|---|
 | Debug builds (local, emulators) | **None, ever** (D4). The Gradle debug build type and the Xcode Debug configuration hard-wire an empty key |
 | GitHub Actions | secret `POSTHOG_API_KEY_PROD`, passed to Gradle as `-Pposthog.apiKey.prod` by `google_play_deploy.yml` and written as `POSTHOG_API_KEY_PROD` into the gitignored `iosApp/Configuration/Secrets.xcconfig` by `ios_testflight.yml` |
-| A local release build (rare) | the same Gradle property / `Secrets.xcconfig` line, by hand |
+| A local release build (§7.1) | `posthog.apiKey.prod=phc_…` in the root `local.properties` (Android) and the `Secrets.xcconfig` line (iOS), both gitignored |
 
 Host: `https://eu.i.posthog.com` (an `ApiConfig`-style constant, not a secret). Note the `.i.` in the ingestion
 host; `eu.posthog.com` without it is the web app.
@@ -423,6 +423,21 @@ Check the opt-out and demo flags before `setup`, as on Android. Push capture (`c
 
 Debug builds never send (D4), so the check has two halves: the Debug menu in a debug build shows that the right
 events fire with the right properties, and a release build shows that they arrive.
+
+### 7.1 A release build on your own device, without a release
+
+Nothing has to ship to the stores to see events arrive. A release build made on your machine carries the Prod key,
+talks to the production API (the app hardcodes it) and sends to the Shifa project like a store build would:
+
+- **Android:** add `posthog.apiKey.prod=phc_…` (the project key from §2) to the root `local.properties`, run
+  `./gradlew :composeApp:assembleRelease` and `adb install -r composeApp/build/outputs/apk/release/composeApp-release.apk`.
+  Without `keystore.properties` the release APK is signed with the debug key, so it installs over a debug build
+  but is never something to upload. CI's `-Pposthog.apiKey.prod` still wins when both are set.
+- **iOS:** put `POSTHOG_API_KEY_PROD = phc_…` in `iosApp/Configuration/Secrets.xcconfig`, then in Xcode edit the
+  `iosApp` scheme → Run → Build Configuration → Release and run on a device or simulator.
+
+Then log in with your own account and follow the steps below. Your events are real production events: log in with
+a test account, or put your `patient_<id>` in the internal-users filter first (§1.4).
 
 1. Debug build: Profile → Debug menu → Analytics lists every event of the session, newest first, with its
    properties. Walk the flow under test and read the list.

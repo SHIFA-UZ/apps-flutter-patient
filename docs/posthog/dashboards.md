@@ -154,6 +154,11 @@ Set on the insights above (PostHog → insight → Alerts), to the team's channe
 | Shifa AI down | `ai_reply_failed` (reason ≠ `rate_limit`) > 10 in an hour |
 | Login trouble | `login_failed` (reason = `server` or `network`) > 2× its average |
 
+The free plan allows five alerts, checked daily, with fixed bounds (no "2× average" and no ratios), so ANL-07 set
+the first five as daily counts: `booking_failed` > 10, `payment_failed` > 5, `video_join_failed` > 5, `api_error`
+> 50 and `ai_reply_failed` > 10, mailed to the project owner. Re-tune the bounds once a month of data shows the
+normal level; Login trouble and New crash wait for the Paid plan (Error tracking has its own issue alert there).
+
 ## 11. Cohorts
 
 The saved cohorts are defined in [personalisation.md §3](personalisation.md#3-cohorts); build them in ANL-07 so

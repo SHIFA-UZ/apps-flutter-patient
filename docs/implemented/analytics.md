@@ -115,3 +115,31 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
 - Exception autocapture is on in both SDK configs (README D11) and in the PostHog project. No "Crash now" row:
   release builds have no Debug menu and debug builds never send, so it couldn't verify anything.
 - Not built: the `Flags` accessors (first flag in ANL-08; the sink methods exist).
+
+## Dashboards, cohorts and alerts (ANL-07, 2026-11-03)
+
+Created in the Shifa project through the API, empty until the first release build sends events:
+
+- **Eight dashboards**, one per dashboards.md section, 103 insights in all: Patient · Journey (activation funnel,
+  login vs signup, first-visit funnel, weekly retention, stickiness, feature reach, path to booking, platform /
+  version / language splits), Booking, Payments, Video visit, Tasks, Shifa AI, Notifications chat and documents,
+  Reliability. Insight names are `<dashboard> · <title>`. Ratios use formulas (`A/B`), timings use median and p90
+  of the event's `*_ms` / `*_s` property; the Personalisation dashboard (dashboards.md §9) waits for ANL-08 flags.
+- **Sixteen cohorts**: the fourteen from personalisation.md §3 plus Android and iOS. "Lapsed" uses PostHog's "stopped
+  performing" condition (opened in the 30 days before, not in the last 30).
+- **Five alerts**, the free plan's limit, with fixed daily bounds (dashboards.md §10), mailed to the project owner.
+- A local release build is the way to test before a store release (setup.md §7.1); `composeApp/build.gradle.kts`
+  reads `posthog.apiKey.prod` from `local.properties` when CI's property is absent and debug-signs the release
+  type when there is no `keystore.properties`.
+
+## Flags (ANL-08, started 2026-11-03)
+
+- The seven round-1 flags from personalisation.md §6 exist in PostHog, **inactive at 0 %**, targeting the §3
+  cohorts or person properties: `booking-default-video-from-history` (Video-preferring),
+  `payment-preselect-last-provider` (Paying), `home-order` (multivariate `tasks_first` / `ai_card` on
+  `has_checked_in` / `has_used_ai`, with an `{"order": [...]}` payload per variant, because flags can't target
+  event-based cohorts), `home-first-week-tips` (New this week, `{"tip": ...}` payload), `video-permission-explainer`
+  (`camera_mic_granted = false`), `ai-intro-tip` (AI-eligible never tried), `booking-scan-start-test` (variants
+  `control` / `next_available`). P7 is a survey, off until surveys are decided (README D12).
+- Not built yet: the `Flags` accessors and the ViewModel reads. They come one personalisation at a time, each on its
+  own branch, once the user picks which to wire; until then the flags change nothing.

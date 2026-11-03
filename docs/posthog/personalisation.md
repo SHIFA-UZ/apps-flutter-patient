@@ -118,7 +118,10 @@ Rules:
 - **Lifecycle:** a rollout flag is removed from code and PostHog once it's at 100 % for two releases. Flags aren't
   config. An experiment flag is removed when the experiment ends, with the winning branch kept.
 - **Targeting** uses only person properties from §2, cohorts from §3, `$os`, `$app_version` and the rollout
-  percentage. Never a cohort uploaded from the backend (privacy.md §7).
+  percentage. Never a cohort uploaded from the backend (privacy.md §7). PostHog can't evaluate a flag against a
+  cohort with an event-based condition (Task-active, AI users, Payment drop-offs, …), only against property-based
+  ones, so a flag that needs "did X" targets the matching person property from §2 (`has_checked_in`,
+  `has_used_ai`) or a counter.
 - **Cost:** flag evaluations count against the 1,000,000 free requests a month (setup.md §1.6). One evaluation per
   launch and one per identify is about 2-4 per session, far below the limit.
 
