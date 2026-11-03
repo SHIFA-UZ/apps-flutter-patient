@@ -12,6 +12,8 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Test
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.COPILOT_FAILED
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.api.createHttpClient
@@ -30,7 +32,8 @@ class CopilotRepositoryTest {
             respond(body, status, headersOf(HttpHeaders.ContentType, "text/event-stream"))
         }
     private val tokens = TokenStorage(MapSettings()).apply { token = "t0k" }
-    private val classToTest = CopilotRepository(createHttpClient(tokens, engine))
+    private val tracker = RecordingTracker()
+    private val classToTest = CopilotRepository(createHttpClient(tokens, engine), tracker)
     private val streamed = mutableListOf<String>()
 
     private suspend fun stream() =
@@ -97,5 +100,22 @@ class CopilotRepositoryTest {
 
             assertThat(error).isInstanceOf(ApiException.NetworkError::class.java)
             assertThat(error).hasMessageThat().isEqualTo(NETWORK_ERROR)
+        }
+
+    @Test
+    fun `a refused stream and a dead connection are tracked by their stage`() =
+        runTest {
+            status = HttpStatusCode.InternalServerError
+            body = "{}"
+            stream()
+            down = true
+            stream()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.AiStreamError("connect", 500),
+                    AnalyticsEvent.AiStreamError("connect", 0),
+                )
+                .inOrder()
         }
 }

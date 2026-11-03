@@ -8,9 +8,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.CoreGraphics.CGRectMake
+import platform.Foundation.NSError
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLRequest
 import platform.UIKit.UIApplication
+import platform.WebKit.WKNavigation
 import platform.WebKit.WKNavigationAction
 import platform.WebKit.WKNavigationActionPolicy
 import platform.WebKit.WKNavigationActionPolicy.WKNavigationActionPolicyAllow
@@ -26,12 +28,24 @@ actual fun PaymentWebView(
     url: String,
     modifier: Modifier,
     onNavigate: (String) -> Boolean,
+    onError: (code: Int) -> Unit,
 ) {
     val navigate by rememberUpdatedState(onNavigate)
+    val failed by rememberUpdatedState(onError)
     // The web view only holds its delegate weakly, so this keeps it alive.
     val delegate =
         remember {
             object : NSObject(), WKNavigationDelegateProtocol {
+                // The page failing to load. (didFailNavigation has the same Kotlin signature, so it can't be added
+                // without @ObjCSignatureOverride; a failure after the page committed isn't reported.)
+                override fun webView(
+                    webView: WKWebView,
+                    didFailProvisionalNavigation: WKNavigation?,
+                    withError: NSError,
+                ) {
+                    failed(withError.code.toInt())
+                }
+
                 override fun webView(
                     webView: WKWebView,
                     decidePolicyForNavigationAction: WKNavigationAction,

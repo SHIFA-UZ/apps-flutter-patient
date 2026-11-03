@@ -125,13 +125,13 @@ fun ShifaAiChatScreen(
         onAdd = soon,
         onCopy = {
             viewModel.onReplyAction("copy", it)
-            clipboard.setText(AnnotatedString(it))
+            clipboard.setText(AnnotatedString(it.content))
             viewModel.showNotice(Res.string.copied)
         },
         onRegenerate = viewModel::regenerate,
         onShare = {
             viewModel.onReplyAction("share", it)
-            share(it)
+            share(it.content)
         },
     )
     if (deleting) {
@@ -166,9 +166,9 @@ internal fun ShifaAiChatContent(
     onAttach: () -> Unit = {},
     onCloseAdd: () -> Unit = {},
     onAdd: () -> Unit = {},
-    onCopy: (String) -> Unit = {},
+    onCopy: (CopilotMessage) -> Unit = {},
     onRegenerate: () -> Unit = {},
-    onShare: (String) -> Unit = {},
+    onShare: (CopilotMessage) -> Unit = {},
     now: Instant = getCurrentInstant(),
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding().imePadding()) {
@@ -209,9 +209,9 @@ internal fun ShifaAiChatContent(
                     ShifaChatReplyBubble(
                         it.content,
                         time = timeOf(it),
-                        onCopy = { onCopy(it.content) },
+                        onCopy = { onCopy(it) },
                         onRegenerate = onRegenerate.takeIf { newest },
-                        onShare = { onShare(it.content) },
+                        onShare = { onShare(it) },
                     )
                 }
             }

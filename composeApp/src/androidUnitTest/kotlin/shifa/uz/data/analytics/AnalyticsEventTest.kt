@@ -167,6 +167,10 @@ class AnalyticsEventTest {
             AnalyticsEvent.PrivacyPolicyOpened,
             AnalyticsEvent.ComingSoonTapped("map"),
             AnalyticsEvent.RetryTapped("doctor_profile"),
+            AnalyticsEvent.ApiError("patients/me/appointments/{id}", "GET", 404, "NotFound", "NOT_FOUND"),
+            AnalyticsEvent.ApiSlow("public/doctors", "GET", 6_000),
+            AnalyticsEvent.AiStreamError("connect", 500),
+            AnalyticsEvent.WebviewError("click", -2),
         )
 
     // privacy.md §3: identity, free text, exact amounts and record ids never travel.

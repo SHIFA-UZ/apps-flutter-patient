@@ -103,5 +103,15 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   `notifications_all_read.unread_count` counts the pages loaded so far, not the whole inbox (N4 clears it all).
   `document_viewed` waits for both the file and the visit lookup, so `has_visit` is final; an unsupported file is a
   `document_view_failed` with `unsupported`.
-- Not built: reliability events and exception autocapture (ANL-06), the `Flags` accessors (first flag in ANL-08;
-  the sink methods exist).
+## Reliability (ANL-06)
+
+- `api_error` from both failure branches of `apiCall` (and an unreadable body), with the path as a template
+  (`endpointTemplate`: numeric, UUID-like and long segments become `{id}`), the method, the status, the
+  `ApiException` kind and the backend's `code`; never the message. A call with no response has no endpoint (there
+  is no request object in that branch), only the exception's class. `api_slow` for a successful call over 5 s.
+- `ai_stream_error` from `CopilotRepository.stream`: `connect` with the status for a non-200, `stream` for a
+  dropped stream. `webview_error` from the payment WebView's main-frame load failure on both platforms, with the
+  provider and the platform's error code (iOS reports the provisional-navigation failure only).
+- Exception autocapture is on in both SDK configs (README D11) and in the PostHog project. No "Crash now" row:
+  release builds have no Debug menu and debug builds never send, so it couldn't verify anything.
+- Not built: the `Flags` accessors (first flag in ANL-08; the sink methods exist).

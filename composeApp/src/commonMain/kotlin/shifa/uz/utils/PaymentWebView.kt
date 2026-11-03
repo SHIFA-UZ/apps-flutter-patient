@@ -13,4 +13,5 @@ expect fun PaymentWebView(
     url: String,
     modifier: Modifier = Modifier,
     onNavigate: (String) -> Boolean = { false },
+    onError: (code: Int) -> Unit = {}, // the main page failed to load (events.md §13), with the platform's code
 )

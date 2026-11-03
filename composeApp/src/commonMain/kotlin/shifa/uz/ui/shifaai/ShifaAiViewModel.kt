@@ -122,13 +122,13 @@ class ShifaAiViewModel(
         showError(Res.string.microphonePermissionDenied)
     }
 
-    /** Copy or Share on the reply with [text]; the turn is that reply's, not the chat's last. Regenerate tracks itself. */
+    /** Copy or Share on [reply]; the turn is that reply's, not the chat's last. Regenerate tracks itself. */
     fun onReplyAction(
         action: String,
-        text: String,
+        reply: CopilotMessage,
     ) {
         val messages = _state.value.chat?.messages.orEmpty()
-        val at = messages.indexOfLast { !it.isUser && it.content == text }
+        val at = messages.indexOfFirst { it === reply }.takeIf { it >= 0 } ?: messages.indexOf(reply)
         val turn = if (at < 0) turn() else messages.take(at).count { it.isUser }
         analytics.track(AnalyticsEvent.AiReplyAction(action, turn))
     }

@@ -31,6 +31,7 @@ fun setUpAnalytics(app: Application) {
             capturePushNotificationOpened = false
             sessionReplay = false // README D5
             personProfiles = PersonProfiles.IDENTIFIED_ONLY
+            errorTrackingConfig.autoCapture = true // README D11: crashes next to the taps before them
             // README D10; not while off, or setup would still ask PostHog for flags with the distinct id. (The
             // SDK's reset() reloads them regardless; that one anonymous request on logout is accepted, since the
             // identity must be dropped even while opted out.)

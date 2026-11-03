@@ -688,6 +688,36 @@ sealed class AnalyticsEvent(
     data class NotificationsAllRead(val unreadCount: Int) :
         AnalyticsEvent("notifications_all_read", "unread_count" to unreadCount)
 
+    // ---- events.md §13: reliability ----
+
+    /** [endpoint]: the path template with ids replaced (`patients/me/appointments/{id}`); null when no request was made. */
+    data class ApiError(
+        val endpoint: String?,
+        val method: String?,
+        val status: Int,
+        val error: String,
+        val code: String?,
+    ) :
+        AnalyticsEvent(
+                "api_error",
+                "endpoint" to endpoint,
+                "method" to method,
+                "status" to status,
+                "error" to error,
+                "code" to code,
+            )
+
+    data class ApiSlow(val endpoint: String, val method: String, val ms: Long) :
+        AnalyticsEvent("api_slow", "endpoint" to endpoint, "method" to method, "ms" to ms)
+
+    /** [stage]: `connect` / `stream`. */
+    data class AiStreamError(val stage: String, val status: Int) :
+        AnalyticsEvent("ai_stream_error", "stage" to stage, "status" to status)
+
+    /** [errorCode]: the platform's WebView error code, never the URL. */
+    data class WebviewError(val provider: String?, val errorCode: Int) :
+        AnalyticsEvent("webview_error", "provider" to provider, "error_code" to errorCode)
+
     // ---- events.md §12: profile and settings ----
 
     data object ProfileRefreshed : AnalyticsEvent("profile_refreshed")
