@@ -152,11 +152,15 @@ sealed class AnalyticsEvent(
     data class BookingVisitTypeChanged(val isVideo: Boolean) :
         AnalyticsEvent("booking_visit_type_changed", "is_video" to isVideo)
 
-    /** [daysToFirstSlot]: null is `none`; [scanStart]: `next_available` / `today` / `picked`. */
+    /**
+     * [daysToFirstSlot]: null when the scan found none, then left out and `has_slots = false` (one numeric type, so
+     * PostHog can take its median); [scanStart]: `next_available` / `today` / `picked`.
+     */
     data class BookingSlotsLoaded(val daysToFirstSlot: Int?, val isVideo: Boolean, val scanStart: String) :
         AnalyticsEvent(
             "booking_slots_loaded",
-            "days_to_first_slot" to (daysToFirstSlot ?: "none"),
+            "has_slots" to (daysToFirstSlot != null),
+            "days_to_first_slot" to daysToFirstSlot,
             "is_video" to isVideo,
             "scan_start" to scanStart,
         )

@@ -46,6 +46,10 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   identify with a new id once identified, and Login can show without a logout (the splash's 5 s cap, a failed
   restore), so the next patient's events landed on the previous one; `Analytics.identify` now resets first when the
   SDK holds a different `patient_<id>` (`AnalyticsSink.distinctId()`).
+- `booking_slots_loaded.days_to_first_slot` is only ever a number (PostHog fixes one type per property; it was the
+  string `none` when the scan found nothing), left out then, with `has_slots` saying whether there was a slot. The
+  two "No slots" insights on the Booking dashboard filter on `has_slots = false` (changed through the API before any
+  event had arrived).
 ## Screens (ANL-03)
 
 - `AnalyticsScreen` lists every `$screen` id (events.md §2); `TrackScreen(screen, properties…, step)` in each

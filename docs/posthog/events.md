@@ -144,7 +144,7 @@ review tray, the signature pad, the upload pop-up, the language dialog, the canc
 | `booking_location_selected` | Select Clinic | `locations_count` | - | `CreateBookingViewModel.onLocationChange` |
 | `booking_service_selected` | Select Service | `payment_kind` (§5.0), `has_price`, `allows_video`, `services_count` | - | `CreateBookingViewModel.onServiceChange` |
 | `booking_visit_type_changed` | the video switch | `is_video` | - | `CreateBookingViewModel.onVideoChange` |
-| `booking_slots_loaded` | the slot scan ends | `days_to_first_slot` (0-30, or `none`), `is_video`, `scan_start`: `next_available` / `today`, `scan_days` | - | `CreateBookingViewModel.loadSlots` |
+| `booking_slots_loaded` | the slot scan ends | `has_slots`, `days_to_first_slot` (days from today to the first free slot, left out when `has_slots = false`), `is_video`, `scan_start`: `next_available` / `today` / `picked`, `scan_days` | - | `CreateBookingViewModel.loadSlots` |
 | `booking_date_picked` | the date picker | `days_ahead`, `slots_count` | - | `CreateBookingViewModel.onDateChange` |
 | `booking_slot_selected` | a time chip is tapped (the first free slot is pre-selected after a scan, so a booking can complete without this event; funnels must not require it) | `hours_ahead`, `hour_of_day` (local, 0-23) | - | `CreateBookingViewModel.onSlotSelect` |
 | `booking_reason_entered` | the reason field loses focus with text | `length` | - | `CreateBookingScreen` → ViewModel |
