@@ -334,6 +334,26 @@ class AuthRepositoryTest {
         }
 
     @Test
+    fun `the first launch resets the analytics identity only when it wiped a token`() =
+        runTest {
+            assertThat(
+                AuthRepository(client, tokens, MapSettings(), chats, resetAnalytics = { analyticsResets++ })
+                    .restoreSession(),
+            ).isFalse()
+            assertThat(analyticsResets).isEqualTo(0)
+
+            tokens.token = "t"
+            AuthRepository(
+                client,
+                tokens,
+                MapSettings(),
+                chats,
+                resetAnalytics = { analyticsResets++ },
+            ).restoreSession()
+            assertThat(analyticsResets).isEqualTo(1)
+        }
+
+    @Test
     fun `a stored token is checked against the profile`() =
         runTest {
             tokens.token = "t"

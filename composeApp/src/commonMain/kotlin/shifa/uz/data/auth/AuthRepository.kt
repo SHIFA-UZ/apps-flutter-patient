@@ -185,13 +185,15 @@ class AuthRepository(
     suspend fun restoreSession(): Boolean =
         withContext(Dispatchers.Default) {
             try {
-                // The iOS Keychain survives a reinstall; drop its token on the first launch.
+                // The iOS Keychain survives a reinstall; drop its token on the first launch. The analytics identity
+                // goes only with a wiped token: a reset on a plain first launch would give the install a second
+                // anonymous id, and `Application Installed` would never join the signup that follows it.
                 var wiped = false
                 if (!settings.getBoolean(KEY_HAS_LAUNCHED, false)) {
                     wiped = tokenStorage.token != null
                     tokenStorage.clear()
                     copilot.clear()
-                    resetAnalytics()
+                    if (wiped) resetAnalytics()
                     settings[KEY_HAS_LAUNCHED] = true
                 }
                 if (tokenStorage.token == null) {

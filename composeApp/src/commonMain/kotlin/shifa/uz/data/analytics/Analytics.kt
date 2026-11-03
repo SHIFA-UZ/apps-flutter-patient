@@ -126,7 +126,10 @@ object Analytics : AnalyticsTracker {
 
     /**
      * The platform's startup: both guards at once, so a launch in demo mode never opts the SDK in for a moment
-     * between the two. [platform] must already be set.
+     * between the two. [platform] must already be set. The `app` and `app_language` super properties (events.md
+     * §1.3) are registered here, right after the SDK's setup and before its `Application Opened` fires on the first
+     * foreground (`Application Installed` is sent inside the setup itself and carries neither); the UI only
+     * re-registers `app_language` when the patient changes it.
      */
     fun start(
         optedOut: Boolean,
@@ -135,6 +138,8 @@ object Analytics : AnalyticsTracker {
         this.optedOut = optedOut
         this.demo = demo
         apply()
+        superProperties["app"] = ANALYTICS_APP
+        superProperties["app_language"] = languageProvider()
         superProperties.forEach { (key, value) -> platform?.register(key, value) }
     }
 

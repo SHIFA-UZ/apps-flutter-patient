@@ -54,6 +54,9 @@ We add:
 | `app` | `patient` (the doctor app sends `doctor`; setup.md §1.7) | always |
 | `app_language` | the app language now (it can differ from the person's at signup) | always |
 
+Both are registered by `Analytics.start`, right after the SDK's setup. The SDK sends `Application Installed` /
+`Updated` during that setup, so those two events carry neither property; everything from `Application Opened` on does.
+
 Debug builds send nothing at all (README D4), so there is no `backend` or `debug` property to filter on.
 
 ## 2. Screens (`$screen`)
