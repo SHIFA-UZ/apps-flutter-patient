@@ -6,7 +6,7 @@ the status table, the file for the area you touched, and one line in the log.
 Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 What we need from the backend team: [../backend-improvements.md](../backend-improvements.md).
 The payment plan (BOOK-04, BOOK-11): [../payment-flow.md](../payment-flow.md), with every flow drawn in [../payment-flow-diagrams.md](../payment-flow-diagrams.md).
-The analytics plan (PostHog, ANL-01..08; ANL-01..07 built, ANL-08 flags created, not wired; rewritten 2026-11-03 with payments, personalisation and a from-zero setup guide): [../posthog/README.md](../posthog/README.md).
+The analytics plan (PostHog, ANL-01..08; ANL-01..07 built, ANL-08 postponed; rewritten 2026-11-03 with payments, personalisation and a from-zero setup guide): [../posthog/README.md](../posthog/README.md).
 
 | Area | File |
 |---|---|
@@ -40,7 +40,7 @@ The analytics plan (PostHog, ANL-01..08; ANL-01..07 built, ANL-08 flags created,
 | ANL-05 Engagement events | Done | Tasks, documents, chat, Shifa AI, notifications, push and profile fire the events.md §7-12 events; `Push.arrived` carries the push type. Left-outs in analytics.md. |
 | ANL-06 Reliability events | Done | `api_error` / `api_slow` in `apiCall` with templated endpoints, `ai_stream_error`, `webview_error`, exception autocapture on. |
 | ANL-07 Dashboards, cohorts, alerts | Done (PostHog side) | Nine dashboards with 122 insights, two actions, sixteen cohorts and the free plan's five alerts created in the Shifa project; empty until a release build sends. Local release builds for testing read the key from `local.properties` (setup.md §7.1). |
-| ANL-08 Personalisation flags | Flags created, nothing wired | The seven round-1 flags exist in PostHog, inactive at 0 %. `Flags` accessors and ViewModel reads follow per personalisation once chosen. |
+| ANL-08 Personalisation flags | Postponed | Nothing in the app. The seven round-1 flags and the Personalisation dashboard were created in PostHog and then archived on 2026-11-03, until the user asks for personalisation. |
 | AUTH-01 Splash & session restore | Done | The token is checked against `/patients/me/profile` while the splash plays, with a 5 s cap. Only a 401 signs out; offline keeps the session (05 §2.1). The first launch after a reinstall wipes the token. |
 | AUTH-02 Login | Mostly done | Real login, identifier normalization, the persisted 5-attempt lockout and localized errors. Goes to Home. Not built: routing on `forcePasswordReset` (needs AUTH-07), the language toggle and the version footer. |
 | AUTH-03 Create account | Mostly done | Figma 3-step wizard (account → info → photo), password checklist, check-identifier dialogs, the email/SMS choice with the email fallback. Not built: `PhoneInputField` with a country picker (a plain phone field instead, so the 04 parsing bug can't happen). |
@@ -165,3 +165,4 @@ The analytics plan (PostHog, ANL-01..08; ANL-01..07 built, ANL-08 flags created,
 - 2026-11-03: Engagement events (ANL-05): the events.md §7-12 catalog from the tasks, documents, chat, Shifa AI, notifications, push and profile ViewModels and screens, with the size / duration / text / age buckets; one event test per ViewModel.
 - 2026-11-03: Reliability events (ANL-06): `apiCall` tracks `api_error` (templated endpoint, status, kind, code) and `api_slow`, the Shifa AI stream `ai_stream_error`, the payment WebView `webview_error` (a new `onError` on `PaymentWebView`), and PostHog's exception autocapture is on in both SDK configs.
 - 2026-11-03: Dashboards, cohorts and alerts (ANL-07) created in PostHog from dashboards.md and personalisation.md §3 (nine dashboards, 122 insights, two actions, sixteen cohorts, five alerts); the seven ANL-08 flags created inactive at 0 %; `build.gradle.kts` reads `posthog.apiKey.prod` from `local.properties` and debug-signs an unsigned release build so tracking can be checked on a device before a store release (setup.md §7.1).
+- 2026-11-03: Personalisation (ANL-08) postponed on the user's decision: the PostHog flags and the Personalisation dashboard archived, no app code.
