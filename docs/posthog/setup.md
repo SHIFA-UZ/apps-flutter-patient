@@ -1,64 +1,159 @@
-# Setting up PostHog
+# Setting up PostHog from zero
 
-Part 1 is done once in PostHog's web app (ANL-01). Part 2 is the code (ANL-02). Check [privacy.md](privacy.md) before
-anything is sent from a real device.
+Everything needed to go from "we have no PostHog" to "events from a real device show up in the right project".
+Part 1 (§1-3) is done once, by hand, in PostHog's web app and GitHub (ticket ANL-01). Part 2 (§4-7) is the code
+(ANL-02). Check [privacy.md](privacy.md) before anything is sent from a real device.
 
-## 1. PostHog organization and projects
+Versions checked on 2026-11-03: `posthog-android` 3.75.1, `posthog-ios` 3.93.3, `posthog-kmp` 0.10.0.
 
-1. Create the organization **Shifa** at <https://eu.posthog.com> (EU cloud, decision D1). If legal requires data to
-   stay in Uzbekistan, stop here and plan a self-hosted instance instead (privacy.md §5).
-2. Turn on 2FA for every member, and keep members to the people who need the data (Project → Access control).
-3. Create two projects:
-   - **Shifa Patient (Dev)**: debug builds, emulators, local testing.
-   - **Shifa Patient (Prod)**: Play Store and TestFlight / App Store release builds.
-4. Apply these settings to **both** projects:
+## 0. What you need before you start
+
+- A work email for the PostHog account (one shared owner account is fine; every team member gets their own later).
+- Admin access to the GitHub org `SHIFA-UZ` (to add the secrets in §2).
+- The decision on hosting (README D1). The steps below assume PostHog Cloud EU. If legal requires data to stay in
+  Uzbekistan, stop after §1.1 and plan a self-hosted instance instead (privacy.md §5); the code in §4-7 is the same,
+  only the host URL changes.
+- Nothing else. No credit card: the free plan has no card requirement.
+
+## 1. The PostHog account, organization and projects
+
+### 1.1 Create the account in the EU region
+
+1. Open <https://eu.posthog.com/signup>. The `eu.` part matters: the region is chosen at signup and can't be
+   changed afterwards without a migration. (`app.posthog.com` / `us.posthog.com` is the US region; don't use it.)
+2. Sign up with the work email. Pick "Product analytics" when asked what you want to use.
+3. Name the organization **Shifa**.
+4. Turn on 2FA for your account at once (top-right avatar → Account settings → Two-factor authentication).
+
+### 1.2 Create the two projects
+
+PostHog creates a first project automatically. Rename it and add a second one:
+
+1. Settings → Project → General → Project name: **Shifa Patient (Prod)**.
+2. Top-left project switcher → New project → **Shifa Patient (Dev)**.
+
+Dev is for debug builds, emulators and local testing. Prod is for Play Store, TestFlight and App Store builds.
+Debug builds must never carry the Prod key (§2).
+
+The free plan allows one project. See §1.6 for how to handle that.
+
+### 1.3 Project settings (apply to both projects)
+
+Settings → Project:
 
 | Setting | Value | Why |
 |---|---|---|
-| Timezone | `Asia/Tashkent` | Days and weeks in charts match the patients' days |
-| Discard client IP data | **On** | IP is personal data, and we don't need geo-IP |
-| Person profiles | Identified only (also set in the SDK) | Anonymous pre-login traffic stays cheap and profile-free |
-| Record user sessions (session replay) | **Off** | Decision D5, privacy.md §6 |
-| Autocapture / heatmaps / web vitals | Off | Web-only features; nothing to capture in the app |
-| Exception autocapture | Off for now | Crashes go to Crashlytics when it's wired (spec 01 §2.1). Revisit in ANL-08. |
-| Data retention | 1 year (Prod), 30 days (Dev), if the plan allows | Keep only what we analyse |
-| Surveys | Off until ANL-08 | |
+| General → Timezone | `Asia/Tashkent` | Days and weeks in charts match the patients' days |
+| General → Discard client IP data | **On** | IP is personal data, and we don't need geo-IP |
+| Product analytics → Person profiles | Identified only (also set in the SDK) | Anonymous pre-login traffic stays cheap and profile-free |
+| Session replay → Record user sessions | **Off** | README D5, privacy.md §6 |
+| Autocapture, Heatmaps, Web vitals | Off | Web-only features; nothing to capture in a native app |
+| Error tracking → Enable exception autocapture | **On** (Prod and Dev) | README D11. Also requires the SDK flag in §5. |
+| Surveys | Off until ANL-08 | README D12 |
+| Feature flags | Nothing to set; flags are created when needed | personalisation.md |
 
-5. In Prod, add the property filters "Filter out internal and test users". Mark the team's accounts with the person
-   property `internal = true` (set from the Debug menu, development.md §5).
+Data retention is fixed by the plan (1 year free, 7 years paid). We keep the free tier's 1 year; that's enough for
+year-over-year retention charts.
+
+### 1.4 Filter out the team
+
+In both projects: Settings → Project → Product analytics → "Filter out internal and test users" → add the filter
+`internal = true` (a person property). The team's accounts get `internal = true` from the Debug menu
+(development.md §5). Turn the filter on by default for new insights.
+
+### 1.5 Team members and access
+
+- Settings → Organization → Members → Invite. Roles: **Admin** for the two or three people who manage settings and
+  keys, **Member** for everyone who only reads dashboards.
+- Keep members to the people who need the data: product, engineering leads, support leads. Remove leavers the day
+  they leave (privacy.md §8).
+- Every member turns on 2FA. Settings → Organization → "Enforce 2FA" once everyone has it.
+
+### 1.6 Billing: free plan vs pay-as-you-go
+
+PostHog's plans on 2026-11-03:
+
+| Plan | Base price | Projects | Free monthly allowance (resets monthly) |
+|---|---|---|---|
+| Free | $0 | 1 | 1,000,000 analytics events, 1,000,000 feature flag requests, 100,000 exceptions, 1,500 survey responses, 5,000 session replays |
+| Paid (pay-as-you-go) | $0 | 6 | The same free allowances; you pay only for usage above them |
+
+Our volume: a patient produces roughly 50-150 events per active day (screens, actions, outcomes). At 1,000 daily
+active patients that's about 1.5-4.5 million events a month, so we will cross the free allowance once the app grows,
+but not at launch.
+
+Recommendation: add a card and switch to **Paid** on day one anyway, because the free plan allows only one project
+and we need Dev and Prod (D4). Set a **billing limit** (Settings → Organization → Billing → "Set a billing limit")
+of, say, $50/month on product analytics, so a bug that loops events can't produce a surprise bill. PostHog stops
+ingesting at the limit instead of charging more.
+
+If the user prefers to stay on Free for now: keep one project, **Prod**, and let debug builds run with no key
+(§2: a missing key means analytics off). Testing then uses the Debug menu's "Analytics: show events" list
+(development.md §5) instead of PostHog's live view. Switch to two projects when the card is added.
 
 ## 2. Keys
 
-Each project has a **Project API key** (`phc_…`). It's a write-only key built into the app (PostHog designs it to be
-public), but keep it out of git anyway, so forks and local runs don't write to Prod.
+Each project has a **Project API key** (`phc_…`), under Settings → Project → General → Project ID & API key. It's a
+write-only key built into the app (PostHog designs it to be public), but keep it out of git anyway, so forks and
+local runs don't write to Prod.
 
 | Where | Dev key | Prod key |
 |---|---|---|
-| Local Android | `local.properties`: `posthog.apiKey.dev=phc_…` | - |
-| Local iOS | `iosApp/Configuration/Secrets.xcconfig` (gitignored): `POSTHOG_API_KEY = phc_…` | - |
-| GitHub Actions | secret `POSTHOG_API_KEY_DEV` (for CI builds of debug, if any) | secret `POSTHOG_API_KEY_PROD` |
+| Local Android | `local.properties`: `posthog.apiKey.dev=phc_…` (gitignored) | - |
+| Local iOS | `iosApp/Configuration/Secrets.xcconfig` (add to `.gitignore`): `POSTHOG_API_KEY = phc_…` | - |
+| GitHub Actions | - (CI runs tests only; it never builds a debug app) | secret `POSTHOG_API_KEY_PROD` |
 
-Host for both: `https://eu.i.posthog.com` (an `ApiConfig`-style constant, not a secret).
+Host for both: `https://eu.i.posthog.com` (an `ApiConfig`-style constant, not a secret). Note the `.i.` in the
+ingestion host; `eu.posthog.com` without it is the web app.
 
 A build with no key runs with analytics off, so a fresh clone works without any setup.
 
-### CI changes
+### 2.1 GitHub
 
-- `google_play_deploy.yml`, in the build step: pass `-Pposthog.apiKey.prod=${{ secrets.POSTHOG_API_KEY_PROD }}` to
-  Gradle.
-- `ios_testflight.yml`, before the fastlane step: write the key into the xcconfig that release builds read:
-  `echo "POSTHOG_API_KEY = $POSTHOG_API_KEY_PROD" > iosApp/Configuration/Secrets.xcconfig`, with
-  `POSTHOG_API_KEY_PROD: ${{ secrets.POSTHOG_API_KEY_PROD }}` in that step's `env`.
-- Add both secrets to the secrets list in `CLAUDE.md` (CI/CD section).
+1. `SHIFA-UZ/apps-flutter-patient` → Settings → Secrets and variables → Actions → New repository secret
+   `POSTHOG_API_KEY_PROD` = the Prod project's key.
+2. `google_play_deploy.yml`, in the Gradle build step: pass `-Pposthog.apiKey.prod=${{ secrets.POSTHOG_API_KEY_PROD }}`.
+3. `ios_testflight.yml`, before the fastlane step, write the key into the xcconfig that release builds read:
 
-## 3. Versions
+```yaml
+- name: Write PostHog key
+  env:
+    POSTHOG_API_KEY_PROD: ${{ secrets.POSTHOG_API_KEY_PROD }}
+  run: echo "POSTHOG_API_KEY = $POSTHOG_API_KEY_PROD" > iosApp/Configuration/Secrets.xcconfig
+```
 
-- Add `posthog-android` to `gradle/libs.versions.toml`, pinned to the latest 3.x on Maven Central
-  (`com.posthog:posthog-android`). Never use `3.+`: builds must be reproducible.
-- iOS: add the Swift package `https://github.com/PostHog/posthog-ios.git` to the Xcode project ("Up to Next Major",
-  from the latest 3.x), product `PostHog`, added the same way as Daily's package.
-- Upgrade path: once `com.posthog:posthog-kmp` reaches 1.0 and we're on Kotlin 2.4+, it can replace the two platform
-  files below. The facade and every call site stay the same.
+4. Add `POSTHOG_API_KEY_PROD` to the secrets list in `CLAUDE.md` (CI/CD section).
+
+### 2.2 Rotating a key
+
+Settings → Project → General → "Reset project API key". The old key stops working at once, so release a build with
+the new key first, wait for store adoption, then reset. Store builds with the old key then send nothing (they fail
+silently; the SDK drops the queue). Rotate only if a key leaks; it can't read data.
+
+## 3. Versions and dependencies
+
+- Android: add to `gradle/libs.versions.toml`:
+
+```toml
+[versions]
+posthog = "3.75.1"
+
+[libraries]
+posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthog" }
+```
+
+  Never `3.+` (PostHog's docs suggest it): builds must be reproducible. `posthog-android` needs `minSdk` 21; we're
+  on 24.
+
+- iOS: Xcode → the `iosApp` project → Package Dependencies → `+` → `https://github.com/PostHog/posthog-ios.git`,
+  "Up to Next Major" from `3.93.3`, product `PostHog`, added to the `iosApp` target the same way as Daily's package.
+  PostHog has announced that `posthog-ios` 4.0 will raise the minimum iOS to 15; our deployment target is 18.2,
+  so the 4.0 upgrade will be a plain version bump.
+
+- Upgrade path: `com.posthog:posthog-kmp` (0.10.0) wraps both native SDKs for `commonMain`, but its iOS linking
+  needs Kotlin 2.4.0+ (we're on 2.3.0), and it's 0.x, so its API may change between minor versions. When the Kotlin
+  upgrade lands and `posthog-kmp` is 1.x, it can replace the two platform files below. The facade and every call
+  site stay the same.
 
 ## 4. Code: the shared facade (`commonMain`)
 
@@ -69,12 +164,17 @@ New package `data/analytics/`. Nothing in `ui/` touches a PostHog class directly
 
 /** What the platform SDK does. Android: PostHog's SDK; iOS: Swift's PostHogAnalytics through the bridge. */
 interface AnalyticsSink {
-    fun capture(event: String, properties: Map<String, Any>)
+    fun capture(event: String, properties: Map<String, Any>, userProperties: Map<String, Any>, userPropertiesSetOnce: Map<String, Any>)
     fun screen(name: String, properties: Map<String, Any>)
     fun identify(distinctId: String, userProperties: Map<String, Any>, userPropertiesSetOnce: Map<String, Any>)
     fun register(key: String, value: Any)
     fun reset()
+    /** The SDK's optOut() / optIn(): also stops the SDK's own lifecycle and exception capture. */
     fun optOut(out: Boolean)
+    fun isFeatureEnabled(key: String): Boolean?
+    /** The payload re-encoded as a JSON string by the platform (the SDKs return decoded objects); null if none. */
+    fun featureFlagPayloadJson(key: String): String?
+    fun reloadFeatureFlags()
 }
 
 /** For ViewModels: constructor-injected with `Analytics` as the default, a recording fake in tests. */
@@ -83,26 +183,44 @@ interface AnalyticsTracker {
 }
 
 /**
- * The app's one way into analytics (docs/posthog). [sink] is set at launch; it stays null in tests, previews,
- * builds without a key, and while demo data is on, so nothing is sent from those.
+ * The app's one way into analytics (docs/posthog). [platform] is set at launch; it stays null in tests, previews
+ * and builds without a key. [sink] is null whenever the patient opted out or demo data is on, so neither events
+ * nor flag reads reach the SDK then (privacy.md §4, README D8); [setEnabled] also calls the SDK's optOut(), so
+ * its automatic lifecycle and exception capture stop as well.
  */
 object Analytics : AnalyticsTracker {
-    var sink: AnalyticsSink? = null
+    var platform: AnalyticsSink? = null
+    private var enabled = true
+
+    val sink: AnalyticsSink? get() = platform.takeIf { enabled }
+
+    /**
+     * Opt-out switch and demo mode: `enabled = !optedOut && !DemoMode.enabled.value`. Turning back on re-identifies
+     * the signed-in patient (the caller passes the current profile), so the next events aren't anonymous.
+     */
+    fun setEnabled(on: Boolean, profile: PatientProfile? = null) {
+        enabled = on
+        platform?.optOut(!on)
+        if (on && profile != null) identify(profile)
+    }
 
     override fun track(event: AnalyticsEvent) {
-        sink?.capture(event.name, event.properties)
+        sink?.capture(event.name, event.properties, event.userProperties, event.userPropertiesSetOnce)
     }
 
     fun screen(screen: AnalyticsScreen, vararg properties: Pair<String, Any?>) {
         sink?.screen(screen.id, properties.clean())
     }
 
-    /** After P1 loads (Home), and again after Edit profile saves. */
-    fun identify(profile: PatientProfile) { /* events.md §1.2 */ }
+    /** After P1 loads (Home), and again after Edit profile saves. events.md §1.2. */
+    fun identify(profile: PatientProfile) { /* … */ }
 
-    /** Logout, account deletion and a session 401. */
+    /**
+     * Logout, account deletion and a session 401. Goes through [platform], not [sink]: the identity must be
+     * dropped even while opted out, or patient A's distinct_id would be left behind for patient B's later opt-in.
+     */
     fun reset() {
-        sink?.reset()
+        platform?.reset()
     }
 }
 ```
@@ -113,21 +231,37 @@ object Analytics : AnalyticsTracker {
 sealed class AnalyticsEvent(
     val name: String,
     vararg props: Pair<String, Any?>,
+    /** Person properties set with this event (personalisation.md §2): `has_booked = true`, … */
+    val userProperties: Map<String, Any> = emptyMap(),
+    /** Person properties set only the first time: `first_booking_at`, … */
+    val userPropertiesSetOnce: Map<String, Any> = emptyMap(),
 ) {
     /** Nulls dropped, so an unknown value is left out instead of sent as "null". */
     val properties: Map<String, Any> = props.clean()
 
-    data class BookingCompleted(val isVideo: Boolean, val paymentStatus: String?, val daysAhead: Int) :
+    data class BookingCompleted(val isVideo: Boolean, val paymentKind: String, val daysAhead: Int) :
         AnalyticsEvent(
             "booking_completed",
             "is_video" to isVideo,
-            "payment_status" to paymentStatus,
+            "payment_kind" to paymentKind,
             "days_ahead" to daysAhead,
+            userProperties = mapOf("has_booked" to true, "last_visit_type" to if (isVideo) "video" else "in_person"),
+            userPropertiesSetOnce = mapOf("first_booking_at" to nowIso()),
         )
     // … every other event in events.md
 }
 
 enum class AnalyticsScreen(val id: String) { Home("home"), Bookings("bookings") /* … events.md §2 */ }
+```
+
+```kotlin
+// data/analytics/Flags.kt: typed feature flags with safe defaults (personalisation.md §4). Empty at first.
+
+object Flags {
+    // Example, not built yet. Payloads come as JSON strings and are decoded with kotlinx.serialization:
+    // val homeOrder: List<String>
+    //     get() = Analytics.sink?.featureFlagPayloadJson("home-order")?.let { decodeOrNull<HomeOrder>(it)?.order } ?: DEFAULT_HOME_ORDER
+}
 ```
 
 Why typed events and not `track("some_name", mapOf(...))`: every event and property is in one file, compiled and
@@ -139,11 +273,14 @@ reviewable. A typo can't create a new event, and a privacy review reads one file
 
 1. **Application class** (the deferred `Application` init): `shifa/uz/ShifaApp.kt`, registered with
    `android:name=".ShifaApp"` in `AndroidManifest.xml`. Move `initSecureSettings(this)` there from `MainActivity`.
-2. Gradle (`composeApp/build.gradle.kts`): `implementation(libs.posthog.android)` in `androidMain`, and per build type
-   a `buildConfigField("String", "POSTHOG_API_KEY", …)`: debug reads `posthog.apiKey.dev` from `local.properties`,
-   release reads the `posthog.apiKey.prod` Gradle property. Missing → `""`.
-3. `androidMain/…/data/analytics/PostHogSink.kt`: implements `AnalyticsSink` with `PostHog.capture`, `PostHog.screen`,
-   `PostHog.identify`, `PostHog.register`, `PostHog.reset`, `PostHog.optOut()` / `optIn()`.
+2. Gradle (`composeApp/build.gradle.kts`): `implementation(libs.posthog.android)` in `androidMain.dependencies`,
+   and per build type a `buildConfigField("String", "POSTHOG_API_KEY", …)`: debug reads `posthog.apiKey.dev` from
+   `local.properties`, release reads the `posthog.apiKey.prod` Gradle property. Missing → `""`.
+3. `androidMain/…/data/analytics/PostHogSink.kt`: implements `AnalyticsSink` with `PostHog.capture`,
+   `PostHog.screen`, `PostHog.identify`, `PostHog.register`, `PostHog.reset`, `PostHog.optOut()` / `optIn()`,
+   `PostHog.isFeatureEnabled`, `PostHog.getFeatureFlagResult(key)?.payload` (nullable; the payload is a decoded
+   `Any`, so re-encode it with `org.json` or kotlinx.serialization to the JSON string the facade promises),
+   `PostHog.reloadFeatureFlags()`.
 4. In `ShifaApp.onCreate`, when the key isn't blank:
 
 ```kotlin
@@ -154,11 +291,15 @@ val config =
         captureDeepLinks = false
         sessionReplay = false // D5
         personProfiles = PersonProfiles.IDENTIFIED_ONLY
-        optOut = AnalyticsSettings.optedOut || DemoBackend.enabled // privacy.md §4, D8
+        preloadFeatureFlags = true // D10: flags are ready by the time Home shows
+        errorTrackingConfig.autoCapture = true // D11; also needs the project setting (§1.3)
+        optOut = AnalyticsSettings.optedOut || DemoMode.enabled.value // privacy.md §4, D8
         debug = BuildConfig.DEBUG
     }
 PostHogAndroid.setup(this, config)
-Analytics.sink = PostHogSink()
+Analytics.platform = PostHogSink()
+Analytics.setEnabled(!AnalyticsSettings.optedOut && !DemoMode.enabled.value)
+if (BuildConfig.DEBUG) Analytics.sink?.register("backend", BackendChoice.current.value.name.lowercase()) // D9
 ```
 
 ### iOS
@@ -166,22 +307,31 @@ Analytics.sink = PostHogSink()
 Same pattern as Daily: a Kotlin interface that Swift implements and registers at launch.
 
 1. `iosMain/…/data/analytics/AnalyticsBridge.kt`: `interface NativeAnalytics` (the `AnalyticsSink` methods with
-   `Map<String, Any>`), and `fun registerAnalytics(native: NativeAnalytics)`, which sets `Analytics.sink` unless
-   demo data is on.
+   `Map<String, Any>`), and `fun registerAnalytics(native: NativeAnalytics)`, which sets `Analytics.platform` and
+   calls `Analytics.setEnabled(...)` from the opt-out and demo flags.
 2. `iosApp/iosApp/PostHogAnalytics.swift`: `class PostHogAnalytics: NativeAnalytics`, forwarding to
-   `PostHogSDK.shared.capture(_:properties:)`, `.screen(_:properties:)`, `.identify(_:userProperties:userPropertiesSetOnce:)`,
-   `.register(_:)`, `.reset()` and `.optOut()` / `.optIn()`.
-3. `Info.plist`: `PostHogApiKey = $(POSTHOG_API_KEY)`. `Config.xcconfig` gets `#include? "Secrets.xcconfig"`, so a
-   missing file just means no key.
-4. In `AppDelegate.application(_:didFinishLaunchingWithOptions:)`, after Firebase:
+   `PostHogSDK.shared.capture(_:properties:userProperties:userPropertiesSetOnce:)`, `.screen(_:properties:)`,
+   `.identify(_:userProperties:userPropertiesSetOnce:)`, `.register(_:)`, `.reset()`, `.optOut()` / `.optIn()`,
+   `.isFeatureEnabled(_:)`, `.getFeatureFlagPayload(_:)` (returns `Any?`; re-encode with `JSONSerialization` to the
+   JSON string the facade promises), `.reloadFeatureFlags()`.
+3. `Info.plist`: `PostHogApiKey = $(POSTHOG_API_KEY)`. `Config.xcconfig` gets `#include? "Secrets.xcconfig"`
+   (the `?` makes a missing file harmless), and `Secrets.xcconfig` goes in `.gitignore`.
+4. In `AppDelegate.application(_:didFinishLaunchingWithOptions:)`, after `FirebaseApp.configure()`:
 
 ```swift
 if let key = Bundle.main.object(forInfoDictionaryKey: "PostHogApiKey") as? String, !key.isEmpty {
-    let config = PostHogConfig(apiKey: key, host: "https://eu.i.posthog.com") // `projectToken:` in newer SDKs
+    let config = PostHogConfig(projectToken: key, host: "https://eu.i.posthog.com") // `apiKey:` in older 3.x
     config.captureApplicationLifecycleEvents = true
-    config.captureScreenViews = false // UIKit only sees the one Compose controller
-    config.sessionReplay = false
+    config.captureScreenViews = false // UIKit only sees the one Compose controller (D6)
+    config.captureElementInteractions = false
+    config.sessionReplay = false // D5
+    config.surveys = false // D12 (the iOS default is on)
     config.personProfiles = .identifiedOnly
+    config.preloadFeatureFlags = true
+    config.errorTrackingConfig.autoCapture = true // D11
+    #if DEBUG
+    config.debug = true
+    #endif
     PostHogSDK.shared.setup(config)
     AnalyticsBridgeKt.registerAnalytics(native: PostHogAnalytics())
 }
@@ -193,15 +343,16 @@ Check the opt-out and demo flags before `setup`, as on Android.
 
 | What | Where | Notes |
 |---|---|---|
-| Screens | A `TrackScreen(AnalyticsScreen.X)` composable (`LaunchedEffect(screen) { Analytics.screen(screen) }`) in each `XxxScreen`, never in `XxxContent`, so previews and screenshot tests send nothing. Tabs: in `MainScreen` when `tab` changes. | events.md §2 has every screen |
-| Identify | `HomeViewModel` after P1 succeeds, and after Edit profile saves | events.md §1.2 |
-| Reset | `AuthRepository.logout()`, after account deletion, and on the session 401 path | Before the token is wiped, so the logout event still belongs to the user |
-| Super properties | On launch and when they change: `app_language` (LanguageStorage) | events.md §1.3 |
+| Screens | A `TrackScreen(AnalyticsScreen.X, vararg properties)` composable (`LaunchedEffect(screen, properties) { Analytics.screen(screen, *properties) }`) in each `XxxScreen`, never in `XxxScreenContent`, so previews and screenshot tests send nothing. The properties are part of the key, so Register and Forgot password re-send on each `step`. Tabs: in `MainScreen` when `tab` changes. | events.md §2 has every screen |
+| Identify | `HomeViewModel` after P1 succeeds, and `EditProfileViewModel` after P2 saves | events.md §1.2 |
+| Reset | `AuthRepository.logout()`, after account deletion (P6), and on the session-expired path | Send `logged_out` first, then `reset()`, so the event still belongs to the patient |
+| Super properties | On launch and when they change: `app_language` (`languageStorage.language`); debug builds also `backend` | events.md §1.3 |
 | Events | ViewModels, through an `analytics: AnalyticsTracker = Analytics` constructor param (CLAUDE.md DI style) | Only after the outcome is known: `booking_completed` in B3's `onSuccess`, not on the tap |
-| Push | `ShifaMessagingService` / `AppDelegate.willPresent` (received), `Push.opened` handling (opened) | events.md §12 |
-| API errors | `apiCall` failure branch, next to `httpLogger` | events.md §13, with the path's ids replaced |
-| Opt-out | Profile → Settings → "Share usage data" switch → `AnalyticsSettings` (plain Settings) → `Analytics.sink?.optOut(...)` | privacy.md §4 |
-| Demo data | Switching demo data on re-keys `App`; the sink is detached while it's on | D8 |
+| Push | `ShifaMessagingService.onMessageReceived` / `AppDelegate.willPresent` → `push_received`; `MainScreen`'s `Push.opened` handling → `push_opened` | events.md §11 |
+| API errors | `apiCall`'s two failure branches, next to `httpLogger` | events.md §13, with the path's ids replaced |
+| Opt-out | Profile → Settings → "Share usage data" switch → `AnalyticsSettings` (plain Settings) → `Analytics.setEnabled(false)` (facade off **and** the SDK's `optOut()`, so flags and the SDK's automatic events stop too) | privacy.md §4 |
+| Demo data | `DemoMode.set` → `Analytics.setEnabled(false)`; off again → `setEnabled(!optedOut, profile)` with the signed-in profile (Home's P1), so the patient is re-identified like after an opt-in. Detaching the facade alone isn't enough: the native SDK would keep sending lifecycle events and exceptions, and `App`'s re-key doesn't rerun the native startup | D8 |
+| Flags | `Flags` read in ViewModels, never in composables; `reloadFeatureFlags()` after identify | personalisation.md §4 |
 
 ## 7. Checking it works
 
@@ -213,5 +364,22 @@ Check the opt-out and demo flags before `setup`, as on Android.
    - no event has a name, phone, email, free text, doctor or document names, or health values.
 3. Log out: the next events are anonymous again (new `distinct_id`).
 4. Turn on demo data: nothing arrives. Turn on the opt-out switch: nothing arrives.
-5. Kill the network, use the app, bring it back: the queued events arrive (the SDKs batch and retry).
-6. Only then add the Prod key to CI.
+5. Kill the network, use the app, bring it back: the queued events arrive (the SDKs batch and retry; the queue holds
+   1,000 events and drops the oldest first).
+6. Force a crash from the Debug menu (add a "Crash now" row in ANL-06): the exception appears under Error tracking
+   in Dev, linked to the person.
+7. Create a test flag in Dev (`test-flag`, 100 % on), restart the app: `Flags` reads it as on; turn it off, restart:
+   off; delete it: the default applies.
+8. Only then add the Prod key to CI (§2.1), ship a TestFlight / internal-track build, and repeat steps 2-3 in Prod
+   with your account marked `internal = true`.
+
+## 8. Go-live checklist
+
+- [ ] Legal has signed off on D1 (hosting) and D7 (consent), privacy.md §4-5.
+- [ ] The privacy policy at `https://shifa.uz/#privacy` names PostHog, the region, what's collected and how to opt out.
+- [ ] App Store privacy labels declare "Product interaction" and "Crash data" as linked to the user and not used
+      for tracking; Play's Data safety form declares "App interactions", "Crash logs" and "Diagnostics" (privacy.md §4).
+- [ ] Both projects have IP discarding on, replay off, the internal-user filter on, and the billing limit set.
+- [ ] `POSTHOG_API_KEY_PROD` is in GitHub, and both deploy workflows pass it.
+- [ ] The team's accounts are marked `internal = true` in Prod.
+- [ ] The account-deletion runbook includes deleting the person in PostHog (privacy.md §4).

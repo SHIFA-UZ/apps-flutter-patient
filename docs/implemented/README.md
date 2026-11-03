@@ -6,7 +6,7 @@ the status table, the file for the area you touched, and one line in the log.
 Ticket IDs are from `docs/kmp-spec/16-implementation-plan.md`.
 What we need from the backend team: [../backend-improvements.md](../backend-improvements.md).
 The payment plan (BOOK-04, BOOK-11): [../payment-flow.md](../payment-flow.md), with every flow drawn in [../payment-flow-diagrams.md](../payment-flow-diagrams.md).
-The analytics plan (PostHog, ANL-01..08, not built): [../posthog/README.md](../posthog/README.md).
+The analytics plan (PostHog, ANL-01..08, not built; rewritten 2026-11-03 with payments, personalisation and a from-zero setup guide): [../posthog/README.md](../posthog/README.md).
 
 | Area | File |
 |---|---|
@@ -148,3 +148,4 @@ The analytics plan (PostHog, ANL-01..08, not built): [../posthog/README.md](../p
 - 2026-10-30: Production fixes: the inbox falls back to N1 when `/notifications/page` is missing (production answered 500 and the inbox showed an error); leaving the payment page releases the held booking with B5 and rescans the day instead of keeping the hold (a cancelled checkout left a pending visit in the list). The backend lets an unpaid PENDING_PAYMENT visit be cancelled inside the 24 h lock (`canCancel`), and development runs payments with the production providers.
 - 2026-10-31: UZS prices were shown ×100 too large (`moneyText` treated `amountMinor` as so'm while the backend and the doctor app use tiyin; Click was charged the right amount all along). Demo prices and test fixtures moved to tiyin; MOBILE_BOOKING_PAYMENT §1 corrected.
 - 2026-11-01: A task notification's Submit Check in opens today's PENDING check-in only; with today finished it opens the task page instead of tomorrow's form, which looked like the same task asked again. The backend's `durationDays` counted one day too many (1 made 2 days of check-ins), fixed on its own branch of the same name. Forgot password empties both passwords when it returns to the code step, since retyping into the masked fields appended to the old text and gave a false "passwords do not match".
+- 2026-11-03: Rewrote the PostHog plan in `docs/posthog/` against v1.2.4 (no code): a from-zero `setup.md` (account, EU region, Dev / Prod projects, settings, billing, keys, SDKs, verification, go-live), `events.md` with the payment flow, voice / file chats, the Shifa AI reply actions, the removed Near me and App Lock, and a per-screen coverage matrix, a new `personalisation.md` (behavioural person properties, cohorts, the `Flags` plumbing, round-1 candidates), plus error tracking (D11) and the Development backend (D9) in the decisions.
