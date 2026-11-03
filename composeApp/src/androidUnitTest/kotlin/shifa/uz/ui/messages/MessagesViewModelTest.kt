@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -20,6 +21,8 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.failedToStartChat
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.chat.ChatRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.ChatContact
@@ -31,7 +34,8 @@ class MessagesViewModelTest {
     private val chat = mock<ChatRepository>()
     private val aziz = ChatContact("3", "11", "Aziz", lastAt = "2026-09-27T08:00:00Z")
     private val malika = ChatContact("4", "12", "Malika", lastAt = "2026-09-28T08:00:00Z")
-    private val classToTest by lazy { MessagesViewModel(chat, debounceMs = 400) }
+    private val tracker = RecordingTracker()
+    private val classToTest by lazy { MessagesViewModel(chat, debounceMs = 400, analytics = tracker) }
 
     @Before
     fun setUp() {
@@ -43,6 +47,18 @@ class MessagesViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `a doctor search is tracked with its length and results`() =
+        runTest {
+            wheneverBlocking { chat.search(any()) } doReturn Result.success(emptyList())
+            classToTest.search(" az ")
+            advanceUntilIdle()
+
+            assertThat(
+                tracker.events,
+            ).containsExactly(AnalyticsEvent.ChatDoctorSearched(queryLength = 2, resultsCount = 0))
+        }
 
     private val state get() = classToTest.state.value
 

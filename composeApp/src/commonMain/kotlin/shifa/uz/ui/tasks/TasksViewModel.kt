@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.tasks.TasksRepository
@@ -18,8 +21,10 @@ import shifa.uz.data.tasks.TasksRepository
 /** 12 §3.1 (TASK-01). Lives in the tab shell, so the check-in page can report back to it. */
 class TasksViewModel(
     private val tasks: TasksRepository = TasksRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TasksUiState())
+    private var viewing = false
     val state: StateFlow<TasksUiState> = _state.asStateFlow()
 
     private val _signedOut = Channel<Unit>(Channel.BUFFERED)
@@ -31,7 +36,14 @@ class TasksViewModel(
 
     /** The page opened: last visit's notice goes, T1 reloads. */
     fun open() {
+        viewing = true
         update { copy(notice = null) }
+        load()
+    }
+
+    /** Pull to refresh (events.md §7). */
+    fun refresh() {
+        analytics.track(AnalyticsEvent.TasksRefreshed)
         load()
     }
 
@@ -41,7 +53,14 @@ class TasksViewModel(
         update { copy(isLoading = true) }
         viewModelScope.launch {
             tasks.getMyTasks().fold(
-                onSuccess = { update { copy(tasks = it, isLoading = false, error = null) } },
+                onSuccess = {
+                    update { copy(tasks = it, isLoading = false, error = null) }
+                    if (viewing) {
+                        viewing = false
+                        val open = it.count { t -> t.isOpen }
+                        analytics.track(AnalyticsEvent.TasksViewed("open", open, it.size - open))
+                    }
+                },
                 onFailure = {
                     update { copy(isLoading = false, error = it.toUserMessage()) }
                     if (it is ApiException.Unauthorized) _signedOut.send(Unit)

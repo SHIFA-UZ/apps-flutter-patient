@@ -15,6 +15,11 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.documentSaved
 import shifa.composeapp.generated.resources.errorOpeningDocument
 import shifa.composeapp.generated.resources.errorSomethingWentWrong
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
+import shifa.uz.data.analytics.fileType
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
@@ -28,12 +33,35 @@ class DocumentViewerViewModel(
     private val document: PatientDocument,
     private val documents: DocumentsRepository = DocumentsRepository(),
     private val bookings: BookingsRepository = BookingsRepository(),
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DocumentViewerUiState())
+
+    // events.md §8: `self` / `doctor` / `unknown`, from the backend's ownership flags.
+    private val uploadedBy =
+        when {
+            document.uploadedByPatient == true || document.creatorType.equals("PATIENT", true) -> "self"
+            document.uploadedByPatient == false || document.creatorType.equals("DOCTOR", true) -> "doctor"
+            else -> "unknown"
+        }
     val state: StateFlow<DocumentViewerUiState> = _state.asStateFlow()
 
     private val _deleted = Channel<Unit>(Channel.BUFFERED)
     val deleted: Flow<Unit> = _deleted.receiveAsFlow()
+
+    // events.md §8: `document_viewed` once, after both the file and its visit lookup have answered.
+    private var viewedExtension: String? = null
+    private var visitChecked = false
+    private var viewedTracked = false
+
+    private fun maybeTrackViewed() {
+        val extension = viewedExtension ?: return
+        if (!visitChecked || viewedTracked) return
+        viewedTracked = true
+        analytics.track(
+            AnalyticsEvent.DocumentViewed(fileType(extension), uploadedBy, _state.value.appointment != null),
+        )
+    }
 
     init {
         load()
@@ -47,7 +75,7 @@ class DocumentViewerViewModel(
      */
     private fun findAppointment() {
         viewModelScope.launch {
-            val all = bookings.getAppointments().getOrNull() ?: return@launch
+            val all = bookings.getAppointments().getOrNull().orEmpty()
             val id = document.appointmentId?.ifBlank { null }
             val found =
                 if (id != null) {
@@ -66,6 +94,8 @@ class DocumentViewerViewModel(
                     }
                 }
             update { copy(appointment = found) }
+            visitChecked = true
+            maybeTrackViewed()
         }
     }
 
@@ -75,20 +105,28 @@ class DocumentViewerViewModel(
 
     /** F4; also Retry. */
     fun load() {
-        val url = document.file ?: return update { copy(isLoading = false, error = Res.string.errorOpeningDocument) }
+        val url =
+            document.file ?: run {
+                analytics.track(AnalyticsEvent.DocumentViewFailed("no_file"))
+                return update { copy(isLoading = false, error = Res.string.errorOpeningDocument) }
+            }
         update { copy(isLoading = true, error = null) }
         viewModelScope.launch {
             documents.getFile(url).fold(
                 onSuccess = {
-                    update {
-                        copy(
-                            isLoading = false,
-                            bytes = it,
-                            extension = documentExtension(it, document.type, url),
-                        )
+                    val extension = documentExtension(it, document.type, url)
+                    if (extension == null) {
+                        analytics.track(AnalyticsEvent.DocumentViewFailed("unsupported"))
+                    } else {
+                        viewedExtension = extension
+                        maybeTrackViewed()
                     }
+                    update { copy(isLoading = false, bytes = it, extension = extension) }
                 },
-                onFailure = { update { copy(isLoading = false, error = it.toUserMessage()) } },
+                onFailure = {
+                    analytics.track(AnalyticsEvent.DocumentViewFailed(it.analyticsReason()))
+                    update { copy(isLoading = false, error = it.toUserMessage()) }
+                },
             )
         }
     }
@@ -102,6 +140,15 @@ class DocumentViewerViewModel(
         val fileName = if (name.endsWith(".$extension", ignoreCase = true)) name else "$name.$extension"
         // ponytail: writes on the caller's thread; the bytes are already in memory, so it's quick.
         val saved = save(fileName, bytes).isSuccess
+        analytics.track(
+            if (saved) {
+                AnalyticsEvent.DocumentDownloaded(
+                    fileType(extension),
+                )
+            } else {
+                AnalyticsEvent.DocumentDownloadFailed
+            },
+        )
         update {
             copy(
                 error = Res.string.errorSomethingWentWrong.takeUnless { saved },
@@ -123,10 +170,12 @@ class DocumentViewerViewModel(
         viewModelScope.launch {
             documents.delete(document.id).fold(
                 onSuccess = {
+                    analytics.track(AnalyticsEvent.DocumentDeleted("viewer"))
                     update { copy(isDeleting = false, confirmDelete = false) }
                     _deleted.send(Unit)
                 },
                 onFailure = {
+                    analytics.track(AnalyticsEvent.DocumentDeleteFailed("viewer", it.analyticsReason()))
                     update {
                         copy(
                             isDeleting = false,

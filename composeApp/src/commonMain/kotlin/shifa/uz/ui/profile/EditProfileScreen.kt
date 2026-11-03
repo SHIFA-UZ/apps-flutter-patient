@@ -57,6 +57,8 @@ import shifa.composeapp.generated.resources.selectDate
 import shifa.composeapp.generated.resources.selectOnMap
 import shifa.composeapp.generated.resources.streetAddress
 import shifa.composeapp.generated.resources.uploadPhoto
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.storage.AppLanguage
@@ -122,7 +124,10 @@ fun EditProfileScreen(
         onAddressChange = viewModel::onAddressChange,
         onLanguageChange = viewModel::onLanguageChange,
         onStreetAddressChange = viewModel::onStreetAddressChange,
-        onSelectOnMap = { onMap = true },
+        onSelectOnMap = {
+            Analytics.track(AnalyticsEvent.ComingSoonTapped("map"))
+            onMap = true
+        },
         onSave = viewModel::save,
     )
     if (pickingDate) {

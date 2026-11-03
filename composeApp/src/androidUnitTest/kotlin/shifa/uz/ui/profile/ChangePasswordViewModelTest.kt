@@ -21,6 +21,8 @@ import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorFailedToChangePassword
 import shifa.composeapp.generated.resources.passwordRequired
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_CHANGE_PASSWORD
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.model.ApiException
@@ -29,18 +31,30 @@ import shifa.uz.data.model.ApiException
 class ChangePasswordViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val auth = mock<AuthRepository>()
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: ChangePasswordViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        classToTest = ChangePasswordViewModel(auth)
+        classToTest = ChangePasswordViewModel(auth, tracker)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `a changed password is tracked`() =
+        runTest {
+            wheneverBlocking { auth.changePassword(any(), any()) } doReturn Result.success(Unit)
+            fill()
+            classToTest.save()
+            advanceUntilIdle()
+
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.PasswordChanged)
+        }
 
     private val state get() = classToTest.state.value
 

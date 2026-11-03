@@ -12,6 +12,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.profilePhotoUpdatedSuccessfully
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.ProfileUpdate
@@ -35,8 +39,10 @@ class EditProfileViewModel(
     initial: PatientProfile?,
     private val profile: ProfileRepository = ProfileRepository(),
     private val languages: LanguageStorage = languageStorage,
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
-    private val _state = MutableStateFlow((initial ?: PatientProfile()).toEditState(languages.language.value))
+    private val original = initial ?: PatientProfile()
+    private val _state = MutableStateFlow(original.toEditState(languages.language.value))
     val state: StateFlow<EditProfileUiState> = _state.asStateFlow()
 
     private val _events = Channel<EditProfileEvent>(Channel.BUFFERED)
@@ -69,6 +75,7 @@ class EditProfileViewModel(
         viewModelScope.launch {
             profile.changePhoto(picked.fileBytes, picked.fileName).fold(
                 onSuccess = {
+                    analytics.track(AnalyticsEvent.ProfilePhotoUpdated("edit_profile"))
                     update {
                         copy(
                             isUploading = false,
@@ -78,7 +85,10 @@ class EditProfileViewModel(
                     }
                     _events.send(EditProfileEvent.PhotoChanged(it))
                 },
-                onFailure = { update { copy(isUploading = false, error = it.toUserMessage()) } },
+                onFailure = {
+                    analytics.track(AnalyticsEvent.ProfilePhotoFailed("edit_profile", it.analyticsReason()))
+                    update { copy(isUploading = false, error = it.toUserMessage()) }
+                },
             )
         }
     }
@@ -87,7 +97,10 @@ class EditProfileViewModel(
     fun save() {
         val s = _state.value
         if (s.isSaving) return
-        if (!s.isValid) return update { copy(showErrors = true) }
+        if (!s.isValid) {
+            analytics.track(AnalyticsEvent.ProfileUpdateFailed("validation"))
+            return update { copy(showErrors = true) }
+        }
         update { copy(isSaving = true, error = null, notice = null) }
         val request =
             ProfileUpdate(
@@ -103,11 +116,32 @@ class EditProfileViewModel(
         viewModelScope.launch {
             profile.updateProfile(request).fold(
                 onSuccess = {
+                    analytics.track(AnalyticsEvent.ProfileUpdated(changedFields(s)))
+                    val from = languages.language.value
+                    if (s.language != from) {
+                        analytics.track(AnalyticsEvent.LanguageChanged(from.code, s.language.code, "edit_profile"))
+                    }
                     languages.set(s.language)
                     _events.send(EditProfileEvent.Saved(it))
                 },
-                onFailure = { update { copy(isSaving = false, error = it.toUserMessage()) } },
+                onFailure = {
+                    analytics.track(AnalyticsEvent.ProfileUpdateFailed(it.analyticsReason()))
+                    update { copy(isSaving = false, error = it.toUserMessage()) }
+                },
             )
         }
     }
+
+    // events.md §12: the names of the fields that changed, never their values.
+    private fun changedFields(s: EditProfileUiState): List<String> =
+        listOfNotNull(
+            "first_name".takeIf { s.firstName.trim() != original.fullName.trim().substringBefore(' ') },
+            "last_name".takeIf { s.lastName.trim() != original.fullName.trim().substringAfter(' ', "").trim() },
+            "phone".takeIf { s.phone.trim() != original.phone.orEmpty().trim() },
+            "birth_date".takeIf { s.birthDate?.toString() != original.birthDate?.take(10) },
+            "gender".takeIf { !s.gender?.value.equals(original.gender, ignoreCase = true) },
+            "address".takeIf { s.address.trim() != original.address.orEmpty().trim() },
+            "language".takeIf { s.language != languages.language.value },
+            "street_address".takeIf { s.streetAddress.trim() != original.locationStreetAddress.orEmpty().trim() },
+        )
 }

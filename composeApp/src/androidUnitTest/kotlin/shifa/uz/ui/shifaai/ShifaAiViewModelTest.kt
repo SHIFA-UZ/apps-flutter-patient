@@ -22,6 +22,8 @@ import shifa.composeapp.generated.resources.comingSoon
 import shifa.composeapp.generated.resources.copilotDailyLimit
 import shifa.composeapp.generated.resources.copilotTranscribeError
 import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.copilot.CopilotRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CopilotChat
@@ -65,6 +67,7 @@ class ShifaAiViewModelTest {
     private val heard = mutableListOf<String>()
     private val storage = CopilotStorage(MapSettings())
     private var clock = 1000L
+    private val tracker = RecordingTracker()
     private val saved =
         CopilotChat(
             "1",
@@ -76,6 +79,7 @@ class ShifaAiViewModelTest {
             copilot,
             storage,
             MutableStateFlow(AppLanguage.Russian),
+            tracker,
         ) { clock }
     }
 
@@ -91,6 +95,66 @@ class ShifaAiViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `voice, regenerate and the rate limit are tracked`() =
+        runTest {
+            classToTest.open()
+            classToTest.onRecording()
+            classToTest.transcribe(byteArrayOf(1))
+            advanceUntilIdle()
+            classToTest.regenerate()
+            advanceUntilIdle()
+            reply = Result.failure(ApiException.RateLimit("Too many requests"))
+            classToTest.edit("Hi")
+            classToTest.send()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.map { it.name })
+                .containsExactly(
+                    "ai_chat_started",
+                    "ai_voice_recorded",
+                    "ai_voice_transcribed",
+                    "ai_message_sent",
+                    "ai_reply_received",
+                    "ai_reply_action",
+                    "ai_reply_received",
+                    "ai_message_sent",
+                    "ai_reply_failed",
+                    "ai_rate_limited",
+                ).inOrder()
+            val sent = tracker.events.filterIsInstance<AnalyticsEvent.AiMessageSent>()
+            assertThat(sent.map { it.input }).containsExactly("voice", "typed").inOrder()
+            assertThat(tracker.events.filterIsInstance<AnalyticsEvent.AiReplyReceived>().last().isRegenerate).isTrue()
+            assertThat(tracker.events.flatMap { it.properties.values }).doesNotContain("I have a headache")
+        }
+
+    @Test
+    fun `a new chat, a typed question and its reply are tracked without their text`() =
+        runTest {
+            classToTest.open()
+            classToTest.edit("Headache?")
+            classToTest.send()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.AiChatStarted(isNew = true, savedChats = 1),
+                    AnalyticsEvent.AiMessageSent(
+                        turn = 1,
+                        input = "typed",
+                        lengthBucket = "<50",
+                        at = "1970-01-01T00:00:01Z",
+                    ),
+                    AnalyticsEvent.AiReplyReceived(
+                        firstTokenMs = 0,
+                        totalMs = 0,
+                        replyCharsBucket = "<300",
+                        isRegenerate = false,
+                    ),
+                ).inOrder()
+            assertThat(tracker.events.flatMap { it.properties.values }).doesNotContain("Headache?")
+        }
 
     @Test
     fun `a sent question streams its reply, then both are saved at the top`() =

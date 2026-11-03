@@ -67,7 +67,10 @@ import shifa.composeapp.generated.resources.submitCheckIn
 import shifa.composeapp.generated.resources.timeYesterday
 import shifa.composeapp.generated.resources.today
 import shifa.composeapp.generated.resources.yesterday
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.AppNotification
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.ui.documents.DocumentDisplayCard
@@ -129,8 +132,11 @@ fun NotificationsScreen(
         filter,
         now,
         onBack,
-        { filter = it },
-        viewModel::load,
+        {
+            filter = it
+            Analytics.track(AnalyticsEvent.NotificationFilterSelected(it.analyticsName()))
+        },
+        viewModel::refresh,
         viewModel::markAllRead,
         viewModel::open,
         viewModel::loadMore,
@@ -144,10 +150,12 @@ fun NotificationsScreen(
             patientName,
             viewModel::close,
             onCheckIn = { task ->
+                Analytics.track(AnalyticsEvent.NotificationActionTapped(it.kind, "checkin_tray"))
                 viewModel.close()
                 checkingIn = task
             },
         ) { link ->
+            Analytics.track(AnalyticsEvent.NotificationActionTapped(it.kind, link.routedTo()))
             viewModel.close()
             onLink(link)
         }

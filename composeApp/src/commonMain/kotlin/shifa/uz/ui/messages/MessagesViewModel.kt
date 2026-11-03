@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.failedToStartChat
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.chat.ChatRepository
 import shifa.uz.data.model.ApiException
@@ -22,6 +25,7 @@ import shifa.uz.data.model.ChatUser
 class MessagesViewModel(
     private val chat: ChatRepository = ChatRepository(),
     private val debounceMs: Long = 400,
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MessagesUiState())
     val state: StateFlow<MessagesUiState> = _state.asStateFlow()
@@ -38,6 +42,12 @@ class MessagesViewModel(
 
     private fun update(transform: MessagesUiState.() -> MessagesUiState) {
         _state.value = _state.value.transform()
+    }
+
+    /** Pull to refresh (events.md §9). */
+    fun refresh() {
+        analytics.track(AnalyticsEvent.ChatsRefreshed)
+        load()
     }
 
     /** C1, on first open, pull to refresh and when a chat closes. The list stays on screen meanwhile. */
@@ -61,7 +71,10 @@ class MessagesViewModel(
             viewModelScope.launch {
                 delay(debounceMs)
                 chat.search(query.trim()).fold(
-                    onSuccess = { update { copy(isSearching = false, results = it, error = null) } },
+                    onSuccess = {
+                        analytics.track(AnalyticsEvent.ChatDoctorSearched(query.trim().length, it.size))
+                        update { copy(isSearching = false, results = it, error = null) }
+                    },
                     onFailure = { fail(it) { copy(isSearching = false) } },
                 )
             }

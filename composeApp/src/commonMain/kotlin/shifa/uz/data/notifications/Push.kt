@@ -11,6 +11,6 @@ object Push {
     /** A tapped push's data, kept until the signed-in shell routes it (cold start included). */
     val opened = MutableStateFlow<Map<String, String>?>(null)
 
-    /** A push arrived in the foreground, so the bell's count is stale. */
-    val arrived = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    /** A push arrived in the foreground (its `type`, when the payload has one), so the bell's count is stale. */
+    val arrived = MutableSharedFlow<String?>(extraBufferCapacity = 1)
 }

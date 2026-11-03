@@ -21,6 +21,8 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.Appointment
@@ -38,10 +40,11 @@ class PushViewModelTest {
     private val tasks = mock<TasksRepository>()
     private val token = MutableStateFlow<String?>(null)
     private val opened = MutableStateFlow<Map<String, String>?>(null)
-    private val arrived = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val arrived = MutableSharedFlow<String?>(extraBufferCapacity = 1)
     private val appointment = Appointment(id = "a1")
     private val file = PatientDocument("d1", fileUrl = "https://f/1")
     private val care = RemoteCareTask(id = "t1", startDate = "2026-09-20")
+    private val tracker = RecordingTracker()
     private lateinit var classToTest: PushViewModel
 
     @Before
@@ -52,13 +55,31 @@ class PushViewModelTest {
         wheneverBlocking { bookings.getAppointments() } doReturn Result.success(listOf(appointment))
         wheneverBlocking { documents.getDocuments() } doReturn Result.success(listOf(file))
         wheneverBlocking { tasks.getMyTasks() } doReturn Result.success(listOf(care))
-        classToTest = PushViewModel(notifications, bookings, documents, tasks, token, opened, arrived)
+        classToTest = PushViewModel(notifications, bookings, documents, tasks, token, opened, arrived, tracker)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `the token, a foreground push and a tapped push are tracked`() =
+        runTest {
+            token.value = "t"
+            advanceUntilIdle()
+            arrived.tryEmit("NEW_MESSAGE")
+            advanceUntilIdle()
+            opened.value = mapOf("type" to "NEW_DOCUMENT", "documentId" to "d1")
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(
+                    AnalyticsEvent.PushTokenRegistered,
+                    AnalyticsEvent.PushReceived("NEW_MESSAGE"),
+                    AnalyticsEvent.PushOpened("NEW_DOCUMENT", "document"),
+                ).inOrder()
+        }
 
     @Test
     fun `P7 sends the token, and again when it refreshes`() =
@@ -110,7 +131,7 @@ class PushViewModelTest {
             verifyBlocking(notifications, never()) { markRead(any()) }
 
             classToTest.stale.test {
-                arrived.tryEmit(Unit)
+                arrived.tryEmit("NEW_MESSAGE")
                 awaitItem()
             }
         }

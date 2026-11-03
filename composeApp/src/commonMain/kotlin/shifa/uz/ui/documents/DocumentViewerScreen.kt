@@ -53,6 +53,8 @@ import shifa.composeapp.generated.resources.ic_download_22
 import shifa.composeapp.generated.resources.loadingDocument
 import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.unsupportedDocumentType
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.analytics.fileType
 import shifa.uz.data.model.Appointment
@@ -101,12 +103,24 @@ fun DocumentViewerScreen(
         state,
         document.title.ifBlank { stringResource(Res.string.document) },
         expanded = expanded,
-        onToggleExpanded = { expanded = !expanded },
-        onAppointment = onAppointment,
+        onToggleExpanded = {
+            expanded = !expanded
+            Analytics.track(AnalyticsEvent.DocumentExpanded(expanded))
+        },
+        onAppointment =
+            onAppointment?.let { open ->
+                {
+                    Analytics.track(AnalyticsEvent.DocumentVisitOpened)
+                    open(it)
+                }
+            },
         onBack = { if (expanded) expanded = false else onBack() },
         // F3 only takes the patient's own uploads.
         onMore = viewModel::askDelete.takeIf { document.isUploadedBy(patientName) && document.id.isNotBlank() },
-        onRetry = viewModel::load,
+        onRetry = {
+            Analytics.track(AnalyticsEvent.RetryTapped("document_viewer"))
+            viewModel.load()
+        },
         onDownload = { viewModel.download(saver::saveFile) },
     )
     if (state.confirmDelete) {

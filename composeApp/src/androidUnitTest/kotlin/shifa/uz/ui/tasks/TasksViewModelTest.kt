@@ -20,6 +20,8 @@ import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
 import shifa.composeapp.generated.resources.errorNetworkConnection
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.RemoteCareTask
@@ -36,7 +38,8 @@ class TasksViewModelTest {
     private val expiredLeft = active.copy(id = "4", status = "EXPIRED", progress = TaskProgress(3, 1, 2))
     private val cancelled = active.copy(id = "5", status = "CANCELLED")
     private val all = listOf(active, done, expiredDone, expiredLeft, cancelled)
-    private val classToTest by lazy { TasksViewModel(tasks) }
+    private val tracker = RecordingTracker()
+    private val classToTest by lazy { TasksViewModel(tasks, tracker) }
 
     @Before
     fun setUp() {
@@ -48,6 +51,19 @@ class TasksViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `opening the page and refreshing are tracked`() =
+        runTest {
+            classToTest.open()
+            advanceUntilIdle()
+            classToTest.refresh()
+            advanceUntilIdle()
+
+            assertThat(tracker.events)
+                .containsExactly(AnalyticsEvent.TasksViewed("open", 3, 2), AnalyticsEvent.TasksRefreshed)
+                .inOrder()
+        }
 
     private val state get() = classToTest.state.value
 

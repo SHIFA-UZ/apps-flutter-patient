@@ -8,8 +8,9 @@ fun onPushToken(token: String) {
     Push.token.value = token
 }
 
-fun onPushArrived() {
-    Push.arrived.tryEmit(Unit)
+/** [type] is the push's `type` entry, for analytics only. */
+fun onPushArrived(type: String?) {
+    Push.arrived.tryEmit(type)
 }
 
 /** The tapped push's userInfo; its string entries are the FCM data. */

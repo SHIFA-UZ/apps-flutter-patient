@@ -19,6 +19,7 @@ import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsSettings
 import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.PatientProfile
@@ -58,6 +59,12 @@ class ProfileViewModel(
         _state.value = _state.value.transform()
     }
 
+    /** Pull to refresh (events.md §12). */
+    fun refresh() {
+        analytics.track(AnalyticsEvent.ProfileRefreshed)
+        load()
+    }
+
     /** P1, also pull to refresh. The last profile stays on screen meanwhile (14 Q13). */
     fun load() {
         if (_state.value.isLoading) return
@@ -81,6 +88,8 @@ class ProfileViewModel(
 
     /** 14 §3.1.1. The app language is local; the PATCH only tells the backend, errors ignored. */
     fun selectLanguage(language: AppLanguage) {
+        val from = languages.language.value
+        if (language != from) analytics.track(AnalyticsEvent.LanguageChanged(from.code, language.code, "profile"))
         languages.set(language)
         // The person's `language` follows (docs/posthog/events.md §1.2); Edit profile's path goes through Home.
         _state.value.profile?.let(identify)
@@ -111,8 +120,14 @@ class ProfileViewModel(
         update { copy(isUploading = true, error = null, notice = null) }
         viewModelScope.launch {
             profile.changePhoto(picked.fileBytes, picked.fileName).fold(
-                onSuccess = { onProfileChanged(it, Res.string.profilePhotoUpdatedSuccessfully) },
-                onFailure = { update { copy(isUploading = false, error = it.toUserMessage()) } },
+                onSuccess = {
+                    analytics.track(AnalyticsEvent.ProfilePhotoUpdated("profile"))
+                    onProfileChanged(it, Res.string.profilePhotoUpdatedSuccessfully)
+                },
+                onFailure = {
+                    analytics.track(AnalyticsEvent.ProfilePhotoFailed("profile", it.analyticsReason()))
+                    update { copy(isUploading = false, error = it.toUserMessage()) }
+                },
             )
         }
     }
@@ -130,10 +145,19 @@ class ProfileViewModel(
     fun requestDeletion() {
         val s = _state.value
         if (s.isRequestingDeletion) return
-        if (s.email.isEmpty()) return update { copy(dialog = null, notice = null, error = Res.string.emailRequired) }
+        if (s.email.isEmpty()) {
+            analytics.track(AnalyticsEvent.AccountDeletionFailed("request", "email_required"))
+            return update { copy(dialog = null, notice = null, error = Res.string.emailRequired) }
+        }
         update { copy(isRequestingDeletion = true) }
         viewModelScope.launch {
             val result = profile.requestDeletion()
+            analytics.track(
+                result.fold(
+                    onSuccess = { AnalyticsEvent.AccountDeletionStarted },
+                    onFailure = { AnalyticsEvent.AccountDeletionFailed("request", it.analyticsReason()) },
+                ),
+            )
             update {
                 copy(
                     isRequestingDeletion = false,

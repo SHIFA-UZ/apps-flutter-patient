@@ -19,6 +19,10 @@ import shifa.composeapp.generated.resources.checkInPleaseSelectYesOrNo
 import shifa.composeapp.generated.resources.checkInSubmittedSuccessfully
 import shifa.composeapp.generated.resources.checkInValueInvalidNumber
 import shifa.composeapp.generated.resources.checkInValueRequired
+import shifa.uz.data.analytics.Analytics
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.AnalyticsTracker
+import shifa.uz.data.analytics.analyticsReason
 import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CheckInRequest
@@ -42,6 +46,7 @@ class TaskCheckInViewModel(
     private val clock: () -> Instant = ::getCurrentInstant,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
     private val openDue: Boolean = false,
+    private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(TaskCheckInUiState(task, clock().toLocalDateTime(zone).date.firstOfMonth()))
@@ -56,6 +61,28 @@ class TaskCheckInViewModel(
 
     private val _nothingDue = Channel<Unit>(Channel.CONFLATED)
     val nothingDue: Flow<Unit> = _nothingDue.receiveAsFlow()
+
+    init {
+        analytics.track(
+            AnalyticsEvent.TaskOpened(
+                category = task.category,
+                inputType = _state.value.inputType,
+                status = task.status,
+                progressPct =
+                    task.progress?.takeIf {
+                        it.totalCheckIns > 0
+                    }?.let { it.completedCheckIns * 100 / it.totalCheckIns / 10 * 10 },
+            ),
+        )
+    }
+
+    /** Pull to refresh (events.md §7). */
+    fun refresh() {
+        analytics.track(AnalyticsEvent.TaskRefreshed)
+        load()
+    }
+
+    private fun today() = clock().toLocalDateTime(zone).date
 
     private fun update(transform: TaskCheckInUiState.() -> TaskCheckInUiState) {
         _state.value = _state.value.transform()
@@ -93,6 +120,7 @@ class TaskCheckInViewModel(
                     if (it is ApiException.Unauthorized) {
                         _signedOut.send(Unit)
                     } else if (openDue && _state.value.checkIns == null) {
+                        analytics.track(AnalyticsEvent.CheckinNothingDue)
                         _nothingDue.send(Unit)
                     }
                 },
@@ -107,12 +135,30 @@ class TaskCheckInViewModel(
     private fun openDueDay() {
         val today = clock().toLocalDateTime(zone).date
         if (_state.value.on(today).any { it.isPending }) openDay(today)
-        if (_state.value.day == null) _nothingDue.trySend(Unit)
+        if (_state.value.day == null) {
+            analytics.track(AnalyticsEvent.CheckinNothingDue)
+            _nothingDue.trySend(Unit)
+        }
     }
 
-    fun prevMonth() = update { copy(month = month.plusMonths(-1)) }
+    fun prevMonth() = moveMonth(-1, "prev")
 
-    fun nextMonth() = update { copy(month = month.plusMonths(1)) }
+    fun nextMonth() = moveMonth(1, "next")
+
+    private fun moveMonth(
+        by: Int,
+        direction: String,
+    ) {
+        update { copy(month = month.plusMonths(by)) }
+        val month = _state.value.month
+        val today = today()
+        analytics.track(
+            AnalyticsEvent.TaskMonthChanged(
+                direction,
+                (month.year * 12 + month.monthNumber) - (today.year * 12 + today.monthNumber),
+            ),
+        )
+    }
 
     /** A day with a PENDING check-in opens its form; one with only submitted ones shows them. */
     fun openDay(date: LocalDate) {
@@ -121,11 +167,29 @@ class TaskCheckInViewModel(
         val entry = day.firstOrNull { it.isPending }
         if (entry == null && day.none { it.isCompleted }) return
         val due = entry?.scheduledAt(zone)?.let { it <= clock() + 10.minutes } ?: false
+        analytics.track(
+            AnalyticsEvent.CheckinDayOpened(
+                state =
+                    if (entry == null) {
+                        "submitted"
+                    } else if (due) {
+                        "due"
+                    } else {
+                        "not_yet_due"
+                    },
+                daysFromToday = (date.toEpochDays() - today().toEpochDays()).toInt(),
+            ),
+        )
         update { copy(day = date, entry = entry, entryDue = due, error = null, notice = null).cleared() }
     }
 
     fun closeDay() {
-        if (!_state.value.isSubmitting) update { copy(day = null, entry = null, error = null).cleared() }
+        val s = _state.value
+        if (s.isSubmitting) return
+        if (s.entry != null && (s.value.isNotBlank() || s.notes.isNotBlank() || s.answer != null)) {
+            analytics.track(AnalyticsEvent.CheckinAbandoned(s.inputType))
+        }
+        update { copy(day = null, entry = null, error = null).cleared() }
     }
 
     fun onValueChange(value: String) = update { copy(value = value, valueError = null) }
@@ -155,6 +219,17 @@ class TaskCheckInViewModel(
             }
         val notesError = Res.string.checkInNotesRequired.takeIf { s.task.notesRequired && notes == null }
         if (valueError != null || notesError != null) {
+            analytics.track(
+                AnalyticsEvent.CheckinValidationFailed(
+                    field = if (valueError != null) "value" else "notes",
+                    rule =
+                        when (valueError) {
+                            null, Res.string.checkInValueRequired, Res.string.checkInNotesRequired -> "required"
+                            Res.string.checkInValueInvalidNumber -> "not_a_number"
+                            else -> "yes_no"
+                        },
+                ),
+            )
             update { copy(valueError = valueError, notesError = notesError) }
             return
         }
@@ -170,6 +245,17 @@ class TaskCheckInViewModel(
         viewModelScope.launch {
             tasks.submitCheckIn(s.task.id, request).fold(
                 onSuccess = {
+                    val now = clock()
+                    analytics.track(
+                        AnalyticsEvent.CheckinSubmitted(
+                            inputType = s.inputType,
+                            category = s.task.category,
+                            hasNotes = notes != null,
+                            minutesFromScheduled = s.entry?.scheduledAt(zone)?.let { (now - it).inWholeMinutes },
+                            hourOfDay = now.toLocalDateTime(zone).hour,
+                            at = now.toString(),
+                        ),
+                    )
                     update {
                         copy(
                             day = null,
@@ -183,6 +269,7 @@ class TaskCheckInViewModel(
                     _submitted.send(Unit)
                 },
                 onFailure = {
+                    analytics.track(AnalyticsEvent.CheckinFailed(it.analyticsReason()))
                     update { copy(isSubmitting = false, error = it.toUserMessage()) }
                     if (it is ApiException.Unauthorized) _signedOut.send(Unit)
                 },

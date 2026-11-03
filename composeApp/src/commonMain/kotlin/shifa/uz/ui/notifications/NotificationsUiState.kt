@@ -142,3 +142,17 @@ internal fun actionLabel(kind: String) =
         "MESSAGE" in kind -> Res.string.notificationActionOpenChat
         else -> Res.string.notificationActionOpenDetails
     }
+
+/** events.md §11: where a link lands. */
+fun NotificationLink.routedTo(): String =
+    when (this) {
+        is NotificationLink.ToAppointment -> "appointment"
+        is NotificationLink.ToSigning -> "live_appointment"
+        is NotificationLink.ToDocument -> "document"
+        NotificationLink.ToDocuments -> "documents_tab"
+        is NotificationLink.ToTask -> "task"
+        NotificationLink.ToTasks -> "tasks_list"
+        is NotificationLink.ToChat -> "chat"
+        NotificationLink.ToMessages -> "messages_tab"
+        NotificationLink.ToBookings -> "bookings_tab"
+    }

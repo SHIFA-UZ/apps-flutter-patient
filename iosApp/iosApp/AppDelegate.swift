@@ -62,7 +62,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        PushBridgeKt.onPushArrived()
+        PushBridgeKt.onPushArrived(type: notification.request.content.userInfo["type"] as? String)
         completionHandler([.banner, .list, .sound])
     }
 

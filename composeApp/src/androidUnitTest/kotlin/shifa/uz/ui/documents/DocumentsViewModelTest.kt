@@ -26,6 +26,8 @@ import shifa.composeapp.generated.resources.documentUploadedSuccessfully
 import shifa.composeapp.generated.resources.enterDocumentTitle
 import shifa.composeapp.generated.resources.failedToDeleteDocument
 import shifa.composeapp.generated.resources.uploadFailed
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_DELETE_DOCUMENT
 import shifa.uz.data.api.FAILED_TO_UPLOAD_DOCUMENT
 import shifa.uz.data.documents.DocumentsRepository
@@ -39,7 +41,8 @@ class DocumentsViewModelTest {
     private val blood =
         PatientDocument(id = "1", title = "Blood test", creatorLabel = "Patient", category = "BLOOD_TEST")
     private val mri = PatientDocument(id = "2", title = "MRI scan", creatorLabel = "Doctor", category = "MRI")
-    private val classToTest by lazy { DocumentsViewModel(documents) }
+    private val tracker = RecordingTracker()
+    private val classToTest by lazy { DocumentsViewModel(documents, tracker) }
 
     @Before
     fun setUp() {
@@ -51,6 +54,31 @@ class DocumentsViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `a chip and an upload from the camera are tracked`() =
+        runTest {
+            wheneverBlocking { documents.upload(any(), any(), any(), anyOrNull()) } doReturn Result.success(blood)
+            classToTest.load()
+            advanceUntilIdle()
+            classToTest.filterBy("MRI")
+            classToTest.pick("scan.pdf", "%PDF".encodeToByteArray(), "camera")
+            classToTest.upload()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.take(2))
+                .containsExactly(
+                    AnalyticsEvent.DocumentsFiltered("MRI", 1),
+                    AnalyticsEvent.DocumentUploadStarted("camera"),
+                )
+                .inOrder()
+            val uploaded = tracker.events.filterIsInstance<AnalyticsEvent.DocumentUploaded>().single()
+            assertThat(uploaded.source).isEqualTo("camera")
+            assertThat(uploaded.fileType).isEqualTo("pdf")
+            assertThat(uploaded.category).isEqualTo("none")
+            assertThat(uploaded.sizeKbBucket).isEqualTo("<500")
+            assertThat(uploaded.titleEdited).isFalse()
+        }
 
     private val state get() = classToTest.state.value
 

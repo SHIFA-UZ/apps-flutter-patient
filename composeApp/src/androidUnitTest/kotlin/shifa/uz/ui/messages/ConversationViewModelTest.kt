@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -25,6 +26,8 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.uz.data.analytics.AnalyticsEvent
+import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.chat.ChatRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.ChatMessage
@@ -41,8 +44,9 @@ class ConversationViewModelTest {
     private val reply = ChatMessage("2", text = "Hi", created = "2026-09-28T08:01:00Z")
     private var target = ChatTarget("3", name = "Aziz")
     private var now = 1_000_000_000L
+    private val tracker = RecordingTracker()
     private val classToTest by lazy {
-        ConversationViewModel(target, chat, pollMs = 5_000) { Instant.fromEpochMilliseconds(now) }
+        ConversationViewModel(target, chat, pollMs = 5_000, analytics = tracker) { Instant.fromEpochMilliseconds(now) }
     }
 
     @Before
@@ -56,6 +60,22 @@ class ConversationViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `opening the chat and sending a text are tracked without the text`() =
+        runTest {
+            wheneverBlocking { chat.send(any()) } doReturn Result.success(null)
+            open()
+            classToTest.edit("Hello doctor")
+            classToTest.send()
+            advanceUntilIdle()
+
+            assertThat(tracker.events.first()).isEqualTo(AnalyticsEvent.ChatOpened(source = null, isNew = false))
+            val sent = tracker.events.filterIsInstance<AnalyticsEvent.ChatMessageSent>().single()
+            assertThat(sent.type).isEqualTo("text")
+            assertThat(sent.isFirstInChat).isFalse()
+            assertThat(sent.properties.values).doesNotContain("Hello doctor")
+        }
 
     private val state get() = classToTest.state.value
 
