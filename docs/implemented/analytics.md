@@ -2,6 +2,15 @@
 
 The plan: [../posthog/README.md](../posthog/README.md). This file records what of it is built.
 
+## The PostHog project (ANL-01, 2026-11-03)
+
+- Organization **SHIFA** on PostHog Cloud EU, project **Shifa** (id 332380). Settings applied through the API:
+  timezone `Asia/Tashkent`, client IPs discarded, session replay off, autocapture / heatmaps / web vitals / console
+  logs / performance off, surveys off, exception autocapture off (ANL-06 turns it on), the internal-users filter on
+  by default for new insights, weeks start on Monday. Person profiles "identified only" is set in the SDK.
+- Still to do: the team's `patient_<id>`s in the internal-users filter (setup.md §1.4), `POSTHOG_API_KEY_PROD` in
+  GitHub (setup.md §2.1), legal sign-off (privacy.md §4-5), the privacy policy text.
+
 ## Foundation (`data/analytics/`, ANL-02)
 
 - `Analytics` is the one way in: `track(event)`, `identify(profile)`, `reset()`, `register(key, value)`,
@@ -9,23 +18,22 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   at once). Super properties are kept and re-registered after `reset`, which the SDKs would otherwise drop. Its `platform` is the SDK (`PostHogSink` on Android,
   `PostHogAnalytics.swift` on iOS, registered through `AnalyticsBridge.kt`); `sink` is null while opted out or in demo
   mode, so events and flag reads stop, while `reset` and `register` go through regardless (setup.md §4).
-- `AnalyticsEvent` is the catalog in code (events.md). Built so far: `analytics_opted_out`, `analytics_opted_in`,
-  `debug_marked_internal`. `AnalyticsEventTest` checks names and keys against privacy.md §3.
-- Keys: debug reads `posthog.apiKey.dev` from `local.properties`; release reads the Gradle property
-  `posthog.apiKey.prod` (Play workflow) or `POSTHOG_API_KEY_PROD` in `iosApp/Configuration/Secrets.xcconfig` (written by
-  the TestFlight workflow; a local `POSTHOG_API_KEY_DEV` there feeds Debug builds only), both from the
-  `POSTHOG_API_KEY_PROD` secret. No key: `platform` stays null, nothing runs.
+- `AnalyticsEvent` is the catalog in code (events.md). Built so far: `analytics_opted_out`, `analytics_opted_in`. `AnalyticsEventTest` checks names and keys against privacy.md §3.
+- Key: release builds only (README D4: debug builds never track; the Gradle debug type and the Xcode Debug
+  configuration hard-wire an empty key, and both platform setups return early in debug). Release reads the Gradle
+  property `posthog.apiKey.prod` (Play workflow) or `POSTHOG_API_KEY_PROD` in `iosApp/Configuration/Secrets.xcconfig`
+  (written by the TestFlight workflow), both from the `POSTHOG_API_KEY_PROD` secret. No key: `platform` stays null.
 - SDK config (setup.md §5): lifecycle events on, screen views / deep links / element interactions / push capture off,
   session replay off, identified-only person profiles, flags preloaded unless starting opted out or in demo mode (the
-  SDK would otherwise still ask PostHog for flags), `debug` in debug builds. Known: the SDK's `reset()` reloads flags
+  SDK would otherwise still ask PostHog for flags). Known: the SDK's `reset()` reloads flags
   regardless, so a logout while opted out makes one anonymous flags request. Error tracking
   autocapture is ANL-06.
 - Hooks: `HomeViewModel.show` identifies (`patient_<id>` with the events.md §1.2 person properties);
-  `AuthRepository.logout`, the session-restore 401 and the reinstall wipe reset; `App` registers `app_language`
-  (and `backend` in debug builds) and tells `Analytics` about demo mode; Profile → Settings → "Share usage data"
+  `AuthRepository.logout`, the session-restore 401 and the reinstall wipe reset; `App` registers `app = patient` and `app_language` (the person gets `app` too) and tells `Analytics` about demo mode; Profile → Settings → "Share usage data"
   (`ProfileViewModel.setShareUsageData`, saved as `analytics_opt_out` in plain Settings); the Profile language dialog
   re-identifies so the person's `language` follows.
-- Debug menu → Analytics: whether a key is built in, "Mark me as internal" (`internal = true`), the session's last 50
-  events (`Analytics.recent`, debug builds only).
+- Debug menu → Analytics: your analytics id (`patient_<id>`, to add to PostHog's internal-users filter, since a
+  debug build can't send a marker) and the session's last 50 events (`Analytics.recent`, debug builds only): the
+  way to check events, since debug builds never send.
 - Not built: screens (`TrackScreen`, ANL-03), journey and engagement events (ANL-04/05), reliability events and
   exception autocapture (ANL-06), the `Flags` accessors (first flag in ANL-08; the sink methods exist).

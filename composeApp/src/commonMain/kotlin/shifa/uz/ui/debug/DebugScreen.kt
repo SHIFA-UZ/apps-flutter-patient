@@ -49,7 +49,6 @@ fun DebugScreen(
         onDevelopmentChange = viewModel::onDevelopmentChange,
         onReset = viewModel::resetDemoData,
         onPush = { viewModel.onPushed(push(it.label, it.message, it.data)) },
-        onMarkInternal = viewModel::markInternal,
     )
 }
 
@@ -61,7 +60,6 @@ internal fun DebugContent(
     onDevelopmentChange: (Boolean) -> Unit = {},
     onReset: () -> Unit = {},
     onPush: (FakePush) -> Unit = {},
-    onMarkInternal: () -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().background(ShifaColors.Bg.Surface).statusBarsPadding()) {
         ShifaPageElement(ShifaPageElementType.Header) { ShifaSubHeader("Debug menu", onBack = onBack) }
@@ -102,14 +100,11 @@ internal fun DebugContent(
                     }
                     ShifaSection("Analytics", type = ShifaSectionType.CardOnColor) {
                         Note(
-                            if (state.analyticsReady) {
-                                "PostHog is on with this build's key (Dev project). Events this session, newest first:"
-                            } else {
-                                "No PostHog key in this build (local.properties posthog.apiKey.dev), so nothing is " +
-                                    "sent. Events this session, newest first:"
-                            },
+                            "Debug builds never send to PostHog; release builds do. To keep your own release builds " +
+                                "out of the dashboards, add your analytics id to PostHog's internal-users filter " +
+                                "(docs/posthog/setup.md §1.4): ${state.analyticsId ?: "sign in to see it"}.",
                         )
-                        ShifaSecondaryButton("Mark me as internal", onMarkInternal, Modifier.fillMaxWidth())
+                        Note("Every event still goes through the app's analytics. This session, newest first:")
                         if (state.analyticsEvents.isEmpty()) Note("None yet.")
                         state.analyticsEvents.forEach { Note(it) }
                     }

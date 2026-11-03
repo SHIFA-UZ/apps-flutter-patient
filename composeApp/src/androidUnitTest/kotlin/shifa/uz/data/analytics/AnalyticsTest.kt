@@ -33,9 +33,9 @@ class AnalyticsTest {
 
     @Test
     fun `an event goes to the sink with its properties`() {
-        Analytics.track(AnalyticsEvent.MarkedInternal)
+        Analytics.track(AnalyticsEvent.AnalyticsOptedIn)
 
-        assertThat(sink.calls).containsExactly("capture debug_marked_internal {} {internal=true} {}")
+        assertThat(sink.calls).containsExactly("capture analytics_opted_in {} {} {}")
     }
 
     @Test
@@ -43,8 +43,8 @@ class AnalyticsTest {
         Analytics.identify(patient, language = "ru")
 
         assertThat(sink.calls).containsExactly(
-            "identify patient_42 {language=ru, subscription_tier=PRO, shifa_ai_enabled=false, has_photo=true, " +
-                "has_email=true, has_phone=false} {first_platform=android}",
+            "identify patient_42 {app=patient, language=ru, subscription_tier=PRO, shifa_ai_enabled=false, " +
+                "has_photo=true, has_email=true, has_phone=false} {first_platform=android}",
         )
     }
 
@@ -58,7 +58,7 @@ class AnalyticsTest {
     @Test
     fun `opted out sends nothing, opts the SDK out, but still resets and registers`() {
         Analytics.setOptedOut(true)
-        Analytics.track(AnalyticsEvent.MarkedInternal)
+        Analytics.track(AnalyticsEvent.AnalyticsOptedIn)
         Analytics.identify(patient, language = "en")
         Analytics.register("app_language", "en")
         Analytics.reset()
@@ -104,14 +104,12 @@ class AnalyticsTest {
     @Test
     fun `reset puts the super properties back, since the SDK's reset drops them`() {
         Analytics.register("app_language", "ru")
-        Analytics.register("backend", "development")
+        Analytics.register("other", "value")
         sink.calls.clear()
 
         Analytics.reset()
 
-        assertThat(sink.calls)
-            .containsExactly("reset", "register app_language=ru", "register backend=development")
-            .inOrder()
+        assertThat(sink.calls).containsExactly("reset", "register app_language=ru", "register other=value").inOrder()
     }
 
     @Test

@@ -11,10 +11,11 @@ import shifa.uz.BuildConfig
 import shifa.uz.data.debug.DemoMode
 
 /**
- * docs/posthog/setup.md §5. No key (a fresh clone, or CI without the secret) means analytics stays off: nothing is
- * set up and [Analytics.platform] stays null.
+ * docs/posthog/setup.md §5. Release builds only (README D4: debug builds never track), and no key (CI without the
+ * secret) means analytics stays off: nothing is set up and [Analytics.platform] stays null.
  */
 fun setUpAnalytics(app: Application) {
+    if (BuildConfig.DEBUG) return
     val key = BuildConfig.POSTHOG_API_KEY
     if (key.isBlank()) return
     val optedOut = AnalyticsSettings().optedOut
@@ -35,7 +36,6 @@ fun setUpAnalytics(app: Application) {
             // identity must be dropped even while opted out.)
             preloadFeatureFlags = !(optedOut || demo)
             this.optOut = optedOut || demo // privacy.md §4, README D8
-            debug = BuildConfig.DEBUG
         }
     PostHogAndroid.setup(app, config)
     Analytics.platform = PostHogSink()

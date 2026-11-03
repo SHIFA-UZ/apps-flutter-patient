@@ -30,8 +30,8 @@ data class DebugUiState(
     val chatId: String? = null,
     val notice: String? = null,
     val noticeIsError: Boolean = false,
-    val analyticsReady: Boolean = false, // a PostHog key is built in
     val analyticsEvents: List<String> = emptyList(), // newest first (docs/posthog/development.md §5)
+    val analyticsId: String? = null, // `patient_<id>`: what to add to PostHog's internal-users filter (setup.md §1.4)
 ) {
     val pushes get() =
         listOf(

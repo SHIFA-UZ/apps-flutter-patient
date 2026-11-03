@@ -11,6 +11,9 @@ import shifa.uz.utils.isDebugBuild
 /** PostHog Cloud EU (docs/posthog/README.md D1). Not a secret; the project key is. */
 const val POSTHOG_HOST = "https://eu.i.posthog.com"
 
+/** On every event and person: tells this app's data from the doctor app's if they ever share a project (setup.md §1.7). */
+const val ANALYTICS_APP = "patient"
+
 /** What the platform SDK does. Android: PostHog's SDK (`PostHogSink`); iOS: Swift's `PostHogAnalytics`. */
 interface AnalyticsSink {
     fun capture(
@@ -93,6 +96,7 @@ object Analytics : AnalyticsTracker {
         sink?.identify(
             "patient_$id",
             listOf(
+                "app" to ANALYTICS_APP,
                 "language" to language,
                 "subscription_tier" to profile.subscriptionTier,
                 "shifa_ai_enabled" to profile.canUseShifaAi,

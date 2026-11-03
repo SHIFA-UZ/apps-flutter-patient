@@ -10,7 +10,6 @@ class AnalyticsEventTest {
         listOf(
             AnalyticsEvent.AnalyticsOptedOut,
             AnalyticsEvent.AnalyticsOptedIn,
-            AnalyticsEvent.MarkedInternal,
         )
 
     // privacy.md §3: identity, free text, exact amounts and record ids never travel.

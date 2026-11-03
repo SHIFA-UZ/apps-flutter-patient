@@ -119,13 +119,8 @@ val appVersionCode = versionBuild
 
 println("Building Shifa v$appVersionName (Build $appVersionCode)")
 
-// PostHog project keys (docs/posthog/setup.md §2): debug from local.properties, release from CI's Gradle property.
-// Missing means analytics off, so a fresh clone needs no setup.
-val localProperties =
-    Properties().apply {
-        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
-    }
-val postHogDevKey = localProperties.getProperty("posthog.apiKey.dev").orEmpty()
+// The PostHog project key (docs/posthog/setup.md §2): release builds only, from CI's Gradle property. Missing means
+// analytics off. Debug builds never get one (README D4: no development data is tracked).
 val postHogProdKey = project.findProperty("posthog.apiKey.prod")?.toString().orEmpty()
 
 // Written by CI (google_play_deploy.yml); absent locally, so release stays unsigned.
@@ -164,7 +159,7 @@ android {
         getByName("debug") {
             versionNameSuffix = "-debug"
             isDebuggable = true
-            buildConfigField("String", "POSTHOG_API_KEY", "\"$postHogDevKey\"")
+            buildConfigField("String", "POSTHOG_API_KEY", "\"\"") // never tracked (README D4)
         }
 
         getByName("release") {

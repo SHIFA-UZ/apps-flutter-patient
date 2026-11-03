@@ -18,15 +18,15 @@ import org.junit.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.wheneverBlocking
-import shifa.uz.data.analytics.AnalyticsEvent
-import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.chat.ChatRepository
 import shifa.uz.data.debug.Backend
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PatientDocument
+import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.RemoteCareTask
+import shifa.uz.data.profile.ProfileRepository
 import shifa.uz.data.tasks.TasksRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,7 +42,7 @@ class DebugViewModelTest {
     private var backend: Backend? = null
     private var signOuts = 0
     private val signedOut = CompletableDeferred<Unit>()
-    private val tracker = RecordingTracker()
+    private val profile = mock<ProfileRepository>()
 
     private val classToTest by lazy {
         DebugViewModel(
@@ -50,6 +50,7 @@ class DebugViewModelTest {
             tasks,
             documents,
             chat,
+            profile,
             MutableStateFlow(true),
             setDemo = { demo = it },
             resetDemo = { resets++ },
@@ -60,8 +61,6 @@ class DebugViewModelTest {
                 signOuts++
             },
             clock = { now },
-            analytics = tracker,
-            analyticsReady = true,
             recentEvents = MutableStateFlow(listOf("analytics_opted_in")),
         )
     }
@@ -158,16 +157,13 @@ class DebugViewModelTest {
         }
 
     @Test
-    fun `mark me as internal sends the marker event and shows the analytics state`() =
+    fun `the analytics id and the session's events show`() =
         runTest {
+            wheneverBlocking { profile.getProfile() } doReturn Result.success(PatientProfile(id = " 42 "))
             classToTest
             advanceUntilIdle()
 
-            classToTest.markInternal()
-
-            assertThat(tracker.events).containsExactly(AnalyticsEvent.MarkedInternal)
-            assertThat(classToTest.state.value.analyticsReady).isTrue()
+            assertThat(classToTest.state.value.analyticsId).isEqualTo("patient_42")
             assertThat(classToTest.state.value.analyticsEvents).containsExactly("analytics_opted_in")
-            assertThat(classToTest.state.value.notice).startsWith("Marked as internal")
         }
 }

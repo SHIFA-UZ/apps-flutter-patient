@@ -23,8 +23,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         return true
     }
 
-    /// docs/posthog/setup.md §5. No key (Secrets.xcconfig missing) means analytics stays off.
+    /// docs/posthog/setup.md §5. Release builds only (README D4: debug builds never track), and no key
+    /// (Secrets.xcconfig missing) means analytics stays off.
     private func setUpAnalytics() {
+        #if DEBUG
+        return
+        #else
         guard let key = Bundle.main.object(forInfoDictionaryKey: "PostHogApiKey") as? String, !key.isEmpty else { return }
         let config = PostHogConfig(projectToken: key, host: "https://eu.i.posthog.com")
         config.captureApplicationLifecycleEvents = true
@@ -39,11 +43,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         let off = AnalyticsBridgeKt.analyticsStartsOptedOut() // privacy.md §4, README D8
         config.preloadFeatureFlags = !off // README D10; not while off, or setup would still ask PostHog for flags
         config.optOut = off
-        #if DEBUG
-        config.debug = true
-        #endif
         PostHogSDK.shared.setup(config)
         AnalyticsBridgeKt.registerAnalytics(sink: PostHogAnalytics())
+        #endif
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {

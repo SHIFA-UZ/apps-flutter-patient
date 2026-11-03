@@ -22,7 +22,4 @@ sealed class AnalyticsEvent(
     data object AnalyticsOptedOut : AnalyticsEvent("analytics_opted_out")
 
     data object AnalyticsOptedIn : AnalyticsEvent("analytics_opted_in")
-
-    /** Debug menu: marks the team's account, so Prod's "internal users" filter excludes it (development.md §5). */
-    data object MarkedInternal : AnalyticsEvent("debug_marked_internal", userProperties = mapOf("internal" to true))
 }
