@@ -224,6 +224,14 @@ class AnalyticsEventTest {
     fun `null property values are left out instead of sent as null`() {
         assertThat(listOf("a" to 1, "b" to null, "c" to "x").clean()).containsExactly("a", 1, "c", "x")
     }
+
+    @Test
+    fun `days_to_first_slot is only ever a number, with has_slots saying whether there was one`() {
+        assertThat(AnalyticsEvent.BookingSlotsLoaded(2, false, "today").properties)
+            .containsExactly("has_slots", true, "days_to_first_slot", 2, "is_video", false, "scan_start", "today")
+        assertThat(AnalyticsEvent.BookingSlotsLoaded(null, true, "today").properties)
+            .containsExactly("has_slots", false, "is_video", true, "scan_start", "today")
+    }
 }
 
 /** For ViewModel tests: the events a ViewModel sent, in order. */

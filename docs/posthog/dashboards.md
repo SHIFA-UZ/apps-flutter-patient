@@ -34,7 +34,7 @@ The main dashboard: from install to coming back.
 | By payment kind | Trends | `booking_done` by `payment_kind` (both outcome events carry it), next to `booking_abandoned` by `step_reached` for `payment_methods` / `checkout`: does paying up front lose bookings? |
 | Abandonment | Trends | `booking_abandoned` by `step_reached` |
 | Failure reasons | Trends | `booking_failed` by `reason` |
-| No slots | Trends | `booking_slots_loaded` where `days_to_first_slot = none`, by `is_video`, `scan_start` |
+| No slots | Trends | `booking_slots_loaded` where `has_slots = false`, by `is_video`, `scan_start` |
 | Video vs in person | Trends | `booking_done` by `is_video` |
 | Lead time | Trends, median | `booking_completed.days_ahead`; `booking_slot_selected.hour_of_day` histogram |
 | Search quality | Trends | `doctor_search_performed` where `results_count = 0`, as a share of all searches |

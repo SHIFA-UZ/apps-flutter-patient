@@ -12,30 +12,34 @@ final class PostHogAnalytics: NSObject, AnalyticsSink {
     ) {
         PostHogSDK.shared.capture(
             event,
-            properties: properties,
-            userProperties: userProperties.isEmpty ? nil : userProperties,
-            userPropertiesSetOnce: userPropertiesSetOnce.isEmpty ? nil : userPropertiesSetOnce
+            properties: properties.json,
+            userProperties: userProperties.isEmpty ? nil : userProperties.json,
+            userPropertiesSetOnce: userPropertiesSetOnce.isEmpty ? nil : userPropertiesSetOnce.json
         )
     }
 
     func screen(name: String, properties: [String: Any]) {
-        PostHogSDK.shared.screen(name, properties: properties)
+        PostHogSDK.shared.screen(name, properties: properties.json)
     }
 
     func identify(distinctId: String, userProperties: [String: Any], userPropertiesSetOnce: [String: Any]) {
         PostHogSDK.shared.identify(
             distinctId,
-            userProperties: userProperties,
-            userPropertiesSetOnce: userPropertiesSetOnce.isEmpty ? nil : userPropertiesSetOnce
+            userProperties: userProperties.json,
+            userPropertiesSetOnce: userPropertiesSetOnce.isEmpty ? nil : userPropertiesSetOnce.json
         )
     }
 
     func register(key: String, value: Any) {
-        PostHogSDK.shared.register([key: value])
+        PostHogSDK.shared.register([key: value].json)
     }
 
     func reset() {
         PostHogSDK.shared.reset()
+    }
+
+    func distinctId() -> String {
+        PostHogSDK.shared.getDistinctId()
     }
 
     func optOut(out: Bool) {
@@ -57,4 +61,11 @@ final class PostHogAnalytics: NSObject, AnalyticsSink {
     func reloadFeatureFlags() {
         PostHogSDK.shared.reloadFeatureFlags()
     }
+}
+
+private extension Dictionary where Key == String, Value == Any {
+    /// A Kotlin `Boolean` arrives as `KotlinBoolean`, which the SDK's JSONSerialization writes as `1` / `0` (Android
+    /// sends `true` / `false`); a Swift `Bool` bridges to the CFBoolean it writes as `true` / `false`. Kotlin can't
+    /// fix this: it turns even `kCFBooleanTrue` back into a `KotlinBoolean`. Values are flat (events.md).
+    var json: [String: Any] { mapValues { ($0 as? KotlinBoolean)?.boolValue ?? $0 } }
 }

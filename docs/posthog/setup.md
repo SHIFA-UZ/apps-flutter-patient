@@ -435,6 +435,10 @@ talks to the production API (the app hardcodes it) and sends to the Shifa projec
   but is never something to upload. CI's `-Pposthog.apiKey.prod` still wins when both are set.
 - **iOS:** put `POSTHOG_API_KEY_PROD = phc_…` in `iosApp/Configuration/Secrets.xcconfig`, then in Xcode edit the
   `iosApp` scheme → Run → Build Configuration → Release and run on a device or simulator.
+  From the command line: `xcodebuild -scheme iosApp -configuration Release -destination 'id=<simulator>'
+  CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= build`, then `xcrun simctl install`. Keep the
+  ad-hoc signing: with `CODE_SIGNING_ALLOWED=NO` the app has no Keychain access, so the token store throws and
+  `session_restored` (and login) never happen.
 
 Then log in with your own account and follow the steps below. Your events are real production events: log in with
 a test account, or put your `patient_<id>` in the internal-users filter first (§1.4).

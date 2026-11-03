@@ -57,6 +57,23 @@ class AnalyticsTest {
     }
 
     @Test
+    fun `identify resets a different patient the SDK still holds, and not the same one`() {
+        sink.distinctId = "patient_7"
+        Analytics.identify(patient, language = "ru")
+        Analytics.identify(patient, language = "ru")
+
+        assertThat(sink.calls.map { it.substringBefore(" {") })
+            .containsExactly(
+                "reset",
+                "register app=patient",
+                "register app_language=en",
+                "identify patient_42",
+                "identify patient_42",
+            )
+            .inOrder()
+    }
+
+    @Test
     fun `a profile without an id is never identified`() {
         Analytics.identify(PatientProfile(fullName = "Aziz"), language = "en")
 
@@ -176,6 +193,7 @@ class RecordingSink : AnalyticsSink {
         userPropertiesSetOnce: Map<String, Any>,
     ) {
         calls += "identify $distinctId $userProperties $userPropertiesSetOnce"
+        this.distinctId = distinctId
     }
 
     override fun register(
@@ -187,7 +205,13 @@ class RecordingSink : AnalyticsSink {
 
     override fun reset() {
         calls += "reset"
+        distinctId = "anonymous"
     }
+
+    /** What the SDK holds: an anonymous id until identified. */
+    var distinctId = "anonymous"
+
+    override fun distinctId() = distinctId
 
     override fun optOut(out: Boolean) {
         calls += "optOut $out"

@@ -74,6 +74,8 @@ internal class PostHogSink : AnalyticsSink {
 
     override fun reset() = PostHog.reset()
 
+    override fun distinctId() = PostHog.distinctId()
+
     override fun optOut(out: Boolean) = if (out) PostHog.optOut() else PostHog.optIn()
 
     override fun isFeatureEnabled(key: String) = PostHog.isFeatureEnabled(key)
