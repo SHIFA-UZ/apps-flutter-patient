@@ -30,12 +30,12 @@ controls, with the event each one produces. A new control without a row is a rev
 
 | Property | Value | Source |
 |---|---|---|
+| `app` | `patient` | constant; the doctor app sets `doctor` (setup.md §1.7) |
 | `language` | `en` / `ru` / `uz` / `de` | the app language |
 | `subscription_tier` | P1 `subscriptionTier` as sent (`BASIC`, `PRO`, `PREMIUM`…) | P1 |
 | `shifa_ai_enabled` | bool | `canUseShifaAi` |
 | `has_photo` | bool | P1 `photoUrl != null` |
 | `has_email` / `has_phone` | bool | P1 |
-| `internal` | `true` for the team's accounts | Debug menu (development.md §5) |
 
 - **Set once** (`userPropertiesSetOnce`): `first_platform` (`android` / `ios`), `signup_method` (`email` / `sms` /
   `doctor_link`, when the signup ran on this device).
@@ -51,8 +51,10 @@ We add:
 
 | Property | Value | When |
 |---|---|---|
+| `app` | `patient` (the doctor app sends `doctor`; setup.md §1.7) | always |
 | `app_language` | the app language now (it can differ from the person's at signup) | always |
-| `backend` | `production` / `development` | debug builds only (README D9) |
+
+Debug builds send nothing at all (README D4), so there is no `backend` or `debug` property to filter on.
 
 ## 2. Screens (`$screen`)
 
@@ -89,7 +91,6 @@ from `MainScreen` when `tab` changes; a tab shown again after an overlay closes 
 | `edit_profile` | `EditProfileScreen` | - |
 | `change_password` | `ChangePasswordScreen` | - |
 | `delete_account` | `DeleteAccountScreen` | - |
-| `debug` | `DebugScreen` | debug builds only; lands in Dev |
 
 Trays and dialogs aren't screens; their events below cover them (the Confirm Payment tray, the check-in tray, the
 review tray, the signature pad, the upload pop-up, the language dialog, the cancel / logout / delete confirms).
@@ -370,7 +371,7 @@ control, this table gets a row in the same PR.
 | | Show / hide password | (not tracked: no decision value) |
 | | Forgot password? | screen `forgot_password` |
 | | Create account | `signup_started` + screen `register` |
-| | Development backend (debug) | super property `backend` |
+| | Development backend (debug) | nothing: debug builds never send |
 | Register | Next / Create account / Continue with email / Resend / code entry | `signup_step_completed`, `signup_identifier_conflict`, `signup_code_sent`, `signup_sms_unavailable`, `signup_fallback_email`, `signup_completed`, `signup_failed` |
 | | Photo pick | `signup_step_completed.has_photo` |
 | | Back / Close | `signup_abandoned` |
@@ -452,7 +453,7 @@ control, this table gets a row in the same PR.
 | | Select on Map | `coming_soon_tapped(map)` |
 | Change password | Save | `password_changed` / `password_change_failed` |
 | Delete account | Code / Resend / Confirm | `account_deletion_code_resent`, `account_deleted` / `account_deletion_failed` |
-| Debug (debug builds) | Demo data, Development backend, fake pushes, Mark me internal, Analytics: show events, Crash now | not tracked except `backend`, `internal`; `$exception` for Crash now |
+| Debug (debug builds) | Demo data, Development backend, fake pushes, Analytics (your id, the session's events), Crash now | debug builds never send |
 
 ## 15. Where the journey stitches together
 

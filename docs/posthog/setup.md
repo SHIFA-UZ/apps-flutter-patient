@@ -25,19 +25,16 @@ Versions checked on 2026-11-03: `posthog-android` 3.75.1, `posthog-ios` 3.93.3, 
 3. Name the organization **Shifa**.
 4. Turn on 2FA for your account at once (top-right avatar → Account settings → Two-factor authentication).
 
-### 1.2 Create the two projects
+### 1.2 The project
 
-PostHog creates a first project automatically. Rename it and add a second one:
+PostHog creates a first project automatically. Rename it: Settings → Project → General → Project name: **Shifa**
+(not "Shifa Patient": on the free plan the doctor app will share it, §1.7).
 
-1. Settings → Project → General → Project name: **Shifa Patient (Prod)**.
-2. Top-left project switcher → New project → **Shifa Patient (Dev)**.
+One project is enough (README D4): only release builds (Play Store, TestFlight, App Store) send to it. Debug
+builds, emulators, demo data and the development backend never carry a key, so there is no development data to
+keep apart. The free plan allows exactly one project, so this costs nothing (§1.6).
 
-Dev is for debug builds, emulators and local testing. Prod is for Play Store, TestFlight and App Store builds.
-Debug builds must never carry the Prod key (§2).
-
-The free plan allows one project. See §1.6 for how to handle that.
-
-### 1.3 Project settings (apply to both projects)
+### 1.3 Project settings
 
 Settings → Project:
 
@@ -57,9 +54,11 @@ year-over-year retention charts.
 
 ### 1.4 Filter out the team
 
-In both projects: Settings → Project → Product analytics → "Filter out internal and test users" → add the filter
-`internal = true` (a person property). The team's accounts get `internal = true` from the Debug menu
-(development.md §5). Turn the filter on by default for new insights.
+Settings → Project → Product analytics → "Filter out internal and test users" → add the filter
+`distinct_id` is not in `patient_<id>, patient_<id>, …` with the team's own patient ids. This matters more with one
+project: the team's TestFlight and internal-track builds are release builds and do send. Each team member reads
+their id from Profile → Debug menu → Analytics in a debug build (development.md §5) and adds it here once; a
+debug build can't send a marker itself. Turn the filter on by default for new insights.
 
 ### 1.5 Team members and access
 
@@ -78,40 +77,104 @@ PostHog's plans on 2026-11-03:
 | Free | $0 | 1 | 1,000,000 analytics events, 1,000,000 feature flag requests, 100,000 exceptions, 1,500 survey responses, 5,000 session replays |
 | Paid (pay-as-you-go) | $0 | 6 | The same free allowances; you pay only for usage above them |
 
-Our volume: a patient produces roughly 50-150 events per active day (screens, actions, outcomes). At 1,000 daily
-active patients that's about 1.5-4.5 million events a month, so we will cross the free allowance once the app grows,
-but not at launch.
+**Start on Free.** One project is all the patient app needs (D4), and nothing is billed until usage passes the
+allowances. When it does, or when the doctor app needs its own project (§1.7), switch to Paid and set a **billing
+limit** (Settings → Organization → Billing → "Set a billing limit"), so a bug that loops events can't produce a
+surprise bill: PostHog stops ingesting at the limit instead of charging more.
 
-Recommendation: add a card and switch to **Paid** on day one anyway, because the free plan allows only one project
-and we need Dev and Prod (D4). Set a **billing limit** (Settings → Organization → Billing → "Set a billing limit")
-of, say, $50/month on product analytics, so a bug that loops events can't produce a surprise bill. PostHog stops
-ingesting at the limit instead of charging more.
+#### What it costs as the app grows
 
-If the user prefers to stay on Free for now: keep one project, **Prod**, and let debug builds run with no key
-(§2: a missing key means analytics off). Testing then uses the Debug menu's "Analytics: show events" list
-(development.md §5) instead of PostHog's live view. Switch to two projects when the card is added.
+PostHog's per-event prices (2026-11-03), after each product's own first 1,000,000 free a month. An event from an
+identified patient (everything after login, with person profiles) pays **both** rows:
 
-## 2. Keys
-
-Each project has a **Project API key** (`phc_…`), under Settings → Project → General → Project ID & API key. It's a
-write-only key built into the app (PostHog designs it to be public), but keep it out of git anyway, so forks and
-local runs don't write to Prod.
-
-| Where | Dev key | Prod key |
+| Monthly events | Base, per event | Identified add-on, per event |
 |---|---|---|
-| Local Android | `local.properties`: `posthog.apiKey.dev=phc_…` (gitignored) | - |
-| Local iOS | `iosApp/Configuration/Secrets.xcconfig` (add to `.gitignore`): `POSTHOG_API_KEY = phc_…` | - |
-| GitHub Actions | - (CI runs tests only; it never builds a debug app) | secret `POSTHOG_API_KEY_PROD` |
+| 1-2 M | $0.00005 | $0.000198 |
+| 2-15 M | $0.0000343 | $0.0000697 |
+| 15-50 M | $0.0000295 | $0.000036 |
 
-Host for both: `https://eu.i.posthog.com` (an `ApiConfig`-style constant, not a secret). Note the `.i.` in the
-ingestion host; `eu.posthog.com` without it is the web app.
+Feature-flag requests: first 1,000,000 a month free, then $0.0001. Exceptions: first 100,000 free.
 
-A build with no key runs with analytics off, so a fresh clone works without any setup.
+Assumptions for a patient: about 10 sessions a month (weekly visits, check-ins, chat) and about 30 events a
+session (2 lifecycle, 8 screens, 15 actions and outcomes, a few errors), so about **300 events per monthly active
+patient**, nearly all identified. Flags: 2 requests a session, so 200,000 a month at 10,000 patients, well inside
+the free 1,000,000.
+
+| Monthly active patients | Events a month | Base | Identified add-on | **Total a month** |
+|---|---|---|---|---|
+| 3,000 | 0.9 M | $0 | $0 | **$0** |
+| 5,000 | 1.5 M | $25 | $99 | **$124** |
+| 10,000, lean (150 events each) | 1.5 M | $25 | $99 | **$124** |
+| **10,000, as assumed** | **3 M** | **$84** | **$268** | **$352** |
+| 10,000, heavy (500 events each) | 5 M | $153 | $407 | **$560** |
+| 30,000 | 9 M | $290 | $686 | **$976** |
+
+How the 10,000 row is computed: 3 M events, 1 M free in each row, then 1 M at the 1-2 M price and 1 M at the
+2-15 M price: base 1 M × $0.00005 + 1 M × $0.0000343 = $84; add-on 1 M × $0.000198 + 1 M × $0.0000697 = $268.
+"Active" means monthly active; if 10,000 is a *daily* count, use the 30,000 row or above.
+
+Three quarters of the bill is the identified add-on. The levers, in order: keep the catalog lean (every `$screen`
+and tab change is an event; skip low-value ones such as `api_slow` and `home_refreshed` at scale), sample
+high-volume events in the app (send 1 in 10 `$screen`s), and only as a last resort drop `identify` (anonymous events
+are the base price only, so the 10,000 row becomes $84, but person properties, cohorts and most of
+personalisation.md go with it).
+
+### 1.7 The doctor app: how the two apps stay apart
+
+The doctor app (`web-flutter-doctor`, moving to KMP) will get its own tracking plan. The free plan allows one
+project, so the two apps **share the project "Shifa"** and are told apart by data, not by project. The patient app
+already does its half (built in ANL-02):
+
+| Mechanism | Patient app | Doctor app (its plan must mirror this) |
+|---|---|---|
+| Distinct id | `patient_<id>` | `doctor_<id>` (clinic staff `staff_<id>`); the admin panel is not tracked at all (the user's call, 2026-11-03). A doctor who is also a patient is two persons, which is right, since they're two roles |
+| Super property on every event | `app = patient` | `app = doctor` |
+| Person property | `app = patient` (set at identify) | `app = doctor` |
+| Event names | events.md | its own catalog, same conventions (events.md §1.1); a name used by both apps (`appointment_cancelled`) is fine, `app` tells them apart |
+
+How that plays out in PostHog:
+
+- **Insights and dashboards:** every dashboard gets a dashboard-level filter `app = patient` (or `doctor`), which
+  PostHog applies to all of its insights, so a forgotten filter on one insight can't mix the apps. Name dashboards
+  with the app prefix ("Patient · Journey", "Doctor · Schedule"). Trends and funnels that *should* span both apps
+  (a patient books → the doctor confirms) are the one thing a shared project makes possible, and the reason it's
+  not a bad place to be.
+- **Cohorts and feature flags:** target or filter by the person property `app`, or by `distinct_id` matching
+  `^doctor_`. A flag for the doctor app never matches a patient.
+- **Persons:** the Persons list mixes both; filter by `app`. Deleting a person (privacy.md §4) is per person, so
+  unaffected.
+- **Access:** one project means everyone with access sees both apps' data. Fine for the team today; it's the one
+  thing only a separate project can fix.
+- **Volume:** both apps count against the same free 1,000,000 events a month (§1.6). The doctor app is used by far
+  fewer people, so it adds little.
+
+**Later, a real split:** switch to Paid ($0 base, §1.6), create the project **Shifa Doctor**, and give the doctor
+app that project's key in its next release. Events can't be moved between projects, so the doctor app's history to
+that point stays in "Shifa" (filtered by `app`); decide before the doctor app's first tracked release if that
+matters. The patient app changes nothing either way.
+
+## 2. The key
+
+The project has a **Project API key** (`phc_…`), under Settings → Project → General → Project ID & API key. It's a
+write-only key built into release builds (PostHog designs it to be public), but keep it out of git anyway, so forks
+and local runs can't write to the project.
+
+| Where | Key |
+|---|---|
+| Debug builds (local, emulators) | **None, ever** (D4). The Gradle debug build type and the Xcode Debug configuration hard-wire an empty key |
+| GitHub Actions | secret `POSTHOG_API_KEY_PROD`, passed to Gradle as `-Pposthog.apiKey.prod` by `google_play_deploy.yml` and written as `POSTHOG_API_KEY_PROD` into the gitignored `iosApp/Configuration/Secrets.xcconfig` by `ios_testflight.yml` |
+| A local release build (rare) | the same Gradle property / `Secrets.xcconfig` line, by hand |
+
+Host: `https://eu.i.posthog.com` (an `ApiConfig`-style constant, not a secret). Note the `.i.` in the ingestion
+host; `eu.posthog.com` without it is the web app.
+
+A build with no key runs with analytics off, so a fresh clone works without any setup, and a debug build can't
+send even by mistake.
 
 ### 2.1 GitHub
 
 1. `SHIFA-UZ/apps-flutter-patient` → Settings → Secrets and variables → Actions → New repository secret
-   `POSTHOG_API_KEY_PROD` = the Prod project's key.
+   `POSTHOG_API_KEY_PROD` = the project's key.
 2. `google_play_deploy.yml`, in the Gradle build step: pass `-Pposthog.apiKey.prod=${{ secrets.POSTHOG_API_KEY_PROD }}`.
 3. `ios_testflight.yml`, before the fastlane step, write the key into the xcconfig that release builds read:
 
@@ -119,7 +182,7 @@ A build with no key runs with analytics off, so a fresh clone works without any 
 - name: Write PostHog key
   env:
     POSTHOG_API_KEY_PROD: ${{ secrets.POSTHOG_API_KEY_PROD }}
-  run: echo "POSTHOG_API_KEY = $POSTHOG_API_KEY_PROD" > iosApp/Configuration/Secrets.xcconfig
+  run: echo "POSTHOG_API_KEY_PROD = $POSTHOG_API_KEY_PROD" > iosApp/Configuration/Secrets.xcconfig
 ```
 
 4. Add `POSTHOG_API_KEY_PROD` to the secrets list in `CLAUDE.md` (CI/CD section).
@@ -274,14 +337,14 @@ reviewable. A typo can't create a new event, and a privacy review reads one file
 1. **Application class** (the deferred `Application` init): `shifa/uz/ShifaApp.kt`, registered with
    `android:name=".ShifaApp"` in `AndroidManifest.xml`. Move `initSecureSettings(this)` there from `MainActivity`.
 2. Gradle (`composeApp/build.gradle.kts`): `implementation(libs.posthog.android)` in `androidMain.dependencies`,
-   and per build type a `buildConfigField("String", "POSTHOG_API_KEY", …)`: debug reads `posthog.apiKey.dev` from
-   `local.properties`, release reads the `posthog.apiKey.prod` Gradle property. Missing → `""`.
+   and per build type a `buildConfigField("String", "POSTHOG_API_KEY", …)`: debug is always `""` (D4), release
+   reads the `posthog.apiKey.prod` Gradle property, missing → `""`.
 3. `androidMain/…/data/analytics/PostHogSink.kt`: implements `AnalyticsSink` with `PostHog.capture`,
    `PostHog.screen`, `PostHog.identify`, `PostHog.register`, `PostHog.reset`, `PostHog.optOut()` / `optIn()`,
    `PostHog.isFeatureEnabled`, `PostHog.getFeatureFlagResult(key)?.payload` (nullable; the payload is a decoded
    `Any`, so re-encode it with `org.json` or kotlinx.serialization to the JSON string the facade promises),
    `PostHog.reloadFeatureFlags()`.
-4. In `ShifaApp.onCreate`, when the key isn't blank:
+4. In `ShifaApp.onCreate`, in release builds only and when the key isn't blank:
 
 ```kotlin
 val config =
@@ -299,7 +362,6 @@ val config =
 PostHogAndroid.setup(this, config)
 Analytics.platform = PostHogSink()
 Analytics.setEnabled(!AnalyticsSettings.optedOut && !DemoMode.enabled.value)
-if (BuildConfig.DEBUG) Analytics.sink?.register("backend", BackendChoice.current.value.name.lowercase()) // D9
 ```
 
 ### iOS
@@ -314,9 +376,11 @@ Same pattern as Daily: a Kotlin interface that Swift implements and registers at
    `.identify(_:userProperties:userPropertiesSetOnce:)`, `.register(_:)`, `.reset()`, `.optOut()` / `.optIn()`,
    `.isFeatureEnabled(_:)`, `.getFeatureFlagPayload(_:)` (returns `Any?`; re-encode with `JSONSerialization` to the
    JSON string the facade promises), `.reloadFeatureFlags()`.
-3. `Info.plist`: `PostHogApiKey = $(POSTHOG_API_KEY)`. `Config.xcconfig` gets `#include? "Secrets.xcconfig"`
-   (the `?` makes a missing file harmless), and `Secrets.xcconfig` goes in `.gitignore`.
-4. In `AppDelegate.application(_:didFinishLaunchingWithOptions:)`, after `FirebaseApp.configure()`:
+3. `Info.plist`: `PostHogApiKey = $(POSTHOG_API_KEY)`. `Config.xcconfig` sets `POSTHOG_API_KEY[config=Debug]` to
+   nothing and `POSTHOG_API_KEY[config=Release]` to `$(POSTHOG_API_KEY_PROD)`, with `#include? "Secrets.xcconfig"`
+   (the `?` makes a missing file harmless) providing that value; `Secrets.xcconfig` is in `.gitignore`.
+4. In `AppDelegate.application(_:didFinishLaunchingWithOptions:)`, after `FirebaseApp.configure()`, skipped
+   entirely under `#if DEBUG`:
 
 ```swift
 if let key = Bundle.main.object(forInfoDictionaryKey: "PostHogApiKey") as? String, !key.isEmpty {
@@ -337,7 +401,8 @@ if let key = Bundle.main.object(forInfoDictionaryKey: "PostHogApiKey") as? Strin
 }
 ```
 
-Check the opt-out and demo flags before `setup`, as on Android.
+Check the opt-out and demo flags before `setup`, as on Android. Push capture (`capturePushNotificationSubscriptions`,
+`capturePushNotificationOpened`) is off on both platforms: our own push events carry no payload.
 
 ## 6. Hooks into the app
 
@@ -346,7 +411,7 @@ Check the opt-out and demo flags before `setup`, as on Android.
 | Screens | A `TrackScreen(AnalyticsScreen.X, vararg properties)` composable (`LaunchedEffect(screen, properties) { Analytics.screen(screen, *properties) }`) in each `XxxScreen`, never in `XxxScreenContent`, so previews and screenshot tests send nothing. The properties are part of the key, so Register and Forgot password re-send on each `step`. Tabs: in `MainScreen` when `tab` changes. | events.md §2 has every screen |
 | Identify | `HomeViewModel` after P1 succeeds, and `EditProfileViewModel` after P2 saves | events.md §1.2 |
 | Reset | `AuthRepository.logout()`, after account deletion (P6), and on the session-expired path | Send `logged_out` first, then `reset()`, so the event still belongs to the patient |
-| Super properties | On launch and when they change: `app_language` (`languageStorage.language`); debug builds also `backend` | events.md §1.3 |
+| Super properties | On launch and when they change: `app_language` (`languageStorage.language`) | events.md §1.3 |
 | Events | ViewModels, through an `analytics: AnalyticsTracker = Analytics` constructor param (CLAUDE.md DI style) | Only after the outcome is known: `booking_completed` in B3's `onSuccess`, not on the tap |
 | Push | `ShifaMessagingService.onMessageReceived` / `AppDelegate.willPresent` → `push_received`; `MainScreen`'s `Push.opened` handling → `push_opened` | events.md §11 |
 | API errors | `apiCall`'s two failure branches, next to `httpLogger` | events.md §13, with the path's ids replaced |
@@ -356,8 +421,14 @@ Check the opt-out and demo flags before `setup`, as on Android.
 
 ## 7. Checking it works
 
-1. Debug build with the Dev key, `debug = true`: Logcat (tag `PostHog`) / the Xcode console print each event.
-2. PostHog Dev → **Activity** (live events): open the app, log in, open a few screens. Check that:
+Debug builds never send (D4), so the check has two halves: the Debug menu in a debug build shows that the right
+events fire with the right properties, and a release build shows that they arrive.
+
+1. Debug build: Profile → Debug menu → Analytics lists every event of the session, newest first, with its
+   properties. Walk the flow under test and read the list.
+2. Release build (TestFlight or the Play internal track, with the secret set): first add your `patient_<id>` to
+   the internal-users filter (§1.4), so the dashboards leave you out. Then PostHog → **Activity** (live events):
+   open the app, log in, open a few screens. Check that:
    - `Application Opened` arrives, then `$screen` with our screen names;
    - after login, events carry `distinct_id = patient_<id>` and the person has only the allowed properties
      (privacy.md §3);
@@ -366,12 +437,10 @@ Check the opt-out and demo flags before `setup`, as on Android.
 4. Turn on demo data: nothing arrives. Turn on the opt-out switch: nothing arrives.
 5. Kill the network, use the app, bring it back: the queued events arrive (the SDKs batch and retry; the queue holds
    1,000 events and drops the oldest first).
-6. Force a crash from the Debug menu (add a "Crash now" row in ANL-06): the exception appears under Error tracking
-   in Dev, linked to the person.
-7. Create a test flag in Dev (`test-flag`, 100 % on), restart the app: `Flags` reads it as on; turn it off, restart:
-   off; delete it: the default applies.
-8. Only then add the Prod key to CI (§2.1), ship a TestFlight / internal-track build, and repeat steps 2-3 in Prod
-   with your account marked `internal = true`.
+6. Force a crash from the Debug menu (add a "Crash now" row in ANL-06) in the release build: the exception appears
+   under Error tracking, linked to the person (and filtered out of dashboards by the internal-users filter).
+7. Create a test flag (`test-flag`, 100 % on, targeting your `distinct_id` only), restart the app: `Flags` reads it
+   as on; turn it off, restart: off; delete it: the default applies.
 
 ## 8. Go-live checklist
 
@@ -379,7 +448,7 @@ Check the opt-out and demo flags before `setup`, as on Android.
 - [ ] The privacy policy at `https://shifa.uz/#privacy` names PostHog, the region, what's collected and how to opt out.
 - [ ] App Store privacy labels declare "Product interaction" and "Crash data" as linked to the user and not used
       for tracking; Play's Data safety form declares "App interactions", "Crash logs" and "Diagnostics" (privacy.md §4).
-- [ ] Both projects have IP discarding on, replay off, the internal-user filter on, and the billing limit set.
+- [ ] The project has IP discarding on, replay off and the internal-user filter on (a billing limit once on Paid).
 - [ ] `POSTHOG_API_KEY_PROD` is in GitHub, and both deploy workflows pass it.
-- [ ] The team's accounts are marked `internal = true` in Prod.
+- [ ] The team's `patient_<id>`s are in the internal-users filter.
 - [ ] The account-deletion runbook includes deleting the person in PostHog (privacy.md §4).

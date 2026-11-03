@@ -106,23 +106,23 @@ fun `a booking that goes through is tracked with its kind and lead time`() =
 - [ ] Screens use `TrackScreen` in `XxxScreen` only
 - [ ] Person properties set by the event are in personalisation.md §2
 - [ ] A test asserts each new outcome event
-- [ ] Seen arriving in the PostHog **Dev** project (Activity view), with the expected properties
+- [ ] Seen in the Debug menu's event list with the expected properties (and in PostHog's Activity view from a release build when the flow is new)
 - [ ] dashboards.md updated if there's a new flow to watch
 
-## 5. Testing with the Dev project
+## 5. Testing without a development project
 
-- Debug builds use the Dev key (setup.md §2) and log every event (`debug = true`).
-- Demo data turns analytics off (README D8). To test analytics, use the Development backend
-  (Debug → Development backend, or Login's debug button) with a seed account; the super property
-  `backend = development` separates those events in Dev charts (D9).
-- Debug menu additions (ANL-02, ANL-06):
-  - "Mark me as internal": sets the person property `internal = true`, so Prod filters exclude you if a debug build
-    ever points at Prod.
-  - "Analytics: show events": a list of the last 50 events sent this session, with their properties, to check
-    without opening PostHog (and the only way to check on the free plan's single project, setup.md §1.6).
-  - "Analytics: reload flags" and the current values of every `Flags` accessor.
-  - "Crash now": throws, to verify exception autocapture.
-- Never point a debug build at the Prod key.
+- Debug builds never send (README D4): there is no key in them, by construction. Every event still goes through
+  the facade, so the Debug menu shows it.
+- Debug menu → Analytics (ANL-02, ANL-06):
+  - the last 50 events of the session with their properties, newest first: the way to check a feature's events
+    before review, with any backend, demo data included;
+  - your analytics id (`patient_<id>`): add it to PostHog's internal-users filter (setup.md §1.4) once, so the
+    dashboards exclude the events your TestFlight / internal-track builds send;
+  - "Analytics: reload flags" and the current values of every `Flags` accessor;
+  - "Crash now": throws, to verify exception autocapture in a release build.
+- Seeing events arrive in PostHog is a release-build check (setup.md §7): a TestFlight or internal-track build on
+  an account listed in the internal-users filter.
+- Never put a key into a debug build.
 
 ## 6. Renaming and removing events
 
