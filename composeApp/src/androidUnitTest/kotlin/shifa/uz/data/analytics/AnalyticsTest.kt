@@ -73,8 +73,13 @@ class AnalyticsTest {
 
         assertThat(Analytics.sink).isNull()
         assertThat(sink.calls)
-            .containsExactly("optOut true", "register app_language=en", "reset", "register app_language=en")
-            .inOrder()
+            .containsExactly(
+                "optOut true",
+                "register app_language=en",
+                "reset",
+                "register app=patient",
+                "register app_language=en",
+            ).inOrder()
     }
 
     @Test
@@ -101,12 +106,24 @@ class AnalyticsTest {
 
     @Test
     fun `starting in demo mode opts the SDK out at once, never in first`() {
-        Analytics.register("app_language", "uz")
-        sink.calls.clear()
-
         Analytics.start(optedOut = false, demo = true)
 
-        assertThat(sink.calls).containsExactly("optOut true", "register app_language=uz").inOrder()
+        assertThat(sink.calls)
+            .containsExactly("optOut true", "register app=patient", "register app_language=en")
+            .inOrder()
+    }
+
+    @Test
+    fun `start registers app and app_language right after the opt-out state`() {
+        Analytics.clearForTests()
+        Analytics.platform = sink
+        Analytics.languageProvider = { "ru" }
+
+        Analytics.start(optedOut = false, demo = false)
+
+        assertThat(sink.calls)
+            .containsExactly("optOut false", "register app=patient", "register app_language=ru")
+            .inOrder()
     }
 
     @Test
@@ -117,7 +134,9 @@ class AnalyticsTest {
 
         Analytics.reset()
 
-        assertThat(sink.calls).containsExactly("reset", "register app_language=ru", "register other=value").inOrder()
+        assertThat(sink.calls)
+            .containsExactly("reset", "register app=patient", "register app_language=ru", "register other=value")
+            .inOrder()
     }
 
     @Test

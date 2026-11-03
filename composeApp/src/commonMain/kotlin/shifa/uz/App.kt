@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.accountDeletedSuccess
-import shifa.uz.data.analytics.ANALYTICS_APP
 import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.debug.BackendChoice
@@ -36,8 +35,8 @@ private enum class Screen { Splash, Login, Register, ForgotPassword, Home }
 @Preview
 fun App() {
     val language by languageStorage.language.collectAsState()
-    // docs/posthog/events.md §1.3: the super properties, and demo data keeps analytics off (README D8).
-    LaunchedEffect(Unit) { Analytics.register("app", ANALYTICS_APP) }
+    // docs/posthog/events.md §1.3: `app_language` follows the patient's choice (`Analytics.start` registered the
+    // launch value), and demo data keeps analytics off (README D8).
     LaunchedEffect(language) { Analytics.register("app_language", language.code) }
     ProvideAppLocale(language.code) {
         // Debug menu → Demo data or Development backend swaps the backend; everything restarts from the splash on it.

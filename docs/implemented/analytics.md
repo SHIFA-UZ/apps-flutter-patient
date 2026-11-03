@@ -30,7 +30,7 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
   regardless, so a logout while opted out makes one anonymous flags request. Error tracking
   autocapture is ANL-06.
 - Hooks: `HomeViewModel.show` identifies (`patient_<id>` with the events.md §1.2 person properties);
-  `AuthRepository.logout`, the session-restore 401 and the reinstall wipe reset; `App` registers `app = patient` and `app_language` (the person gets `app` too) and tells `Analytics` about demo mode; Profile → Settings → "Share usage data"
+  `AuthRepository.logout`, the session-restore 401 and the reinstall wipe reset; `Analytics.start` registers `app = patient` and `app_language` right after the SDK's setup, so `Application Opened` and everything after carry them (the person gets `app` too; `Application Installed` / `Updated` are sent inside the setup itself and carry neither, which only matters once the doctor app shares the project, when a properties sanitizer in both SDK configs would add `app`), `App` re-registers `app_language` on a change and tells `Analytics` about demo mode; Profile → Settings → "Share usage data"
   (`ProfileViewModel.setShareUsageData`, saved as `analytics_opt_out` in plain Settings); the Profile language dialog
   re-identifies so the person's `language` follows.
 - Debug menu → Analytics: your analytics id (`patient_<id>`, to add to PostHog's internal-users filter, since a
