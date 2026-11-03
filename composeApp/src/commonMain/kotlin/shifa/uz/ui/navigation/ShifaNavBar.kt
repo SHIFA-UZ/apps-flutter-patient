@@ -38,6 +38,7 @@ import shifa.composeapp.generated.resources.ic_nav_messages_selected
 import shifa.composeapp.generated.resources.ic_nav_shifa_ai
 import shifa.composeapp.generated.resources.messages
 import shifa.composeapp.generated.resources.shifaAiTitle
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -58,6 +59,17 @@ enum class ShifaTab(
     Documents(Res.string.documents, Res.drawable.ic_nav_documents, Res.drawable.ic_nav_documents_selected),
     Messages(Res.string.messages, Res.drawable.ic_nav_messages, Res.drawable.ic_nav_messages_selected),
 }
+
+/** docs/posthog/events.md §2: the tab's `$screen` id. */
+val ShifaTab.analyticsScreen: AnalyticsScreen
+    get() =
+        when (this) {
+            ShifaTab.Home -> AnalyticsScreen.Home
+            ShifaTab.Bookings -> AnalyticsScreen.Bookings
+            ShifaTab.ShifaAi -> AnalyticsScreen.ShifaAi
+            ShifaTab.Documents -> AnalyticsScreen.Documents
+            ShifaTab.Messages -> AnalyticsScreen.Messages
+        }
 
 @Composable
 fun ShifaNavBar(

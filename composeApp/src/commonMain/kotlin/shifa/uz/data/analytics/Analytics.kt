@@ -79,6 +79,22 @@ object Analytics : AnalyticsTracker {
     /** Debug builds: the last [RECENT_MAX] events this session, for the Debug menu. Empty in release. */
     val recent: StateFlow<List<String>> get() = _recent
 
+    /** A screen view (events.md §2); `TrackScreen` calls it. */
+    fun screen(
+        screen: AnalyticsScreen,
+        properties: List<Pair<String, Any?>> = emptyList(),
+    ) {
+        if (isDebugBuild) {
+            _recent.value =
+                (
+                    listOf(
+                        "\$screen ${screen.id} ${properties.clean()}",
+                    ) + _recent.value
+                ).take(RECENT_MAX)
+        }
+        sink?.screen(screen.id, properties.clean())
+    }
+
     override fun track(event: AnalyticsEvent) {
         if (isDebugBuild) _recent.value = (listOf(event.label) + _recent.value).take(RECENT_MAX)
         sink?.capture(event.name, event.properties, event.userProperties, event.userPropertiesSetOnce)

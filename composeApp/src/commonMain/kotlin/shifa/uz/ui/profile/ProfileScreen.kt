@@ -71,6 +71,7 @@ import shifa.composeapp.generated.resources.shareUsageData
 import shifa.composeapp.generated.resources.signOutConfirm
 import shifa.composeapp.generated.resources.uploadPhoto
 import shifa.composeapp.generated.resources.uploading
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.storage.AppLanguage
 import shifa.uz.ui.debug.DebugScreen
@@ -96,6 +97,7 @@ import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaSettingsItem
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.ShifaSwitch
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.isDebugBuild
 import shifa.uz.utils.rememberImagePickerLauncher
 import shifa.uz.utils.rememberInAppBrowser
@@ -115,6 +117,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel { ProfileViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Profile)
     val logOut by rememberUpdatedState(onLogOut)
     val changed by rememberUpdatedState(onProfileChanged)
     LaunchedEffect(viewModel) {

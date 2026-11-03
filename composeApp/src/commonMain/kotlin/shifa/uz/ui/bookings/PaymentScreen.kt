@@ -25,6 +25,7 @@ import shifa.composeapp.generated.resources.completePayment
 import shifa.composeapp.generated.resources.ic_alert_circle_16
 import shifa.composeapp.generated.resources.payment
 import shifa.composeapp.generated.resources.paymentSlotHeld
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.Appointment
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
@@ -36,6 +37,7 @@ import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.PaymentWebView
 import kotlin.time.Duration
 
@@ -53,6 +55,7 @@ fun PaymentScreen(
     viewModel: PaymentViewModel = viewModel { PaymentViewModel(appointment) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Payment, "provider" to appointment.payment?.provider?.lowercase())
     val done by rememberUpdatedState(onDone)
     val signedOut by rememberUpdatedState(onSignedOut)
     // A paid booking goes on by itself; a failed one waits for Book again.

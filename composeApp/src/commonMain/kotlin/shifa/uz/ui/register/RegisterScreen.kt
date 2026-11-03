@@ -125,6 +125,8 @@ import shifa.composeapp.generated.resources.smsUnavailableTitle
 import shifa.composeapp.generated.resources.surname
 import shifa.composeapp.generated.resources.upload
 import shifa.composeapp.generated.resources.verifyAndCreate
+import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.OtpChannel
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
@@ -146,6 +148,7 @@ import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.ShifaTertiaryButton
 import shifa.uz.ui.widgets.ShifaTray
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.Country
 import shifa.uz.utils.countries
 import shifa.uz.utils.formatDate
@@ -160,6 +163,12 @@ fun RegisterScreen(
     viewModel: RegisterViewModel = viewModel { RegisterViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(
+        AnalyticsScreen.Register,
+        "step" to state.step.analyticsName(),
+        "is_doctor_link" to state.isDoctorLink,
+        step = state.step,
+    )
     val registered by rememberUpdatedState(onRegistered)
     LaunchedEffect(viewModel) { viewModel.registered.collect { registered() } }
     val onBack = {

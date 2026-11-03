@@ -39,6 +39,14 @@ class AnalyticsTest {
     }
 
     @Test
+    fun `a screen goes to the sink with its properties and nulls dropped`() {
+        Analytics.screen(AnalyticsScreen.Register, listOf("step" to "otp", "is_doctor_link" to false, "x" to null))
+
+        assertThat(sink.calls).containsExactly("screen register {step=otp, is_doctor_link=false}")
+        assertThat(Analytics.recent.value.first()).isEqualTo("\$screen register {step=otp, is_doctor_link=false}")
+    }
+
+    @Test
     fun `identify uses patient_id and only the allowed person properties`() {
         Analytics.identify(patient, language = "ru")
 

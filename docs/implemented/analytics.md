@@ -35,5 +35,17 @@ The plan: [../posthog/README.md](../posthog/README.md). This file records what o
 - Debug menu → Analytics: your analytics id (`patient_<id>`, to add to PostHog's internal-users filter, since a
   debug build can't send a marker) and the session's last 50 events (`Analytics.recent`, debug builds only): the
   way to check events, since debug builds never send.
-- Not built: screens (`TrackScreen`, ANL-03), journey and engagement events (ANL-04/05), reliability events and
-  exception autocapture (ANL-06), the `Flags` accessors (first flag in ANL-08; the sink methods exist).
+## Screens (ANL-03)
+
+- `AnalyticsScreen` lists every `$screen` id (events.md §2); `TrackScreen(screen, properties…, step)` in each
+  `XxxScreen` (never in a `Content`) sends it once when the screen appears, with the properties as they are then,
+  and again only when `step` changes (Register, Forgot password). A tab shown again after an overlay closes isn't
+  re-sent (events.md §2). The tabs are sent from `MainScreen` through `ShifaTab.analyticsScreen`; the video call
+  only as the full screen.
+- Properties as in events.md §2, computed by pure helpers in `AnalyticsScreen.kt` (`analyticsName`,
+  `paymentBadge`, `appointmentState`, `fileType`), each with a unit test. Not sent: `source` on `doctor_profile`
+  and `create_booking` (the screens don't know where they were opened from; the ANL-04 events carry it) and
+  `is_certificate` / `has_visit` on `document_viewer` (a certificate and a chat file look the same to the viewer,
+  and the visit loads after the screen appears; the `document_viewed` event will say).
+- Not built: journey and engagement events (ANL-04/05), reliability events and exception autocapture (ANL-06), the
+  `Flags` accessors (first flag in ANL-08; the sink methods exist).

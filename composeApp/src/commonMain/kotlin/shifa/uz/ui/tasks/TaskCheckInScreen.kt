@@ -56,6 +56,7 @@ import shifa.composeapp.generated.resources.submitEntry
 import shifa.composeapp.generated.resources.task
 import shifa.composeapp.generated.resources.taskCheckInNotYetAvailable
 import shifa.composeapp.generated.resources.yes
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.data.model.TaskCheckIn
 import shifa.uz.ui.home.TaskCard
@@ -80,6 +81,7 @@ import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.ShifaTray
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.getCurrentInstant
 
 /**
@@ -95,6 +97,7 @@ fun TaskCheckInScreen(
     viewModel: TaskCheckInViewModel = viewModel { TaskCheckInViewModel(task) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Task, "category" to task.category, "input_type" to task.inputType)
     val submitted by rememberUpdatedState(onSubmitted)
     val signedOut by rememberUpdatedState(onSignedOut)
     LaunchedEffect(viewModel) { viewModel.submitted.collect { submitted() } }

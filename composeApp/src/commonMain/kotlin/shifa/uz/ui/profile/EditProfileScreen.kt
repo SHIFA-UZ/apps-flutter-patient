@@ -57,6 +57,7 @@ import shifa.composeapp.generated.resources.selectDate
 import shifa.composeapp.generated.resources.selectOnMap
 import shifa.composeapp.generated.resources.streetAddress
 import shifa.composeapp.generated.resources.uploadPhoto
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.storage.AppLanguage
 import shifa.uz.ui.navigation.ComingSoon
@@ -80,6 +81,7 @@ import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaSubHeader
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatDate
 import shifa.uz.utils.rememberImagePickerLauncher
 
@@ -94,6 +96,7 @@ fun EditProfileScreen(
     viewModel: EditProfileViewModel = viewModel { EditProfileViewModel(initial) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.EditProfile)
     val photoChanged by rememberUpdatedState(onPhotoChanged)
     val saved by rememberUpdatedState(onSaved)
     LaunchedEffect(viewModel) {

@@ -61,6 +61,7 @@ import shifa.composeapp.generated.resources.password
 import shifa.composeapp.generated.resources.passwordRequired
 import shifa.composeapp.generated.resources.showPassword
 import shifa.composeapp.generated.resources.signIn
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.debug.Backend
 import shifa.uz.data.debug.BackendChoice
@@ -76,6 +77,7 @@ import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaTertiaryButton
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.isDebugBuild
 
 @Composable
@@ -87,6 +89,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel { LoginViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Login)
     val signedIn by rememberUpdatedState(onSignedIn)
     LaunchedEffect(viewModel) { viewModel.signedIn.collect { signedIn() } }
     if (state.isLocked) {

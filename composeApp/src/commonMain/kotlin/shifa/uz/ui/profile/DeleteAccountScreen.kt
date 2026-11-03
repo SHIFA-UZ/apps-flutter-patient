@@ -11,10 +11,12 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.confirmDeletion
 import shifa.composeapp.generated.resources.deleteAccountOtpSubtitle
 import shifa.composeapp.generated.resources.deleteAccountVerifyTitle
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.DeleteAccountChallenge
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.CodeEntry
 import shifa.uz.ui.register.RegisterPage
+import shifa.uz.ui.widgets.TrackScreen
 
 /** 14 §3.5 (no Figma): the registration code page. */
 @Composable
@@ -26,6 +28,7 @@ fun DeleteAccountScreen(
     viewModel: DeleteAccountViewModel = viewModel { DeleteAccountViewModel(challenge, email) },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.DeleteAccount)
     val deleted by rememberUpdatedState(onDeleted)
     LaunchedEffect(viewModel) { viewModel.deleted.collect { deleted() } }
     DeleteAccountContent(state, onBack, viewModel::onOtpChange, viewModel::resend, viewModel::confirm)

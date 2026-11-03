@@ -67,6 +67,7 @@ import shifa.composeapp.generated.resources.submitCheckIn
 import shifa.composeapp.generated.resources.timeYesterday
 import shifa.composeapp.generated.resources.today
 import shifa.composeapp.generated.resources.yesterday
+import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.AppNotification
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.ui.documents.DocumentDisplayCard
@@ -93,6 +94,7 @@ import shifa.uz.ui.widgets.ShifaPrimaryButton
 import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.ShifaTray
+import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatTime
 import shifa.uz.utils.getCurrentInstant
 
@@ -113,6 +115,7 @@ fun NotificationsScreen(
     viewModel: NotificationsViewModel = viewModel { NotificationsViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.Notifications)
     val read by rememberUpdatedState(onRead)
     val signedOut by rememberUpdatedState(onSignedOut)
     var filter by rememberSaveable { mutableStateOf(NotificationFilter.All) }

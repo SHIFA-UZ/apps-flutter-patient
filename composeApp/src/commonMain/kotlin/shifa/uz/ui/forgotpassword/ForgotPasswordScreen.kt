@@ -32,6 +32,8 @@ import shifa.composeapp.generated.resources.otpSentToPhone
 import shifa.composeapp.generated.resources.resetPassword
 import shifa.composeapp.generated.resources.sendCode
 import shifa.composeapp.generated.resources.verify
+import shifa.uz.data.analytics.AnalyticsScreen
+import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.OtpChannel
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.CodeEntry
@@ -41,6 +43,7 @@ import shifa.uz.ui.register.PasswordEye
 import shifa.uz.ui.register.RegisterPage
 import shifa.uz.ui.register.SubLogo
 import shifa.uz.ui.theme.ShifaColors
+import shifa.uz.ui.widgets.TrackScreen
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -50,6 +53,7 @@ fun ForgotPasswordScreen(
     viewModel: ForgotPasswordViewModel = viewModel { ForgotPasswordViewModel() },
 ) {
     val state by viewModel.state.collectAsState()
+    TrackScreen(AnalyticsScreen.ForgotPassword, "step" to state.step.analyticsName(), step = state.step)
     val signedIn by rememberUpdatedState(onSignedIn)
     LaunchedEffect(viewModel) { viewModel.signedIn.collect { signedIn() } }
     val onBack = {
