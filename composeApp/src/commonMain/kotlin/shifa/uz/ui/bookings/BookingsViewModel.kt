@@ -141,13 +141,13 @@ class BookingsViewModel(
         return null
     }
 
-    // One unfiltered B2. Past: over or cancelled, newest first. Future pending ones show nowhere (no Figma).
+    // One unfiltered B2. Past: over, cancelled or missed (NO_SHOW), newest first. Future pending ones show nowhere (no Figma).
     private suspend fun loadAppointments(): StringResource? {
         val all = bookings.getAppointments().getOrElse { return fail(it) }
         val now = clock()
         update {
             copy(
-                past = all.filter { it.isOver(now) || it.status == "CANCELLED" }.sortedByDescending { it.start },
+                past = all.filter { it.isOver(now) || it.isCancelled || it.isNoShow }.sortedByDescending { it.start },
             )
         }
         val found = doctors.doctorsOf(all).getOrElse { return fail(it) }

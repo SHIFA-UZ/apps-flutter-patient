@@ -34,10 +34,12 @@ import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.availabilityToday
 import shifa.composeapp.generated.resources.availabilityTomorrow
+import shifa.composeapp.generated.resources.cancelled
 import shifa.composeapp.generated.resources.hello
 import shifa.composeapp.generated.resources.ic_alert_circle_16
 import shifa.composeapp.generated.resources.join
 import shifa.composeapp.generated.resources.liveAppointment
+import shifa.composeapp.generated.resources.missed
 import shifa.composeapp.generated.resources.myDoctors
 import shifa.composeapp.generated.resources.myTasks
 import shifa.composeapp.generated.resources.noDoctorsFound
@@ -276,11 +278,15 @@ internal fun UpcomingCard(
     // Home's Live Appointment section: View instead of Join.
     live: Boolean = false,
 ) {
-    val inWindow = appointment.isNow(now)
+    // A notification's card can be a visit that is over: no "Now" for it.
+    val inWindow = appointment.isNow(now) && appointment.isOpen
     val place = if (appointment.isVideo) stringResource(Res.string.videoConsultation) else appointment.doctorClinic
-    // Not in Figma: a visit the doctor hasn't confirmed, or not paid yet, says so after its time.
+    // Not in Figma: a visit the doctor hasn't confirmed, or not paid yet, says so after its time; so does a
+    // cancelled or missed one (a notification's card).
     val note =
         when {
+            appointment.isCancelled -> stringResource(Res.string.cancelled)
+            appointment.isNoShow -> stringResource(Res.string.missed)
             appointment.paymentStatus.equals(
                 "PENDING",
                 ignoreCase = true,

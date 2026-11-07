@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Instant
+import kotlinx.serialization.decodeFromString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -27,10 +28,13 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.allNotificationsMarkedAsRead
+import shifa.composeapp.generated.resources.appointmentNoShowMessage
+import shifa.composeapp.generated.resources.appointmentNoShowTitle
 import shifa.composeapp.generated.resources.errorNetworkConnection
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.NETWORK_ERROR
+import shifa.uz.data.api.apiJson
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.documents.DocumentsRepository
 import shifa.uz.data.model.ApiException
@@ -380,6 +384,43 @@ class NotificationsViewModelTest {
                 awaitItem()
             }
         }
+
+    @Test
+    fun `a no-show has its own text and opens the visit, like a cancellation`() =
+        runTest {
+            open()
+
+            val missed = AppNotification(9, "", "", "APPOINTMENT_NO_SHOW", "2026-09-28T07:00:00Z", appointmentId = "a1")
+            assertThat(tap(missed)).isEqualTo(NotificationLink.ToAppointment(appointment))
+            assertThat(NOTIFICATION_TEXTS["APPOINTMENT_NO_SHOW"])
+                .isEqualTo(Res.string.appointmentNoShowTitle to Res.string.appointmentNoShowMessage)
+            assertThat(NotificationFilter.Appointments.matches(missed.kind)).isTrue()
+        }
+
+    @Test
+    fun `a cancellation's reason and note are read from its data and from a push`() {
+        val inbox =
+            apiJson.decodeFromString<AppNotification>(
+                """{"id":1,"title":"t","message":"m","type":"APPOINTMENT_CANCELLED","createdAt":"2026-09-28T07:00:00Z",
+                    "data":{"cancelReasonCode":"DOCTOR_UNAVAILABLE","cancelNote":"Ill"}}""",
+            )
+        assertThat(inbox.cancelReason).isEqualTo("DOCTOR_UNAVAILABLE")
+        assertThat(inbox.cancelNote).isEqualTo("Ill")
+        val row =
+            apiJson.decodeFromString<AppNotification>(
+                """{"id":2,"title":"t","message":"m","type":"APPOINTMENT_CANCELLED","createdAt":"2026-09-28T07:00:00Z",
+                    "cancelReasonCode":"OTHER","cancelNote":"Clinic closed"}""",
+            )
+        assertThat(row.cancelReason).isEqualTo("OTHER")
+        assertThat(row.cancelNote).isEqualTo("Clinic closed")
+        val push =
+            AppNotification.fromPush(
+                mapOf("type" to "APPOINTMENT_CANCELLED", "entityId" to "a1", "cancelReasonCode" to "RESCHEDULED"),
+            )
+        assertThat(push.cancelReason).isEqualTo("RESCHEDULED")
+        assertThat(push.cancelNote).isNull()
+        assertThat(reminder.cancelReason).isNull()
+    }
 
     @Test
     fun `an access request message splits into its parts`() {

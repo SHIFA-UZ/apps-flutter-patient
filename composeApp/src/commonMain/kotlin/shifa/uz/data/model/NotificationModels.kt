@@ -45,6 +45,8 @@ data class AppNotification(
     @JsonNames("chat_id") private val chatId: String? = null,
     @JsonNames("patient_form_id") private val patientFormId: String? = null,
     @JsonNames("doctor_name") private val doctorName: String? = null,
+    @JsonNames("cancel_reason_code") private val cancelReasonCode: String? = null,
+    @SerialName("cancelNote") @JsonNames("cancel_note") private val cancelNoteText: String? = null,
     private val data: JsonObject? = null,
 ) {
     // kotlinx-datetime 0.5 has no Instant serializer on iOS. A bad date throws, so items() skips the item.
@@ -58,6 +60,10 @@ data class AppNotification(
     val chat get() = chatId ?: data.string("chatId", "chat_id")
     val form get() = patientFormId ?: data.string("patientFormId", "patient_form_id")
     val doctor get() = doctorName ?: data.string("doctorName", "doctor_name")
+
+    // A cancellation's reason and the doctor's note, when the backend sends them (the row, its `data`, or push data).
+    val cancelReason get() = cancelReasonCode?.ifBlank { null } ?: data.string("cancelReasonCode", "cancel_reason_code")
+    val cancelNote get() = cancelNoteText?.ifBlank { null } ?: data.string("cancelNote", "cancel_note")
 
     companion object {
         /**

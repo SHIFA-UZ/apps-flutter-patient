@@ -79,6 +79,7 @@ internal val NOTIFICATION_TEXTS: Map<String, Pair<StringResource, StringResource
     listOf(
         listOf("APPOINTMENT_CANCELLED", "APPOINTMENT_CANCELLED_BY_PATIENT") to
             (Res.string.appointmentCancelledTitle to Res.string.notificationMessageCancelled),
+        listOf("APPOINTMENT_NO_SHOW") to (Res.string.appointmentNoShowTitle to Res.string.appointmentNoShowMessage),
         listOf("APPOINTMENT_CHANGED", "APPOINTMENT_RESCHEDULED_BY_PATIENT") to
             (Res.string.appointmentChangedTitle to Res.string.notificationMessageChanged),
         listOf("APPOINTMENT_REMINDER", "APPOINTMENT_UPCOMING", "APPOINTMENT_SOON", "APPOINTMENT_CLOSE") to

@@ -973,4 +973,10 @@
     <string name="share">Поделиться</string>
     <string name="regenerate">Сгенерировать заново</string>
     <string name="fromAppointment">Из приёма</string>
+    <string name="appointmentNoShowTitle">Пропущенный приём</string>
+    <string name="appointmentNoShowMessage">Врач отметил этот приём как пропущенный. Если приём всё ещё нужен, запишитесь снова.</string>
+    <string name="cancelReasonDoctorUnavailable">Врач недоступен.</string>
+    <string name="cancelReasonPatientRequest">Отменён по вашей просьбе.</string>
+    <string name="cancelReasonRescheduled">Перенесён на другое время.</string>
+    <string name="missed">Пропущен</string>
 </resources>

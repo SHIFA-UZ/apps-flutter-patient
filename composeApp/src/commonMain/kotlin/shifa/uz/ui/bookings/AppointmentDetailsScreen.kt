@@ -39,11 +39,17 @@ import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.additionalInformation
+import shifa.composeapp.generated.resources.appointmentCancelledTitle
 import shifa.composeapp.generated.resources.appointmentDetails
 import shifa.composeapp.generated.resources.appointmentLessThan24Hours
+import shifa.composeapp.generated.resources.appointmentNoShowMessage
+import shifa.composeapp.generated.resources.appointmentNoShowTitle
 import shifa.composeapp.generated.resources.areYouSureCancel
 import shifa.composeapp.generated.resources.cancel
 import shifa.composeapp.generated.resources.cancelAppointment
+import shifa.composeapp.generated.resources.cancelReasonDoctorUnavailable
+import shifa.composeapp.generated.resources.cancelReasonPatientRequest
+import shifa.composeapp.generated.resources.cancelReasonRescheduled
 import shifa.composeapp.generated.resources.checkUp
 import shifa.composeapp.generated.resources.comment
 import shifa.composeapp.generated.resources.consultationInPerson
@@ -60,6 +66,7 @@ import shifa.composeapp.generated.resources.leaveReview
 import shifa.composeapp.generated.resources.location
 import shifa.composeapp.generated.resources.months
 import shifa.composeapp.generated.resources.no
+import shifa.composeapp.generated.resources.notificationMessageCancelled
 import shifa.composeapp.generated.resources.paymentCompleted
 import shifa.composeapp.generated.resources.paymentInClinic
 import shifa.composeapp.generated.resources.paymentPendingTitle
@@ -225,6 +232,7 @@ internal fun AppointmentDetailsContent(
                 ServiceSection(appointment)
                 detailRows(appointment, doctor).forEach { InfoSection(it.title, it.text, it.style) }
             } else {
+                EndedNotice(appointment)
                 AppointmentSummaryCard(appointment, doctor, state.detailsOpen, onToggleDetails)
                 state.review?.let { review ->
                     ShifaSection(stringResource(Res.string.yourReview)) {
@@ -269,6 +277,44 @@ internal fun AppointmentDetailsContent(
         }
     }
 }
+
+/** Not in Figma: a cancelled visit says so with the doctor's reason and note, a missed one (NO_SHOW) too. */
+@Composable
+private fun EndedNotice(appointment: Appointment) {
+    val (title, fallback) =
+        when {
+            appointment.isCancelled -> Res.string.appointmentCancelledTitle to Res.string.notificationMessageCancelled
+            appointment.isNoShow -> Res.string.appointmentNoShowTitle to Res.string.appointmentNoShowMessage
+            else -> return
+        }
+    val why = if (appointment.isCancelled) cancelText(appointment.cancelReasonCode, appointment.cancelNote) else null
+    ShifaNotification(
+        stringResource(title),
+        why ?: stringResource(fallback),
+        ShifaNotificationType.Feedback,
+        Modifier.fillMaxWidth(),
+        maxLines = Int.MAX_VALUE, // the doctor's note in full
+    )
+}
+
+/** The doctor's reason as a short phrase (OTHER has none), then their note; null when there's neither. */
+@Composable
+internal fun cancelText(
+    code: String?,
+    note: String?,
+): String? =
+    listOfNotNull(cancelReason(code)?.let { stringResource(it) }, note?.trim()?.ifEmpty { null })
+        .joinToString("\n")
+        .ifEmpty { null }
+
+/** `cancelReasonCode` to its phrase; OTHER and unknown codes have none. */
+internal fun cancelReason(code: String?): StringResource? =
+    when (code?.uppercase()) {
+        "DOCTOR_UNAVAILABLE" -> Res.string.cancelReasonDoctorUnavailable
+        "PATIENT_REQUEST" -> Res.string.cancelReasonPatientRequest
+        "RESCHEDULED" -> Res.string.cancelReasonRescheduled
+        else -> null
+    }
 
 /**
  * Figma 1825:17774 / 1825:17960: the booked service, then how it's paid: Payment Completed, Payment in clinic with the

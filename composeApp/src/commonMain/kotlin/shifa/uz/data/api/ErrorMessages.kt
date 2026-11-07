@@ -58,6 +58,11 @@ private const val INVALID_CREDENTIALS = "Invalid credentials"
 private const val ACCOUNT_DISABLED = "Account is disabled"
 private const val INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token"
 private const val NO_ACCOUNT_FOUND = "No account found"
+private const val VIDEO_TOO_EARLY =
+    "Video call is not yet available. You can join 5 minutes before the appointment start."
+private const val VIDEO_TOO_LATE =
+    "Video call has ended. The join window closes 15 minutes after the appointment end."
+private const val VIDEO_PAYMENT_REQUIRED = "Payment is required before joining this video consultation."
 const val TOO_MANY_REQUESTS = "Too many requests. Please try again later."
 
 // 01 §8 known-safe backend strings (plus the app's own), mapped to their l10n keys (01 §9.2).
@@ -134,14 +139,12 @@ private val MESSAGES: Map<String, StringResource> =
         FAILED_TO_SUBMIT_SIGNATURE to Res.string.errorSaving,
         FAILED_TO_START_VIDEO_CALL to Res.string.failedToStartVideoCall,
         // V1 (06 §7.3): the join window and payment are checked on the server too.
-        "Video call is not yet available. You can join 5 minutes before the appointment start." to
-            Res.string.errorVideoCallNotYetAvailable,
-        "Video call has ended. The join window closes 15 minutes after the appointment end." to
-            Res.string.errorVideoCallHasEnded,
+        VIDEO_TOO_EARLY to Res.string.errorVideoCallNotYetAvailable,
+        VIDEO_TOO_LATE to Res.string.errorVideoCallHasEnded,
         "Video call is not available. It may have ended, or the join window has closed (usually 15 minutes " +
             "after the appointment end)." to
             Res.string.errorVideoCallHasEnded,
-        "Payment is required before joining this video consultation." to Res.string.errorVideoCallPaymentRequired,
+        VIDEO_PAYMENT_REQUIRED to Res.string.errorVideoCallPaymentRequired,
         "Appointment does not belong to this patient" to Res.string.errorAppointmentDoesNotBelongToPatient,
         FAILED_TO_SEND_MESSAGE to Res.string.failedToSend,
         FAILED_TO_UPLOAD_ATTACHMENT to Res.string.failedToUploadImage,
@@ -164,6 +167,10 @@ private val CODE_MESSAGES: Map<String, String> =
         "SESSION_EXPIRED" to INVALID_OR_EXPIRED_TOKEN,
         "SESSION_INVALID" to INVALID_OR_EXPIRED_TOKEN,
         "TOKEN_INVALID" to INVALID_OR_EXPIRED_TOKEN,
+        // V1's refusals (403, 403, 402), whatever their message says.
+        "VIDEO_TOO_EARLY" to VIDEO_TOO_EARLY,
+        "VIDEO_TOO_LATE" to VIDEO_TOO_LATE,
+        "VIDEO_PAYMENT_REQUIRED" to VIDEO_PAYMENT_REQUIRED,
     )
 
 /**

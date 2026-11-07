@@ -73,6 +73,7 @@ import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.analytics.analyticsName
 import shifa.uz.data.model.AppNotification
 import shifa.uz.data.model.RemoteCareTask
+import shifa.uz.ui.bookings.cancelText
 import shifa.uz.ui.documents.DocumentDisplayCard
 import shifa.uz.ui.home.TaskCard
 import shifa.uz.ui.home.UpcomingCard
@@ -412,7 +413,11 @@ private fun texts(n: AppNotification): Pair<String, String> {
                     } ?: n.message
                 )
         else ->
-            NOTIFICATION_TEXTS[n.kind]?.let { (title, message) -> stringResource(title) to stringResource(message) }
+            NOTIFICATION_TEXTS[n.kind]?.let { (title, message) ->
+                // A cancellation adds the doctor's reason and note when its data has them.
+                val why = if ("CANCELLED" in n.kind) cancelText(n.cancelReason, n.cancelNote) else null
+                stringResource(title) to listOfNotNull(stringResource(message), why).joinToString("\n")
+            }
                 ?: if ("signature" in n.title.lowercase()) {
                     signature
                 } else {

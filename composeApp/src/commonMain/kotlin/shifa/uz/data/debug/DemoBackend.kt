@@ -189,7 +189,8 @@ class DemoBackend(
             request.method == HttpMethod.Delete && path.startsWith("${Endpoints.DOCUMENTS}/") ->
                 data.deleteDocument(p.last())
             get && path == Endpoints.CONVERSATIONS -> ok(JsonArray(data.chats.map { it.contact() }))
-            get && p.size == 5 && path.startsWith(Endpoints.CONVERSATIONS) -> data.chat(p[4])
+            get && p.size == 5 && path.startsWith(Endpoints.CONVERSATIONS) ->
+                data.chat(p[4], request.url.parameters["after"])
             post && p.size == 6 && path.startsWith(Endpoints.CONVERSATIONS) && p[5] == "read" -> data.readChat(p[4])
             post && path == Endpoints.SEND_MESSAGE -> data.send(body)
             get && path == Endpoints.SEARCH_USERS -> ok(data.users(request.url.parameters["q"]))
@@ -349,7 +350,16 @@ class DemoBackend(
                 visit(9103, "9001", at(3, 15), video = true, payment = "PENDING"),
                 visit(9104, "9002", at(5, 9, 30)),
                 visit(9105, "9001", at(-10, 11), status = "COMPLETED"),
-                visit(9106, "9002", at(-20, 14), status = "CANCELLED"),
+                visit(9108, "9001", at(-15, 16), video = true, status = "NO_SHOW"),
+                visit(9106, "9002", at(-20, 14), status = "CANCELLED").let {
+                    JsonObject(
+                        it +
+                            obj(
+                                "cancelReasonCode" to "DOCTOR_UNAVAILABLE",
+                                "cancelNote" to "I'm away at a conference that day. Please book another time.",
+                            ),
+                    )
+                },
                 visit(9107, "9002", at(-30, 10), status = "COMPLETED"),
             )
 
@@ -416,6 +426,9 @@ class DemoBackend(
                 "endAt" to (start + 30.minutes).toString(),
                 "location" to if (video) "Video Consultation" else DEMO_CLINIC,
                 "isVideo" to video,
+                "joinWindow" to
+                    obj("from" to (start - 5.minutes).toString(), "to" to (start + 45.minutes).toString())
+                        .takeIf { video },
                 "reason" to reason,
                 "status" to status,
                 "paymentStatus" to payment,
@@ -812,6 +825,28 @@ class DemoBackend(
                     "appointmentId" to "9101",
                 ),
                 notification(
+                    9609,
+                    "APPOINTMENT_NO_SHOW",
+                    "Missed appointment",
+                    "Aziza Karimova marked your video visit as missed.",
+                    now - 4.hours,
+                    "appointmentId" to "9108",
+                ),
+                notification(
+                    9610,
+                    "APPOINTMENT_CANCELLED",
+                    "Appointment cancelled",
+                    "Your visit was cancelled.",
+                    now - 1.days - 2.hours,
+                    "appointmentId" to "9106",
+                    read = true,
+                    data =
+                        obj(
+                            "cancelReasonCode" to "DOCTOR_UNAVAILABLE",
+                            "cancelNote" to "I'm away at a conference that day. Please book another time.",
+                        ),
+                ),
+                notification(
                     9607,
                     "DOCUMENT_ACCESS_REQUEST",
                     "Document access request",
@@ -829,6 +864,7 @@ class DemoBackend(
             at: Instant,
             link: Pair<String, String>,
             read: Boolean = false,
+            data: JsonObject? = null,
         ) = obj(
             "id" to id,
             "type" to type,
@@ -837,6 +873,7 @@ class DemoBackend(
             "createdAt" to at.toString(),
             "readAt" to at.toString().takeIf { read },
             "doctorName" to "Aziza Karimova",
+            "data" to data,
             link,
         )
 
@@ -964,13 +1001,18 @@ class DemoBackend(
             "isRead" to mine,
         )
 
-        fun chat(id: String): Reply {
+        /** C2; with [after], only the messages after that one (all of them when it isn't there). */
+        fun chat(
+            id: String,
+            after: String? = null,
+        ): Reply {
             val chat =
                 chats.firstOrNull { it.id == id } ?: return fail(
                     HttpStatusCode.NotFound,
                     "Conversation not found",
                 )
-            return ok(obj("conversation" to chat.contact(), "messages" to chat.messages))
+            val from = chat.messages.indexOfFirst { it.str("id") == after } + 1
+            return ok(obj("conversation" to chat.contact(), "messages" to chat.messages.drop(from)))
         }
 
         fun readChat(id: String): Reply {

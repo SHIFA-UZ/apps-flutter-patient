@@ -20,6 +20,9 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.cancelReasonDoctorUnavailable
+import shifa.composeapp.generated.resources.cancelReasonPatientRequest
+import shifa.composeapp.generated.resources.cancelReasonRescheduled
 import shifa.composeapp.generated.resources.errorCancellingAppointment
 import shifa.composeapp.generated.resources.thankYouForYourRating
 import shifa.uz.data.analytics.AnalyticsEvent
@@ -210,6 +213,31 @@ class AppointmentDetailsViewModelTest {
             assertThat(state.canReview).isFalse()
             assertThat(state.notice).isEqualTo(Res.string.thankYouForYourRating)
         }
+
+    @Test
+    fun `a missed visit is over, with no Reschedule, Cancel or review`() =
+        runTest {
+            wheneverBlocking { bookings.getReview(any()) } doReturn null
+            create(tomorrow.copy(status = "NO_SHOW"))
+            assertThat(state.isUpcoming).isFalse()
+            create(inThreeDays.copy(startAt = "2026-09-26T09:00:00Z", status = "NO_SHOW"))
+            advanceUntilIdle()
+            assertThat(state.isPast).isTrue()
+            assertThat(state.canCancel).isFalse()
+            assertThat(state.canReschedule).isFalse()
+            assertThat(state.canReview).isFalse()
+            verifyBlocking(bookings, never()) { getReview(any()) }
+        }
+
+    @Test
+    fun `each cancel reason code has its phrase, OTHER and unknown codes none`() {
+        assertThat(cancelReason("DOCTOR_UNAVAILABLE")).isEqualTo(Res.string.cancelReasonDoctorUnavailable)
+        assertThat(cancelReason("patient_request")).isEqualTo(Res.string.cancelReasonPatientRequest)
+        assertThat(cancelReason("RESCHEDULED")).isEqualTo(Res.string.cancelReasonRescheduled)
+        assertThat(cancelReason("OTHER")).isNull()
+        assertThat(cancelReason("SOMETHING_NEW")).isNull()
+        assertThat(cancelReason(null)).isNull()
+    }
 
     @Test
     fun `an existing review hides Leave Review, and a cancelled visit has none`() =

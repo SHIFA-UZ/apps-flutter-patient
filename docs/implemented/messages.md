@@ -11,7 +11,7 @@
 ## Chat (`ConversationScreen.kt`, CHAT-02, partly CHAT-03/05)
 
 - Figma: `1772:17206`. An overlay above the tabs; the doctor's name and photo in the header.
-- C2 on open and every 5 s while the chat is shown (the screen runs the poll, so it stops on leave). C4 on open and when a new received message comes in; its errors are ignored.
+- C2 on open and every 5 s while the chat is shown (the screen runs the poll, so it stops on leave). Once the chat has a message, the poll sends `after=<newest server message id>` and merges the reply by id (2026-11-07); a backend that ignores `after` sends the whole thread, which merges to the same list. C4 on open and when a new received message comes in; its errors are ignored.
 - Opens at the newest message (Flutter opened at the oldest).
 - Send (C3) clears the composer once it goes. A failed send keeps the text and shows the error. A sent message stays on screen until a fetch brings it.
 - A new chat is addressed by `recipientDoctorId`, then switches to the `chatId` of its first message (Flutter never switched, 08 §6.4).

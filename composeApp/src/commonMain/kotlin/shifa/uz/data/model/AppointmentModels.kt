@@ -42,6 +42,10 @@ data class Appointment(
     val canReschedule: Boolean? = null,
     val refundRequired: Boolean = false,
     val payment: PaymentCheckout? = null, // B3's reply for pay now only
+    // The doctor's cancellation (DOCTOR_UNAVAILABLE, PATIENT_REQUEST, RESCHEDULED, OTHER) and note to the patient.
+    val cancelReasonCode: String? = null,
+    val cancelNote: String? = null,
+    val joinWindow: JoinWindow? = null, // video visits only; older backends leave it out
 ) {
     val needsSignature get() = signatureRequested && !alreadySigned
 
@@ -63,12 +67,20 @@ data class Appointment(
     val isConfirmed get() = status == null || status == "CONFIRMED" || status == "IN_PROGRESS"
 
     // 06 quirk 12: Flutter ignored the status here. REQUESTED and PENDING are open (new bookings are either, 15 B2).
-    val isOpen get() = status != "CANCELLED" && status != "COMPLETED" && !isPaymentDead
+    // NO_SHOW: the doctor marked it missed, so it's over like a cancelled one.
+    val isOpen get() = status != CANCELLED && status != "COMPLETED" && !isNoShow && !isPaymentDead
+
+    val isCancelled get() = status == CANCELLED
+
+    val isNoShow get() = status == NO_SHOW
 
     val start get() = parseInstant(startAt)
 
-    // 06: the video join window, start − 5 min to end + 15 min. Home also uses it for "Now".
-    private val window get() = start?.let { (it - 5.minutes)..((parseInstant(endAt) ?: it) + 15.minutes) }
+    // 06: the video join window, the backend's when it sends one, else start − 5 min to end + 15 min. Home also uses
+    // it for "Now".
+    private val window
+        get() =
+            joinWindow?.range ?: start?.let { (it - 5.minutes)..((parseInstant(endAt) ?: it) + 15.minutes) }
 
     fun isNow(now: Instant) = window?.contains(now) == true
 
@@ -80,7 +92,19 @@ data class Appointment(
         const val PENDING_PAYMENT = "PENDING_PAYMENT"
         const val EXPIRED = "EXPIRED"
         const val PAYMENT_FAILED = "PAYMENT_FAILED"
+        const val CANCELLED = "CANCELLED"
+        const val NO_SHOW = "NO_SHOW"
     }
+}
+
+/** When the video room lets the patient in; also in V1's VIDEO_TOO_EARLY / VIDEO_TOO_LATE refusals. */
+@Serializable
+data class JoinWindow(
+    val from: String = "",
+    val to: String = "",
+) {
+    /** Null unless both ends parse. */
+    val range get() = parseInstant(from)?.let { start -> parseInstant(to)?.let { start..it } }
 }
 
 /** B3's pay-now checkout (MOBILE_BOOKING_PAYMENT §2.2). */
