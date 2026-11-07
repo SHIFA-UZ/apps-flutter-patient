@@ -67,6 +67,14 @@ private val past =
             startAt = "2026-09-01T05:00:00Z",
             status = "CANCELLED",
         ),
+        Appointment(
+            id = "4",
+            doctorName = "Malika Rahimova",
+            doctorProfession = "Cardiologist",
+            location = "Video Consultation",
+            startAt = "2026-08-25T10:30:00Z",
+            status = "NO_SHOW",
+        ),
     )
 
 @Preview(widthDp = 393, heightDp = 852)
@@ -172,6 +180,32 @@ private val pastVisit =
 internal fun AppointmentDetailsPastPreview() =
     PreviewTheme {
         AppointmentDetailsContent(AppointmentDetailsUiState(pastVisit, now, previewDoctor, reviewChecked = true))
+    }
+
+// Not in Figma: the doctor's reason and note on a cancelled visit.
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun AppointmentDetailsCancelledPreview() =
+    PreviewTheme {
+        AppointmentDetailsContent(
+            AppointmentDetailsUiState(
+                pastVisit.copy(
+                    status = "CANCELLED",
+                    cancelReasonCode = "DOCTOR_UNAVAILABLE",
+                    cancelNote = "I'm away at a conference that day. Please book another time.",
+                ),
+                now,
+                previewDoctor,
+            ),
+        )
+    }
+
+// Not in Figma: the doctor marked the visit missed (NO_SHOW).
+@Preview(widthDp = 393, heightDp = 852)
+@Composable
+internal fun AppointmentDetailsNoShowPreview() =
+    PreviewTheme {
+        AppointmentDetailsContent(AppointmentDetailsUiState(pastVisit.copy(status = "NO_SHOW"), now, previewDoctor))
     }
 
 @Preview(widthDp = 393, heightDp = 852)

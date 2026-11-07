@@ -227,7 +227,7 @@ private fun RecommendedCard(
     )
 }
 
-// 06: cancelled cards don't open.
+// Cancelled and missed visits are Error. They open too (06 said cancelled ones don't), for the doctor's reason.
 @Composable
 internal fun PastCard(
     appointment: Appointment,
@@ -235,7 +235,6 @@ internal fun PastCard(
     shadow: Boolean = true,
     link: Boolean = false,
 ) {
-    val cancelled = appointment.status == "CANCELLED"
     val place = if (appointment.isVideo) stringResource(Res.string.videoConsultation) else appointment.doctorClinic
     ShifaPastAppointmentCard(
         doctorName = appointment.doctorName?.ifBlank { null } ?: stringResource(Res.string.unknownDoctor),
@@ -244,13 +243,13 @@ internal fun PastCard(
         avatarUrl = appointment.doctorPhotoUrl,
         status =
             when {
-                cancelled -> ShifaAppointmentStatus.Error
+                appointment.isCancelled || appointment.isNoShow -> ShifaAppointmentStatus.Error
                 appointment.isConfirmed || appointment.status == "COMPLETED" -> ShifaAppointmentStatus.Successful
                 else -> ShifaAppointmentStatus.Warning // never confirmed
             },
         video = appointment.isVideo,
         shadow = shadow,
         link = link,
-        onClick = { onClick(appointment) }.takeUnless { cancelled },
+        onClick = { onClick(appointment) },
     )
 }

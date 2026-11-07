@@ -971,4 +971,10 @@
     <string name="share">Ulashish</string>
     <string name="regenerate">Qayta yaratish</string>
     <string name="fromAppointment">Qabuldan</string>
+    <string name="appointmentNoShowTitle">O'tkazib yuborilgan qabul</string>
+    <string name="appointmentNoShowMessage">Shifokor bu qabulni o'tkazib yuborilgan deb belgiladi. Qabul hali ham kerak bo'lsa, qayta yoziling.</string>
+    <string name="cancelReasonDoctorUnavailable">Shifokor qabul qila olmaydi.</string>
+    <string name="cancelReasonPatientRequest">Sizning so'rovingiz bo'yicha bekor qilindi.</string>
+    <string name="cancelReasonRescheduled">Boshqa vaqtga ko'chirildi.</string>
+    <string name="missed">O'tkazib yuborilgan</string>
 </resources>

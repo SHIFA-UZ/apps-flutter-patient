@@ -27,6 +27,11 @@ class NotificationsScreenshotTest {
     }
 
     @Test
+    fun cancelledTray() {
+        captureRoboImage("screenshots/NotificationTray_cancelled.png") { NotificationCancelledTrayPreview() }
+    }
+
+    @Test
     fun documentTray() {
         captureRoboImage("screenshots/NotificationTray_document.png") { NotificationDocumentTrayPreview() }
     }

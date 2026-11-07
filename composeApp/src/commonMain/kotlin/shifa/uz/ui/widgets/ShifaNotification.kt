@@ -52,7 +52,8 @@ enum class ShifaNotificationType(
 
 /**
  * Figma notification, every type but message. Unread ([unreadCount] > 0): a bold brand [time] and the count's
- * [ShifaNotificationBubble]; an unread chat sits on canvas. Feedback has no [time] or bubble in Figma.
+ * [ShifaNotificationBubble]; an unread chat sits on canvas. Feedback has no [time] or bubble in Figma. The body is cut
+ * at [maxLines] (Figma's 2 in lists).
  */
 @Composable
 fun ShifaNotification(
@@ -62,6 +63,7 @@ fun ShifaNotification(
     modifier: Modifier = Modifier,
     time: String? = null,
     unreadCount: Int = 0,
+    maxLines: Int = 2,
     onClick: (() -> Unit)? = null,
 ) {
     val feedback = type == ShifaNotificationType.Feedback
@@ -105,7 +107,7 @@ fun ShifaNotification(
             Modifier.lineBox(style),
             style = style,
             color = ShifaColors.Text.Primary,
-            maxLines = 2,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
         )
     }

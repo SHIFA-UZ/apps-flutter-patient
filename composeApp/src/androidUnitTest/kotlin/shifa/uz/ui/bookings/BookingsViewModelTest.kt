@@ -44,6 +44,7 @@ class BookingsViewModelTest {
     private val cancelled =
         Appointment(id = "3", doctorId = "d1", startAt = "2026-10-20T09:00:00Z", status = "CANCELLED")
     private val upcoming = Appointment(id = "4", doctorId = "d1", startAt = "2026-10-01T09:00:00Z")
+    private val missed = Appointment(id = "5", doctorId = "d2", startAt = "2026-09-27T08:50:00Z", status = "NO_SHOW")
     private val ali = Doctor(id = "d1", fullName = "Ali")
     private val vali = Doctor(id = "d2", fullName = "Vali")
     private val tracker = RecordingTracker()
@@ -52,7 +53,8 @@ class BookingsViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        wheneverBlocking { bookings.getAppointments() } doReturn Result.success(listOf(older, upcoming, cancelled, old))
+        wheneverBlocking { bookings.getAppointments() } doReturn
+            Result.success(listOf(older, upcoming, cancelled, old, missed))
         wheneverBlocking { doctors.getDoctor("d1") } doReturn Result.success(ali)
         wheneverBlocking { doctors.getDoctor("d2") } doReturn Result.success(vali)
         wheneverBlocking { doctors.searchDoctors(any()) } doReturn Result.success(listOf(vali))
@@ -86,7 +88,8 @@ class BookingsViewModelTest {
             assertThat(state.isLoading).isTrue()
             advanceUntilIdle()
 
-            assertThat(state.past).containsExactly(cancelled, old, older).inOrder()
+            // The missed one is past although its join window is still open.
+            assertThat(state.past).containsExactly(cancelled, missed, old, older).inOrder()
             assertThat(state.myDoctors).containsExactly(ali, vali).inOrder()
             assertThat(state.lastVisit(ali)).isEqualTo(old.start) // not the cancelled one
             assertThat(state.lastVisit(vali)).isEqualTo(older.start)

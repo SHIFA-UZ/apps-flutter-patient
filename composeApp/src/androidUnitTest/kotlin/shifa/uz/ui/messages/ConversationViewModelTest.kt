@@ -18,6 +18,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -52,7 +53,12 @@ class ConversationViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        wheneverBlocking { chat.conversation(any()) } doReturn Result.success(Conversation(null, listOf(hello)))
+        wheneverBlocking {
+            chat.conversation(
+                any(),
+                anyOrNull(),
+            )
+        } doReturn Result.success(Conversation(null, listOf(hello)))
         wheneverBlocking { chat.markRead(any()) } doReturn Result.success(Unit)
     }
 
@@ -95,19 +101,57 @@ class ConversationViewModelTest {
             open()
             assertThat(state.messages).containsExactly(hello)
             verifyBlocking(chat) { markRead("3") }
+            verifyBlocking(chat) { conversation("3", null) }
 
+            // A backend that ignores `after` sends everything again: same list.
             nextPoll()
-            verifyBlocking(chat, times(2)) { conversation("3") }
+            verifyBlocking(chat) { conversation("3", "1") }
             verifyBlocking(chat, times(1)) { markRead("3") }
 
             wheneverBlocking {
                 chat.conversation(
                     any(),
+                    anyOrNull(),
                 )
             } doReturn Result.success(Conversation(null, listOf(hello, reply)))
             nextPoll()
             assertThat(state.messages).containsExactly(hello, reply).inOrder()
             verifyBlocking(chat, times(2)) { markRead("3") }
+        }
+
+    @Test
+    fun `polls ask only for messages after the newest and merge them`() =
+        runTest {
+            open()
+            wheneverBlocking { chat.conversation("3", "1") } doReturn Result.success(Conversation(null, listOf(reply)))
+            nextPoll()
+            assertThat(state.messages).containsExactly(hello, reply).inOrder()
+
+            wheneverBlocking { chat.conversation("3", "2") } doReturn Result.success(Conversation(null, emptyList()))
+            nextPoll()
+            verifyBlocking(chat) { conversation("3", "2") }
+            assertThat(state.messages).containsExactly(hello, reply).inOrder()
+        }
+
+    @Test
+    fun `a full page of newer messages is read on from its newest`() =
+        runTest {
+            open()
+            // Ids 2..101, a second apart after "Hello" (08:00).
+            val page =
+                (2..101).map {
+                    val t = it - 1
+                    ChatMessage(
+                        "$it",
+                        text = "m$it",
+                        created = "2026-09-28T08:0${1 + t / 60}:${(t % 60).toString().padStart(2, '0')}Z",
+                    )
+                }
+            wheneverBlocking { chat.conversation("3", "1") } doReturn Result.success(Conversation(null, page))
+            wheneverBlocking { chat.conversation("3", "101") } doReturn Result.success(Conversation(null, emptyList()))
+            nextPoll()
+            verifyBlocking(chat) { conversation("3", "101") }
+            assertThat(state.messages).hasSize(101)
         }
 
     @Test
@@ -119,7 +163,7 @@ class ConversationViewModelTest {
             wheneverBlocking { chat.send(any()) } doReturn Result.success(echo)
             open()
             assertThat(state.messages).isEmpty()
-            verifyBlocking(chat, never()) { conversation(any()) }
+            verifyBlocking(chat, never()) { conversation(any(), anyOrNull()) }
 
             classToTest.edit(" Hi doctor ")
             classToTest.send()
@@ -132,7 +176,7 @@ class ConversationViewModelTest {
             assertThat(state.messages).containsExactly(echo)
             // Kept until a fetch has it.
             nextPoll()
-            verifyBlocking(chat) { conversation("7") }
+            verifyBlocking(chat) { conversation("7", null) }
             assertThat(state.messages).containsExactly(hello, echo).inOrder()
         }
 
@@ -214,6 +258,7 @@ class ConversationViewModelTest {
             wheneverBlocking {
                 chat.conversation(
                     any(),
+                    anyOrNull(),
                 )
             } doReturn Result.failure(ApiException.Unauthorized("Unauthorized"))
 

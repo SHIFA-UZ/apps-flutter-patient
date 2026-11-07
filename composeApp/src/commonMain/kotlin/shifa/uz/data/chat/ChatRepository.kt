@@ -41,9 +41,17 @@ class ChatRepository(
         apiCall<JsonElement>(FAILED_TO_LOAD_CONVERSATIONS) { client.get(ApiConfig.Endpoints.CONVERSATIONS) }
             .map { it.items<ChatContact>() }
 
-    /** C2. A missing `messages` is empty. */
-    suspend fun conversation(id: String): Result<Conversation> =
-        apiCall<JsonElement>(FAILED_TO_LOAD_CONVERSATION) { client.get(ApiConfig.Endpoints.conversation(id)) }
+    /**
+     * C2. A missing `messages` is empty. With [after] (a message id) the backend sends only newer ones; one that
+     * doesn't know the parameter yet sends them all.
+     */
+    suspend fun conversation(
+        id: String,
+        after: String? = null,
+    ): Result<Conversation> =
+        apiCall<JsonElement>(FAILED_TO_LOAD_CONVERSATION) {
+            client.get(ApiConfig.Endpoints.conversation(id)) { parameter("after", after) }
+        }
             .map { json ->
                 Conversation(
                     (json as? JsonObject)?.get("conversation")?.let {

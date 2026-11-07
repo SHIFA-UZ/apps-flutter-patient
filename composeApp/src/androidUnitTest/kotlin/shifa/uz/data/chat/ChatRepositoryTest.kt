@@ -57,6 +57,7 @@ class ChatRepositoryTest {
             val chat = classToTest.conversation("3").getOrThrow()
 
             assertThat(request.url.encodedPath).isEqualTo("/api/patients/me/messages/conversations/3")
+            assertThat(request.url.parameters.names()).isEmpty()
             assertThat(chat.contact?.participantName).isEqualTo("Aziz")
             assertThat(chat.messages.map { it.type })
                 .containsExactly(
@@ -72,6 +73,14 @@ class ChatRepositoryTest {
             assertThat(chat.messages[2].fileName).isEqualTo("Results.PDF")
             assertThat(chat.messages[3].fileUrl).isEqualTo("https://f/v.m4a")
             assertThat(chat.messages[3].durationSeconds).isEqualTo(42)
+        }
+
+    @Test
+    fun `a poll asks for messages after the newest one`() =
+        runTest {
+            body = """{"messages":[]}"""
+            assertThat(classToTest.conversation("3", after = "42").getOrThrow().messages).isEmpty()
+            assertThat(request.url.parameters["after"]).isEqualTo("42")
         }
 
     @Test

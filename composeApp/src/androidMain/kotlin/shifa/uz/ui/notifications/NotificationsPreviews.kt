@@ -23,6 +23,7 @@ private val inbox =
         reminder,
         document,
         task,
+        AppNotification(8, "", "", "APPOINTMENT_NO_SHOW", "2026-09-27T16:00:00Z"),
         AppNotification(4, "", "", "APPOINTMENT_CANCELLED", "2026-09-27T12:00:00Z"),
         AppNotification(5, "", "", "CONSULTATION_PAYMENT_REMINDER", "2026-09-27T08:15:00Z"),
         AppNotification(6, "", "", "TASK_COMPLETED", "2026-09-20T10:00:00Z", readAt = "2026-09-20T11:00:00Z"),
@@ -51,6 +52,34 @@ internal fun NotificationAppointmentTrayPreview() =
                     doctorProfession = "Dentist",
                     doctorClinic = "Sog'lom Hayot Klinikasi",
                     startAt = "2026-09-28T10:00:00Z",
+                ),
+            ),
+            now,
+            null,
+        )
+    }
+
+// Not in Figma: a cancellation with the doctor's reason and note (push data shown as an item).
+@Preview
+@Composable
+internal fun NotificationCancelledTrayPreview() =
+    Gallery(background = ShifaColors.Bg.Canvas) {
+        NotificationTray(
+            AppNotification.fromPush(
+                mapOf(
+                    "type" to "APPOINTMENT_CANCELLED",
+                    "createdAt" to "2026-09-28T08:00:00Z",
+                    "cancelReasonCode" to "DOCTOR_UNAVAILABLE",
+                    "cancelNote" to "I'm away at a conference that day. Please book another time.",
+                ),
+            ),
+            NotificationLink.ToAppointment(
+                Appointment(
+                    doctorName = "Aziz Karimov",
+                    doctorProfession = "Dentist",
+                    doctorClinic = "Sog'lom Hayot Klinikasi",
+                    startAt = "2026-09-29T10:00:00Z",
+                    status = "CANCELLED",
                 ),
             ),
             now,

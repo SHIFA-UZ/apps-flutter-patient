@@ -782,6 +782,18 @@ The payment gateways are **Click.uz**, the primary one for UZS, and **Stripe**, 
   - Web: an iframe at `${roomUrl}?t=${token}`.
 - **Join window**: 5 minutes before `startAt` until 15 minutes after `endAt` (UTC). The client enforces this before offering the button; whether the server does too is **UNVERIFIED**.
 - **Errors**: `message` → `error` → `reason` → raw body.
+- **KMP app, backend second round (2026-11-07, not on production yet):** the server enforces the window and payment,
+  and each refusal carries a `code` (statuses unchanged):
+
+  | Status | `code` | Extra body field | Text shown |
+  |---|---|---|---|
+  | 403 | `VIDEO_TOO_EARLY` | `"joinWindow": {"from": ISO, "to": ISO}` | `errorVideoCallNotYetAvailable` |
+  | 403 | `VIDEO_TOO_LATE` | `"joinWindow": {"from": ISO, "to": ISO}` | `errorVideoCallHasEnded` |
+  | 402 | `VIDEO_PAYMENT_REQUIRED` | | `errorVideoCallPaymentRequired` |
+
+  `sanitizeError` maps the codes to those texts when the message isn't a known one; without a code (production) the
+  known messages still decide. The error's `joinWindow` isn't read: the appointment's own `joinWindow` (§5.6) already
+  places the Join button.
 
 ### 3.7 Chat
 
@@ -793,6 +805,10 @@ The payment gateways are **Click.uz**, the primary one for UZS, and **Stripe**, 
 - **Caller**: `chat_providers.dart:29` (`conversationProvider`), re-fetched **every 5s** by `chat_conversation_screen.dart:60`.
 - **Res 200**: `{ "conversation": ChatContact, "messages": [ChatMessage…] }`. A missing `messages` key yields `[]`.
 - A new conversation has a client-side id of the form `new_…` until the first message is sent.
+- **KMP app, backend second round (2026-11-07):** optional `after=<messageId>` (and `limit=`) returns only messages
+  newer than that one; without them, unchanged. The open chat's 5 s poll sends `after` = its newest server message
+  once it has one (no `limit`) and merges the reply by id, so a backend that ignores `after` (production) and sends the
+  whole thread gives the same list. C1 gained an optional `since=`, which the app doesn't send.
 
 #### C3 `POST /patients/me/messages/send`
 - **Callers**: `chat_conversation_screen.dart:~95` (text and image), `:~303` (voice).
@@ -1113,6 +1129,12 @@ The keys read from `RemoteMessage.data` (`notification_tap_handler.dart:25-140`,
 
 `notification.title` and `notification.body` are only fallbacks. The client re-localizes the text from `type` into the app language.
 
+**KMP app, backend second round (2026-11-07):** `APPOINTMENT_NO_SHOW` (the doctor marked the visit missed; in-app and
+push, with the appointment id) is handled like the cancellations: its own localized title and text, the Appointments
+filter, tap → the visit. Cancellation pushes and inbox rows may carry `cancelReasonCode` and `cancelNote` (in the push
+data; on the row itself or under its `data`); the app's text then adds the reason phrase and the note. With a reason the
+backend writes the push's own title and body in the patient's language (the background push shows those).
+
 `type` values handled: `APPOINTMENT_SCHEDULED`, `APPOINTMENT_CONFIRMED`, `APPOINTMENT_CANCELLED`, `APPOINTMENT_CHANGED`, `APPOINTMENT_REMINDER`, `APPOINTMENT_UPCOMING`, `APPOINTMENT_SOON`, `APPOINTMENT_CLOSE`, `APPOINTMENT_ASSIGNED`, `NEW_APPOINTMENT`, `APPOINTMENT_BOOKED_BY_PATIENT`, `APPOINTMENT_CANCELLED_BY_PATIENT`, `APPOINTMENT_RESCHEDULED_BY_PATIENT`, `SIGNATURE_REQUESTED`, `AI_VISIT_SUMMARY_READY`, `AI_SCRIBE_READY`, `CONSULTATION_PAYMENT_REMINDER`, `CONSULTATION_PAYMENT_DUE_24H`, `CONSULTATION_PAYMENT_DUE_6H`, `CONSULTATION_PAYMENT_DUE_1H`, `TREATMENT_PLAN_PAYMENT_REMINDER`, `TREATMENT_PLAN_UPDATED`, `INSTALLMENT_DUE_SOON`, `INSTALLMENT_DUE_TODAY`, `INSTALLMENT_OVERDUE`, `INSTALLMENT_SCHEDULE_CREATED`, `PROPHYLAXIS_REMINDER`, `NEW_DOCUMENT`, `DOCUMENT`, `DOCUMENT_ACCESS_REQUEST`, `DOCUMENT_ACCESS_APPROVED`, `DOCUMENT_ACCESS_REJECTED`, `NEW_MESSAGE`, `CHAT_MESSAGE`, `TASK_ASSIGNED`, `TASK_REMINDER`, `TASK_CANCELLED`, `TASK_COMPLETED`.
 
 Routing summary:
@@ -1216,6 +1238,16 @@ B7 returns a smaller shape: `{ rating: int (req), comment?, createdAt? }`.
 }
 ```
 - **`location` is required as a String.** A null `location`, for example on a video appointment, crashes parsing. The server must always send it.
+- **KMP app, backend second round (2026-11-07, all optional, absent on production):** on B2's items and on B4
+  (`AppointmentSummaryDto`, same values; the app reads both into `Appointment`).
+  - `status` may be `NO_SHOW` (the doctor marked it missed). The app treats it as over, like `CANCELLED`: not
+    upcoming, no Join / Reschedule / Cancel / review, a red status on the past card and a "Missed appointment" notice
+    in the details.
+  - `cancelReasonCode`: `DOCTOR_UNAVAILABLE` | `PATIENT_REQUEST` | `RESCHEDULED` | `OTHER`, and `cancelNote`: the
+    doctor's note to the patient. A cancelled visit's details show the reason as a short phrase (`OTHER` has none)
+    and the note; with neither, the generic cancelled text.
+  - `joinWindow`: `{"from": ISO, "to": ISO}`, video visits only (start − 5 min to end + 15 min). When both ends
+    parse it replaces the client-computed window for "Now", Join and Home's upcoming cut-off.
 - Doctor phone and email on the details screen come from D2, not from the appointment.
 
 ### 5.7 Document (`core/models/document_model.dart`), from F1 and F2

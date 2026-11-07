@@ -68,11 +68,31 @@ class ConversationViewModel(
 
     private fun shown() = (server + sent.filter { s -> server.none { it.id == s.id } }).sortedBy { it.createdAt }
 
-    /** C2. A failed poll shows its error until the next one works. */
+    /**
+     * C2. A failed poll shows its error until the next one works. Once there's a message, only newer ones are asked
+     * for and merged by id, so a backend that ignores `after` (and sends everything) gives the same list.
+     */
     private suspend fun refresh(id: String) {
-        chat.conversation(id).fold(
+        // A newer-only read that came back full (the backend's page) has more behind it: read on.
+        var after = newestFetched()
+        do {
+            val page = fetch(id, after) ?: return
+            val wasAfter = after
+            after = newestFetched()
+        } while (wasAfter != null && page >= CURSOR_PAGE && after != wasAfter)
+    }
+
+    // The backend pages by id (`id > after`), so the cursor is the largest id fetched, not the latest time.
+    private fun newestFetched() = server.maxByOrNull { it.id.toLongOrNull() ?: Long.MIN_VALUE }?.id
+
+    /** One read; how many messages it brought, or null when it failed. */
+    private suspend fun fetch(
+        id: String,
+        after: String?,
+    ): Int? =
+        chat.conversation(id, after).fold(
             onSuccess = { c ->
-                server = c.messages
+                server = server.filter { old -> c.messages.none { it.id == old.id } } + c.messages
                 sent = sent.filter { s -> server.none { it.id == s.id } }
                 update {
                     copy(
@@ -89,10 +109,13 @@ class ConversationViewModel(
                     readUpTo = newest
                     chat.markRead(id)
                 }
+                c.messages.size
             },
-            onFailure = { fail(it) },
+            onFailure = {
+                fail(it)
+                null
+            },
         )
-    }
 
     /** C2 every [pollMs], until cancelled: the screen runs it while it's shown. */
     suspend fun poll() {
@@ -246,3 +269,6 @@ class ConversationViewModel(
         if (e is ApiException.Unauthorized) _signedOut.send(Unit)
     }
 }
+
+/** The backend's default page for a newer-only read (`after`). */
+private const val CURSOR_PAGE = 100

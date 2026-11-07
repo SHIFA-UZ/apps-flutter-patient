@@ -58,7 +58,7 @@ class DemoBackendTest {
                     ApiConfig.DEV_BASE_URL,
                 )
 
-            assertThat(NotificationsRepository(dev).unreadCount().getOrThrow()).isEqualTo(7)
+            assertThat(NotificationsRepository(dev).unreadCount().getOrThrow()).isEqualTo(8)
             assertThat(real.requestHistory).isEmpty()
         }
 
@@ -115,18 +115,18 @@ class DemoBackendTest {
     fun `reading notifications lowers the count`() =
         runTest {
             val notifications = NotificationsRepository(client)
-            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(7)
+            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(8)
 
             notifications.markRead(9601).getOrThrow()
-            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(6)
+            assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(7)
             notifications.markAllRead().getOrThrow()
             assertThat(notifications.unreadCount().getOrThrow()).isEqualTo(0)
-            assertThat(notifications.getNotifications().getOrThrow()).hasSize(8)
+            assertThat(notifications.getNotifications().getOrThrow()).hasSize(10)
             val first = notifications.getNotificationsPage(0, 5).getOrThrow()
             val second = notifications.getNotificationsPage(1, 5).getOrThrow()
             assertThat(first.items).hasSize(5)
             assertThat(first.last).isFalse()
-            assertThat(second.items).hasSize(3)
+            assertThat(second.items).hasSize(5)
             assertThat(second.last).isTrue()
         }
 
@@ -141,6 +141,28 @@ class DemoBackendTest {
             val reply = chat.conversation("9801").getOrThrow().messages.last()
             assertThat(reply.isMine).isFalse()
             assertThat(chat.conversations().getOrThrow().single { it.id == "9801" }.unreadCount).isEqualTo(3)
+        }
+
+    @Test
+    fun `a chat read with after sends only the newer messages`() =
+        runTest {
+            val chat = ChatRepository(client)
+            val all = chat.conversation("9801").getOrThrow().messages
+            assertThat(
+                chat.conversation("9801", all[all.size - 2].id).getOrThrow().messages,
+            ).containsExactly(all.last())
+            assertThat(chat.conversation("9801", all.last().id).getOrThrow().messages).isEmpty()
+        }
+
+    @Test
+    fun `the demo has a missed visit and one cancelled with the doctor's reason`() =
+        runTest {
+            val visits = BookingsRepository(client).getAppointments().getOrThrow()
+            assertThat(visits.single { it.id == "9108" }.isNoShow).isTrue()
+            val cancelled = visits.single { it.id == "9106" }
+            assertThat(cancelled.cancelReasonCode).isEqualTo("DOCTOR_UNAVAILABLE")
+            assertThat(cancelled.cancelNote).isNotEmpty()
+            assertThat(visits.single { it.id == "9101" }.joinWindow?.range).isNotNull()
         }
 
     @Test

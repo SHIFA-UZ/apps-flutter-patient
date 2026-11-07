@@ -70,7 +70,7 @@ class AppointmentDetailsViewModel(
                 )
             }
         }
-        if (_state.value.isPast && appointment.status != "CANCELLED") {
+        if (_state.value.isPast && !appointment.isCancelled && !appointment.isNoShow) {
             viewModelScope.launch {
                 val review = bookings.getReview(appointment.id)
                 update { copy(review = review, reviewChecked = true) }

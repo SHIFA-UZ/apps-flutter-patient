@@ -48,9 +48,9 @@ data class AppointmentDetailsUiState(
     /** Upcoming has the info cards, Reschedule and Cancel; anything else is past: the summary card and a review. */
     val isUpcoming get() = appointment.isOpen && !isPast
 
-    // 06 §3.9: a past visit that wasn't cancelled, with a doctor, once B7 found no review.
+    // 06 §3.9: a past visit that wasn't cancelled or missed, with a doctor, once B7 found no review.
     val canReview get() =
-        isPast && appointment.status != "CANCELLED" && !appointment.doctorId.isNullOrBlank() &&
+        isPast && !appointment.isCancelled && !appointment.isNoShow && !appointment.doctorId.isNullOrBlank() &&
             reviewChecked && review == null
 
     val shownDoctor get() = appointment.shownDoctor(doctor)

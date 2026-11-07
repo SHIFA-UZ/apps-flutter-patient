@@ -31,6 +31,7 @@ import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.JoinWindow
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.RemoteCareTask
 import shifa.uz.data.notifications.NotificationsRepository
@@ -145,6 +146,10 @@ class HomeViewModelTest {
                         appointment("requested", "2026-09-27T11:00:00Z", status = "REQUESTED"),
                         appointment("cancelled", "2026-09-27T11:00:00Z", status = "CANCELLED"),
                         appointment("completed", "2026-09-27T13:00:00Z", status = "COMPLETED"),
+                        appointment("missed", "2026-09-27T08:45:00Z", status = "NO_SHOW"),
+                        // The backend's window wins: it closed at 08:58, before start + 30 min + 15 min.
+                        appointment("windowClosed", "2026-09-27T08:30:00Z", endAt = "2026-09-27T09:00:00Z")
+                            .copy(joinWindow = JoinWindow("2026-09-27T08:25:00Z", "2026-09-27T08:58:00Z")),
                         appointment("noDate", "soon"),
                     ),
                 )

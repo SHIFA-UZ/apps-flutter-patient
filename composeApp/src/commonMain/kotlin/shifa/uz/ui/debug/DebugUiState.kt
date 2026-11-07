@@ -48,6 +48,12 @@ data class DebugUiState(
                 "appointmentId" to appointmentId,
             ),
             FakePush(
+                "Missed appointment",
+                "APPOINTMENT_NO_SHOW",
+                "The doctor marked your visit as missed.",
+                "appointmentId" to appointmentId,
+            ),
+            FakePush(
                 "Payment due in 24 h",
                 "CONSULTATION_PAYMENT_DUE_24H",
                 "Pay to keep your slot.",
