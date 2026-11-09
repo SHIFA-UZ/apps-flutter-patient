@@ -63,6 +63,22 @@ internal fun CreateBookingCompletePreview() =
         ),
     )
 
+// Not in Figma: the doctor practises in Dubai (UTC+4, no daylight saving) and the phone is elsewhere (screenshot tests run
+// in Tashkent), so the times are the doctor's, an hour earlier, and the note says so.
+@Preview(widthDp = 393, heightDp = 1000)
+@Composable
+internal fun CreateBookingOtherZonePreview() =
+    Booking(
+        CreateBookingUiState(
+            doctor.copy(timeZone = "Asia/Dubai"),
+            isVideo = true,
+            serviceId = "7",
+            date = LocalDate(2026, 10, 20),
+            slots = slots,
+            slot = slots.first(),
+        ),
+    )
+
 // Figma 1921:25675.
 @Preview(widthDp = 393, heightDp = 1000)
 @Composable

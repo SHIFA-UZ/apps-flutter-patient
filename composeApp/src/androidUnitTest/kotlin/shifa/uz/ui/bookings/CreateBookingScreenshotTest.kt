@@ -22,6 +22,12 @@ class CreateBookingScreenshotTest {
         captureRoboImage("screenshots/CreateBooking_complete.png") { CreateBookingCompletePreview() }
     }
 
+    @Config(qualifiers = "w393dp-h1000dp-xhdpi")
+    @Test
+    fun `other zone`() {
+        captureRoboImage("screenshots/CreateBooking_otherZone.png") { CreateBookingOtherZonePreview() }
+    }
+
     @Test
     @Config(qualifiers = "w393dp-h1000dp-xhdpi")
     fun reschedule() {

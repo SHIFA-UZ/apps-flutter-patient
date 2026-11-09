@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.toInstant
@@ -26,6 +27,23 @@ fun parseDay(
     zone: TimeZone = TimeZone.currentSystemDefault(),
 ): LocalDate? =
     runCatching { LocalDate.parse(value.trim()) }.getOrNull() ?: parseInstant(value)?.toLocalDateTime(zone)?.date
+
+/**
+ * The doctor's practice time zone (backend `timeZone` / `doctorTimeZone`, an IANA id): booking times are shown in it, as
+ * the doctor app and the SMS reminders show them, whatever zone the phone is in. The phone's own zone when the backend
+ * didn't say (older backends) or the id is unknown.
+ */
+fun practiceZone(id: String?): TimeZone =
+    id?.trim()?.ifEmpty { null }?.let { runCatching { TimeZone.of(it) }.getOrNull() } ?: TimeZone.currentSystemDefault()
+
+/** "UTC+5", "UTC-3:30", "UTC+0": how the time note names a zone (no city names to translate). */
+fun utcLabel(offset: UtcOffset): String {
+    val total = offset.totalSeconds
+    val sign = if (total < 0) "-" else "+"
+    val hours = kotlin.math.abs(total) / 3600
+    val minutes = kotlin.math.abs(total) % 3600 / 60
+    return "UTC$sign$hours" + if (minutes > 0) ":${minutes.twoDigits()}" else ""
+}
 
 /** dd.MM.yyyy */
 fun formatDate(date: LocalDate) = "${date.dayOfMonth.twoDigits()}.${date.monthNumber.twoDigits()}.${date.year}"

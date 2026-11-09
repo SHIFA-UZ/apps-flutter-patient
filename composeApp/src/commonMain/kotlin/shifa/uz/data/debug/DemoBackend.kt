@@ -80,7 +80,11 @@ object DemoMode {
  */
 class DemoBackend(
     private val clock: () -> Instant = ::getCurrentInstant,
-    private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    // The demo doctors' practice zone (as the backend's default): demo slots are built in it and sent with it.
+    private val zone: TimeZone = TimeZone.of(DEMO_TIME_ZONE),
+    // The phone's zone: check-ins carry an offset-free date and time the app reads in it (personal tasks, not practice
+    // time).
+    private val phone: TimeZone = TimeZone.currentSystemDefault(),
     passthrough: () -> HttpClient = { HttpClient(createHttpEngine()) },
 ) {
     private val real by lazy(passthrough)
@@ -297,6 +301,7 @@ class DemoBackend(
             "supportsOnline" to online,
             "supportsInPerson" to true,
             "nextAvailableStartAt" to at(1, 9).toString(),
+            "timeZone" to DEMO_TIME_ZONE,
             "biography" to "A demo doctor. Bookings, chats and check-ins with her only change demo data.",
             "phone" to "+998901112233",
             "email" to "doctor@shifa.uz",
@@ -422,6 +427,7 @@ class DemoBackend(
                 "doctorName" to doctor.str("fullName"),
                 "doctorProfession" to doctor.str("profession"),
                 "doctorClinic" to DEMO_CLINIC,
+                "doctorTimeZone" to DEMO_TIME_ZONE,
                 "startAt" to start.toString(),
                 "endAt" to (start + 30.minutes).toString(),
                 "location" to if (video) "Video Consultation" else DEMO_CLINIC,
@@ -672,7 +678,7 @@ class DemoBackend(
             status: String = "PENDING",
             vararg values: Pair<String, Any?>,
         ): JsonObject {
-            val local = at.toLocalDateTime(zone)
+            val local = at.toLocalDateTime(phone)
             return obj(
                 "id" to id,
                 "scheduledDate" to local.date.toString(),
@@ -720,7 +726,7 @@ class DemoBackend(
             "description" to description,
             "category" to category,
             "status" to status,
-            "startDate" to today.plus(-3, DateTimeUnit.DAY).toString(),
+            "startDate" to now.toLocalDateTime(phone).date.plus(-3, DateTimeUnit.DAY).toString(),
             "inputType" to input,
             "inputLabel" to label,
             "notesRequired" to (notes != null),
@@ -1094,6 +1100,7 @@ class DemoBackend(
         val shared by lazy { DemoBackend() }
         const val DEMO_PATIENT = "Demo Patient"
         private const val DEMO_CLINIC = "Shifa Demo Clinic"
+        private const val DEMO_TIME_ZONE = "Asia/Tashkent"
         private const val DEMO_PDF = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
         private const val DEMO_PHOTO = "https://picsum.photos/id/64/400/400"
 

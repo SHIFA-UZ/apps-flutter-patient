@@ -39,7 +39,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
@@ -213,7 +212,7 @@ internal fun CreateBookingContent(
             // Pay later can't be video (MOBILE_BOOKING_PAYMENT §1).
             if (state.canSwitchVideo) VideoSection(state, onVideoChange)
             DateSection(state, Res.string.selectDate, onPickDate)
-            TimesSection(state, onSlot)
+            TimesSection(state, now, onSlot)
             ShifaSection(stringResource(Res.string.reasonForVisitOptional)) {
                 ShifaInputField(
                     state.reason,
@@ -299,8 +298,10 @@ internal fun DateSection(
 @Composable
 internal fun TimesSection(
     state: CreateBookingUiState,
+    now: Instant,
     onSlot: (AvailableSlot) -> Unit,
 ) = ShifaSection(stringResource(Res.string.availableTimes)) {
+    PracticeTimeNote(state.zone, state.slot?.start ?: state.slots?.firstNotNullOfOrNull { it.start } ?: now)
     val slots = state.slots
     when {
         slots == null -> ShifaChipsSkeleton()
@@ -314,7 +315,11 @@ internal fun TimesSection(
             )
         else ->
             ShifaChipGrid(slots, Modifier.fillMaxWidth()) {
-                ShifaChip(it.start?.let { start -> formatTime(start) }.orEmpty(), it == state.slot, { onSlot(it) })
+                ShifaChip(
+                    it.start?.let { start -> formatTime(start, state.zone) }.orEmpty(),
+                    it == state.slot,
+                    { onSlot(it) },
+                )
             }
     }
 }
@@ -327,7 +332,7 @@ internal fun BookingDayPicker(
     onDate: (LocalDate) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val today = now.toLocalDateTime(state.zone).date
     DayPicker(state.date, today..today.plus(90, DateTimeUnit.DAY), state.date ?: today, onDate, onDismiss)
 }
 
@@ -348,6 +353,7 @@ private fun VideoSection(
                     parseInstant(slot.endAt),
                     stringArrayResource(Res.array.weekdays),
                     stringArrayResource(Res.array.months),
+                    state.zone,
                 )
             Text(visit, Modifier.fillMaxWidth(), style = ShifaTextStyles.caption(), color = ShifaColors.Text.Primary)
         }

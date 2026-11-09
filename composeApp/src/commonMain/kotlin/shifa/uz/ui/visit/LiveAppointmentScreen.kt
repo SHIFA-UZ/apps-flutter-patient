@@ -228,6 +228,7 @@ private fun visitText(appointment: Appointment) =
             parseInstant(appointment.endAt),
             stringArrayResource(Res.array.weekdays),
             stringArrayResource(Res.array.months),
+            appointment.zone,
         )
     }
 

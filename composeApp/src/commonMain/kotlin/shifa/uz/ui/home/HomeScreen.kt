@@ -86,6 +86,7 @@ import shifa.uz.utils.formatDate
 import shifa.uz.utils.formatSlot
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.parseInstant
+import shifa.uz.utils.practiceZone
 
 @Composable
 fun HomeScreen(
@@ -294,7 +295,14 @@ internal fun UpcomingCard(
             !appointment.isConfirmed -> stringResource(Res.string.pending)
             else -> null
         }
-    val time = if (inWindow) stringResource(Res.string.now) else appointment.start?.let { slot(it, now) }
+    val time =
+        if (inWindow) {
+            stringResource(
+                Res.string.now,
+            )
+        } else {
+            appointment.start?.let { slot(it, now, appointment.zone) }
+        }
     val action =
         when {
             live -> stringResource(Res.string.view)
@@ -354,7 +362,8 @@ internal fun DoctorCard(
     doctor: Doctor,
     now: Instant,
     onClick: (Doctor) -> Unit,
-    availability: String? = parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now) },
+    availability: String? =
+        parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now, practiceZone(doctor.timeZone)) },
     shadow: Boolean = true,
 ) = ShifaDoctorCard(
     name = doctor.name,
@@ -372,7 +381,15 @@ internal fun DoctorCard(
 internal fun slot(
     at: Instant,
     now: Instant,
-) = formatSlot(at, now, stringResource(Res.string.availabilityToday), stringResource(Res.string.availabilityTomorrow))
+    // The doctor's practice zone (practiceZone): the time the doctor's calendar shows.
+    zone: TimeZone,
+) = formatSlot(
+    at,
+    now,
+    stringResource(Res.string.availabilityToday),
+    stringResource(Res.string.availabilityTomorrow),
+    zone,
+)
 
 // Placeholder cards per list while it first loads.
 internal const val SKELETON_ITEMS = 3

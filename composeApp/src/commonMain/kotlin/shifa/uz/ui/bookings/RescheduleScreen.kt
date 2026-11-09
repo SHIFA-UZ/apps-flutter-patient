@@ -124,7 +124,7 @@ internal fun RescheduleContent(
                 ShifaSection(stringResource(Res.string.videoConsultation)) { ServiceDropdown(state, onServiceChange) }
             }
             DateSection(state, Res.string.selectNewDate, onPickDate)
-            TimesSection(state, onSlot)
+            TimesSection(state, now, onSlot)
         }
         ShifaPageElement(ShifaPageElementType.ActionTray, Modifier.navigationBarsPadding()) {
             Banners(state.error)

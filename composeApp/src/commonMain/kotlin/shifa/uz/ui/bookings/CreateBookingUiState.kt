@@ -9,6 +9,7 @@ import shifa.uz.data.model.Doctor
 import shifa.uz.data.model.DoctorLocation
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.data.model.PaymentMethod
+import shifa.uz.utils.practiceZone
 
 /**
  * The booking page. The chosen [service] decides the payment (MOBILE_BOOKING_PAYMENT): free and pay later book at
@@ -35,6 +36,9 @@ data class CreateBookingUiState(
     val pending: Appointment? = null, // the PENDING_PAYMENT booking, held until its holdExpiresAt
     val paying: Boolean = false, // the payment page is open
 ) {
+    /** The doctor's practice zone: slots, the day picker and the summary are in it, as the doctor sees them. */
+    val zone get() = practiceZone(doctor.timeZone)
+
     val canBook get() = slot != null && !isBooking && !isUploading
 
     /** The services for this visit: video ones for video, else the ones bookable at the clinic. */

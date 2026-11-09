@@ -57,6 +57,8 @@
 - Not built: removing an attachment and the ⋮ menu. Reschedule reuses this page's ViewModel (see Reschedule) and never asks for a payment. Not pressed on a device (production).
 - The switch keeps its 48 dp touch target, so the Video card is taller than Figma's.
 
+- **Time zone** (2026-11-09): the doctor's practice zone (`Doctor.timeZone`, `practiceZone`) decides the day B1 is asked for and every time shown (slots, summary, day picker); `PracticeTimeNote` adds "Times are in the doctor's time zone (UTC+5)" when the phone's offset differs. Bookings, details, live visit and video call use `Appointment.doctorTimeZone` the same way.
+
 ## Payment (`PaymentScreen.kt`, BOOK-04)
 
 - Figma: `1825:17388`. Over the booking page; Figma's title "Pay via webview" is a placeholder, so it says Payment. The provider's checkout loads in an in-app WebView (Android `WebView`, iOS `WKWebView`). The backend doc suggests a browser tab; the design's page inside the app lets the app close it by itself. Links that aren't web pages (a bank or wallet app) open that app on Android.

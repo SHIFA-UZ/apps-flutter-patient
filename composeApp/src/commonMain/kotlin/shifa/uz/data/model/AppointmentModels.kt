@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import shifa.uz.utils.parseInstant
+import shifa.uz.utils.practiceZone
 import kotlin.time.Duration.Companion.minutes
 
 /** B2 item (15 §5.6). `location` is optional: Flutter required it and crashed on video appointments without one. */
@@ -15,6 +16,8 @@ data class Appointment(
     val doctorProfession: String? = null,
     val doctorClinic: String? = null,
     val doctorPhotoUrl: String? = null,
+    // The doctor's practice time zone (IANA id): the visit's time is shown in it (practiceZone).
+    val doctorTimeZone: String? = null,
     val startAt: String = "",
     val endAt: String? = null,
     val location: String? = null,
@@ -75,6 +78,9 @@ data class Appointment(
     val isNoShow get() = status == NO_SHOW
 
     val start get() = parseInstant(startAt)
+
+    /** The zone the visit's time is shown in: the doctor's practice zone. */
+    val zone get() = practiceZone(doctorTimeZone)
 
     // 06: the video join window, the backend's when it sends one, else start − 5 min to end + 15 min. Home also uses
     // it for "Now".
@@ -137,6 +143,7 @@ fun Appointment.shownDoctor(doctor: Doctor?) =
         profession = doctorProfession,
         clinic = doctorClinic,
         photoUrl = doctorPhotoUrl,
+        timeZone = doctorTimeZone,
     )
 
 /** B1 item. Only in-person slots carry `locationId`. */

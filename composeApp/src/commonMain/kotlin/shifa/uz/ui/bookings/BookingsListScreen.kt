@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -45,6 +44,7 @@ import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatDate
 import shifa.uz.utils.getCurrentInstant
+import shifa.uz.utils.practiceZone
 
 /** The Bookings tab's lists in full, behind their arrows: Figma 1655:15670 (My Doctors), 1655:15892 (Past); Recommended alike. Flat cards (Figma). */
 enum class BookingsList(val title: StringResource) {
@@ -102,7 +102,7 @@ internal fun BookingsListContent(
                     Res.string.noDoctorsFound,
                     limit = Int.MAX_VALUE,
                 ) {
-                    val visit = state.lastVisit(it)?.toLocalDateTime(TimeZone.currentSystemDefault())?.date
+                    val visit = state.lastVisit(it)?.toLocalDateTime(practiceZone(it.timeZone))?.date
                     DoctorCard(
                         it,
                         now,

@@ -177,7 +177,7 @@ Dio uses its default `validateStatus` (2xx only), so every non-2xx response arri
 | Booking `startAt` | Echoes the slot's `startAt` string exactly as the server returned it | `POST /patients/me/appointments` |
 | Time zone | IANA name from `flutter_timezone`, sent as profile `timeZone` on start and on resume | `PATCH /patients/me/profile` |
 
-Scheduling days are computed on the device's local calendar. `day=yyyy-MM-dd` is the local date, and whether the server interprets it in the patient's `timeZone` is **UNVERIFIED**.
+Booking times are the doctor's practice time (KMP, 2026-11-09): the server builds slots in the doctor's `timeZone` and reads B1's `day=yyyy-MM-dd` in it (backend `PatientDaySlotsService`, verified), so the client asks for the doctor's date and shows slots, bookings and visits in the doctor's zone, the same clock time the doctor app and the SMS reminders show. The zone comes as `timeZone` on the doctor (§3) and `doctorTimeZone` on the appointment (§5); without it (older backends) the client falls back to the device zone (`utils/practiceZone`). When the device's offset differs, the booking and appointment screens add "Times are in the doctor's time zone (UTC+5)". Personal times (chat, notifications, tasks) stay in the device zone.
 
 ### 1.8 Pagination
 
@@ -1199,6 +1199,7 @@ This model is **never parsed from any API response** and appears to be a dead mo
   "furtherInformation"?: string, "biography"?: string,
   "telegram"?: string, "instagram"?: string,
   "nextAvailableStartAt"?: "ISO-UTC",
+  "timeZone"?: string,            // IANA id of the doctor's practice zone (backend 2026-11-09)
   "recommendationReason"?: string, "triggeredBySymptoms"?: [string],   // copilot
   "supportsOnline": bool, "supportsInPerson": bool,                    // == true
   "minPriceMinor"?: int, "minPriceCurrency"?: string,
@@ -1227,6 +1228,7 @@ B7 returns a smaller shape: `{ rating: int (req), comment?, createdAt? }`.
   "id": any, "doctorId": any,
   "doctorName"?: string,          // split on first space into first/last
   "doctorProfession"?, "doctorClinic"?, "doctorPhotoUrl"?: string,
+  "doctorTimeZone"?: string,      // IANA id of the doctor's practice zone (backend 2026-11-09), list and detail
   "startAt": "ISO-UTC" /*req*/, "endAt": "ISO-UTC" /*req*/,
   "location": string /*req*/,     // "Video Consultation" ⇒ isVideo
   "isVideo"?: bool,

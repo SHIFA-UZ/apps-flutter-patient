@@ -977,4 +977,5 @@
     <string name="cancelReasonPatientRequest">Sizning so'rovingiz bo'yicha bekor qilindi.</string>
     <string name="cancelReasonRescheduled">Boshqa vaqtga ko'chirildi.</string>
     <string name="missed">O'tkazib yuborilgan</string>
+    <string name="timesInDoctorZone">Vaqt shifokorning vaqt mintaqasida ko'rsatilgan (%1$s)</string>
 </resources>
