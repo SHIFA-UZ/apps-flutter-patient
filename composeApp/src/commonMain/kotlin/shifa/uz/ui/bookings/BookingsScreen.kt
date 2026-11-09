@@ -62,6 +62,7 @@ import shifa.uz.ui.widgets.ShifaTagType
 import shifa.uz.utils.formatTimeDay
 import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.parseInstant
+import shifa.uz.utils.practiceZone
 
 /** 06/07: the Bookings tab, Figma 1648:11080. Find doctors (D1), my doctors and past visits (B2). */
 @Composable
@@ -214,7 +215,7 @@ private fun RecommendedCard(
     now: Instant,
     onClick: (Doctor) -> Unit,
 ) {
-    val next = parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now) }
+    val next = parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now, practiceZone(doctor.timeZone)) }
     ShifaDoctorCard(
         name = doctor.name,
         specialty = doctor.profession.orEmpty(),
@@ -239,7 +240,10 @@ internal fun PastCard(
     ShifaPastAppointmentCard(
         doctorName = appointment.doctorName?.ifBlank { null } ?: stringResource(Res.string.unknownDoctor),
         subtitle = listOfNotNull(appointment.doctorProfession, place).filter(String::isNotBlank).joinToString(" - "),
-        time = appointment.start?.let { formatTimeDay(it, stringArrayResource(Res.array.monthsShort)) }.orEmpty(),
+        time =
+            appointment.start
+                ?.let { formatTimeDay(it, stringArrayResource(Res.array.monthsShort), appointment.zone) }
+                .orEmpty(),
         avatarUrl = appointment.doctorPhotoUrl,
         status =
             when {

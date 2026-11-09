@@ -246,7 +246,7 @@ internal fun VideoCallContent(
 private fun CallCard(appointment: Appointment) {
     val time =
         appointment.start?.let { start ->
-            listOfNotNull(start, parseInstant(appointment.endAt)).joinToString("-") { formatTime(it) }
+            listOfNotNull(start, parseInstant(appointment.endAt)).joinToString("-") { formatTime(it, appointment.zone) }
         }
     ShifaDoctorCard(
         appointment.doctorName?.ifBlank { null } ?: stringResource(Res.string.unknownDoctor),

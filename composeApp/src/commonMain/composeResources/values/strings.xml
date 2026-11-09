@@ -977,4 +977,5 @@
     <string name="cancelReasonPatientRequest">Cancelled at your request.</string>
     <string name="cancelReasonRescheduled">Moved to another time.</string>
     <string name="missed">Missed</string>
+    <string name="timesInDoctorZone">Times are in the doctor's time zone (%1$s)</string>
 </resources>

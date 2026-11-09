@@ -32,7 +32,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringArrayResource
@@ -116,6 +115,7 @@ import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.formatDate
 import shifa.uz.utils.formatTime
 import shifa.uz.utils.formatVisit
+import shifa.uz.utils.getCurrentInstant
 import shifa.uz.utils.parseInstant
 
 /**
@@ -231,6 +231,7 @@ internal fun AppointmentDetailsContent(
                 }
                 ServiceSection(appointment)
                 detailRows(appointment, doctor).forEach { InfoSection(it.title, it.text, it.style) }
+                PracticeTimeNote(appointment.zone, appointment.start ?: getCurrentInstant())
             } else {
                 EndedNotice(appointment)
                 AppointmentSummaryCard(appointment, doctor, state.detailsOpen, onToggleDetails)
@@ -385,6 +386,7 @@ internal fun detailRows(
                 parseInstant(appointment.endAt),
                 stringArrayResource(Res.array.weekdays),
                 stringArrayResource(Res.array.months),
+                appointment.zone,
             )
         }
     val place =
@@ -486,7 +488,7 @@ internal fun ReviewTray(
     val appointment = state.appointment
     val doctor = state.shownDoctor
     val start = appointment.start
-    val day = start?.toLocalDateTime(TimeZone.currentSystemDefault())?.date?.let(::formatDate).orEmpty()
+    val day = start?.toLocalDateTime(appointment.zone)?.date?.let(::formatDate).orEmpty()
     val lastName = doctor.name.trim().substringAfterLast(' ')
     val clinic = (appointment.doctorClinic ?: doctor.clinic)?.ifBlank { null }
     ShifaTray(stringResource(Res.string.leaveReview), onClose, Modifier.navigationBarsPadding().imePadding()) {
@@ -507,7 +509,7 @@ internal fun ReviewTray(
                 ShifaUpcomingAppointmentCard(
                     doctor.name,
                     listOfNotNull(doctor.profession, clinic).joinToString(" - "),
-                    start?.let { "${formatTime(it)}, $day" }.orEmpty(),
+                    start?.let { "${formatTime(it, appointment.zone)}, $day" }.orEmpty(),
                     avatarUrl = doctor.photoUrl,
                 )
             }

@@ -5,6 +5,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.toInstant
 import org.junit.Test
 
@@ -46,5 +47,21 @@ class DatesTest {
     fun `file names lose path and reserved characters`() {
         assertThat(safeFileName(" a/b:c*?.pdf ")).isEqualTo("a_b_c__.pdf")
         assertThat(safeFileName("  ")).isEqualTo("document")
+    }
+
+    @Test
+    fun `the practice zone is the doctor's, the phone's when the backend doesn't say`() {
+        assertThat(practiceZone("Asia/Tashkent")).isEqualTo(tashkent)
+        assertThat(practiceZone(null)).isEqualTo(TimeZone.currentSystemDefault())
+        assertThat(practiceZone(" ")).isEqualTo(TimeZone.currentSystemDefault())
+        assertThat(practiceZone("Not/AZone")).isEqualTo(TimeZone.currentSystemDefault())
+    }
+
+    @Test
+    fun `the note names a zone by its offset`() {
+        assertThat(utcLabel(UtcOffset(hours = 5))).isEqualTo("UTC+5")
+        assertThat(utcLabel(UtcOffset(hours = -3, minutes = -30))).isEqualTo("UTC-3:30")
+        assertThat(utcLabel(UtcOffset(hours = 5, minutes = 45))).isEqualTo("UTC+5:45")
+        assertThat(utcLabel(UtcOffset.ZERO)).isEqualTo("UTC+0")
     }
 }

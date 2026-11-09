@@ -12,6 +12,7 @@ import shifa.uz.ui.widgets.ShifaDoctorCard
 import shifa.uz.ui.widgets.ShifaTag
 import shifa.uz.ui.widgets.ShifaTagType
 import shifa.uz.utils.parseInstant
+import shifa.uz.utils.practiceZone
 
 /**
  * The full doctor card with its Clinic / Online tags (07 §4.1). No Nearby tag: the app has no Near me (the user's call).
@@ -32,7 +33,7 @@ internal fun DoctorHeaderCard(
         avatarUrl = doctor.photoUrl,
         verified = doctor.isVerified,
         rating = doctor.ratingText,
-        availability = parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now) },
+        availability = parseInstant(doctor.nextAvailableStartAt)?.let { slot(it, now, practiceZone(doctor.timeZone)) },
         tags =
             if (inPerson || online) {
                 {

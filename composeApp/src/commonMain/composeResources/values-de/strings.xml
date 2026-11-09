@@ -559,4 +559,5 @@
         <item>Samstag</item>
         <item>Sonntag</item>
     </string-array>
+    <string name="timesInDoctorZone">Zeiten in der Zeitzone der Ärztin oder des Arztes (%1$s)</string>
 </resources>

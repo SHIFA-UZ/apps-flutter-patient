@@ -12,7 +12,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -20,6 +19,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.atLeast
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -75,7 +75,6 @@ class CreateBookingViewModelTest {
 
     // 14:00 in Tashkent.
     private val now = Instant.parse("2026-09-28T09:00:00Z")
-    private val tashkent = TimeZone.of("Asia/Tashkent")
     private val today = LocalDate(2026, 9, 28)
     private val gone = AvailableSlot("2026-09-28T08:00:00Z", "2026-09-28T08:30:00Z")
     private val first = AvailableSlot("2026-09-30T05:00:00Z", "2026-09-30T05:30:00Z", 30, locationId = 3)
@@ -83,7 +82,7 @@ class CreateBookingViewModelTest {
 
     private val tracker = RecordingTracker()
     private val classToTest by lazy {
-        CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent, analytics = tracker)
+        CreateBookingViewModel(card, bookings, doctors, documents, { now }, analytics = tracker)
     }
 
     @Before
@@ -149,7 +148,7 @@ class CreateBookingViewModelTest {
                 Result.success(listOf(first))
             val old = Appointment(id = "77", startAt = first.startAt, isVideoConsultation = true)
             val reschedule =
-                CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent, old, analytics = tracker)
+                CreateBookingViewModel(card, bookings, doctors, documents, { now }, old, analytics = tracker)
             advanceUntilIdle()
             reschedule.onVideoChange(true)
             advanceUntilIdle()
@@ -323,7 +322,7 @@ class CreateBookingViewModelTest {
             assertThat(state.error).isEqualTo(Res.string.bookingSelectServiceForVideo)
 
             wheneverBlocking { doctors.getDoctor("42") } doReturn Result.failure(Exception())
-            val none = CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent)
+            val none = CreateBookingViewModel(card, bookings, doctors, documents, { now })
             advanceUntilIdle()
             none.onVideoChange(true)
             advanceUntilIdle()
@@ -390,7 +389,7 @@ class CreateBookingViewModelTest {
             val request =
                 BookingRequest(42, first.startAt, 30, false, "Pain", locationId = 3, rescheduleAppointmentId = 77)
             wheneverBlocking { bookings.book(request) } doReturn Result.success(Appointment(id = "78"))
-            val reschedule = CreateBookingViewModel(card, bookings, doctors, documents, { now }, tashkent, old)
+            val reschedule = CreateBookingViewModel(card, bookings, doctors, documents, { now }, old)
             advanceUntilIdle()
             assertThat(reschedule.state.value.locationId).isEqualTo(4)
             assertThat(reschedule.state.value.isVideo).isFalse()
@@ -508,5 +507,30 @@ class CreateBookingViewModelTest {
             classToTest.onPaymentDone(dead)
             assertThat(state.pending).isNull()
             assertThat(state.paying).isFalse()
+        }
+
+    @Test
+    fun `without a zone given, the slots are asked for the doctor's date, not the phone's`() =
+        runTest {
+            // 20:30 UTC on 27.09 is already 01:30 on 28.09 in Tashkent, the doctor's practice zone.
+            val late = Instant.parse("2026-09-27T20:30:00Z")
+            CreateBookingViewModel(card.copy(timeZone = "Asia/Tashkent"), bookings, doctors, documents, { late })
+            advanceUntilIdle()
+
+            verifyBlocking(bookings, atLeast(1)) { getSlots(eq("42"), eq(LocalDate(2026, 9, 28)), anyOrNull()) }
+            verifyBlocking(bookings, never()) { getSlots(any(), eq(LocalDate(2026, 9, 27)), anyOrNull()) }
+        }
+
+    @Test
+    fun `the slot day follows the zone the doctor's detail sends, not the card's copy`() =
+        runTest {
+            // 16:30 UTC on 27.09: 21:30 on the 27th in Tashkent (the card's fallback), 01:30 on the 28th in Tokyo.
+            val late = Instant.parse("2026-09-27T16:30:00Z")
+            wheneverBlocking { doctors.getDoctor("42") } doReturn Result.success(full.copy(timeZone = "Asia/Tokyo"))
+            CreateBookingViewModel(card.copy(timeZone = null), bookings, doctors, documents, { late })
+            advanceUntilIdle()
+
+            verifyBlocking(bookings, atLeast(1)) { getSlots(eq("42"), eq(LocalDate(2026, 9, 28)), anyOrNull()) }
+            verifyBlocking(bookings, never()) { getSlots(any(), eq(LocalDate(2026, 9, 27)), anyOrNull()) }
         }
 }

@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
@@ -59,7 +58,6 @@ class CreateBookingViewModel(
     private val doctors: DoctorsRepository = DoctorsRepository(),
     private val documents: DocumentsRepository = DocumentsRepository(),
     private val clock: () -> Instant = ::getCurrentInstant,
-    private val zone: TimeZone = TimeZone.currentSystemDefault(),
     private val reschedule: Appointment? = null,
     private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
@@ -86,6 +84,10 @@ class CreateBookingViewModel(
     val signedOut: Flow<Unit> = _signedOut.receiveAsFlow()
 
     private var slotsJob: Job? = null
+
+    // The doctor's practice zone: the day the slots are asked for and the times shown (the backend reads `day` in it).
+    // Read from the state, so D2's doctor (which may carry a newer zone than the card's copy) wins.
+    private val zone get() = _state.value.zone
 
     /** When the payment page opened, for `seconds_to_pay` on a close-time PAID (events.md §5). */
     private var checkoutOpenedAt: Instant? = null

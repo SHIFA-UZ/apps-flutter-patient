@@ -17,6 +17,8 @@ data class Doctor(
     val reviewCount: Int = 0,
     val certificates: List<String> = emptyList(),
     val nextAvailableStartAt: String? = null,
+    // The practice time zone (IANA id) the slots are built in; times are shown in it (practiceZone).
+    val timeZone: String? = null,
     val address: String? = null, // legacy free text
     val locationStreetAddress: String? = null,
     val street: String? = null,
