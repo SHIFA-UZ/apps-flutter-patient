@@ -73,7 +73,11 @@ class DeleteAccountViewModel(
         viewModelScope.launch {
             auth.sendEmailOtp(email, ACCOUNT_DELETION).fold(
                 onSuccess = { update { copy(isSending = false, notice = Res.string.codeSentAgain.takeIf { resent }) } },
-                onFailure = { update { copy(isSending = false, error = it.toUserMessage()) } },
+                onFailure = {
+                    // No code went out: Resend works at once instead of after the whole countdown.
+                    cooldown?.cancel()
+                    update { copy(isSending = false, resendSeconds = 0, error = it.toUserMessage()) }
+                },
             )
         }
     }

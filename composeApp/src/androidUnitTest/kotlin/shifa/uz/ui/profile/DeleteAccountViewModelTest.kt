@@ -112,6 +112,22 @@ class DeleteAccountViewModelTest {
         }
 
     @Test
+    fun `a code that failed to send can be resent at once`() =
+        runTest {
+            wheneverBlocking {
+                auth.sendEmailOtp(
+                    any(),
+                    anyOrNull(),
+                )
+            } doReturn Result.failure(ApiException.NetworkError(""))
+            create()
+            dispatcher.scheduler.runCurrent()
+
+            assertThat(classToTest.state.value.error).isNotNull()
+            assertThat(classToTest.state.value.canResend).isTrue()
+        }
+
+    @Test
     fun `a short code isn't sent`() =
         runTest {
             create()
