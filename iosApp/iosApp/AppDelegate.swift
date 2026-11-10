@@ -63,6 +63,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        // Signed out: a push for the account that left is not shown (as on Android).
+        guard PushBridgeKt.isSignedIn() else { return completionHandler([]) }
         PushBridgeKt.onPushArrived(type: notification.request.content.userInfo["type"] as? String)
         completionHandler([.banner, .list, .sound])
     }

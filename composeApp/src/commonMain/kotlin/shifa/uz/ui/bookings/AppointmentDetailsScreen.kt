@@ -51,6 +51,7 @@ import shifa.composeapp.generated.resources.cancelReasonPatientRequest
 import shifa.composeapp.generated.resources.cancelReasonRescheduled
 import shifa.composeapp.generated.resources.checkUp
 import shifa.composeapp.generated.resources.comment
+import shifa.composeapp.generated.resources.completePayment
 import shifa.composeapp.generated.resources.consultationInPerson
 import shifa.composeapp.generated.resources.contactDoctorDirectly
 import shifa.composeapp.generated.resources.dateAndTime
@@ -87,6 +88,7 @@ import shifa.uz.data.analytics.paymentBadge
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
 import shifa.uz.ui.doctors.DoctorHeaderCard
+import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.register.MessagePopUp
 import shifa.uz.ui.theme.ShifaColors
@@ -131,6 +133,7 @@ fun AppointmentDetailsScreen(
     onReschedule: (Appointment) -> Unit,
     onCancelled: () -> Unit,
     onSignedOut: () -> Unit,
+    onPaid: () -> Unit = {},
     viewModel: AppointmentDetailsViewModel = viewModel { AppointmentDetailsViewModel(appointment) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -161,7 +164,22 @@ fun AppointmentDetailsScreen(
         onReschedule = { onReschedule(state.appointment) },
         onCancel = viewModel::askCancel,
         onReview = viewModel::openReview,
+        onPay = viewModel::pay,
     )
+    state.paying?.let { paying ->
+        ScopedViewModels {
+            PaymentScreen(
+                paying,
+                onBack = { viewModel.onPaymentClosed() },
+                onDone = {
+                    viewModel.onPaymentClosed(it)
+                    onPaid() // paid or dead, the lists behind are stale
+                },
+                onSignedOut = onSignedOut,
+                confirmLeave = false, // Back only closes the page; the booking stays as it is
+            )
+        }
+    }
     if (state.confirmCancel) {
         Dialog(viewModel::dismissCancel) {
             MessagePopUp(
@@ -198,6 +216,7 @@ internal fun AppointmentDetailsContent(
     onReschedule: () -> Unit = {},
     onCancel: () -> Unit = {},
     onReview: () -> Unit = {},
+    onPay: () -> Unit = {},
 ) {
     val appointment = state.appointment
     val doctor = state.shownDoctor
@@ -252,6 +271,14 @@ internal fun AppointmentDetailsContent(
         }
         if (state.isUpcoming) {
             ShifaPageElement(ShifaPageElementType.ActionTray, Modifier.navigationBarsPadding()) {
+                if (state.canPay) {
+                    ShifaPrimaryButton(
+                        stringResource(Res.string.completePayment),
+                        onPay,
+                        Modifier.fillMaxWidth(),
+                        loading = state.isStartingPayment,
+                    )
+                }
                 ShifaPrimaryButton(
                     stringResource(Res.string.reschedule),
                     onReschedule,

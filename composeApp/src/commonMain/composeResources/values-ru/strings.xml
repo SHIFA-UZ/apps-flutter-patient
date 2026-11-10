@@ -208,6 +208,7 @@
     <string name="deleteAccount">Удалить мой аккаунт</string>
     <string name="deleteAccountComingSoon">Удаление аккаунта скоро будет доступно</string>
     <string name="deleteAccountConfirmation">Вы уверены, что хотите удалить аккаунт? Это действие нельзя отменить.</string>
+    <string name="deleteAccountNoChannel">Мы не можем отправить код подтверждения для этого аккаунта. Добавьте адрес эл. почты в разделе «Редактировать профиль» и повторите попытку.</string>
     <string name="deleteAccountOtpSubtitle">Введите 6-значный код, отправленный на вашу электронную почту.</string>
     <string name="deleteAccountVerifyTitle">Подтвердите удаление</string>
     <string name="deleteAccountWarning">Это действие необратимо. Ваши личные идентификаторы (телефон/почта/имя) будут удалены. Некоторые медицинские данные могут храниться по закону, но не будут доступны из нового аккаунта.</string>
@@ -600,7 +601,7 @@
     <string name="passwordRequirementUppercase">Одна заглавная буква</string>
     <string name="passwordResetSuccess">Пароль успешно сброшен.</string>
     <string name="passwordTooLong">Пароль должен быть не длиннее 128 символов</string>
-    <string name="passwordTooShort">Пароль должен содержать не менее 6 символов</string>
+    <string name="passwordTooShort">Пароль должен содержать не менее 8 символов</string>
     <string name="passwordsDoNotMatch">Пароли не совпадают</string>
     <string name="past">Прошедшие</string>
     <string name="pastAppointments">Прошедшие приёмы</string>
@@ -980,4 +981,7 @@
     <string name="cancelReasonRescheduled">Перенесён на другое время.</string>
     <string name="missed">Пропущен</string>
     <string name="timesInDoctorZone">Время указано по часовому поясу врача (%1$s)</string>
+    <string name="leavePaymentMessage">Если выйти сейчас, запись будет отменена, а время освободится.</string>
+    <string name="continuePayment">Продолжить оплату</string>
+    <string name="messageStillSending">Предыдущее сообщение ещё отправляется. Повторите через мгновение.</string>
 </resources>

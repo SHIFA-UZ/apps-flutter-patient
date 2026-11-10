@@ -114,6 +114,7 @@ class CreateBookingViewModel(
     }
 
     fun onLocationChange(id: Int) {
+        if (_state.value.isBooking) return // the request already out carries the old choice
         analytics.track(AnalyticsEvent.BookingLocationSelected(_state.value.locations.size))
         discardPending()
         update { copy(locationId = id, error = null).let { s -> s.copy(serviceId = s.service?.id) } }
@@ -122,6 +123,7 @@ class CreateBookingViewModel(
 
     /** Video keeps a service that allows it; pay later never does (§1). */
     fun onVideoChange(on: Boolean) {
+        if (_state.value.isBooking) return // the request already out carries the old choice
         analytics.track(AnalyticsEvent.BookingVisitTypeChanged(on))
         discardPending()
         update { copy(isVideo = on, error = null).let { s -> s.copy(serviceId = s.service?.id) } }
@@ -129,6 +131,7 @@ class CreateBookingViewModel(
     }
 
     fun onServiceChange(id: String) {
+        if (_state.value.isBooking) return // the request already out carries the old choice
         discardPending()
         update { copy(serviceId = id, error = null) }
         _state.value.let { s ->
@@ -148,12 +151,14 @@ class CreateBookingViewModel(
     }
 
     fun onDateChange(date: LocalDate) {
+        if (_state.value.isBooking) return // the request already out carries the old choice
         analytics.track(AnalyticsEvent.BookingDatePicked((date.toEpochDays() - today().toEpochDays()).toInt()))
         discardPending()
         loadSlots(date)
     }
 
     fun onSlotSelect(slot: AvailableSlot) {
+        if (_state.value.isBooking) return // the request already out carries the old choice
         analytics.track(
             AnalyticsEvent.BookingSlotSelected(hoursAhead(slot.start, clock()) ?: 0, hourOfDay(slot.start, zone) ?: 0),
         )

@@ -11,7 +11,7 @@
   - On the first launch (`has_launched_before` not set), the token is wiped. The iOS Keychain survives reinstalls.
   - No token → Login, without a request.
   - A token → `GET /patients/me/profile`. Only a 401 clears it and goes to Login. Offline or a 5xx goes to Home (quirk Q18, kept on purpose). The AUTH-01 ticket says airplane mode goes to Login, which conflicts with 05 §2.1; this follows the spec.
-  - If the check takes longer than 5 s, it goes to Login.
+  - If the check takes longer than 5 s, it counts as offline: the token stays and Home opens (2026-11-10; before, a slow network sent a signed-in user to Login).
 - Native launch screens show Mobile 1's first frame, so the hand-off doesn't flash:
   - Android: `res/drawable/splash_background.xml`, a layer-list with `splash_logo.xml`.
   - iOS: `LaunchScreen.storyboard` background plus `LaunchLogo.imageset`.
@@ -65,7 +65,7 @@
 - Step 1: email or phone. Emails are lowercased, phones normalized like Login. Both are validated before sending (Flutter sent anything non-empty, Q8). Send calls A9 with `identifier` and `app=patient`; the reply's `channel` (default email) picks the message: SMS, "sent to <email>", or "sent to the email on your account" for a phone.
 - Step 2: 6 digits, a 60 s resend cooldown, and a 10:00 `m:ss` expiry countdown that turns red in the last minute (display only). There is no verify call, so the code is only checked by A10.
 - Step 3: new password with the register checklist and rules, plus confirm. The password is sent as typed (Flutter trimmed it here, Q10).
-- A10 sends the identifier under its own key (`email` or `phone`) and the code under the channel's (`emailOtp` or `smsOtp`). Flutter sent a phone as `email` (Q13). The backend's handling of phone + `emailOtp` is unverified. The returned token is saved and the app goes to Home.
+- A10 sends the pair the channel asks for: `phone` + `smsOtp`, or `email` + `emailOtp`. A phone whose code went to the account's email is sent as `email`: the backend accepts only these two pairs and looks a phone up in `email` (checked against `AuthController` 2026-11-10; phone + `emailOtp` answered 400). The returned token is saved and the app goes to Home.
 - A code error from A10 goes back to step 2 with the code cleared (Q12). Other errors stay on step 3.
 - Back walks the steps; back from step 2 clears the code and timers; from step 1 it returns to Login. Leaving drops everything.
 - Returning from step 3 to step 2, by a code error or Back, empties both passwords and hides them. Kept, retyping into a masked field appended to the old text: "passwords do not match" with one field retyped, a silently doubled password with both.

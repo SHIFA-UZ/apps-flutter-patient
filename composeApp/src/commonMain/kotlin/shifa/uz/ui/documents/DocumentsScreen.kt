@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -63,6 +65,7 @@ import shifa.composeapp.generated.resources.camera
 import shifa.composeapp.generated.resources.cancel
 import shifa.composeapp.generated.resources.change
 import shifa.composeapp.generated.resources.delete
+import shifa.composeapp.generated.resources.deleteDocumentConfirmation
 import shifa.composeapp.generated.resources.document
 import shifa.composeapp.generated.resources.documentCategoryLabel
 import shifa.composeapp.generated.resources.documentCategorySelect
@@ -101,11 +104,13 @@ import shifa.composeapp.generated.resources.ic_upload_22
 import shifa.composeapp.generated.resources.name
 import shifa.composeapp.generated.resources.noDocumentsFound
 import shifa.composeapp.generated.resources.photo
+import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.save
 import shifa.composeapp.generated.resources.searchDocuments
 import shifa.composeapp.generated.resources.upload
 import shifa.uz.data.model.PatientDocument
 import shifa.uz.ui.register.Banners
+import shifa.uz.ui.register.MessagePopUp
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
 import shifa.uz.ui.theme.ShifaRadius
@@ -314,6 +319,12 @@ internal fun DocumentsContent(
                             }
                         }
                     }
+                    // A first load that failed leaves the page empty: Retry, as on Messages.
+                    if (state.error != null && state.documents == null && !state.isLoading) {
+                        item {
+                            ShifaSecondaryButton(stringResource(Res.string.retry), onRefresh, Modifier.fillMaxWidth())
+                        }
+                    }
                     if (state.documents != null && shown.isEmpty()) {
                         item {
                             Text(
@@ -367,6 +378,34 @@ private fun DocumentCard(
     val swipe = rememberSwipeToDismissBoxState()
     // The card stays swiped away while F3 runs; a failure brings it back.
     LaunchedEffect(isDeleting) { if (!isDeleting) swipe.reset() }
+    // A swipe only asks; the delete cannot be undone (the viewer asks the same way).
+    var asking by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    if (asking) {
+        val keep = {
+            asking = false
+            scope.launch { swipe.reset() }
+            Unit
+        }
+        Dialog(keep) {
+            MessagePopUp(
+                stringResource(Res.string.delete),
+                stringResource(Res.string.deleteDocumentConfirmation),
+                keep,
+            ) {
+                ShifaPrimaryButton(
+                    stringResource(Res.string.delete),
+                    {
+                        asking = false
+                        onDelete(document)
+                    },
+                    Modifier.fillMaxWidth(),
+                    destructive = true,
+                )
+                ShifaSecondaryButton(stringResource(Res.string.cancel), keep, Modifier.fillMaxWidth())
+            }
+        }
+    }
     SwipeToDismissBox(
         swipe,
         backgroundContent = {
@@ -392,7 +431,7 @@ private fun DocumentCard(
             }
         },
         enableDismissFromStartToEnd = false,
-        onDismiss = { onDelete(document) },
+        onDismiss = { asking = true },
     ) { card() }
 }
 

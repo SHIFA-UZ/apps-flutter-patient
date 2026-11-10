@@ -168,10 +168,16 @@ fun CreateBookingScreen(
     }
     val pending = state.pending
     if (state.paying && pending != null) {
-        BackHandler { viewModel.onPaymentClosed() }
         key(pending.id) {
             ScopedViewModels {
-                PaymentScreen(pending, viewModel::onPaymentClosed, viewModel::onPaymentDone, onSignedOut)
+                PaymentScreen(
+                    pending,
+                    viewModel::onPaymentClosed,
+                    viewModel::onPaymentDone,
+                    onSignedOut,
+                    // Paid at the provider, PAID not here yet: the booking stays and shows as payment pending.
+                    onKeep = { onBooked(true) },
+                )
             }
         }
     }

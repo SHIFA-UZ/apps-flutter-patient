@@ -3,6 +3,7 @@ package shifa.uz.data.auth
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -13,6 +14,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsTracker
@@ -49,6 +51,7 @@ import shifa.uz.data.model.SendEmailOtpRequest
 import shifa.uz.data.model.SendSmsOtpRequest
 import shifa.uz.data.model.SendSmsOtpResponse
 import shifa.uz.data.model.TokenResponse
+import shifa.uz.data.notifications.Push
 import shifa.uz.data.storage.CopilotStorage
 import shifa.uz.data.storage.TokenStorage
 
@@ -108,9 +111,15 @@ class AuthRepository(
         }.map {}
 
     /** A5. Where the code went: the server may fall back to email. See [needsEmailFallback] for failures. */
-    suspend fun sendSmsOtp(phone: String): Result<OtpChannel> =
+    suspend fun sendSmsOtp(phone: String): Result<OtpChannel> = sendSmsOtp(phone, null)
+
+    /** A5 with a [purpose]: `ACCOUNT_DELETION` for the deletion code of an account without an e-mail. */
+    suspend fun sendSmsOtp(
+        phone: String,
+        purpose: String?,
+    ): Result<OtpChannel> =
         apiCall<SendSmsOtpResponse>(COULD_NOT_SEND_SMS_OTP) {
-            postJson(ApiConfig.Endpoints.SEND_SMS_OTP, SendSmsOtpRequest(phone))
+            postJson(ApiConfig.Endpoints.SEND_SMS_OTP, SendSmsOtpRequest(phone, purpose))
         }.map { if (it.channel.equals("email", ignoreCase = true)) OtpChannel.Email else OtpChannel.Sms }
 
     /** A7. Saves the token on success. */
@@ -140,8 +149,8 @@ class AuthRepository(
 
     /**
      * A10, the only place the code is checked. Saves the token on success (auto-login).
-     * The identifier goes under its own key and the code under the channel's, so a phone whose code was
-     * emailed is not sent as `email` (fixes 05 Q13; what the backend expects there is unverified).
+     * The backend reads two pairs only: `email` + `emailOtp` (its `email` may hold a phone, when the code for a
+     * phone identifier went to the account's email) and `phone` + `smsOtp`. So the channel picks the keys.
      */
     suspend fun resetForgottenPassword(
         identifier: String,
@@ -149,13 +158,12 @@ class AuthRepository(
         code: String,
         newPassword: String,
     ): Result<Unit> {
-        val isEmail = '@' in identifier
         val sms = channel == OtpChannel.Sms
         val request =
             ForgotPasswordResetRequest(
                 newPassword = newPassword,
-                phone = identifier.takeUnless { isEmail },
-                email = identifier.takeIf { isEmail },
+                phone = identifier.takeIf { sms },
+                email = identifier.takeUnless { sms },
                 smsOtp = code.takeIf { sms },
                 emailOtp = code.takeUnless { sms },
             )
@@ -200,7 +208,12 @@ class AuthRepository(
                     analytics.track(AnalyticsEvent.SessionRestored(if (wiped) "reinstall_wipe" else "no_token"))
                     return@withContext false
                 }
-                val rejected = apiCall<Unit>("") { client.get(ApiConfig.Endpoints.PROFILE) }.exceptionOrNull()
+                // A slow answer counts as offline: the token stays and Home opens (only a 401 means Login).
+                val reply =
+                    withTimeoutOrNull(
+                        RESTORE_TIMEOUT_MS,
+                    ) { apiCall<Unit>("") { client.get(ApiConfig.Endpoints.PROFILE) } }
+                val rejected = if (reply == null) ApiException.NetworkError("") else reply.exceptionOrNull()
                 if (rejected is ApiException.Unauthorized) {
                     tokenStorage.clear()
                     copilot.clear()
@@ -233,14 +246,20 @@ class AuthRepository(
             client.put(ApiConfig.Endpoints.FCM_TOKEN) {
                 contentType(ContentType.Application.Json)
                 setBody(FcmTokenRequest(""))
+                // Best effort: Log out must not hang for the client's 30 s on a dead network.
+                timeout { requestTimeoutMillis = LOGOUT_TIMEOUT_MS }
             }
         }
         tokenStorage.clear()
         copilot.clear()
+        Push.opened.value = null // a push tapped for this account is not routed for the next one
         // The analytics identity goes with the session (docs/posthog/events.md §1.2).
         resetAnalytics()
     }
 }
+
+private const val LOGOUT_TIMEOUT_MS = 5_000L
+private const val RESTORE_TIMEOUT_MS = 5_000L // the splash does not wait longer than this for the profile call
 
 /** A5 failures that switch registration to the email code (05 §2.4 step 5): SMS unavailable or rate limited. */
 fun Throwable.needsEmailFallback() =

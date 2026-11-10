@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import shifa.composeapp.generated.resources.Res
@@ -61,6 +62,7 @@ private fun AppScreens() {
     var accountDeleted by rememberSaveable { mutableStateOf(false) }
     val auth = remember { AuthRepository() }
     val scope = rememberCoroutineScope()
+    var loggingOut by remember { mutableStateOf<Job?>(null) }
 
     fun show(next: Screen) {
         accountDeleted = false
@@ -90,9 +92,13 @@ private fun AppScreens() {
                 MainScreen(
                     // Awaited, so the token is gone before Login shows (Flutter didn't wait).
                     onLogOut = { source ->
-                        scope.launch {
-                            auth.logout(source)
-                            screen = Screen.Login
+                        // Once: an expired session answers 401 to several calls at a time, and each reports it.
+                        if (loggingOut?.isActive != true) {
+                            loggingOut =
+                                scope.launch {
+                                    auth.logout(source)
+                                    screen = Screen.Login
+                                }
                         }
                     },
                     onAccountDeleted = {

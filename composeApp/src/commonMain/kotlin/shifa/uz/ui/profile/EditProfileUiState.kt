@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.female
-import shifa.composeapp.generated.resources.invalidPhone
 import shifa.composeapp.generated.resources.male
 import shifa.composeapp.generated.resources.other
 import shifa.composeapp.generated.resources.required
@@ -47,8 +46,7 @@ data class EditProfileUiState(
     val lastNameError get() = Res.string.required.takeIf { lastName.isBlank() }
 
     // 14 §7: optional, else at least 10 digits with the dial code.
-    val phoneError get() = Res.string.invalidPhone.takeIf { phone.isNotBlank() && phone.count(Char::isDigit) < 10 }
-    val isValid get() = firstNameError == null && lastNameError == null && phoneError == null
+    val isValid get() = firstNameError == null && lastNameError == null
 }
 
 /** 14 §3.2 field initialisation; the name splits on the first space. */

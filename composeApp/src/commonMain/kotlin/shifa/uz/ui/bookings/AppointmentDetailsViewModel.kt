@@ -130,6 +130,26 @@ class AppointmentDetailsViewModel(
         }
     }
 
+    /** Complete payment on a held booking: $1 gives its checkout, the payment page opens over the details. */
+    fun pay() {
+        val s = _state.value
+        if (!s.canPay || s.isStartingPayment) return
+        update { copy(isStartingPayment = true, error = null, notice = null) }
+        viewModelScope.launch {
+            bookings.checkout(s.appointment.id).fold(
+                onSuccess = { update { copy(isStartingPayment = false, paying = appointment.copy(payment = it)) } },
+                onFailure = {
+                    update { copy(isStartingPayment = false, error = it.toUserMessage()) }
+                    if (it is ApiException.Unauthorized) _signedOut.send(Unit)
+                },
+            )
+        }
+    }
+
+    /** The payment page closed; [latest] is what it last read (paid, expired, or still pending when null). */
+    fun onPaymentClosed(latest: Appointment? = null) =
+        update { copy(paying = null, appointment = latest?.copy(payment = null) ?: appointment) }
+
     fun askCancel() {
         if (!_state.value.canCancel) return
         analytics.track(AnalyticsEvent.AppointmentCancelStarted(hoursAhead(_state.value.appointment.start, clock())))

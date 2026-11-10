@@ -24,15 +24,18 @@ import shifa.composeapp.generated.resources.cancelReasonDoctorUnavailable
 import shifa.composeapp.generated.resources.cancelReasonPatientRequest
 import shifa.composeapp.generated.resources.cancelReasonRescheduled
 import shifa.composeapp.generated.resources.errorCancellingAppointment
+import shifa.composeapp.generated.resources.paymentCouldNotStart
 import shifa.composeapp.generated.resources.thankYouForYourRating
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.FAILED_TO_CANCEL_APPOINTMENT
+import shifa.uz.data.api.FAILED_TO_LOAD_PAYMENT_METHODS
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.doctors.DoctorsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.Doctor
+import shifa.uz.data.model.PaymentCheckout
 import shifa.uz.data.model.Review
 import shifa.uz.data.model.ReviewRequest
 
@@ -270,5 +273,31 @@ class AppointmentDetailsViewModelTest {
             }
             assertThat(state.reviewOpen).isTrue()
             assertThat(state.reviewError).isNotNull()
+        }
+
+    @Test
+    fun `a held unpaid booking opens its checkout, and a failure says payment could not start`() =
+        runTest {
+            val held = inThreeDays.copy(status = Appointment.PENDING_PAYMENT)
+            val page = PaymentCheckout("880", "CLICK", "https://pay/880")
+            wheneverBlocking { bookings.checkout("1") } doReturn Result.success(page)
+            create(held)
+            assertThat(state.canPay).isTrue()
+
+            classToTest.pay()
+            advanceUntilIdle()
+            assertThat(state.paying).isEqualTo(held.copy(payment = page))
+
+            classToTest.onPaymentClosed(held.copy(status = "CONFIRMED", paymentStatus = Appointment.PAID))
+            assertThat(state.paying).isNull()
+            assertThat(state.canPay).isFalse()
+
+            create(held)
+            wheneverBlocking { bookings.checkout("1") } doReturn
+                Result.failure(ApiException.ServerError(FAILED_TO_LOAD_PAYMENT_METHODS))
+            classToTest.pay()
+            advanceUntilIdle()
+            assertThat(state.paying).isNull()
+            assertThat(state.error).isEqualTo(Res.string.paymentCouldNotStart)
         }
 }

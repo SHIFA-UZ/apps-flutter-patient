@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -553,7 +554,14 @@ internal fun Field(
     supportingText = error?.let { stringResource(it) },
     isError = error != null,
     clearable = value.isNotEmpty(),
-    keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+    keyboardOptions =
+        KeyboardOptions(
+            // Plain text fields here are names and addresses.
+            capitalization =
+                if (keyboardType == KeyboardType.Text) KeyboardCapitalization.Words else KeyboardCapitalization.None,
+            keyboardType = keyboardType,
+            imeAction = imeAction,
+        ),
     keyboardActions = KeyboardActions(onDone = { onDone() }),
     visualTransformation = visualTransformation,
     trailingIcon = trailingIcon,

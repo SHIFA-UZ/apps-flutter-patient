@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import shifa.composeapp.generated.resources.Res
-import shifa.composeapp.generated.resources.emailRequired
+import shifa.composeapp.generated.resources.deleteAccountNoChannel
 import shifa.composeapp.generated.resources.languageChanged
 import shifa.composeapp.generated.resources.passwordChangedSuccess
 import shifa.composeapp.generated.resources.profilePhotoUpdatedSuccessfully
@@ -141,20 +141,26 @@ class ProfileViewModel(
         _events.trySend(ProfileEvent.Changed)
     }
 
-    /** 14 §3.1.3: P5, then the code page. Phone-only accounts can't delete (14 Q16). */
+    /**
+     * 14 §3.1.3: P5, then the code page. The code goes to the e-mail, or by SMS for an account without one; an
+     * account that can get neither is told to add an e-mail instead of landing on a page that cannot work.
+     */
     fun requestDeletion() {
         val s = _state.value
         if (s.isRequestingDeletion) return
-        if (s.email.isEmpty()) {
-            analytics.track(AnalyticsEvent.AccountDeletionFailed("request", "email_required"))
-            return update { copy(dialog = null, notice = null, error = Res.string.emailRequired) }
-        }
         update { copy(isRequestingDeletion = true) }
         viewModelScope.launch {
             val result = profile.requestDeletion()
+            val noChannel = result.getOrNull()?.let { it.channel(s.email, s.phone) == null } == true
             analytics.track(
                 result.fold(
-                    onSuccess = { AnalyticsEvent.AccountDeletionStarted },
+                    onSuccess = {
+                        if (noChannel) {
+                            AnalyticsEvent.AccountDeletionFailed("request", "email_required")
+                        } else {
+                            AnalyticsEvent.AccountDeletionStarted
+                        }
+                    },
                     onFailure = { AnalyticsEvent.AccountDeletionFailed("request", it.analyticsReason()) },
                 ),
             )
@@ -162,8 +168,9 @@ class ProfileViewModel(
                 copy(
                     isRequestingDeletion = false,
                     dialog = null,
-                    deletion = result.getOrNull(),
-                    error = result.exceptionOrNull()?.toUserMessage(),
+                    deletion = result.getOrNull().takeUnless { noChannel },
+                    error =
+                        if (noChannel) Res.string.deleteAccountNoChannel else result.exceptionOrNull()?.toUserMessage(),
                     notice = null,
                 )
             }

@@ -22,19 +22,25 @@ import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.DeleteAccountChallenge
+import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.profile.ProfileRepository
 
 private const val ACCOUNT_DELETION = "ACCOUNT_DELETION"
 
-/** 14 §3.5: A4 on open and on resend, then P6 and an awaited logout. */
+/** 14 §3.5: A4 (or A5 for an account without an e-mail) on open and on resend, then P6 and an awaited logout. */
 class DeleteAccountViewModel(
-    private val challenge: DeleteAccountChallenge,
+    private var challenge: DeleteAccountChallenge,
     private val email: String,
+    private val phone: String = "",
     private val profile: ProfileRepository = ProfileRepository(),
     private val auth: AuthRepository = AuthRepository(),
     private val analytics: AnalyticsTracker = Analytics,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(DeleteAccountUiState())
+    private val channel = challenge.channel(email, phone) ?: OtpChannel.Email
+    private val _state =
+        MutableStateFlow(
+            DeleteAccountUiState(smsTo = (challenge.maskedPhone ?: phone).takeIf { channel == OtpChannel.Sms }),
+        )
     val state: StateFlow<DeleteAccountUiState> = _state.asStateFlow()
 
     private val _deleted = Channel<Unit>(Channel.BUFFERED)
@@ -71,10 +77,42 @@ class DeleteAccountViewModel(
                 update { copy(resendSeconds = 0) }
             }
         viewModelScope.launch {
-            auth.sendEmailOtp(email, ACCOUNT_DELETION).fold(
+            // The first challenge has run out by the time Resend is allowed: a new code needs a new one.
+            val fresh =
+                if (resent) {
+                    profile.requestDeletion().onSuccess { challenge = it }
+                } else {
+                    Result.success(
+                        challenge,
+                    )
+                }
+            val sent =
+                when {
+                    fresh.isFailure -> fresh.map {}
+                    channel == OtpChannel.Sms -> sendSmsCode()
+                    else -> auth.sendEmailOtp(email, ACCOUNT_DELETION)
+                }
+            sent.fold(
                 onSuccess = { update { copy(isSending = false, notice = Res.string.codeSentAgain.takeIf { resent }) } },
-                onFailure = { update { copy(isSending = false, error = it.toUserMessage()) } },
+                onFailure = {
+                    // No code went out: Resend works at once instead of after the whole countdown.
+                    cooldown?.cancel()
+                    update { copy(isSending = false, resendSeconds = 0, error = it.toUserMessage()) }
+                },
             )
+        }
+    }
+
+    // The backend sends to the account's own number; one from before that route gets the profile's number (A5).
+    private suspend fun sendSmsCode(): Result<Unit> {
+        val sent = profile.sendDeletionSmsCode()
+        return if (sent.exceptionOrNull() is ApiException.NotFound) {
+            auth.sendSmsOtp(
+                phone,
+                ACCOUNT_DELETION,
+            ).map {}
+        } else {
+            sent
         }
     }
 
@@ -87,7 +125,7 @@ class DeleteAccountViewModel(
         }
         update { copy(isDeleting = true, error = null, notice = null) }
         viewModelScope.launch {
-            profile.confirmDeletion(challenge.challengeId, email, s.otp).fold(
+            profile.confirmDeletion(challenge.challengeId, channel, email, s.otp).fold(
                 onSuccess = {
                     analytics.track(AnalyticsEvent.AccountDeleted)
                     auth.logout("account_deleted")

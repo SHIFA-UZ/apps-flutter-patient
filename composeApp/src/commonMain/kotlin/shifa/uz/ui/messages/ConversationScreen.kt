@@ -3,6 +3,7 @@ package shifa.uz.ui.messages
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -58,6 +63,7 @@ import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
+import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaChatBar
 import shifa.uz.ui.widgets.ShifaChatBubble
@@ -95,8 +101,11 @@ fun ConversationScreen(
     val state by viewModel.state.collectAsState()
     TrackScreen(AnalyticsScreen.Conversation, "is_new" to (target.conversationId == null))
     val signedOut by rememberUpdatedState(onSignedOut)
-    LaunchedEffect(viewModel) {
-        launch { viewModel.poll() }
+    // Polls only while the app is in front: a chat left open behind the lock screen neither asks the backend every
+    // few seconds nor marks the doctor's new messages as read.
+    val lifecycle = LocalLifecycleOwner.current
+    LaunchedEffect(viewModel, lifecycle) {
+        launch { lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.poll() } }
         viewModel.signedOut.collect { signedOut() }
     }
     var adding by rememberSaveable { mutableStateOf(false) }
@@ -195,6 +204,14 @@ internal fun ConversationContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val messages = state.messages
+            // An upload takes seconds: the spinner sits where the message will appear.
+            if (state.isSending) {
+                item {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                        CircularProgressIndicator(Modifier.size(ShifaSize.S24), ShifaColors.Icon.Brand, ShifaSize.S2)
+                    }
+                }
+            }
             if (messages == null) {
                 // A failed first load is the banner's; the poll retries.
                 if (state.error == null) item { ShifaChatSkeleton() }

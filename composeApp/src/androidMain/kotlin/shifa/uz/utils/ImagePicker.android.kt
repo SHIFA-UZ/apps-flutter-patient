@@ -84,7 +84,9 @@ actual fun rememberCameraLauncher(onPhotoTaken: (ImagePickerResult?) -> Unit): (
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
             if (!taken) return@rememberLauncherForActivityResult onTaken(null)
             scope.launch {
-                val jpeg = withContext(Dispatchers.IO) { runCatching { uprightJpeg(file) }.getOrNull() }
+                // The photo (often a medical document) goes on as bytes; no copy stays behind in the cache.
+                val jpeg =
+                    withContext(Dispatchers.IO) { runCatching { uprightJpeg(file) }.getOrNull().also { file.delete() } }
                 onTaken(jpeg?.let { ImagePickerResult(Uri.fromFile(file).toString(), "photo.jpg", it) })
             }
         }

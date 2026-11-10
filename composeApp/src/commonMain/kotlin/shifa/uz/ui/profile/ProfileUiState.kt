@@ -24,4 +24,5 @@ data class ProfileUiState(
     val notice: StringResource? = null,
 ) {
     val email get() = profile?.email?.trim().orEmpty()
+    val phone get() = profile?.phone?.trim().orEmpty()
 }

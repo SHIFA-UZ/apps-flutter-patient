@@ -11,6 +11,7 @@ import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.confirmDeletion
 import shifa.composeapp.generated.resources.deleteAccountOtpSubtitle
 import shifa.composeapp.generated.resources.deleteAccountVerifyTitle
+import shifa.composeapp.generated.resources.otpSentToPhone
 import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.model.DeleteAccountChallenge
 import shifa.uz.ui.register.Banners
@@ -23,9 +24,10 @@ import shifa.uz.ui.widgets.TrackScreen
 fun DeleteAccountScreen(
     challenge: DeleteAccountChallenge,
     email: String,
+    phone: String,
     onBack: () -> Unit,
     onDeleted: () -> Unit,
-    viewModel: DeleteAccountViewModel = viewModel { DeleteAccountViewModel(challenge, email) },
+    viewModel: DeleteAccountViewModel = viewModel { DeleteAccountViewModel(challenge, email, phone) },
 ) {
     val state by viewModel.state.collectAsState()
     TrackScreen(AnalyticsScreen.DeleteAccount)
@@ -51,8 +53,9 @@ internal fun DeleteAccountContent(
 ) {
     Banners(state.error, state.notice)
     CodeEntry(
-        stringResource(Res.string.deleteAccountOtpSubtitle),
-        email = true,
+        state.smsTo?.let { stringResource(Res.string.otpSentToPhone, it) }
+            ?: stringResource(Res.string.deleteAccountOtpSubtitle),
+        email = state.smsTo == null,
         otp = state.otp,
         onOtpChange = onOtpChange,
         resendSeconds = state.resendSeconds,

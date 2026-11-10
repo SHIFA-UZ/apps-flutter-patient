@@ -56,8 +56,6 @@ class EditProfileViewModel(
 
     fun onLastNameChange(value: String) = update { copy(lastName = value) }
 
-    fun onPhoneChange(value: String) = update { copy(phone = value) }
-
     fun onBirthDateChange(value: LocalDate) = update { copy(birthDate = value) }
 
     fun onGenderChange(value: Gender) = update { copy(gender = value) }
@@ -108,7 +106,6 @@ class EditProfileViewModel(
                 lastName = s.lastName.trim(),
                 birthDate = s.birthDate?.toString(),
                 gender = s.gender?.value,
-                phone = s.phone.trim().ifEmpty { null },
                 address = s.address.trim().ifEmpty { null },
                 language = s.language.code,
                 locationStreetAddress = s.streetAddress.trim().ifEmpty { null },
@@ -137,7 +134,6 @@ class EditProfileViewModel(
         listOfNotNull(
             "first_name".takeIf { s.firstName.trim() != original.fullName.trim().substringBefore(' ') },
             "last_name".takeIf { s.lastName.trim() != original.fullName.trim().substringAfter(' ', "").trim() },
-            "phone".takeIf { s.phone.trim() != original.phone.orEmpty().trim() },
             "birth_date".takeIf { s.birthDate?.toString() != original.birthDate?.take(10) },
             "gender".takeIf { !s.gender?.value.equals(original.gender, ignoreCase = true) },
             "address".takeIf { s.address.trim() != original.address.orEmpty().trim() },

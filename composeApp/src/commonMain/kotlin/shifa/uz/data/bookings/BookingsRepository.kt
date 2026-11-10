@@ -21,9 +21,13 @@ import shifa.uz.data.api.FAILED_TO_SUBMIT_SIGNATURE
 import shifa.uz.data.api.apiCall
 import shifa.uz.data.api.httpClient
 import shifa.uz.data.api.items
+import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.AvailableSlot
 import shifa.uz.data.model.BookingRequest
+import shifa.uz.data.model.ConsultationCheckout
+import shifa.uz.data.model.ConsultationCheckoutRequest
+import shifa.uz.data.model.PaymentCheckout
 import shifa.uz.data.model.PaymentMethod
 import shifa.uz.data.model.Review
 import shifa.uz.data.model.SignatureRequest
@@ -89,6 +93,18 @@ class BookingsRepository(
                 parameter("locationId", locationId)
             }
         }.map { it.items<PaymentMethod>() }
+
+    /** $1: where a held, unpaid booking is paid. No usable page is a failure. */
+    suspend fun checkout(appointmentId: String): Result<PaymentCheckout> =
+        apiCall<ConsultationCheckout>(FAILED_TO_LOAD_PAYMENT_METHODS) {
+            client.post(ApiConfig.Endpoints.CONSULTATION_CHECKOUT) {
+                contentType(ContentType.Application.Json)
+                setBody(ConsultationCheckoutRequest(appointmentId.toLong()))
+            }
+        }.mapCatching {
+            if (it.checkoutUrl.isNullOrBlank()) throw ApiException.ServerError(FAILED_TO_LOAD_PAYMENT_METHODS)
+            PaymentCheckout(it.paymentId, it.gateway, it.checkoutUrl)
+        }
 
     /** B3. */
     suspend fun book(request: BookingRequest): Result<Appointment> =

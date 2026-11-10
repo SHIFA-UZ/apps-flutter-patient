@@ -27,6 +27,7 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.composeapp.generated.resources.messageStillSending
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.chat.ChatRepository
@@ -205,6 +206,8 @@ class ConversationViewModelTest {
             classToTest.edit("My rash")
             classToTest.attach("IMG_1.jpg", byteArrayOf(1))
             assertThat(state.isSending).isTrue()
+            classToTest.attach("IMG_2.jpg", byteArrayOf(2)) // a second one meanwhile says so
+            assertThat(state.error).isEqualTo(Res.string.messageStillSending)
             runCurrent()
 
             verifyBlocking(chat) {
@@ -266,5 +269,36 @@ class ConversationViewModelTest {
                 open()
                 awaitItem()
             }
+        }
+
+    @Test
+    fun `after a failed poll the next one waits twice as long`() =
+        runTest {
+            wheneverBlocking {
+                chat.conversation(
+                    any(),
+                    anyOrNull(),
+                )
+            } doReturn Result.failure(ApiException.NetworkError(""))
+            backgroundScope.launch { classToTest.poll() }
+            runCurrent()
+            verifyBlocking(chat, times(1)) { conversation(any(), anyOrNull()) }
+
+            advanceTimeBy(5_100) // the usual 5 s: not yet
+            verifyBlocking(chat, times(1)) { conversation(any(), anyOrNull()) }
+            advanceTimeBy(5_000)
+            verifyBlocking(chat, times(2)) { conversation(any(), anyOrNull()) }
+        }
+
+    @Test
+    fun `a read receipt that failed is sent again by the next poll`() =
+        runTest {
+            wheneverBlocking { chat.markRead(any()) } doReturn Result.failure(ApiException.NetworkError(""))
+            open()
+            wheneverBlocking { chat.markRead(any()) } doReturn Result.success(Unit)
+            nextPoll()
+            nextPoll()
+
+            verifyBlocking(chat, times(2)) { markRead("3") } // the failed one, the retry, then nothing new
         }
 }

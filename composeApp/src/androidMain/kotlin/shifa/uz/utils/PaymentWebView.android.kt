@@ -29,6 +29,9 @@ actual fun PaymentWebView(
             WebView(context).apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                // A checkout page needs neither the device's files nor its content providers.
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
                 webViewClient =
                     object : WebViewClient() {
                         override fun onReceivedError(

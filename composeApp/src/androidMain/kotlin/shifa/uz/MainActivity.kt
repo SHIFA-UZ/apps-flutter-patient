@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
     private fun opened(intent: Intent) {
         val extras = intent.extras ?: return
         val data = extras.keySet().mapNotNull { key -> extras.getString(key)?.let { key to it } }.toMap()
-        if ("type" in data) Push.opened.value = data
+        if ("type" in data) Push.open(data)
     }
 }
 

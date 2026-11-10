@@ -9,6 +9,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import shifa.uz.data.notifications.Push
+import shifa.uz.data.storage.TokenStorage
 import shifa.uz.utils.PUSH_CHANNEL
 
 /**
@@ -22,6 +23,8 @@ class ShifaMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
+        // Signed out (the unregistration at logout is best effort): a push for the old account is not shown.
+        if (!TokenStorage().isLoggedIn()) return
         val data = message.data
         Push.arrived.tryEmit(data["type"])
         // Tray id = server id (13 §11.8).

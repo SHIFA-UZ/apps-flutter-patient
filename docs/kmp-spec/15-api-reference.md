@@ -420,7 +420,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 - **Callers**: `create_account_screen.dart:93`, `register_otp_verify_screen.dart:228`.
 - **Req**:
   ```json
-  { "phone": "+998XXXXXXXXX", "fallbackEmail"?: "<lowercased>", "purpose"?: "<never sent>" }
+  { "phone": "+998XXXXXXXXX", "fallbackEmail"?: "<lowercased>", "purpose"?: "ACCOUNT_DELETION (deletion code only, P6)" }
   ```
 - **Res 200**: `{ "channel": "sms" | "email" }`.
   - `email` means the server fell back to email and sent the code to `fallbackEmail`.
@@ -461,7 +461,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 - **Callers**: `forgot_password_screen.dart:41` (first send) and `forgot_password_otp_screen.dart:108` (resend).
 - **Req**: `{ "identifier": "<email or phone, trimmed>", "app": "patient" }`.
 - **Res 200**: `{ "channel": "sms" | "email" }`, default `email`.
-- **Quirk**: the client stores `email = identifier` when the channel is `email`, and `phone = identifier` when it is `sms`. If a phone identifier comes back with `channel: "email"`, the phone string ends up in the `email` field of A10.
+- **Quirk**: the client stores `email = identifier` when the channel is `email`, and `phone = identifier` when it is `sms`. If a phone identifier comes back with `channel: "email"`, the phone string ends up in the `email` field of A10. The backend needs exactly that: A10 reads `email` + `emailOtp` (and finds a phone in `email`) or `phone` + `smsOtp`, nothing else.
 
 #### A10 `POST /auth/forgot-password-reset`
 - **Caller**: `forgot_password_new_password_screen.dart:73`, `:79`, `:85`.
@@ -489,7 +489,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
   {
     "firstName"?, "lastName"?, "birthDate"?: "yyyy-MM-dd",
     "gender"?: "Male" | "Female" | "Other",
-    "phone"?, "address"?, "language"?: "en|de|uz|ru",
+    "address"?, "language"?: "en|de|uz|ru",
     "photoUrl"?, "latitude"?: number, "longitude"?: number,
     "locationCountry"?, "locationRegion"?, "locationDistrict"?, "locationCity"?,
     "locationPostalCode"?, "locationStreetAddress"?,
@@ -497,6 +497,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
   }
   ```
 - **Res 200**: the updated PatientProfile (§5.1).
+- **No `phone`**: the backend's request has no such key and ignores one (checked 2026-11-10), so the app shows the phone read-only and does not send it.
 - **Asymmetry**: the client sends `firstName` and `lastName`, but the response is parsed only for `fullName`.
 - Location fields come from Google reverse geocoding (§4.1). `address` is a formatted string built on the client.
 - **Bug**: the edit-profile screen can PATCH a local file path as `photoUrl`.
@@ -513,13 +514,18 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 #### P5 `POST /patients/me/delete-account/request`
 - **Caller**: `profile_screen.dart:665`.
 - **Req**: no body.
-- **Res 200**: `{ "challengeId": "string (required)", "maskedEmail"?: "string", "expiresInSeconds"?: 300 }`. An empty `challengeId` throws `Invalid response from server`.
+- **Res 200**: `{ "challengeId": "string (required)", "maskedEmail"?: "string", "maskedPhone"?: "string", "channels"?: ["EMAIL", "SMS"], "expiresInSeconds"?: 300 }`. An empty `challengeId` throws `Invalid response from server`.
+- **`channels`** (KMP app): where a deletion code can go. `EMAIL` when the account has an e-mail, `SMS` when its phone is an Uzbek mobile number. An older backend sends none, which means e-mail only. The app uses the e-mail when it can and SMS otherwise; with neither it shows `deleteAccountNoChannel` and does not open the code page.
 - **Next**: the client navigates to the OTP screen with `{challengeId, email}`, where `email` comes from the profile, not `maskedEmail`. That screen immediately calls A4 with `purpose: ACCOUNT_DELETION`.
-- Whether P5 also sends an email by itself is **UNVERIFIED**.
+- P5 sends no code itself. **Resend** calls P5 again first (the first challenge has expired by then) and confirms with the new `challengeId`.
+
+#### P5b `POST /patients/me/delete-account/sms-code`
+- **Req**: no body. **Res 204**. Sends the SMS deletion code to the account's own phone, the number P6 verifies against (the profile's phone can differ). 400 when the account has no Uzbek mobile number, 503 when the SMS could not be sent.
+- A backend without this route answers 404; the app then falls back to A5 with the profile's phone and `purpose: ACCOUNT_DELETION`.
 
 #### P6 `POST /patients/me/delete-account/confirm`
 - **Caller**: `delete_account_otp_verify_screen.dart:111`.
-- **Req**: `{ "challengeId": "string", "email": "string", "emailOtp": "string" }`.
+- **Req**: `{ "challengeId": "string", "email": "string", "emailOtp": "string" }`, or for the SMS channel `{ "challengeId": "string", "smsOtp": "string" }` (the code from P5b).
 - **Res**: the body is ignored. The client then logs out locally.
 
 #### P7 `PUT /patients/me/fcm-token`
@@ -750,6 +756,7 @@ The payment gateways are **Click.uz**, the primary one for UZS, and **Stripe**, 
   - Stripe retries at `appointment_booking_flow_screen.dart:1113` and `bookings_screen.dart:336`
 - **Req**: `{ "appointmentId": 42, "gateway"?: "STRIPE" }`. With no `gateway`, the server picks one (Click for UZS, **UNVERIFIED**).
 - **Res 200**: `{ "paymentId": "…", "checkoutUrl": "https://…", "gateway"?: "CLICK" | "STRIPE" }`. A missing `paymentId` or `checkoutUrl` produces a "payment could not start" error.
+- **KMP caller** (2026-11-10): Appointment Details → Complete payment on a `PENDING_PAYMENT` booking, sent without `gateway`. The backend hands back the booking's open checkout (same provider) or opens a new one (checked in `PaymentService.createConsultationCheckout`). B2 and B4 carry no `checkoutUrl`; only B3's reply does.
 
 #### $2 `POST /payments/treatment-plan/checkout`
 - **Caller**: `treatment_plan_payment_screen.dart:50`.

@@ -57,7 +57,7 @@ enum class PasswordRule(
 private val SPECIAL = Regex("""[^A-Za-z0-9\s]""")
 
 // 05 §3.3, but any TLD length: the Flutter regex caps it at 4 and rejects `.solutions` (05 Q19).
-private val EMAIL = Regex("""^[\w.-]+@([\w-]+\.)+[\w-]{2,}$""")
+private val EMAIL = Regex("""^[\w.+-]+@([\w-]+\.)+[\w-]{2,}$""")
 
 internal fun isValidEmail(email: String) = EMAIL.matches(email)
 

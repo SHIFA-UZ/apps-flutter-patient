@@ -170,6 +170,9 @@ class RegisterViewModelTest {
         classToTest.onEmailChange("hans@praxis.solutions")
         assertThat(state.phoneError).isNull()
         assertThat(state.emailError).isNull()
+
+        classToTest.onEmailChange("hans+shifa@gmail.com") // a plus address is a valid email
+        assertThat(state.emailError).isNull()
     }
 
     @Test

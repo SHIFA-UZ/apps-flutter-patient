@@ -161,6 +161,22 @@ class CreateBookingViewModelTest {
         }
 
     @Test
+    fun `the form holds still while the booking request is out`() =
+        runTest {
+            wheneverBlocking { bookings.book(any()) } doReturn
+                Result.success(Appointment(id = "9", startAt = first.startAt, status = "CONFIRMED"))
+            open()
+            classToTest.onServiceChange("3")
+            classToTest.book()
+            assertThat(state.isBooking).isTrue()
+
+            classToTest.onSlotSelect(second)
+
+            assertThat(state.slot).isEqualTo(first)
+            advanceUntilIdle()
+        }
+
+    @Test
     fun `a free booking is tracked from the scan to the outcome`() =
         runTest {
             wheneverBlocking { bookings.book(any()) } doReturn

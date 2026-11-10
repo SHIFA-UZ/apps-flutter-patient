@@ -60,6 +60,14 @@ class HomeViewModel(
         load(refreshing = true)
     }
 
+    /** The app came back to the front or a push arrived: the same reload with nothing shown and nothing tracked. */
+    fun reload() = load(refreshing = false, quiet = true)
+
+    /** N2 alone, for the bell after a notification was read. */
+    fun refreshUnread() {
+        viewModelScope.launch { loadUnread() }
+    }
+
     /** Profile saved a change (P2 or a photo): the greeting and avatar follow it without a refetch. */
     fun onProfileChanged(updated: PatientProfile) = show(updated)
 
@@ -67,9 +75,12 @@ class HomeViewModel(
         _state.value = _state.value.transform()
     }
 
-    private fun load(refreshing: Boolean) {
+    private fun load(
+        refreshing: Boolean,
+        quiet: Boolean = false,
+    ) {
         if (loading?.isActive == true) return
-        update { copy(isLoading = !refreshing, isRefreshing = refreshing) }
+        if (!quiet) update { copy(isLoading = !refreshing, isRefreshing = refreshing) }
         loading =
             viewModelScope.launch {
                 val errors =

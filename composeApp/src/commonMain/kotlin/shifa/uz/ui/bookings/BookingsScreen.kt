@@ -30,6 +30,7 @@ import shifa.composeapp.generated.resources.noAppointmentsFound
 import shifa.composeapp.generated.resources.noDoctorsFound
 import shifa.composeapp.generated.resources.pastAppointments
 import shifa.composeapp.generated.resources.recommendedDoctors
+import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.search
 import shifa.composeapp.generated.resources.unknownDoctor
 import shifa.composeapp.generated.resources.videoConsultation
@@ -56,6 +57,7 @@ import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPastAppointmentCard
 import shifa.uz.ui.widgets.ShifaSearchField
+import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaTag
 import shifa.uz.ui.widgets.ShifaTagType
@@ -148,6 +150,10 @@ internal fun BookingsContent(
                 ShifaPageElement(ShifaPageElementType.Body) {
                     Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md)) {
                         Banners(state.error, state.notice)
+                        // A first load that failed leaves the page empty: Retry, as on Messages.
+                        if (state.error != null && state.past == null && !state.isLoading) {
+                            ShifaSecondaryButton(stringResource(Res.string.retry), onRefresh, Modifier.fillMaxWidth())
+                        }
                         if (state.filter == DoctorFilter.All) {
                             // Gone when D1 has none, unless that's a search's answer.
                             if (state.recommended?.isEmpty() != true || state.query.isNotBlank()) {

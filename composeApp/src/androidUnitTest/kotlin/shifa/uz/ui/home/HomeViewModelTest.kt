@@ -17,6 +17,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
@@ -87,6 +88,23 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertThat(tracker.events).containsExactly(AnalyticsEvent.HomeRefreshed)
+        }
+
+    @Test
+    fun `a quiet reload fetches everything again untracked, and the bell alone asks only for the count`() =
+        runTest {
+            create()
+            advanceUntilIdle()
+            classToTest.reload()
+            assertThat(state.isRefreshing).isFalse()
+            advanceUntilIdle()
+            verifyBlocking(bookings, times(2)) { getAppointments() }
+
+            classToTest.refreshUnread()
+            advanceUntilIdle()
+            verifyBlocking(notifications, times(3)) { unreadCount() }
+            verifyBlocking(bookings, times(2)) { getAppointments() }
+            assertThat(tracker.events).isEmpty()
         }
 
     private fun create() {

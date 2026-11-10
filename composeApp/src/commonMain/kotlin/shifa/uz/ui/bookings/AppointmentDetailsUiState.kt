@@ -29,6 +29,8 @@ data class AppointmentDetailsUiState(
     val isReviewing: Boolean = false,
     val reviewError: StringResource? = null,
     val notice: StringResource? = null,
+    val isStartingPayment: Boolean = false,
+    val paying: Appointment? = null, // the payment page is open for it
 ) {
     private val hoursUntil get() = appointment.start?.let { (it - now).inWholeHours }
 
@@ -42,6 +44,9 @@ data class AppointmentDetailsUiState(
 
     val canReschedule get() =
         appointment.isOpen && !isPast && appointment.id.isNotBlank() && (appointment.canReschedule ?: !locked)
+
+    /** A held booking whose payment never finished (the app was closed, the network dropped) can still be paid. */
+    val canPay get() = appointment.isAwaitingPayment && !isPast && appointment.id.toLongOrNull() != null
 
     val showWarning get() = appointment.isOpen && !isPast && locked
 

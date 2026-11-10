@@ -14,11 +14,13 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Test
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
+import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.LOGIN_FAILED
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.api.NO_TOKEN_RECEIVED
@@ -28,6 +30,7 @@ import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CopilotChat
 import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.model.RegisterPatientRequest
+import shifa.uz.data.notifications.Push
 import shifa.uz.data.storage.CopilotStorage
 import shifa.uz.data.storage.TokenStorage
 import java.io.IOException
@@ -233,7 +236,7 @@ class AuthRepositoryTest {
         }
 
     @Test
-    fun `a phone reset sends phone, and a code the server emailed goes as emailOtp (05 Q13)`() =
+    fun `a phone reset sends phone with smsOtp, and with an emailed code the phone goes as email`() =
         runTest {
             replyJson(HttpStatusCode.OK, """{"token":"t4"}""")
             classToTest.resetForgottenPassword("+998901234567", OtpChannel.Sms, "111111", "Secret1!").getOrThrow()
@@ -248,7 +251,7 @@ class AuthRepositoryTest {
             )
             assertThat(email).isEqualTo(
                 Json.parseToJsonElement(
-                    """{"newPassword":"Secret1!","phone":"+998901234567","emailOtp":"222222","app":"patient"}""",
+                    """{"newPassword":"Secret1!","email":"+998901234567","emailOtp":"222222","app":"patient"}""",
                 ),
             )
         }
@@ -272,6 +275,18 @@ class AuthRepositoryTest {
             assertThat(
                 requestJson,
             ).isEqualTo(Json.parseToJsonElement("""{"email":"a@shifa.uz","purpose":"ACCOUNT_DELETION"}"""))
+        }
+
+    @Test
+    fun `the deletion code by SMS sends its purpose`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, """{"channel":"sms"}""")
+
+            classToTest.sendSmsOtp("+998901234567", "ACCOUNT_DELETION").getOrThrow()
+
+            assertThat(
+                requestJson,
+            ).isEqualTo(Json.parseToJsonElement("""{"phone":"+998901234567","purpose":"ACCOUNT_DELETION"}"""))
         }
 
     @Test
@@ -387,6 +402,27 @@ class AuthRepositoryTest {
         }
 
     @Test
+    fun `a profile call that never answers keeps the session`() =
+        runTest {
+            tokens.token = "t"
+            reply = { awaitCancellation() }
+
+            assertThat(classToTest.restoreSession()).isTrue() // real time: the 5 s limit
+            assertThat(tokens.token).isEqualTo("t")
+        }
+
+    @Test
+    fun `a push tapped while signed out is dropped, one tapped while signed in is kept`() {
+        Push.opened.value = null
+        Push.open(mapOf("type" to "CHAT"), signedIn = false)
+        assertThat(Push.opened.value).isNull()
+
+        Push.open(mapOf("type" to "CHAT"), signedIn = true)
+        assertThat(Push.opened.value).containsEntry("type", "CHAT")
+        Push.opened.value = null
+    }
+
+    @Test
     fun `the token is never sent to another host`() =
         runTest {
             tokens.token = "t"
@@ -394,6 +430,18 @@ class AuthRepositoryTest {
             client.get("https://files.example.com/api/patients/me/profile")
 
             assertThat(request.headers[HttpHeaders.Authorization]).isNull()
+        }
+
+    @Test
+    fun `the token is never sent over plain http`() =
+        runTest {
+            tokens.token = "t"
+
+            client.get(ApiConfig.BASE_URL.replace("https://", "http://") + "patients/me/profile")
+
+            // Ktor's defaultRequest moves an http URL to the base URL's https; if it ever stops, no token goes out.
+            val sentInClear = request.url.protocol.name == "http" && request.headers[HttpHeaders.Authorization] != null
+            assertThat(sentInClear).isFalse()
         }
 
     @Test

@@ -208,6 +208,7 @@
     <string name="deleteAccount">Delete my Account</string>
     <string name="deleteAccountComingSoon">Delete account functionality coming soon</string>
     <string name="deleteAccountConfirmation">Are you sure you want to delete your account? This action cannot be undone.</string>
+    <string name="deleteAccountNoChannel">We can't send a verification code to this account. Add an email address in Edit profile and try again.</string>
     <string name="deleteAccountOtpSubtitle">Enter the 6-digit code sent to your email.</string>
     <string name="deleteAccountVerifyTitle">Verify to delete account</string>
     <string name="deleteAccountWarning">This action is irreversible. Your personal identifiers (phone/email/name) will be removed. Some medical data may be retained as required by law, but it will not be accessible from a new account.</string>
@@ -978,4 +979,7 @@
     <string name="cancelReasonRescheduled">Moved to another time.</string>
     <string name="missed">Missed</string>
     <string name="timesInDoctorZone">Times are in the doctor's time zone (%1$s)</string>
+    <string name="leavePaymentMessage">If you leave now, the booking is cancelled and the time slot is released.</string>
+    <string name="continuePayment">Continue payment</string>
+    <string name="messageStillSending">The previous message is still being sent. Try again in a moment.</string>
 </resources>

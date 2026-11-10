@@ -14,6 +14,7 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.composeapp.generated.resources.messageStillSending
 import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsTracker
@@ -72,14 +73,15 @@ class ConversationViewModel(
      * C2. A failed poll shows its error until the next one works. Once there's a message, only newer ones are asked
      * for and merged by id, so a backend that ignores `after` (and sends everything) gives the same list.
      */
-    private suspend fun refresh(id: String) {
+    private suspend fun refresh(id: String): Boolean {
         // A newer-only read that came back full (the backend's page) has more behind it: read on.
         var after = newestFetched()
         do {
-            val page = fetch(id, after) ?: return
+            val page = fetch(id, after) ?: return false
             val wasAfter = after
             after = newestFetched()
         } while (wasAfter != null && page >= CURSOR_PAGE && after != wasAfter)
+        return true
     }
 
     // The backend pages by id (`id > after`), so the cursor is the largest id fetched, not the latest time.
@@ -102,12 +104,12 @@ class ConversationViewModel(
                         error = null,
                     )
                 }
-                // C4, its errors swallowed (08 §2.4).
+                // C4, its errors swallowed (08 §2.4). The cursor moves only once the receipt went through: a failed
+                // or cancelled one (the app left the front mid-call) is sent again by the next read.
                 val newest = shown().lastOrNull { !it.isMine }?.id
-                if (!opened || newest != readUpTo) {
+                if ((!opened || newest != readUpTo) && chat.markRead(id).isSuccess) {
                     opened = true
                     readUpTo = newest
-                    chat.markRead(id)
                 }
                 c.messages.size
             },
@@ -117,11 +119,16 @@ class ConversationViewModel(
             },
         )
 
-    /** C2 every [pollMs], until cancelled: the screen runs it while it's shown. */
+    /**
+     * C2 every [pollMs], until cancelled: the screen runs it while it's shown and the app is in front. After a
+     * failed read the wait doubles, up to [MAX_POLL_MS], and goes back to [pollMs] once one works.
+     */
     suspend fun poll() {
+        var wait = pollMs
         while (true) {
-            _state.value.conversationId?.let { refresh(it) }
-            delay(pollMs)
+            val worked = _state.value.conversationId?.let { refresh(it) } ?: true
+            wait = if (worked) pollMs else (wait * 2).coerceAtMost(maxOf(pollMs, MAX_POLL_MS))
+            delay(wait)
         }
     }
 
@@ -174,7 +181,9 @@ class ConversationViewModel(
         duration: Int? = null,
     ) {
         val state = _state.value
-        if (state.isSending || !state.canAddress) return
+        if (!state.canAddress) return
+        // One at a time; a second file or voice note says so instead of vanishing.
+        if (state.isSending) return showError(Res.string.messageStillSending)
         update { copy(isSending = true, error = null, notice = null) }
         viewModelScope.launch {
             chat.upload(bytes, fileName).fold(
@@ -272,3 +281,4 @@ class ConversationViewModel(
 
 /** The backend's default page for a newer-only read (`after`). */
 private const val CURSOR_PAGE = 100
+private const val MAX_POLL_MS = 30_000L

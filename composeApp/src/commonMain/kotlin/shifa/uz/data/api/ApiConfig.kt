@@ -21,6 +21,7 @@ object ApiConfig {
         const val PATIENT_PHOTO = "patients/me/photo"
         const val DELETE_ACCOUNT_REQUEST = "patients/me/delete-account/request"
         const val DELETE_ACCOUNT_CONFIRM = "patients/me/delete-account/confirm"
+        const val DELETE_ACCOUNT_SMS_CODE = "patients/me/delete-account/sms-code"
         const val FCM_TOKEN = "patients/me/fcm-token"
         const val APPOINTMENTS = "patients/me/appointments"
         const val MY_TASKS = "tasks/my-tasks"
@@ -38,6 +39,7 @@ object ApiConfig {
         const val UPLOAD_ATTACHMENT = "messages/upload-attachment"
         const val VIDEO_TOKEN = "video/token"
         const val PAYMENT_METHODS = "payments/methods"
+        const val CONSULTATION_CHECKOUT = "payments/consultation/checkout"
 
         fun doctor(id: String) = "public/doctors/$id"
 
