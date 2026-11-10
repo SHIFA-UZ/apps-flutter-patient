@@ -13,6 +13,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsTracker
@@ -200,7 +201,12 @@ class AuthRepository(
                     analytics.track(AnalyticsEvent.SessionRestored(if (wiped) "reinstall_wipe" else "no_token"))
                     return@withContext false
                 }
-                val rejected = apiCall<Unit>("") { client.get(ApiConfig.Endpoints.PROFILE) }.exceptionOrNull()
+                // A slow answer counts as offline: the token stays and Home opens (only a 401 means Login).
+                val reply =
+                    withTimeoutOrNull(
+                        RESTORE_TIMEOUT_MS,
+                    ) { apiCall<Unit>("") { client.get(ApiConfig.Endpoints.PROFILE) } }
+                val rejected = if (reply == null) ApiException.NetworkError("") else reply.exceptionOrNull()
                 if (rejected is ApiException.Unauthorized) {
                     tokenStorage.clear()
                     copilot.clear()
@@ -241,6 +247,8 @@ class AuthRepository(
         resetAnalytics()
     }
 }
+
+private const val RESTORE_TIMEOUT_MS = 5_000L // the splash does not wait longer than this for the profile call
 
 /** A5 failures that switch registration to the email code (05 §2.4 step 5): SMS unavailable or rate limited. */
 fun Throwable.needsEmailFallback() =

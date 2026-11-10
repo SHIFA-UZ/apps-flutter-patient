@@ -11,7 +11,7 @@
   - On the first launch (`has_launched_before` not set), the token is wiped. The iOS Keychain survives reinstalls.
   - No token → Login, without a request.
   - A token → `GET /patients/me/profile`. Only a 401 clears it and goes to Login. Offline or a 5xx goes to Home (quirk Q18, kept on purpose). The AUTH-01 ticket says airplane mode goes to Login, which conflicts with 05 §2.1; this follows the spec.
-  - If the check takes longer than 5 s, it goes to Login.
+  - If the check takes longer than 5 s, it counts as offline: the token stays and Home opens (2026-11-10; before, a slow network sent a signed-in user to Login).
 - Native launch screens show Mobile 1's first frame, so the hand-off doesn't flash:
   - Android: `res/drawable/splash_background.xml`, a layer-list with `splash_logo.xml`.
   - iOS: `LaunchScreen.storyboard` background plus `LaunchLogo.imageset`.

@@ -14,6 +14,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Test
@@ -384,6 +385,16 @@ class AuthRepositoryTest {
 
             reply = { throw IOException("offline") }
             assertThat(classToTest.restoreSession()).isTrue()
+            assertThat(tokens.token).isEqualTo("t")
+        }
+
+    @Test
+    fun `a profile call that never answers keeps the session`() =
+        runTest {
+            tokens.token = "t"
+            reply = { awaitCancellation() }
+
+            assertThat(classToTest.restoreSession()).isTrue() // real time: the 5 s limit
             assertThat(tokens.token).isEqualTo("t")
         }
 
