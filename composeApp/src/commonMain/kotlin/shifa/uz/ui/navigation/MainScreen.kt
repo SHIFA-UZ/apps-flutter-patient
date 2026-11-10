@@ -31,6 +31,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -76,9 +77,15 @@ import shifa.uz.ui.visit.VideoCallScreen
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.PushSetup
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 // Pages over the tabs.
 private enum class Page { Account, Notifications }
+
+private val STALE_AFTER = 1.minutes // shorter breaks (a picker, a permission dialog) reload nothing
 
 /** The signed-in shell (02): tabs under the floating nav bar, pages over it. */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -139,10 +146,21 @@ fun MainScreen(
             }
         }
         PushSetup()
+        // Back in front after a while: what's on screen may be hours old, and nothing else reloads it.
+        var leftAt by remember { mutableStateOf<TimeMark?>(null) }
+        LifecycleResumeEffect(Unit) {
+            if ((leftAt?.elapsedNow() ?: Duration.ZERO) >= STALE_AFTER) {
+                home.reload()
+                messages.load()
+                bookings.load(warmFilters = false)
+                documents.load()
+            }
+            onPauseOrDispose { leftAt = TimeSource.Monotonic.markNow() }
+        }
         LaunchedEffect(push) {
             launch {
                 push.stale.collect {
-                    home.refresh()
+                    home.reload()
                     messages.load()
                 }
             }
@@ -443,7 +461,7 @@ fun MainScreen(
                                     homeState.fullName,
                                     onBack = { page = null },
                                     onLink = follow,
-                                    onRead = home::refresh,
+                                    onRead = home::refreshUnread,
                                     onCheckInSubmitted = {
                                         tasks.onSubmitted()
                                         home.refresh()
