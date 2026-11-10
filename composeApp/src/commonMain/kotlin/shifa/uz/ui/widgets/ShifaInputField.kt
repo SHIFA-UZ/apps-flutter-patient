@@ -127,7 +127,7 @@ fun ShifaInputField(
         )
         supportingText?.let {
             Box(
-                Modifier.fillMaxWidth().height(ShifaSize.S16).padding(horizontal = ShifaSpacing.Inset.Sm),
+                Modifier.fillMaxWidth().heightIn(min = ShifaSize.S16).padding(horizontal = ShifaSpacing.Inset.Sm),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
