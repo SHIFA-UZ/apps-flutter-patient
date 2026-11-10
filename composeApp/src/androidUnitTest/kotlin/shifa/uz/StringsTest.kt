@@ -1,11 +1,10 @@
 package shifa.uz
 
-import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
 import java.io.File
 
-// Unit tests run from the module dir. de may fall back to English (strings/README.md), the others may not.
+// Unit tests run from the module dir. No locale may fall back to English.
 class StringsTest {
     private fun strings(dir: String): Map<String, String> =
         Regex("""<string name="(\w+)">(.*)</string>""")
@@ -15,15 +14,10 @@ class StringsTest {
     private val en = strings("values")
 
     @Test
-    fun `uz and ru have every key and only known keys`() {
-        listOf("values-uz", "values-ru").forEach {
+    fun `uz, ru and de have every key and only known keys`() {
+        listOf("values-uz", "values-ru", "values-de").forEach {
             assertWithMessage(it).that(strings(it).keys).containsExactlyElementsIn(en.keys)
         }
-    }
-
-    @Test
-    fun `de has only known keys`() {
-        assertThat(en.keys).containsAtLeastElementsIn(strings("values-de").keys)
     }
 
     @Test
