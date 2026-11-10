@@ -51,6 +51,7 @@ import shifa.uz.data.model.SendEmailOtpRequest
 import shifa.uz.data.model.SendSmsOtpRequest
 import shifa.uz.data.model.SendSmsOtpResponse
 import shifa.uz.data.model.TokenResponse
+import shifa.uz.data.notifications.Push
 import shifa.uz.data.storage.CopilotStorage
 import shifa.uz.data.storage.TokenStorage
 
@@ -245,6 +246,7 @@ class AuthRepository(
         }
         tokenStorage.clear()
         copilot.clear()
+        Push.opened.value = null // a push tapped for this account is not routed for the next one
         // The analytics identity goes with the session (docs/posthog/events.md §1.2).
         resetAnalytics()
     }
