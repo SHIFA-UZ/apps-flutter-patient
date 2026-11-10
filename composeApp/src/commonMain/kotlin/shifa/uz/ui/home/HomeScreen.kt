@@ -49,6 +49,7 @@ import shifa.composeapp.generated.resources.now
 import shifa.composeapp.generated.resources.patient
 import shifa.composeapp.generated.resources.paymentPendingTitle
 import shifa.composeapp.generated.resources.pending
+import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.started
 import shifa.composeapp.generated.resources.starts
 import shifa.composeapp.generated.resources.taskCategoryExercise
@@ -77,6 +78,7 @@ import shifa.uz.ui.widgets.ShifaListSkeleton
 import shifa.uz.ui.widgets.ShifaMainHeader
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
+import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSection
 import shifa.uz.ui.widgets.ShifaSectionType
 import shifa.uz.ui.widgets.ShifaTaskCard
@@ -174,6 +176,14 @@ internal fun HomeContent(
                     Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Md)) {
                         state.error?.let {
                             ShifaBanner(stringResource(it), Res.drawable.ic_alert_circle_16, ShifaBannerType.Error)
+                            // A first load that failed leaves the page empty: Retry, as on Messages.
+                            if (state.upcoming == null && !state.isLoading && !state.isRefreshing) {
+                                ShifaSecondaryButton(
+                                    stringResource(Res.string.retry),
+                                    onRefresh,
+                                    Modifier.fillMaxWidth(),
+                                )
+                            }
                         }
                         // Figma 1647:10075: a visit in its join window has its own section, and View opens it.
                         val live = state.upcoming?.filter { it.isNow(now) }.orEmpty()

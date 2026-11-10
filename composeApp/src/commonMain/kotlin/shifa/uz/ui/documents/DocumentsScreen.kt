@@ -104,6 +104,7 @@ import shifa.composeapp.generated.resources.ic_upload_22
 import shifa.composeapp.generated.resources.name
 import shifa.composeapp.generated.resources.noDocumentsFound
 import shifa.composeapp.generated.resources.photo
+import shifa.composeapp.generated.resources.retry
 import shifa.composeapp.generated.resources.save
 import shifa.composeapp.generated.resources.searchDocuments
 import shifa.composeapp.generated.resources.upload
@@ -316,6 +317,12 @@ internal fun DocumentsContent(
                             ShifaListSkeleton(count = 5, gap = ShifaSpacing.Gap.Md) {
                                 ShifaCardSkeleton(avatar = ShifaDimens.DocumentThumbHeight)
                             }
+                        }
+                    }
+                    // A first load that failed leaves the page empty: Retry, as on Messages.
+                    if (state.error != null && state.documents == null && !state.isLoading) {
+                        item {
+                            ShifaSecondaryButton(stringResource(Res.string.retry), onRefresh, Modifier.fillMaxWidth())
                         }
                     }
                     if (state.documents != null && shown.isEmpty()) {
