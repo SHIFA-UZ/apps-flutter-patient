@@ -16,11 +16,10 @@ import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
-import shifa.composeapp.generated.resources.emailRequired
+import shifa.composeapp.generated.resources.deleteAccountNoChannel
 import shifa.composeapp.generated.resources.errorSomethingWentWrong
 import shifa.composeapp.generated.resources.failedToUploadPhoto
 import shifa.composeapp.generated.resources.languageChanged
@@ -192,18 +191,38 @@ class ProfileViewModelTest {
         }
 
     @Test
-    fun `deletion needs an email`() =
+    fun `an account that can get no code is told so instead of opening the code page`() =
         runTest {
             wheneverBlocking { profile.getProfile() } doReturn Result.success(patient.copy(email = " "))
+            wheneverBlocking { profile.requestDeletion() } doReturn
+                Result.success(DeleteAccountChallenge("c1", channels = emptyList()))
             create()
             advanceUntilIdle()
             classToTest.showDialog(ProfileDialog.DeleteAccount)
 
             classToTest.requestDeletion()
+            advanceUntilIdle()
 
             assertThat(state.dialog).isNull()
-            assertThat(state.error).isEqualTo(Res.string.emailRequired)
-            verifyBlocking(profile, never()) { requestDeletion() }
+            assertThat(state.deletion).isNull()
+            assertThat(state.error).isEqualTo(Res.string.deleteAccountNoChannel)
+        }
+
+    @Test
+    fun `an account without an email opens the code page when the backend offers SMS`() =
+        runTest {
+            val challenge = DeleteAccountChallenge("c1", channels = listOf("SMS"))
+            wheneverBlocking { profile.getProfile() } doReturn
+                Result.success(patient.copy(email = null, phone = "+998901234567"))
+            wheneverBlocking { profile.requestDeletion() } doReturn Result.success(challenge)
+            create()
+            advanceUntilIdle()
+
+            classToTest.requestDeletion()
+            advanceUntilIdle()
+
+            assertThat(state.deletion).isEqualTo(challenge)
+            assertThat(state.error).isNull()
         }
 
     @Test

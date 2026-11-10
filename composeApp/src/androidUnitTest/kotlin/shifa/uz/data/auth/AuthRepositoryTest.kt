@@ -278,6 +278,18 @@ class AuthRepositoryTest {
         }
 
     @Test
+    fun `the deletion code by SMS sends its purpose`() =
+        runTest {
+            replyJson(HttpStatusCode.OK, """{"channel":"sms"}""")
+
+            classToTest.sendSmsOtp("+998901234567", "ACCOUNT_DELETION").getOrThrow()
+
+            assertThat(
+                requestJson,
+            ).isEqualTo(Json.parseToJsonElement("""{"phone":"+998901234567","purpose":"ACCOUNT_DELETION"}"""))
+        }
+
+    @Test
     fun `change password posts both passwords with the token, and a wrong current one keeps its message`() =
         runTest {
             tokens.token = "t"

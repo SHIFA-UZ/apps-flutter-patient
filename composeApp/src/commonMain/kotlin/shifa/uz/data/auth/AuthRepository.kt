@@ -111,9 +111,15 @@ class AuthRepository(
         }.map {}
 
     /** A5. Where the code went: the server may fall back to email. See [needsEmailFallback] for failures. */
-    suspend fun sendSmsOtp(phone: String): Result<OtpChannel> =
+    suspend fun sendSmsOtp(phone: String): Result<OtpChannel> = sendSmsOtp(phone, null)
+
+    /** A5 with a [purpose]: `ACCOUNT_DELETION` for the deletion code of an account without an e-mail. */
+    suspend fun sendSmsOtp(
+        phone: String,
+        purpose: String?,
+    ): Result<OtpChannel> =
         apiCall<SendSmsOtpResponse>(COULD_NOT_SEND_SMS_OTP) {
-            postJson(ApiConfig.Endpoints.SEND_SMS_OTP, SendSmsOtpRequest(phone))
+            postJson(ApiConfig.Endpoints.SEND_SMS_OTP, SendSmsOtpRequest(phone, purpose))
         }.map { if (it.channel.equals("email", ignoreCase = true)) OtpChannel.Email else OtpChannel.Sms }
 
     /** A7. Saves the token on success. */

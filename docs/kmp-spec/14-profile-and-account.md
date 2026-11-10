@@ -701,7 +701,7 @@ Note that `copyWith` **always resets `error` to the passed value**, so it become
 - **Q13 — ProfileScreen shows a full-page spinner during any `updateProfile`**, including the language change.
 - **Q14 — Raw exception text** is shown in the error state and in the update-failure snackbar (`"Exception: …"`).
 - **Q15 — Gender dropdown** crashes or asserts if the stored gender isn't exactly `Male`/`Female`/`Other` (**UNVERIFIED** severity in release).
-- **Q16 — Deletion needs an email**; phone-only users get `emailRequired` with no alternative path.
+- **Q16 — Deletion needs an email**; phone-only users get `emailRequired` with no alternative path. **KMP app: fixed.** The challenge's `channels` decides: e-mail when the account has one, else an SMS code to an Uzbek mobile number (A5 with `purpose: ACCOUNT_DELETION`, confirmed as `smsOtp`); an account with neither gets `deleteAccountNoChannel`.
 - **Q17 — `expiresInSeconds` / `maskedEmail` ignored**; OTP resend cooldown is a hardcoded 5 min, and two OTP emails may be triggered.
 - **Q18 — `LanguageMiniToggle` (login) does not sync to the backend**; the profile dialog does. After login, the ProfileScreen listener may flip the app back to the server's language.
 - **Q19 — Reverse geocoding always uses `language=en`**, so the stored region/city names are English regardless of UI language.

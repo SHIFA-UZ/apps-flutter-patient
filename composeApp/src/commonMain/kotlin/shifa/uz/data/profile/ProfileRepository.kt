@@ -25,6 +25,7 @@ import shifa.uz.data.api.httpClient
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.DeleteAccountChallenge
 import shifa.uz.data.model.DeleteAccountConfirmRequest
+import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.ProfileUpdate
 
@@ -54,17 +55,24 @@ class ProfileRepository(
             ) { timeout { requestTimeoutMillis = DELETION_TIMEOUT_MS } }
         }.mapCatching { if (it.challengeId.isBlank()) throw ApiException.ServerError(FAILED_TO_DELETE_ACCOUNT) else it }
 
-    /** P6. The response body is not read. */
+    /** P6: the code with the e-mail it went to, or the SMS code alone. The response body is not read. */
     suspend fun confirmDeletion(
         challengeId: String,
+        channel: OtpChannel,
         email: String,
-        emailOtp: String,
+        code: String,
     ): Result<Unit> =
         apiCall<String>(FAILED_TO_DELETE_ACCOUNT) {
             client.post(ApiConfig.Endpoints.DELETE_ACCOUNT_CONFIRM) {
                 timeout { requestTimeoutMillis = DELETION_TIMEOUT_MS }
                 contentType(ContentType.Application.Json)
-                setBody(DeleteAccountConfirmRequest(challengeId, email, emailOtp))
+                setBody(
+                    if (channel == OtpChannel.Sms) {
+                        DeleteAccountConfirmRequest(challengeId, smsOtp = code)
+                    } else {
+                        DeleteAccountConfirmRequest(challengeId, email, code)
+                    },
+                )
             }
         }.map {}
 

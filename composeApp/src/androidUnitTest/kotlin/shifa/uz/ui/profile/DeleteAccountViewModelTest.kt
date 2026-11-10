@@ -33,6 +33,7 @@ import shifa.uz.data.api.FAILED_TO_DELETE_ACCOUNT
 import shifa.uz.data.auth.AuthRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.DeleteAccountChallenge
+import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.profile.ProfileRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -58,7 +59,7 @@ class DeleteAccountViewModelTest {
     @Test
     fun `a short code and a confirmed deletion are tracked`() =
         runTest {
-            wheneverBlocking { profile.confirmDeletion(any(), any(), any()) } doReturn Result.success(Unit)
+            wheneverBlocking { profile.confirmDeletion(any(), any(), any(), any()) } doReturn Result.success(Unit)
             create()
             classToTest.onOtpChange("123")
             classToTest.confirm()
@@ -73,8 +74,12 @@ class DeleteAccountViewModelTest {
                 ).inOrder()
         }
 
-    private fun create() {
-        classToTest = DeleteAccountViewModel(challenge, "aziz@example.com", profile, auth, tracker)
+    private fun create(
+        challenge: DeleteAccountChallenge = this.challenge,
+        email: String = "aziz@example.com",
+        phone: String = "",
+    ) {
+        classToTest = DeleteAccountViewModel(challenge, email, phone, profile, auth, tracker)
     }
 
     private val state get() = classToTest.state.value
@@ -138,13 +143,13 @@ class DeleteAccountViewModelTest {
 
             assertThat(state.otp).isEqualTo("123")
             assertThat(state.error).isEqualTo(Res.string.invalidVerificationCode)
-            verifyBlocking(profile, never()) { confirmDeletion(any(), any(), any()) }
+            verifyBlocking(profile, never()) { confirmDeletion(any(), any(), any(), any()) }
         }
 
     @Test
     fun `a confirmed deletion signs out, then leaves`() =
         runTest {
-            wheneverBlocking { profile.confirmDeletion(any(), any(), any()) } doReturn Result.success(Unit)
+            wheneverBlocking { profile.confirmDeletion(any(), any(), any(), any()) } doReturn Result.success(Unit)
             create()
             classToTest.onOtpChange("123456")
 
@@ -154,7 +159,7 @@ class DeleteAccountViewModelTest {
                 awaitItem()
             }
             inOrder(profile, auth) {
-                verifyBlocking(profile) { confirmDeletion("c1", "aziz@example.com", "123456") }
+                verifyBlocking(profile) { confirmDeletion("c1", OtpChannel.Email, "aziz@example.com", "123456") }
                 verifyBlocking(auth) { logout("account_deleted") }
             }
         }
@@ -162,7 +167,7 @@ class DeleteAccountViewModelTest {
     @Test
     fun `a failed deletion keeps the session`() =
         runTest {
-            wheneverBlocking { profile.confirmDeletion(any(), any(), any()) } doReturn
+            wheneverBlocking { profile.confirmDeletion(any(), any(), any(), any()) } doReturn
                 Result.failure(ApiException.ServerError(FAILED_TO_DELETE_ACCOUNT))
             create()
             classToTest.onOtpChange("123456")
@@ -174,4 +179,31 @@ class DeleteAccountViewModelTest {
             assertThat(state.error).isEqualTo(Res.string.errorSomethingWentWrong)
             verifyBlocking(auth, never()) { logout("account_deleted") }
         }
+
+    @Test
+    fun `an account without an email gets the code by SMS and confirms with it`() =
+        runTest {
+            wheneverBlocking { auth.sendSmsOtp(any(), anyOrNull()) } doReturn Result.success(OtpChannel.Sms)
+            wheneverBlocking { profile.confirmDeletion(any(), any(), any(), any()) } doReturn Result.success(Unit)
+            create(challenge.copy(channels = listOf("SMS"), maskedPhone = "***67"), email = "", phone = "+998901234567")
+            runCurrent()
+
+            assertThat(state.smsTo).isEqualTo("***67")
+            verifyBlocking(auth) { sendSmsOtp("+998901234567", "ACCOUNT_DELETION") }
+            verifyBlocking(auth, never()) { sendEmailOtp(any(), anyOrNull()) }
+
+            classToTest.onOtpChange("123456")
+            classToTest.confirm()
+            advanceUntilIdle()
+            verifyBlocking(profile) { confirmDeletion("c1", OtpChannel.Sms, "", "123456") }
+        }
+
+    @Test
+    fun `the email is used when both channels are offered, and with an older backend that lists none`() {
+        val both = challenge.copy(channels = listOf("EMAIL", "SMS"))
+        assertThat(both.channel("a@shifa.uz", "+998901234567")).isEqualTo(OtpChannel.Email)
+        assertThat(challenge.channel("a@shifa.uz", "+998901234567")).isEqualTo(OtpChannel.Email)
+        assertThat(challenge.channel("", "+998901234567")).isNull()
+        assertThat(challenge.copy(channels = listOf("EMAIL")).channel("", "+1202555")).isNull()
+    }
 }

@@ -133,6 +133,7 @@
     <string name="defaultNotificationTitle">Benachrichtigung</string>
     <string name="delete">Löschen</string>
     <string name="deleteAccount">Mein Konto löschen</string>
+    <string name="deleteAccountNoChannel">Wir können für dieses Konto keinen Bestätigungscode senden. Fügen Sie unter „Profil bearbeiten“ eine E-Mail-Adresse hinzu und versuchen Sie es erneut.</string>
     <string name="deleteAccountOtpSubtitle">Geben Sie den 6-stelligen Code ein, der an Ihre E-Mail gesendet wurde.</string>
     <string name="deleteAccountVerifyTitle">Zum Löschen verifizieren</string>
     <string name="deleteAccountWarning">Diese Aktion ist irreversibel. Ihre persönlichen Identifikatoren (Telefon/E-Mail/Name) werden entfernt. Einige medizinische Daten können gesetzlich vorgeschrieben gespeichert bleiben, sind aber von einem neuen Konto aus nicht zugänglich.</string>

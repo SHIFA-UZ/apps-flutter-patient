@@ -42,19 +42,37 @@ val PatientProfile?.canUseShifaAi: Boolean
             else -> !subscriptionTier.equals("PRO", ignoreCase = true)
         }
 
-/** P5. An empty [challengeId] is a failure. */
+/** P5. An empty [challengeId] is a failure. [channels] holds `EMAIL` and/or `SMS`; an older backend lists none. */
 @Serializable
 data class DeleteAccountChallenge(
     val challengeId: String = "",
     val maskedEmail: String? = null,
     val expiresInSeconds: Int = 300,
-)
+    val channels: List<String> = emptyList(),
+    val maskedPhone: String? = null,
+) {
+    /**
+     * Where the deletion code goes: the e-mail when the account has one (the only way an older backend knows), else
+     * an SMS to an Uzbek mobile number. Null when the account has neither.
+     */
+    fun channel(
+        email: String,
+        phone: String,
+    ): OtpChannel? =
+        when {
+            email.isNotEmpty() && (channels.isEmpty() || "EMAIL" in channels) -> OtpChannel.Email
+            phone.isNotEmpty() && "SMS" in channels -> OtpChannel.Sms
+            else -> null
+        }
+}
 
+/** P6. Either [email] with [emailOtp], or [smsOtp] alone. */
 @Serializable
 data class DeleteAccountConfirmRequest(
     val challengeId: String,
-    val email: String,
-    val emailOtp: String,
+    val email: String? = null,
+    val emailOtp: String? = null,
+    val smsOtp: String? = null,
 )
 
 @Serializable

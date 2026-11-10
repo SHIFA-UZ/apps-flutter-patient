@@ -420,7 +420,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 - **Callers**: `create_account_screen.dart:93`, `register_otp_verify_screen.dart:228`.
 - **Req**:
   ```json
-  { "phone": "+998XXXXXXXXX", "fallbackEmail"?: "<lowercased>", "purpose"?: "<never sent>" }
+  { "phone": "+998XXXXXXXXX", "fallbackEmail"?: "<lowercased>", "purpose"?: "ACCOUNT_DELETION (deletion code only, P6)" }
   ```
 - **Res 200**: `{ "channel": "sms" | "email" }`.
   - `email` means the server fell back to email and sent the code to `fallbackEmail`.
@@ -514,13 +514,14 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 #### P5 `POST /patients/me/delete-account/request`
 - **Caller**: `profile_screen.dart:665`.
 - **Req**: no body.
-- **Res 200**: `{ "challengeId": "string (required)", "maskedEmail"?: "string", "expiresInSeconds"?: 300 }`. An empty `challengeId` throws `Invalid response from server`.
+- **Res 200**: `{ "challengeId": "string (required)", "maskedEmail"?: "string", "maskedPhone"?: "string", "channels"?: ["EMAIL", "SMS"], "expiresInSeconds"?: 300 }`. An empty `challengeId` throws `Invalid response from server`.
+- **`channels`** (KMP app): where a deletion code can go. `EMAIL` when the account has an e-mail, `SMS` when its phone is an Uzbek mobile number. An older backend sends none, which means e-mail only. The app uses the e-mail when it can and SMS otherwise; with neither it shows `deleteAccountNoChannel` and does not open the code page.
 - **Next**: the client navigates to the OTP screen with `{challengeId, email}`, where `email` comes from the profile, not `maskedEmail`. That screen immediately calls A4 with `purpose: ACCOUNT_DELETION`.
 - Whether P5 also sends an email by itself is **UNVERIFIED**.
 
 #### P6 `POST /patients/me/delete-account/confirm`
 - **Caller**: `delete_account_otp_verify_screen.dart:111`.
-- **Req**: `{ "challengeId": "string", "email": "string", "emailOtp": "string" }`.
+- **Req**: `{ "challengeId": "string", "email": "string", "emailOtp": "string" }`, or for the SMS channel `{ "challengeId": "string", "smsOtp": "string" }` (the code from A5 with `purpose: ACCOUNT_DELETION`, sent to the profile's phone).
 - **Res**: the body is ignored. The client then logs out locally.
 
 #### P7 `PUT /patients/me/fcm-token`

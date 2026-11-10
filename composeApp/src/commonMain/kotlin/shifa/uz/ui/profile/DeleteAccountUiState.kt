@@ -11,6 +11,8 @@ data class DeleteAccountUiState(
     val isDeleting: Boolean = false,
     val error: StringResource? = null,
     val notice: StringResource? = null,
+    /** Set when the code goes by SMS: the (masked) number it went to. Null means the account's e-mail. */
+    val smsTo: String? = null,
 ) {
     val canResend get() = resendSeconds == 0 && !isSending && !isDeleting
 }

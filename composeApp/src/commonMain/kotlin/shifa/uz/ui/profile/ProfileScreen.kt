@@ -199,7 +199,13 @@ fun ProfileScreen(
         BackHandler(onBack = viewModel::closeDeletion)
         key(it) {
             ScopedViewModels {
-                DeleteAccountScreen(it, state.email, onBack = viewModel::closeDeletion, onDeleted = onAccountDeleted)
+                DeleteAccountScreen(
+                    it,
+                    state.email,
+                    state.phone,
+                    onBack = viewModel::closeDeletion,
+                    onDeleted = onAccountDeleted,
+                )
             }
         }
     }

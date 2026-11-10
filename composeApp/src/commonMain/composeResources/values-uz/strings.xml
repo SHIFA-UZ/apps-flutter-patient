@@ -208,6 +208,7 @@
     <string name="deleteAccount">Mening akkauntimni o'chirish</string>
     <string name="deleteAccountComingSoon">Hisobni o'chirish funksiyasi tez orada</string>
     <string name="deleteAccountConfirmation">Hisobingizni o'chirishni xohlaysizmi? Bu amalni qaytarib bo'lmaydi.</string>
+    <string name="deleteAccountNoChannel">Bu hisob uchun tasdiqlash kodini yubora olmaymiz. Profilni tahrirlash bo'limida elektron pochta manzilini qo'shing va qayta urinib ko'ring.</string>
     <string name="deleteAccountOtpSubtitle">Elektron pochtangizga yuborilgan 6 xonali kodni kiriting.</string>
     <string name="deleteAccountVerifyTitle">Akkauntni o'chirishni tasdiqlash</string>
     <string name="deleteAccountWarning">Bu amalni qaytarib bo'lmaydi. Shaxsiy identifikatorlaringiz (telefon/email/ism) o'chirib tashlanadi. Ba'zi tibbiy ma'lumotlar qonun talabiga ko'ra saqlanishi mumkin, ammo yangi akkauntdan ko'rinmaydi.</string>

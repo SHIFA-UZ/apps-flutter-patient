@@ -45,6 +45,7 @@ data class ChangePasswordRequest(
 @Serializable
 data class SendSmsOtpRequest(
     val phone: String,
+    val purpose: String? = null,
 )
 
 @Serializable

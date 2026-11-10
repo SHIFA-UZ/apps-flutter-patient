@@ -15,6 +15,7 @@ import org.junit.Test
 import shifa.uz.data.api.createHttpClient
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.DeleteAccountChallenge
+import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.model.PatientProfile
 import shifa.uz.data.model.ProfileUpdate
 import shifa.uz.data.storage.TokenStorage
@@ -92,11 +93,12 @@ class ProfileRepositoryTest {
     @Test
     fun `deletion posts no body and reads the challenge, an empty one fails`() =
         runTest {
-            body = """{"challengeId":"c1","maskedEmail":"a***@shifa.uz"}"""
+            body =
+                """{"challengeId":"c1","maskedEmail":"a***@shifa.uz","channels":["EMAIL","SMS"],"maskedPhone":"**7"}"""
 
             assertThat(
                 classToTest.requestDeletion().getOrThrow(),
-            ).isEqualTo(DeleteAccountChallenge("c1", "a***@shifa.uz", 300))
+            ).isEqualTo(DeleteAccountChallenge("c1", "a***@shifa.uz", 300, listOf("EMAIL", "SMS"), "**7"))
             assertThat(request.method).isEqualTo(HttpMethod.Post)
             assertThat(request.url.encodedPath).isEqualTo("/api/patients/me/delete-account/request")
 
@@ -111,10 +113,21 @@ class ProfileRepositoryTest {
         runTest {
             body = "{}"
 
-            classToTest.confirmDeletion("c1", "a@shifa.uz", "123456").getOrThrow()
+            classToTest.confirmDeletion("c1", OtpChannel.Email, "a@shifa.uz", "123456").getOrThrow()
 
             assertThat(request.url.encodedPath).isEqualTo("/api/patients/me/delete-account/confirm")
             assertThat(Json.parseToJsonElement((request.body as TextContent).text))
                 .isEqualTo(Json.parseToJsonElement("""{"challengeId":"c1","email":"a@shifa.uz","emailOtp":"123456"}"""))
+        }
+
+    @Test
+    fun `the deletion confirm of an account without an email sends the SMS code alone`() =
+        runTest {
+            body = "{}"
+
+            classToTest.confirmDeletion("c1", OtpChannel.Sms, "", "654321").getOrThrow()
+
+            assertThat(Json.parseToJsonElement((request.body as TextContent).text))
+                .isEqualTo(Json.parseToJsonElement("""{"challengeId":"c1","smsOtp":"654321"}"""))
         }
 }
