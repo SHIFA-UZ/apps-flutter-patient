@@ -267,4 +267,23 @@ class ConversationViewModelTest {
                 awaitItem()
             }
         }
+
+    @Test
+    fun `after a failed poll the next one waits twice as long`() =
+        runTest {
+            wheneverBlocking {
+                chat.conversation(
+                    any(),
+                    anyOrNull(),
+                )
+            } doReturn Result.failure(ApiException.NetworkError(""))
+            backgroundScope.launch { classToTest.poll() }
+            runCurrent()
+            verifyBlocking(chat, times(1)) { conversation(any(), anyOrNull()) }
+
+            advanceTimeBy(5_100) // the usual 5 s: not yet
+            verifyBlocking(chat, times(1)) { conversation(any(), anyOrNull()) }
+            advanceTimeBy(5_000)
+            verifyBlocking(chat, times(2)) { conversation(any(), anyOrNull()) }
+        }
 }

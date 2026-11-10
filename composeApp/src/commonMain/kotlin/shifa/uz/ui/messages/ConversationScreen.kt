@@ -31,6 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -95,8 +98,11 @@ fun ConversationScreen(
     val state by viewModel.state.collectAsState()
     TrackScreen(AnalyticsScreen.Conversation, "is_new" to (target.conversationId == null))
     val signedOut by rememberUpdatedState(onSignedOut)
-    LaunchedEffect(viewModel) {
-        launch { viewModel.poll() }
+    // Polls only while the app is in front: a chat left open behind the lock screen neither asks the backend every
+    // few seconds nor marks the doctor's new messages as read.
+    val lifecycle = LocalLifecycleOwner.current
+    LaunchedEffect(viewModel, lifecycle) {
+        launch { lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.poll() } }
         viewModel.signedOut.collect { signedOut() }
     }
     var adding by rememberSaveable { mutableStateOf(false) }

@@ -72,14 +72,15 @@ class ConversationViewModel(
      * C2. A failed poll shows its error until the next one works. Once there's a message, only newer ones are asked
      * for and merged by id, so a backend that ignores `after` (and sends everything) gives the same list.
      */
-    private suspend fun refresh(id: String) {
+    private suspend fun refresh(id: String): Boolean {
         // A newer-only read that came back full (the backend's page) has more behind it: read on.
         var after = newestFetched()
         do {
-            val page = fetch(id, after) ?: return
+            val page = fetch(id, after) ?: return false
             val wasAfter = after
             after = newestFetched()
         } while (wasAfter != null && page >= CURSOR_PAGE && after != wasAfter)
+        return true
     }
 
     // The backend pages by id (`id > after`), so the cursor is the largest id fetched, not the latest time.
@@ -117,11 +118,16 @@ class ConversationViewModel(
             },
         )
 
-    /** C2 every [pollMs], until cancelled: the screen runs it while it's shown. */
+    /**
+     * C2 every [pollMs], until cancelled: the screen runs it while it's shown and the app is in front. After a
+     * failed read the wait doubles, up to [MAX_POLL_MS], and goes back to [pollMs] once one works.
+     */
     suspend fun poll() {
+        var wait = pollMs
         while (true) {
-            _state.value.conversationId?.let { refresh(it) }
-            delay(pollMs)
+            val worked = _state.value.conversationId?.let { refresh(it) } ?: true
+            wait = if (worked) pollMs else (wait * 2).coerceAtMost(maxOf(pollMs, MAX_POLL_MS))
+            delay(wait)
         }
     }
 
@@ -272,3 +278,4 @@ class ConversationViewModel(
 
 /** The backend's default page for a newer-only read (`after`). */
 private const val CURSOR_PAGE = 100
+private const val MAX_POLL_MS = 30_000L
