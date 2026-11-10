@@ -42,7 +42,7 @@ data class AppNotification(
     @JsonNames("appointment_id") private val appointmentId: String? = null,
     @JsonNames("document_id") private val documentId: String? = null,
     @JsonNames("task_id") private val taskId: String? = null,
-    @JsonNames("chat_id") private val chatId: String? = null,
+    @JsonNames("chat_id", "conversationId") private val chatId: String? = null,
     @JsonNames("patient_form_id") private val patientFormId: String? = null,
     @JsonNames("doctor_name") private val doctorName: String? = null,
     @JsonNames("cancel_reason_code") private val cancelReasonCode: String? = null,
@@ -57,7 +57,7 @@ data class AppNotification(
     val appointment get() = appointmentId ?: data.string("appointmentId", "appointment_id")
     val document get() = documentId ?: data.string("documentId", "document_id")
     val task get() = taskId ?: data.string("taskId", "task_id")
-    val chat get() = chatId ?: data.string("chatId", "chat_id")
+    val chat get() = chatId ?: data.string("chatId", "chat_id", "conversationId")
     val form get() = patientFormId ?: data.string("patientFormId", "patient_form_id")
     val doctor get() = doctorName ?: data.string("doctorName", "doctor_name")
 
