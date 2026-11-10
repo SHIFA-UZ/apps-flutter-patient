@@ -560,4 +560,6 @@
         <item>Sonntag</item>
     </string-array>
     <string name="timesInDoctorZone">Zeiten in der Zeitzone der Ärztin oder des Arztes (%1$s)</string>
+    <string name="leavePaymentMessage">Wenn Sie jetzt gehen, wird die Buchung storniert und der Termin freigegeben.</string>
+    <string name="continuePayment">Zahlung fortsetzen</string>
 </resources>

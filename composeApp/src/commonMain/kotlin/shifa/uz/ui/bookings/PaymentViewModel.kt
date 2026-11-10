@@ -106,7 +106,10 @@ class PaymentViewModel(
     /** The provider's redirect landed (`success` / `cancel`); success asks B4 at once (events.md §5). */
     fun onRedirect(page: String) {
         analytics.track(AnalyticsEvent.PaymentRedirectSeen(page, checkout?.provider?.lowercase()))
-        if (page == "success") check("redirect")
+        if (page == "success") {
+            update { copy(providerSaidPaid = true) }
+            check("redirect")
+        }
     }
 
     private fun secondsOpen() = (clock() - openedAt).inWholeSeconds

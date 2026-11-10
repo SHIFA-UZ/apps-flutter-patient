@@ -69,6 +69,7 @@ class PaymentViewModelTest {
                 awaitItem()
             }
 
+            assertThat(classToTest.state.value.providerSaidPaid).isTrue() // Back no longer cancels the booking
             assertThat(tracker.events.map { it.name })
                 .containsExactly("payment_redirect_seen", "payment_completed")
                 .inOrder()

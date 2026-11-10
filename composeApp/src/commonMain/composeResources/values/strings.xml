@@ -978,4 +978,6 @@
     <string name="cancelReasonRescheduled">Moved to another time.</string>
     <string name="missed">Missed</string>
     <string name="timesInDoctorZone">Times are in the doctor's time zone (%1$s)</string>
+    <string name="leavePaymentMessage">If you leave now, the booking is cancelled and the time slot is released.</string>
+    <string name="continuePayment">Continue payment</string>
 </resources>

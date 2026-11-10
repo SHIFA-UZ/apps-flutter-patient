@@ -13,16 +13,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.bookAgain
+import shifa.composeapp.generated.resources.cancelBooking
 import shifa.composeapp.generated.resources.completePayment
+import shifa.composeapp.generated.resources.continuePayment
 import shifa.composeapp.generated.resources.ic_alert_circle_16
+import shifa.composeapp.generated.resources.leavePaymentMessage
 import shifa.composeapp.generated.resources.payment
 import shifa.composeapp.generated.resources.paymentSlotHeld
 import shifa.uz.data.analytics.Analytics
@@ -31,6 +40,7 @@ import shifa.uz.data.analytics.AnalyticsScreen
 import shifa.uz.data.analytics.paymentFailureReason
 import shifa.uz.data.model.Appointment
 import shifa.uz.ui.register.Banners
+import shifa.uz.ui.register.MessagePopUp
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.theme.ShifaTextStyles
@@ -39,6 +49,7 @@ import shifa.uz.ui.widgets.ShifaBannerType
 import shifa.uz.ui.widgets.ShifaPageElement
 import shifa.uz.ui.widgets.ShifaPageElementType
 import shifa.uz.ui.widgets.ShifaPrimaryButton
+import shifa.uz.ui.widgets.ShifaSecondaryButton
 import shifa.uz.ui.widgets.ShifaSubHeader
 import shifa.uz.ui.widgets.TrackScreen
 import shifa.uz.utils.PaymentWebView
@@ -49,12 +60,17 @@ import kotlin.time.Duration
  * ([onDone], then the visit's details, 1825:17774); a failed or expired payment says so and offers Book again.
  * Figma's title "Pay via webview" is a placeholder, so it says Payment.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PaymentScreen(
     appointment: Appointment,
     onBack: () -> Unit,
     onDone: (Appointment) -> Unit,
     onSignedOut: () -> Unit,
+    // Leaves without giving the booking up: after the provider's success page, when the backend's PAID is still due.
+    onKeep: () -> Unit = onBack,
+    // [onBack] releases the held slot, so Back asks first.
+    confirmLeave: Boolean = true,
     viewModel: PaymentViewModel = viewModel { PaymentViewModel(appointment) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -64,9 +80,42 @@ fun PaymentScreen(
     // A paid booking goes on by itself; a failed one waits for Book again.
     LaunchedEffect(viewModel) { viewModel.done.collect { if (it.isPaid && !it.isPaymentDead) done(it) } }
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { signedOut() } }
+    var asking by remember { mutableStateOf(false) }
+    val leave = {
+        when {
+            state.failure != null -> onBack()
+            state.providerSaidPaid -> onKeep()
+            confirmLeave -> asking = true
+            else -> onBack()
+        }
+    }
+    BackHandler(onBack = leave) // the system Back too, like the header's
+    if (asking) {
+        Dialog({ asking = false }) {
+            MessagePopUp(
+                stringResource(Res.string.cancelBooking),
+                stringResource(Res.string.leavePaymentMessage),
+                { asking = false },
+            ) {
+                ShifaPrimaryButton(
+                    stringResource(Res.string.continuePayment),
+                    { asking = false },
+                    Modifier.fillMaxWidth(),
+                )
+                ShifaSecondaryButton(
+                    stringResource(Res.string.cancelBooking),
+                    {
+                        asking = false
+                        onBack()
+                    },
+                    Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
     PaymentContent(
         state,
-        onBack,
+        leave,
         onCheck = { viewModel.check() },
         onBookAgain = {
             Analytics.track(AnalyticsEvent.PaymentBookAgainTapped(state.appointment.paymentFailureReason()))

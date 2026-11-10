@@ -980,4 +980,6 @@
     <string name="cancelReasonRescheduled">Перенесён на другое время.</string>
     <string name="missed">Пропущен</string>
     <string name="timesInDoctorZone">Время указано по часовому поясу врача (%1$s)</string>
+    <string name="leavePaymentMessage">Если выйти сейчас, запись будет отменена, а время освободится.</string>
+    <string name="continuePayment">Продолжить оплату</string>
 </resources>

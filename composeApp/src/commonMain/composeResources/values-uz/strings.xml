@@ -978,4 +978,6 @@
     <string name="cancelReasonRescheduled">Boshqa vaqtga ko'chirildi.</string>
     <string name="missed">O'tkazib yuborilgan</string>
     <string name="timesInDoctorZone">Vaqt shifokorning vaqt mintaqasida ko'rsatilgan (%1$s)</string>
+    <string name="leavePaymentMessage">Hozir chiqsangiz, band qilish bekor qilinadi va vaqt bo'shatiladi.</string>
+    <string name="continuePayment">To'lovni davom ettirish</string>
 </resources>

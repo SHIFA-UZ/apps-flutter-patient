@@ -18,6 +18,8 @@ data class PaymentUiState(
     val now: Instant,
     val isChecking: Boolean = false,
     val notice: StringResource? = null,
+    /** The provider's success page was seen: the money may be on its way, so leaving never cancels the booking. */
+    val providerSaidPaid: Boolean = false,
 ) {
     val checkoutUrl get() = appointment.payment?.checkoutUrl.orEmpty()
 
