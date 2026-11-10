@@ -90,6 +90,8 @@ fun PaymentScreen(
         }
     }
     BackHandler(onBack = leave) // the system Back too, like the header's
+    // Paid at the provider while the question was up: it no longer applies.
+    LaunchedEffect(state.providerSaidPaid) { if (state.providerSaidPaid) asking = false }
     if (asking) {
         Dialog({ asking = false }) {
             MessagePopUp(
@@ -106,7 +108,8 @@ fun PaymentScreen(
                     stringResource(Res.string.cancelBooking),
                     {
                         asking = false
-                        onBack()
+                        // The success page may have come while this was open: then the booking stays.
+                        if (viewModel.state.value.providerSaidPaid) onKeep() else onBack()
                     },
                     Modifier.fillMaxWidth(),
                 )
