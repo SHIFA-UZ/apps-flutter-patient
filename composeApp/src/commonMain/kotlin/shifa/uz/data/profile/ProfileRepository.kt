@@ -55,6 +55,14 @@ class ProfileRepository(
             ) { timeout { requestTimeoutMillis = DELETION_TIMEOUT_MS } }
         }.mapCatching { if (it.challengeId.isBlank()) throw ApiException.ServerError(FAILED_TO_DELETE_ACCOUNT) else it }
 
+    /** P5b: the deletion SMS code, sent to the account's own phone (the number P6 verifies against). */
+    suspend fun sendDeletionSmsCode(): Result<Unit> =
+        apiCall<String>(FAILED_TO_DELETE_ACCOUNT) {
+            client.post(
+                ApiConfig.Endpoints.DELETE_ACCOUNT_SMS_CODE,
+            ) { timeout { requestTimeoutMillis = DELETION_TIMEOUT_MS } }
+        }.map {}
+
     /** P6: the code with the e-mail it went to, or the SMS code alone. The response body is not read. */
     suspend fun confirmDeletion(
         challengeId: String,

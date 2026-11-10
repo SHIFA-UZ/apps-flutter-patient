@@ -517,11 +517,15 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 - **Res 200**: `{ "challengeId": "string (required)", "maskedEmail"?: "string", "maskedPhone"?: "string", "channels"?: ["EMAIL", "SMS"], "expiresInSeconds"?: 300 }`. An empty `challengeId` throws `Invalid response from server`.
 - **`channels`** (KMP app): where a deletion code can go. `EMAIL` when the account has an e-mail, `SMS` when its phone is an Uzbek mobile number. An older backend sends none, which means e-mail only. The app uses the e-mail when it can and SMS otherwise; with neither it shows `deleteAccountNoChannel` and does not open the code page.
 - **Next**: the client navigates to the OTP screen with `{challengeId, email}`, where `email` comes from the profile, not `maskedEmail`. That screen immediately calls A4 with `purpose: ACCOUNT_DELETION`.
-- Whether P5 also sends an email by itself is **UNVERIFIED**.
+- P5 sends no code itself. **Resend** calls P5 again first (the first challenge has expired by then) and confirms with the new `challengeId`.
+
+#### P5b `POST /patients/me/delete-account/sms-code`
+- **Req**: no body. **Res 204**. Sends the SMS deletion code to the account's own phone, the number P6 verifies against (the profile's phone can differ). 400 when the account has no Uzbek mobile number, 503 when the SMS could not be sent.
+- A backend without this route answers 404; the app then falls back to A5 with the profile's phone and `purpose: ACCOUNT_DELETION`.
 
 #### P6 `POST /patients/me/delete-account/confirm`
 - **Caller**: `delete_account_otp_verify_screen.dart:111`.
-- **Req**: `{ "challengeId": "string", "email": "string", "emailOtp": "string" }`, or for the SMS channel `{ "challengeId": "string", "smsOtp": "string" }` (the code from A5 with `purpose: ACCOUNT_DELETION`, sent to the profile's phone).
+- **Req**: `{ "challengeId": "string", "email": "string", "emailOtp": "string" }`, or for the SMS channel `{ "challengeId": "string", "smsOtp": "string" }` (the code from P5b).
 - **Res**: the body is ignored. The client then logs out locally.
 
 #### P7 `PUT /patients/me/fcm-token`

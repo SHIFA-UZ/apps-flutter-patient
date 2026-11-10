@@ -29,7 +29,7 @@ private const val ACCOUNT_DELETION = "ACCOUNT_DELETION"
 
 /** 14 §3.5: A4 (or A5 for an account without an e-mail) on open and on resend, then P6 and an awaited logout. */
 class DeleteAccountViewModel(
-    private val challenge: DeleteAccountChallenge,
+    private var challenge: DeleteAccountChallenge,
     private val email: String,
     private val phone: String = "",
     private val profile: ProfileRepository = ProfileRepository(),
@@ -77,11 +77,20 @@ class DeleteAccountViewModel(
                 update { copy(resendSeconds = 0) }
             }
         viewModelScope.launch {
-            val sent =
-                if (channel == OtpChannel.Sms) {
-                    auth.sendSmsOtp(phone, ACCOUNT_DELETION).map {}
+            // The first challenge has run out by the time Resend is allowed: a new code needs a new one.
+            val fresh =
+                if (resent) {
+                    profile.requestDeletion().onSuccess { challenge = it }
                 } else {
-                    auth.sendEmailOtp(email, ACCOUNT_DELETION)
+                    Result.success(
+                        challenge,
+                    )
+                }
+            val sent =
+                when {
+                    fresh.isFailure -> fresh.map {}
+                    channel == OtpChannel.Sms -> sendSmsCode()
+                    else -> auth.sendEmailOtp(email, ACCOUNT_DELETION)
                 }
             sent.fold(
                 onSuccess = { update { copy(isSending = false, notice = Res.string.codeSentAgain.takeIf { resent }) } },
@@ -91,6 +100,19 @@ class DeleteAccountViewModel(
                     update { copy(isSending = false, resendSeconds = 0, error = it.toUserMessage()) }
                 },
             )
+        }
+    }
+
+    // The backend sends to the account's own number; one from before that route gets the profile's number (A5).
+    private suspend fun sendSmsCode(): Result<Unit> {
+        val sent = profile.sendDeletionSmsCode()
+        return if (sent.exceptionOrNull() is ApiException.NotFound) {
+            auth.sendSmsOtp(
+                phone,
+                ACCOUNT_DELETION,
+            ).map {}
+        } else {
+            sent
         }
     }
 

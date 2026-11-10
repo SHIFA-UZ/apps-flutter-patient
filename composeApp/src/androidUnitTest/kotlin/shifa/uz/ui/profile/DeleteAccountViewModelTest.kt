@@ -109,6 +109,7 @@ class DeleteAccountViewModelTest {
             runCurrent()
             verifyBlocking(auth, times(1)) { sendEmailOtp(any(), anyOrNull()) }
 
+            wheneverBlocking { profile.requestDeletion() } doReturn Result.success(challenge)
             advanceTimeBy(3_001)
             classToTest.resend()
             runCurrent()
@@ -181,15 +182,44 @@ class DeleteAccountViewModelTest {
         }
 
     @Test
+    fun `a backend without the deletion SMS route gets the profile's phone`() =
+        runTest {
+            wheneverBlocking { profile.sendDeletionSmsCode() } doReturn Result.failure(ApiException.NotFound(""))
+            wheneverBlocking { auth.sendSmsOtp(any(), anyOrNull()) } doReturn Result.success(OtpChannel.Sms)
+            create(challenge.copy(channels = listOf("SMS")), email = "", phone = "+998901234567")
+            runCurrent()
+
+            verifyBlocking(auth) { sendSmsOtp("+998901234567", "ACCOUNT_DELETION") }
+            assertThat(state.error).isNull()
+        }
+
+    @Test
+    fun `resend confirms with a new challenge`() =
+        runTest {
+            wheneverBlocking { profile.requestDeletion() } doReturn Result.success(challenge.copy(challengeId = "c2"))
+            wheneverBlocking { profile.confirmDeletion(any(), any(), any(), any()) } doReturn Result.success(Unit)
+            create()
+            advanceTimeBy(3_001)
+            classToTest.resend()
+            runCurrent()
+
+            classToTest.onOtpChange("123456")
+            classToTest.confirm()
+            advanceUntilIdle()
+            verifyBlocking(profile) { confirmDeletion("c2", OtpChannel.Email, "aziz@example.com", "123456") }
+        }
+
+    @Test
     fun `an account without an email gets the code by SMS and confirms with it`() =
         runTest {
-            wheneverBlocking { auth.sendSmsOtp(any(), anyOrNull()) } doReturn Result.success(OtpChannel.Sms)
+            wheneverBlocking { profile.sendDeletionSmsCode() } doReturn Result.success(Unit)
             wheneverBlocking { profile.confirmDeletion(any(), any(), any(), any()) } doReturn Result.success(Unit)
             create(challenge.copy(channels = listOf("SMS"), maskedPhone = "***67"), email = "", phone = "+998901234567")
             runCurrent()
 
             assertThat(state.smsTo).isEqualTo("***67")
-            verifyBlocking(auth) { sendSmsOtp("+998901234567", "ACCOUNT_DELETION") }
+            verifyBlocking(profile) { sendDeletionSmsCode() }
+            verifyBlocking(auth, never()) { sendSmsOtp(any(), anyOrNull()) }
             verifyBlocking(auth, never()) { sendEmailOtp(any(), anyOrNull()) }
 
             classToTest.onOtpChange("123456")
