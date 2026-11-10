@@ -30,6 +30,7 @@ import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CopilotChat
 import shifa.uz.data.model.OtpChannel
 import shifa.uz.data.model.RegisterPatientRequest
+import shifa.uz.data.notifications.Push
 import shifa.uz.data.storage.CopilotStorage
 import shifa.uz.data.storage.TokenStorage
 import java.io.IOException
@@ -397,6 +398,17 @@ class AuthRepositoryTest {
             assertThat(classToTest.restoreSession()).isTrue() // real time: the 5 s limit
             assertThat(tokens.token).isEqualTo("t")
         }
+
+    @Test
+    fun `a push tapped while signed out is dropped, one tapped while signed in is kept`() {
+        Push.opened.value = null
+        Push.open(mapOf("type" to "CHAT"), signedIn = false)
+        assertThat(Push.opened.value).isNull()
+
+        Push.open(mapOf("type" to "CHAT"), signedIn = true)
+        assertThat(Push.opened.value).containsEntry("type", "CHAT")
+        Push.opened.value = null
+    }
 
     @Test
     fun `the token is never sent to another host`() =
