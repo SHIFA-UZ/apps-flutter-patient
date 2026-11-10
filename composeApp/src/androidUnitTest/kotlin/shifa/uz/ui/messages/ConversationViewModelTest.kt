@@ -27,6 +27,7 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.composeapp.generated.resources.messageStillSending
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.chat.ChatRepository
@@ -205,6 +206,8 @@ class ConversationViewModelTest {
             classToTest.edit("My rash")
             classToTest.attach("IMG_1.jpg", byteArrayOf(1))
             assertThat(state.isSending).isTrue()
+            classToTest.attach("IMG_2.jpg", byteArrayOf(2)) // a second one meanwhile says so
+            assertThat(state.error).isEqualTo(Res.string.messageStillSending)
             runCurrent()
 
             verifyBlocking(chat) {

@@ -980,4 +980,5 @@
     <string name="timesInDoctorZone">Vaqt shifokorning vaqt mintaqasida ko'rsatilgan (%1$s)</string>
     <string name="leavePaymentMessage">Hozir chiqsangiz, band qilish bekor qilinadi va vaqt bo'shatiladi.</string>
     <string name="continuePayment">To'lovni davom ettirish</string>
+    <string name="messageStillSending">Oldingi xabar hali yuborilmoqda. Birozdan so'ng qayta urinib ko'ring.</string>
 </resources>

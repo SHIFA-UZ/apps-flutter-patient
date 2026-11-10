@@ -14,6 +14,7 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.StringResource
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.errorRecordingVoice
+import shifa.composeapp.generated.resources.messageStillSending
 import shifa.uz.data.analytics.Analytics
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.AnalyticsTracker
@@ -180,7 +181,9 @@ class ConversationViewModel(
         duration: Int? = null,
     ) {
         val state = _state.value
-        if (state.isSending || !state.canAddress) return
+        if (!state.canAddress) return
+        // One at a time; a second file or voice note says so instead of vanishing.
+        if (state.isSending) return showError(Res.string.messageStillSending)
         update { copy(isSending = true, error = null, notice = null) }
         viewModelScope.launch {
             chat.upload(bytes, fileName).fold(

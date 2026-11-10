@@ -980,4 +980,5 @@
     <string name="timesInDoctorZone">Times are in the doctor's time zone (%1$s)</string>
     <string name="leavePaymentMessage">If you leave now, the booking is cancelled and the time slot is released.</string>
     <string name="continuePayment">Continue payment</string>
+    <string name="messageStillSending">The previous message is still being sent. Try again in a moment.</string>
 </resources>

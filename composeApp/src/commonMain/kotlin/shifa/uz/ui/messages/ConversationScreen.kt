@@ -3,6 +3,7 @@ package shifa.uz.ui.messages
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,6 +63,7 @@ import shifa.uz.ui.navigation.ScopedViewModels
 import shifa.uz.ui.register.Banners
 import shifa.uz.ui.theme.ShifaColors
 import shifa.uz.ui.theme.ShifaDimens
+import shifa.uz.ui.theme.ShifaSize
 import shifa.uz.ui.theme.ShifaSpacing
 import shifa.uz.ui.widgets.ShifaChatBar
 import shifa.uz.ui.widgets.ShifaChatBubble
@@ -201,6 +204,14 @@ internal fun ConversationContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val messages = state.messages
+            // An upload takes seconds: the spinner sits where the message will appear.
+            if (state.isSending) {
+                item {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                        CircularProgressIndicator(Modifier.size(ShifaSize.S24), ShifaColors.Icon.Brand, ShifaSize.S2)
+                    }
+                }
+            }
             if (messages == null) {
                 // A failed first load is the banner's; the poll retries.
                 if (state.error == null) item { ShifaChatSkeleton() }

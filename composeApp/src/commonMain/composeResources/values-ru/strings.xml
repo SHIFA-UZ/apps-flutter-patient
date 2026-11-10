@@ -982,4 +982,5 @@
     <string name="timesInDoctorZone">Время указано по часовому поясу врача (%1$s)</string>
     <string name="leavePaymentMessage">Если выйти сейчас, запись будет отменена, а время освободится.</string>
     <string name="continuePayment">Продолжить оплату</string>
+    <string name="messageStillSending">Предыдущее сообщение ещё отправляется. Повторите через мгновение.</string>
 </resources>
