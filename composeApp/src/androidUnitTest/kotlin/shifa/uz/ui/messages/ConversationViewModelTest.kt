@@ -289,4 +289,16 @@ class ConversationViewModelTest {
             advanceTimeBy(5_000)
             verifyBlocking(chat, times(2)) { conversation(any(), anyOrNull()) }
         }
+
+    @Test
+    fun `a read receipt that failed is sent again by the next poll`() =
+        runTest {
+            wheneverBlocking { chat.markRead(any()) } doReturn Result.failure(ApiException.NetworkError(""))
+            open()
+            wheneverBlocking { chat.markRead(any()) } doReturn Result.success(Unit)
+            nextPoll()
+            nextPoll()
+
+            verifyBlocking(chat, times(2)) { markRead("3") } // the failed one, the retry, then nothing new
+        }
 }

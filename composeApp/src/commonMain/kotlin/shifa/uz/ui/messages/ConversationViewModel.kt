@@ -104,12 +104,12 @@ class ConversationViewModel(
                         error = null,
                     )
                 }
-                // C4, its errors swallowed (08 §2.4).
+                // C4, its errors swallowed (08 §2.4). The cursor moves only once the receipt went through: a failed
+                // or cancelled one (the app left the front mid-call) is sent again by the next read.
                 val newest = shown().lastOrNull { !it.isMine }?.id
-                if (!opened || newest != readUpTo) {
+                if ((!opened || newest != readUpTo) && chat.markRead(id).isSuccess) {
                     opened = true
                     readUpTo = newest
-                    chat.markRead(id)
                 }
                 c.messages.size
             },
