@@ -124,8 +124,15 @@ fun MainScreen(
                 is NotificationLink.ToDocument -> viewing = link.document
                 is NotificationLink.ToTask -> checkIn = link.task
                 is NotificationLink.ToSigning -> live = link.appointment
-                NotificationLink.ToBookings -> tab = ShifaTab.Bookings
-                NotificationLink.ToDocuments -> tab = ShifaTab.Documents
+                // The push says something changed, so the tab it opens reloads (it only loads itself once).
+                NotificationLink.ToBookings -> {
+                    tab = ShifaTab.Bookings
+                    bookings.load(warmFilters = false)
+                }
+                NotificationLink.ToDocuments -> {
+                    tab = ShifaTab.Documents
+                    documents.load()
+                }
                 NotificationLink.ToTasks -> tasksOpen = true
                 is NotificationLink.ToChat -> chat = ChatTarget(link.chatId)
                 NotificationLink.ToMessages -> tab = ShifaTab.Messages
