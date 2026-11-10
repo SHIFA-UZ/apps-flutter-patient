@@ -31,7 +31,6 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
@@ -118,7 +117,6 @@ fun EditProfileScreen(
         onChangePhoto = pickPhoto,
         onFirstNameChange = viewModel::onFirstNameChange,
         onLastNameChange = viewModel::onLastNameChange,
-        onPhoneChange = viewModel::onPhoneChange,
         onPickDate = { pickingDate = true },
         onGenderChange = viewModel::onGenderChange,
         onAddressChange = viewModel::onAddressChange,
@@ -148,7 +146,6 @@ internal fun EditProfileContent(
     onChangePhoto: () -> Unit,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
-    onPhoneChange: (String) -> Unit,
     onPickDate: () -> Unit,
     onGenderChange: (Gender) -> Unit,
     onAddressChange: (String) -> Unit,
@@ -192,14 +189,17 @@ internal fun EditProfileContent(
                         Column(verticalArrangement = Arrangement.spacedBy(ShifaSpacing.Gap.Sm)) {
                             Field(state.firstName, onFirstNameChange, Res.string.firstName, shown(state.firstNameError))
                             Field(state.lastName, onLastNameChange, Res.string.lastName, shown(state.lastNameError))
-                            // ponytail: one field with the dial code; Figma's flag and code boxes need a country picker here.
-                            Field(
-                                state.phone,
-                                onPhoneChange,
-                                Res.string.phoneNumber,
-                                shown(state.phoneError),
-                                KeyboardType.Phone,
-                            )
+                            // Read-only: P2 has no phone key (the backend ignores one), the phone is the sign-in name.
+                            if (state.phone.isNotBlank()) {
+                                ShifaInputField(
+                                    value = state.phone,
+                                    onValueChange = {},
+                                    label = stringResource(Res.string.phoneNumber),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = false,
+                                    clearable = false,
+                                )
+                            }
                             DateField(state.birthDate, onPickDate)
                             GenderDropdown(state.gender, onGenderChange)
                             Field(state.address, onAddressChange, Res.string.address, null)

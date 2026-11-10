@@ -38,7 +38,7 @@ private fun Profile(state: ProfileUiState) = PreviewTheme { ProfileContent(state
 
 @Composable
 private fun EditProfile(state: EditProfileUiState) =
-    PreviewTheme { EditProfileContent(state, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) }
+    PreviewTheme { EditProfileContent(state, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) }
 
 @Preview(widthDp = 393, heightDp = 852)
 @Composable

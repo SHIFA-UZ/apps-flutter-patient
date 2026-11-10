@@ -489,7 +489,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
   {
     "firstName"?, "lastName"?, "birthDate"?: "yyyy-MM-dd",
     "gender"?: "Male" | "Female" | "Other",
-    "phone"?, "address"?, "language"?: "en|de|uz|ru",
+    "address"?, "language"?: "en|de|uz|ru",
     "photoUrl"?, "latitude"?: number, "longitude"?: number,
     "locationCountry"?, "locationRegion"?, "locationDistrict"?, "locationCity"?,
     "locationPostalCode"?, "locationStreetAddress"?,
@@ -497,6 +497,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
   }
   ```
 - **Res 200**: the updated PatientProfile (§5.1).
+- **No `phone`**: the backend's request has no such key and ignores one (checked 2026-11-10), so the app shows the phone read-only and does not send it.
 - **Asymmetry**: the client sends `firstName` and `lastName`, but the response is parsed only for `fullName`.
 - Location fields come from Google reverse geocoding (§4.1). `address` is a formatted string built on the client.
 - **Bug**: the edit-profile screen can PATCH a local file path as `photoUrl`.

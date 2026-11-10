@@ -13,7 +13,7 @@
 ## Edit profile (`EditProfileScreen.kt`, PROF-03)
 
 - Figma: `1703:17376`. Starts from the loaded profile, with no fetch. The name splits on the first space, the birth date is parsed from ISO, and an unknown gender is no selection and isn't sent (14 Q15).
-- Validation (14 §7): first and last name are required (the backend only renames when both are sent). The phone is optional, else it needs at least 10 digits.
+- Validation (14 §7): first and last name are required (the backend only renames when both are sent). The phone is shown read-only and not sent: P2 has no phone key (2026-11-10).
 - Save sends P2 with the trimmed fields and blanks as null, without `photoUrl` (14 Q1, Q3). The language applies once the save succeeds. Discard goes back with no prompt (14 §3.2), and it is disabled while saving.
 - Differences from Figma:
   - The header says "Edit Profile", where Figma says "Profile".

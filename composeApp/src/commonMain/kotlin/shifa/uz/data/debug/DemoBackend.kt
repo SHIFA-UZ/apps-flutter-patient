@@ -1082,7 +1082,6 @@ class DemoBackend(
             val changes =
                 listOf(
                     "fullName" to name,
-                    "phone" to update.phone,
                     "birthDate" to update.birthDate,
                     "gender" to update.gender,
                     "address" to update.address,

@@ -9,7 +9,6 @@ data class ProfileUpdate(
     val lastName: String? = null,
     val birthDate: String? = null,
     val gender: String? = null,
-    val phone: String? = null,
     val address: String? = null,
     val language: String? = null,
     val photoUrl: String? = null,

@@ -22,7 +22,6 @@ import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.wheneverBlocking
 import shifa.composeapp.generated.resources.Res
 import shifa.composeapp.generated.resources.failedToUpdateProfile
-import shifa.composeapp.generated.resources.invalidPhone
 import shifa.composeapp.generated.resources.required
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
@@ -67,11 +66,11 @@ class EditProfileViewModelTest {
         runTest {
             wheneverBlocking { profile.updateProfile(any()) } doReturn Result.success(patient)
             create()
-            classToTest.onPhoneChange("+998901111111")
+            classToTest.onAddressChange("Chilonzor 5")
             classToTest.save()
             advanceUntilIdle()
 
-            assertThat(tracker.events).containsExactly(AnalyticsEvent.ProfileUpdated(listOf("phone")))
+            assertThat(tracker.events).containsExactly(AnalyticsEvent.ProfileUpdated(listOf("address")))
         }
 
     private fun create(initial: PatientProfile? = patient) {
@@ -105,14 +104,11 @@ class EditProfileViewModelTest {
     fun `an invalid form shows its errors and isn't sent`() =
         runTest {
             create(null)
-            classToTest.onPhoneChange("+998")
-
             classToTest.save()
             advanceUntilIdle()
 
             assertThat(state.showErrors).isTrue()
             assertThat(state.firstNameError).isEqualTo(Res.string.required)
-            assertThat(state.phoneError).isEqualTo(Res.string.invalidPhone)
             verifyBlocking(profile, never()) { updateProfile(any()) }
         }
 
@@ -139,7 +135,6 @@ class EditProfileViewModelTest {
                         lastName = "Karimov",
                         birthDate = "1990-05-12",
                         gender = "Female",
-                        phone = "+998901234567",
                         address = null,
                         language = "ru",
                         locationStreetAddress = "Amir Temur 1",
