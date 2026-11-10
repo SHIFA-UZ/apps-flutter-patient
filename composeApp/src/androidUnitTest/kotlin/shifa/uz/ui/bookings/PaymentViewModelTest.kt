@@ -24,7 +24,9 @@ import shifa.composeapp.generated.resources.paymentStillPendingConfirmBooking
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.PaymentReports
 import shifa.uz.data.analytics.RecordingTracker
+import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
+import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
 import shifa.uz.data.model.PaymentCheckout
 import kotlin.time.Duration.Companion.minutes
@@ -72,6 +74,23 @@ class PaymentViewModelTest {
                 .inOrder()
             assertThat(tracker.events.filterIsInstance<AnalyticsEvent.PaymentCompleted>().single().via)
                 .isEqualTo("redirect")
+        }
+
+    @Test
+    fun `a check that cannot reach the backend shows that error, not still pending`() =
+        runTest {
+            wheneverBlocking { bookings.getAppointment("50") } doReturn Result.failure(ApiException.NetworkError(""))
+            val classToTest = PaymentViewModel(held, bookings, tracker) { now }
+            classToTest.check()
+            runCurrent()
+
+            assertThat(classToTest.state.value.notice).isEqualTo(ApiException.NetworkError("").toUserMessage())
+            assertThat(tracker.events.map { it.name }).doesNotContain("payment_still_pending_shown")
+
+            // PAID ends the page's polling, or runTest would wait on it forever.
+            wheneverBlocking { bookings.getAppointment("50") } doReturn
+                Result.success(held.copy(status = "CONFIRMED", paymentStatus = Appointment.PAID, payment = null))
+            advanceTimeBy(3_100)
         }
 
     @Test

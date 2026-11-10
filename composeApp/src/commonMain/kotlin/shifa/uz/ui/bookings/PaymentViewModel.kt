@@ -22,6 +22,7 @@ import shifa.uz.data.analytics.amountBucket
 import shifa.uz.data.analytics.daysAhead
 import shifa.uz.data.analytics.hourOfDay
 import shifa.uz.data.analytics.paymentFailureReason
+import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.bookings.BookingsRepository
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.Appointment
@@ -78,7 +79,7 @@ class PaymentViewModel(
         if (_state.value.isChecking || finished) return
         update { copy(isChecking = true, notice = null) }
         viewModelScope.launch {
-            refresh(via)
+            val unreached = refresh(via)
             val a = _state.value.appointment
             // The Complete Payment button only; a redirect (events.md §5) isn't a tap.
             if (via == "check") {
@@ -89,10 +90,15 @@ class PaymentViewModel(
                         else -> "pending"
                     }
                 analytics.track(AnalyticsEvent.PaymentCheckTapped(result, secondsOpen()))
-                if (!finished) analytics.track(AnalyticsEvent.PaymentStillPendingShown)
+                if (!finished && unreached == null) analytics.track(AnalyticsEvent.PaymentStillPendingShown)
             }
+            // "Still pending" only when the backend said so; a check that never reached it shows its own error.
+            val pending = Res.string.paymentStillPendingConfirmBooking.takeIf { !finished }
             update {
-                copy(isChecking = false, notice = Res.string.paymentStillPendingConfirmBooking.takeIf { !finished })
+                copy(
+                    isChecking = false,
+                    notice = unreached?.toUserMessage()?.takeIf { via == "check" } ?: pending,
+                )
             }
         }
     }
@@ -105,8 +111,8 @@ class PaymentViewModel(
 
     private fun secondsOpen() = (clock() - openedAt).inWholeSeconds
 
-    // A failed B4 just waits for the next one; a 401 signs out.
-    private suspend fun refresh(via: String) {
+    // A failed B4 just waits for the next one (and is returned, for Complete Payment); a 401 signs out.
+    private suspend fun refresh(via: String): Throwable? =
         bookings.getAppointment(_state.value.appointment.id).fold(
             onSuccess = {
                 update { copy(appointment = it.copy(payment = it.payment ?: checkout), now = clock()) }
@@ -114,10 +120,13 @@ class PaymentViewModel(
                     report(_state.value.appointment, via)
                     _done.send(_state.value.appointment)
                 }
+                null
             },
-            onFailure = { if (it is ApiException.Unauthorized) _signedOut.send(Unit) },
+            onFailure = {
+                if (it is ApiException.Unauthorized) _signedOut.send(Unit)
+                it
+            },
         )
-    }
 
     // Once: the poll and a check can both see the end.
     private fun report(
