@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
@@ -34,6 +35,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import shifa.composeapp.generated.resources.Res
@@ -144,6 +146,13 @@ fun MainScreen(
                 is NotificationLink.ToChat -> chat = ChatTarget(link.chatId)
                 NotificationLink.ToMessages -> tab = ShifaTab.Messages
             }
+        }
+        // The reloads below run whatever tab is open, while each tab collects its own 401 only when shown: the
+        // shell collects them too, so an expired session logs out from any tab.
+        val logOut by rememberUpdatedState(onLogOut)
+        LaunchedEffect(home, messages, bookings, documents) {
+            merge(home.signedOut, messages.signedOut, bookings.signedOut, documents.signedOut)
+                .collect { logOut("session_expired") }
         }
         PushSetup()
         // Back in front after a while: what's on screen may be hours old, and nothing else reloads it.
