@@ -180,6 +180,7 @@ class DemoBackend(
                 path.startsWith(
                     Endpoints.MY_TASKS,
                 ) && p[3] == "check-in" -> data.submitCheckIn(p[2], body)
+            post && path == Endpoints.CONSULTATION_CHECKOUT -> data.checkout(body)
             get && path == Endpoints.PAYMENT_METHODS -> ok(data.paymentMethods(request.url.parameters["serviceId"]))
             get && path == Endpoints.NOTIFICATIONS -> ok(JsonArray(data.notifications))
             get && path == Endpoints.NOTIFICATIONS_PAGE ->
@@ -577,6 +578,14 @@ class DemoBackend(
         }
 
         private val paidAt = mutableMapOf<String, Instant>()
+
+        /** $1: the held booking's checkout again; the fake provider then "pays" 15 s later, as after B3. */
+        fun checkout(body: String): Reply? {
+            val id = apiJson.parseToJsonElement(body).jsonObject.str("appointmentId")
+            if (appointments.none { it.str("id") == id }) return null
+            paidAt[id] = getCurrentInstant() + 15.seconds
+            return ok(obj("paymentId" to id.toLong() + 1000, "checkoutUrl" to DEMO_CHECKOUT, "gateway" to "CLICK"))
+        }
 
         /** §2.1: Click and Stripe for a pay-now service, none for free and pay later. */
         fun paymentMethods(serviceId: String?): JsonArray {

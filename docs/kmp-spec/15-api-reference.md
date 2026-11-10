@@ -751,6 +751,7 @@ The payment gateways are **Click.uz**, the primary one for UZS, and **Stripe**, 
   - Stripe retries at `appointment_booking_flow_screen.dart:1113` and `bookings_screen.dart:336`
 - **Req**: `{ "appointmentId": 42, "gateway"?: "STRIPE" }`. With no `gateway`, the server picks one (Click for UZS, **UNVERIFIED**).
 - **Res 200**: `{ "paymentId": "…", "checkoutUrl": "https://…", "gateway"?: "CLICK" | "STRIPE" }`. A missing `paymentId` or `checkoutUrl` produces a "payment could not start" error.
+- **KMP caller** (2026-11-10): Appointment Details → Complete payment on a `PENDING_PAYMENT` booking, sent without `gateway`. The backend hands back the booking's open checkout (same provider) or opens a new one (checked in `PaymentService.createConsultationCheckout`). B2 and B4 carry no `checkoutUrl`; only B3's reply does.
 
 #### $2 `POST /payments/treatment-plan/checkout`
 - **Caller**: `treatment_plan_payment_screen.dart:50`.

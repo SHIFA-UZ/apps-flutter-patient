@@ -122,6 +122,17 @@ data class PaymentCheckout(
     val expiresAt: String? = null,
 )
 
+/** $1: the checkout of a booking that is still unpaid (15 §7). The backend hands back the open one, or opens one. */
+@Serializable
+data class ConsultationCheckoutRequest(val appointmentId: Long)
+
+@Serializable
+data class ConsultationCheckout(
+    val paymentId: String = "",
+    val checkoutUrl: String? = null,
+    val gateway: String? = null,
+)
+
 /** `GET payments/methods` item: a provider the service can be paid with (§2.1). */
 @Serializable
 data class PaymentMethod(

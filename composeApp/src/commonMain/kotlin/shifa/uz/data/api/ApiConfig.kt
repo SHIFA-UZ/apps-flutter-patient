@@ -38,6 +38,7 @@ object ApiConfig {
         const val UPLOAD_ATTACHMENT = "messages/upload-attachment"
         const val VIDEO_TOKEN = "video/token"
         const val PAYMENT_METHODS = "payments/methods"
+        const val CONSULTATION_CHECKOUT = "payments/consultation/checkout"
 
         fun doctor(id: String) = "public/doctors/$id"
 

@@ -327,6 +327,10 @@ fun MainScreen(
                                 home.refresh()
                             },
                             onSignedOut = { onLogOut("session_expired") },
+                            onPaid = {
+                                bookings.load(warmFilters = false)
+                                home.refresh()
+                            },
                         )
                     }
                 }
