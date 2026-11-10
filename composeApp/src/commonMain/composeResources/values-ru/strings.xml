@@ -600,7 +600,7 @@
     <string name="passwordRequirementUppercase">Одна заглавная буква</string>
     <string name="passwordResetSuccess">Пароль успешно сброшен.</string>
     <string name="passwordTooLong">Пароль должен быть не длиннее 128 символов</string>
-    <string name="passwordTooShort">Пароль должен содержать не менее 6 символов</string>
+    <string name="passwordTooShort">Пароль должен содержать не менее 8 символов</string>
     <string name="passwordsDoNotMatch">Пароли не совпадают</string>
     <string name="past">Прошедшие</string>
     <string name="pastAppointments">Прошедшие приёмы</string>

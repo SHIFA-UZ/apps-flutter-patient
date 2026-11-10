@@ -352,7 +352,7 @@
     <string name="otpSentToAccountEmail">Ein 6-stelliger Code wurde an die E-Mail-Adresse Ihres Kontos gesendet. Prüfen Sie Ihren Posteingang.</string>
     <string name="otpSentToEmail">Ein 6-stelliger Code wurde an %1$s gesendet. Prüfen Sie Ihren Posteingang.</string>
     <string name="password">Passwort</string>
-    <string name="passwordTooShort">Passwort muss mindestens 6 Zeichen lang sein</string>
+    <string name="passwordTooShort">Passwort muss mindestens 8 Zeichen lang sein</string>
     <string name="passwordsDoNotMatch">Passwörter stimmen nicht überein</string>
     <string name="past">Vergangen</string>
     <string name="pastAppointments">Vergangene Termine</string>
