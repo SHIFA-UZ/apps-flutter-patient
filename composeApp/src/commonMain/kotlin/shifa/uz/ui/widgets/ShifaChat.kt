@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -40,6 +41,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -113,7 +115,9 @@ fun ShifaChatBar(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.weight(1f),
-                singleLine = true,
+                // A long message wraps and grows the bar (Figma shows one line only), then scrolls inside it.
+                maxLines = MAX_INPUT_LINES,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 textStyle = style.copy(color = ShifaColors.Text.Primary),
                 cursorBrush = SolidColor(ShifaColors.Border.Focus),
                 interactionSource = interactionSource,
@@ -169,6 +173,7 @@ private fun wavePhase(): Float {
     return phase
 }
 
+private const val MAX_INPUT_LINES = 4
 private const val WAVE_PERIOD_MS = 1200
 private const val WAVE_SPREAD = 0.7f
 private const val WAVE_MIN = 0.25f
