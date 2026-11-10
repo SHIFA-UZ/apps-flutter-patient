@@ -235,7 +235,7 @@ class AuthRepositoryTest {
         }
 
     @Test
-    fun `a phone reset sends phone, and a code the server emailed goes as emailOtp (05 Q13)`() =
+    fun `a phone reset sends phone with smsOtp, and with an emailed code the phone goes as email`() =
         runTest {
             replyJson(HttpStatusCode.OK, """{"token":"t4"}""")
             classToTest.resetForgottenPassword("+998901234567", OtpChannel.Sms, "111111", "Secret1!").getOrThrow()
@@ -250,7 +250,7 @@ class AuthRepositoryTest {
             )
             assertThat(email).isEqualTo(
                 Json.parseToJsonElement(
-                    """{"newPassword":"Secret1!","phone":"+998901234567","emailOtp":"222222","app":"patient"}""",
+                    """{"newPassword":"Secret1!","email":"+998901234567","emailOtp":"222222","app":"patient"}""",
                 ),
             )
         }

@@ -461,7 +461,7 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
 - **Callers**: `forgot_password_screen.dart:41` (first send) and `forgot_password_otp_screen.dart:108` (resend).
 - **Req**: `{ "identifier": "<email or phone, trimmed>", "app": "patient" }`.
 - **Res 200**: `{ "channel": "sms" | "email" }`, default `email`.
-- **Quirk**: the client stores `email = identifier` when the channel is `email`, and `phone = identifier` when it is `sms`. If a phone identifier comes back with `channel: "email"`, the phone string ends up in the `email` field of A10.
+- **Quirk**: the client stores `email = identifier` when the channel is `email`, and `phone = identifier` when it is `sms`. If a phone identifier comes back with `channel: "email"`, the phone string ends up in the `email` field of A10. The backend needs exactly that: A10 reads `email` + `emailOtp` (and finds a phone in `email`) or `phone` + `smsOtp`, nothing else.
 
 #### A10 `POST /auth/forgot-password-reset`
 - **Caller**: `forgot_password_new_password_screen.dart:73`, `:79`, `:85`.

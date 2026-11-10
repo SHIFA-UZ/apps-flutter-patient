@@ -141,8 +141,8 @@ class AuthRepository(
 
     /**
      * A10, the only place the code is checked. Saves the token on success (auto-login).
-     * The identifier goes under its own key and the code under the channel's, so a phone whose code was
-     * emailed is not sent as `email` (fixes 05 Q13; what the backend expects there is unverified).
+     * The backend reads two pairs only: `email` + `emailOtp` (its `email` may hold a phone, when the code for a
+     * phone identifier went to the account's email) and `phone` + `smsOtp`. So the channel picks the keys.
      */
     suspend fun resetForgottenPassword(
         identifier: String,
@@ -150,13 +150,12 @@ class AuthRepository(
         code: String,
         newPassword: String,
     ): Result<Unit> {
-        val isEmail = '@' in identifier
         val sms = channel == OtpChannel.Sms
         val request =
             ForgotPasswordResetRequest(
                 newPassword = newPassword,
-                phone = identifier.takeUnless { isEmail },
-                email = identifier.takeIf { isEmail },
+                phone = identifier.takeIf { sms },
+                email = identifier.takeUnless { sms },
                 smsOtp = code.takeIf { sms },
                 emailOtp = code.takeUnless { sms },
             )
