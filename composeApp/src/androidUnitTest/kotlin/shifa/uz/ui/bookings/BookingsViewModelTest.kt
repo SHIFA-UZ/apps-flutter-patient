@@ -163,6 +163,15 @@ class BookingsViewModelTest {
         }
 
     @Test
+    fun `the reload after a booking fetches only the chip on screen`() =
+        runTest {
+            classToTest.onBooked(pending = false)
+            advanceUntilIdle()
+
+            verifyBlocking(doctors, times(1)) { searchDoctors(any()) }
+        }
+
+    @Test
     fun `a chip not fetched yet shows skeletons until D1 answers`() =
         runTest {
             val today = DoctorsQuery(search = "", availableWithin = "today")

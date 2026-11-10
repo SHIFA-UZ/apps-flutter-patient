@@ -58,8 +58,12 @@ class BookingsViewModel(
         _state.value = _state.value.transform()
     }
 
-    /** First open and pull to refresh: B2 (past + my doctors) and D1. The lists stay on screen meanwhile. */
-    fun load() {
+    /**
+     * First open and pull to refresh: B2 (past + my doctors) and D1. The lists stay on screen meanwhile.
+     * [warmFilters]: also fetch the other chips' lists; off for the reload after a booking change, which then
+     * costs one D1 instead of four (the other chips load when tapped).
+     */
+    fun load(warmFilters: Boolean = true) {
         if (_state.value.isLoading) return
         update { copy(isLoading = true) }
         searching?.cancel()
@@ -67,7 +71,13 @@ class BookingsViewModel(
         viewModelScope.launch {
             val errors = listOf(async { loadAppointments() }, async { search(keepList = true) }).awaitAll()
             update { copy(isLoading = false, error = errors.firstNotNullOfOrNull { it }) }
-            if (_state.value.query.isBlank()) DoctorFilter.entries.forEach { searchOf(it.query.copy(search = "")) }
+            if (warmFilters && _state.value.query.isBlank()) {
+                DoctorFilter.entries.forEach {
+                    searchOf(
+                        it.query.copy(search = ""),
+                    )
+                }
+            }
         }
     }
 
@@ -87,19 +97,19 @@ class BookingsViewModel(
     /** Details cancelled one (B5): reload, with a notice. */
     fun onCancelled() {
         update { copy(notice = Res.string.appointmentCancelledSuccessfully) }
-        load()
+        load(warmFilters = false)
     }
 
     /** Create Booking booked one (B3): reload, with a notice. [pending]: the payment is still due. */
     fun onBooked(pending: Boolean) {
         update { copy(notice = if (pending) Res.string.paymentPendingMessage else Res.string.appointmentSlotBooked) }
-        load()
+        load(warmFilters = false)
     }
 
     /** Reschedule booked the new time (B3): reload, with a notice. */
     fun onRescheduled() {
         update { copy(notice = Res.string.appointmentRescheduledSuccessfully) }
-        load()
+        load(warmFilters = false)
     }
 
     private fun research(delayMs: Long) {
