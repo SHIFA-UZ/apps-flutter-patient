@@ -9,6 +9,7 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.bearerAuth
+import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
@@ -66,10 +67,11 @@ fun createHttpClient(
         defaultRequest { url(baseUrl) }
     }.apply {
         // 01 §4.2: the token goes on every backend request except the public auth paths, and never to
-        // another host (00 bug 7). A plain interceptor, because Ktor's Auth plugin caches the token.
+        // another host (00 bug 7) or over plain http (a file URL from a chat message can say http). A plain interceptor, because Ktor's Auth plugin caches the token.
         plugin(HttpSend).intercept { request ->
             val path = request.url.encodedPath
-            if (request.url.host == apiHost && ApiConfig.PUBLIC_AUTH_PATHS.none(path::endsWith)) {
+            val toBackend = request.url.host == apiHost && request.url.protocol == URLProtocol.HTTPS
+            if (toBackend && ApiConfig.PUBLIC_AUTH_PATHS.none(path::endsWith)) {
                 tokenStorage.token?.let(request::bearerAuth)
             }
             execute(request)

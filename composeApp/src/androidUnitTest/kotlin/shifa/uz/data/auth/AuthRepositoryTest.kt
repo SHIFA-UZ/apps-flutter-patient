@@ -19,6 +19,7 @@ import kotlinx.serialization.json.Json
 import org.junit.Test
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
+import shifa.uz.data.api.ApiConfig
 import shifa.uz.data.api.LOGIN_FAILED
 import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.api.NO_TOKEN_RECEIVED
@@ -394,6 +395,18 @@ class AuthRepositoryTest {
             client.get("https://files.example.com/api/patients/me/profile")
 
             assertThat(request.headers[HttpHeaders.Authorization]).isNull()
+        }
+
+    @Test
+    fun `the token is never sent over plain http`() =
+        runTest {
+            tokens.token = "t"
+
+            client.get(ApiConfig.BASE_URL.replace("https://", "http://") + "patients/me/profile")
+
+            // Ktor's defaultRequest moves an http URL to the base URL's https; if it ever stops, no token goes out.
+            val sentInClear = request.url.protocol.name == "http" && request.headers[HttpHeaders.Authorization] != null
+            assertThat(sentInClear).isFalse()
         }
 
     @Test
