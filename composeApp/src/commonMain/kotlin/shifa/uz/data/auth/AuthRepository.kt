@@ -3,6 +3,7 @@ package shifa.uz.data.auth
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -238,6 +239,8 @@ class AuthRepository(
             client.put(ApiConfig.Endpoints.FCM_TOKEN) {
                 contentType(ContentType.Application.Json)
                 setBody(FcmTokenRequest(""))
+                // Best effort: Log out must not hang for the client's 30 s on a dead network.
+                timeout { requestTimeoutMillis = LOGOUT_TIMEOUT_MS }
             }
         }
         tokenStorage.clear()
@@ -247,6 +250,7 @@ class AuthRepository(
     }
 }
 
+private const val LOGOUT_TIMEOUT_MS = 5_000L
 private const val RESTORE_TIMEOUT_MS = 5_000L // the splash does not wait longer than this for the profile call
 
 /** A5 failures that switch registration to the email code (05 §2.4 step 5): SMS unavailable or rate limited. */

@@ -34,7 +34,6 @@ internal val apiJson =
         encodeDefaults = true
         explicitNulls = false // optional keys are omitted, not sent as null (A2, P2)
         coerceInputValues = true // a null list (D1 `certificates`) reads as the default, not a dropped item
-        prettyPrint = true
     }
 
 private val tokens by lazy { TokenStorage() }
