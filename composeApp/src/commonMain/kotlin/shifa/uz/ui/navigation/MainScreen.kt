@@ -125,12 +125,16 @@ fun MainScreen(
         var booking by remember { mutableStateOf<Doctor?>(null) }
         var rescheduling by remember { mutableStateOf<Appointment?>(null) }
         var chat by remember { mutableStateOf<ChatTarget?>(null) }
+        // Every page that opens over the tabs (null when closed); a new one goes here.
+        val openPages =
+            listOf(
+                aiState.chat, chat, list, checkIn, appointment, rescheduling, live, doctor, booking, page, viewing,
+                upcomingOpen.takeIf { it }, tasksOpen.takeIf { it }, call.takeIf { !callMinimized },
+            )
         // A field on the page left behind keeps the keyboard up (iOS has no key to hide it): opening a doctor from the
         // search results, a booking, a chat or another tab lets go of it.
         val focus = LocalFocusManager.current
-        LaunchedEffect(tab, page, list, tasksOpen, upcomingOpen, viewing, checkIn, appointment, live, doctor, booking, rescheduling, chat) {
-            focus.clearFocus()
-        }
+        LaunchedEffect(tab, *openPages.toTypedArray()) { focus.clearFocus() }
         val tabs = rememberSaveableStateHolder()
         val density = LocalDensity.current
         var navPadding by remember { mutableStateOf(PaddingValues()) }
@@ -293,11 +297,7 @@ fun MainScreen(
             // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a certificate / document → a call.
             // An open page covers the tabs. Without this layer a tap or drag on its empty parts (a header, the canvas)
             // reached the tab underneath: its buttons, its search field, its pull-to-refresh.
-            val pageOpen =
-                aiState.chat != null || chat != null || list != null || upcomingOpen || tasksOpen || checkIn != null ||
-                    appointment != null || rescheduling != null || live != null || doctor != null || booking != null ||
-                    page != null || viewing != null || (call != null && !callMinimized)
-            if (pageOpen) Box(Modifier.fillMaxSize().pointerInput(Unit) {})
+            if (openPages.any { it != null }) Box(Modifier.fillMaxSize().pointerInput(Unit) {})
             if (aiState.chat != null) {
                 BackHandler { shifaAi.close() }
                 ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = { onLogOut("session_expired") })
