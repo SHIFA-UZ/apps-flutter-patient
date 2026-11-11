@@ -984,4 +984,5 @@
     <string name="leavePaymentMessage">Если выйти сейчас, запись будет отменена, а время освободится.</string>
     <string name="continuePayment">Продолжить оплату</string>
     <string name="messageStillSending">Предыдущее сообщение ещё отправляется. Повторите через мгновение.</string>
+    <string name="errorIdentifierConflict">Этот номер телефона и email принадлежат разным аккаунтам. Проверьте их или оставьте одно поле пустым.</string>
 </resources>

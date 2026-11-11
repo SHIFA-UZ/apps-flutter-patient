@@ -18,6 +18,8 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Test
+import shifa.composeapp.generated.resources.Res
+import shifa.composeapp.generated.resources.errorIdentifierConflict
 import shifa.uz.data.analytics.AnalyticsEvent
 import shifa.uz.data.analytics.RecordingTracker
 import shifa.uz.data.api.ApiConfig
@@ -26,6 +28,7 @@ import shifa.uz.data.api.NETWORK_ERROR
 import shifa.uz.data.api.NO_TOKEN_RECEIVED
 import shifa.uz.data.api.SMS_COULD_NOT_BE_SENT
 import shifa.uz.data.api.createHttpClient
+import shifa.uz.data.api.toUserMessage
 import shifa.uz.data.model.ApiException
 import shifa.uz.data.model.CopilotChat
 import shifa.uz.data.model.OtpChannel
@@ -161,6 +164,22 @@ class AuthRepositoryTest {
                 replyJson(status, body)
                 assertThat(classToTest.checkIdentifier(null, "a@shifa.uz").getOrThrow().type).isEqualTo("none")
             }
+        }
+
+    @Test
+    fun `a phone and an email of different accounts is an error with its own text, not none`() =
+        runTest {
+            replyJson(
+                HttpStatusCode.Conflict,
+                """{"status":409,"message":"This phone number and email belong to different accounts",""" +
+                    """"code":"IDENTIFIER_CONFLICT"}""",
+            )
+            val failure = classToTest.checkIdentifier("+998901234567", "a@shifa.uz").exceptionOrNull()
+            assertThat(failure?.toUserMessage()).isEqualTo(Res.string.errorIdentifierConflict)
+            // The code alone is enough, whatever the message says.
+            replyJson(HttpStatusCode.Conflict, """{"status":409,"message":"Conflict","code":"IDENTIFIER_CONFLICT"}""")
+            assertThat(classToTest.checkIdentifier("+998901234567", "a@shifa.uz").exceptionOrNull()?.toUserMessage())
+                .isEqualTo(Res.string.errorIdentifierConflict)
         }
 
     @Test
