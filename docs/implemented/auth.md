@@ -46,6 +46,7 @@
   - Phones are normalized like Login (`data/auth/Phone.kt`): 9 digits get `+998`.
   - Names are checked trimmed, and the email regex takes any TLD length. Both fix Q19.
   - Next calls check-identifier (A2): a patient gets the "already exists" dialog; a doctor gets the "existing doctor" dialog; none (or a 404) goes on.
+    A phone and an email of different accounts (or an account with another phone or email) is a 409 `IDENTIFIER_CONFLICT`: the step shows "This phone number and email belong to different accounts…" (2026-11-11).
 - Step 2: date of birth (Material date picker, no future dates), country, address. All optional.
   - Country: every ISO country from the OS (`utils/Country.kt`, expect/actual), since there is no country endpoint (15: local catalogs). The name shows in the device language; P2 gets the English name (TR stays "Turkey", like 07 appendix C). Uzbekistan comes first. The closed dropdown opens a searchable `CountryTray` in a bottom sheet, because ~250 rows don't fit the inline menu.
 - Step 3: photo from the platform picker. On iOS it's `PHPickerViewController` (no permission prompt), re-encoded as JPEG. Optional.

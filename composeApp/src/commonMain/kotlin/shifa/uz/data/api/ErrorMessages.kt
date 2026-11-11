@@ -58,6 +58,7 @@ private const val INVALID_CREDENTIALS = "Invalid credentials"
 private const val ACCOUNT_DISABLED = "Account is disabled"
 private const val INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token"
 private const val NO_ACCOUNT_FOUND = "No account found"
+private const val IDENTIFIER_CONFLICT = "This phone number and email belong to different accounts"
 private const val VIDEO_TOO_EARLY =
     "Video call is not yet available. You can join 5 minutes before the appointment start."
 private const val VIDEO_TOO_LATE =
@@ -155,6 +156,8 @@ private val MESSAGES: Map<String, StringResource> =
         "Numeric value required" to Res.string.checkInValueRequired,
         "Text value required" to Res.string.checkInValueRequired,
         NO_TOKEN_RECEIVED to Res.string.errorNoTokenReceivedFromServer,
+        // A2 (409): the phone and the email name different accounts.
+        IDENTIFIER_CONFLICT to Res.string.errorIdentifierConflict,
         NETWORK_ERROR to Res.string.errorNetworkConnection,
         CONNECTION_TIMED_OUT to Res.string.errorConnectionTimedOut,
     )
@@ -171,6 +174,7 @@ private val CODE_MESSAGES: Map<String, String> =
         "VIDEO_TOO_EARLY" to VIDEO_TOO_EARLY,
         "VIDEO_TOO_LATE" to VIDEO_TOO_LATE,
         "VIDEO_PAYMENT_REQUIRED" to VIDEO_PAYMENT_REQUIRED,
+        "IDENTIFIER_CONFLICT" to IDENTIFIER_CONFLICT,
     )
 
 /**

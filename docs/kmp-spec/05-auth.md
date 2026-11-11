@@ -506,6 +506,8 @@ Separately, 401s on any `/auth/*` or `/public/*` path never trigger logout (`api
 - At least one field; empty ones are omitted.
 - 200 → `{ "type": "doctor" | "patient" | "none", "firstName"?: "…", "lastName"?: "…" }`. A missing `type` or null body → `none`.
 - **404 → `none`**.
+- **409 `IDENTIFIER_CONFLICT`** → `errorIdentifierConflict` ("This phone number and email belong to different
+  accounts…"): the two identifiers name different accounts, or the account has another phone or email.
 - Other errors → sanitized, default `Could not verify account details`, or the timeout/network messages (`auth_repository.dart:93-126, 248-258`).
 
 #### `POST /auth/check-existing-doctor` (dead code)

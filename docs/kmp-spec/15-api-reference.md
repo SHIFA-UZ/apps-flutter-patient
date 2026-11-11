@@ -395,6 +395,9 @@ The client intercepts `…/api/payments/checkout/success` and `…/api/payments/
   - A missing `type` is treated as `none`.
   - A null body is treated as `none`.
 - **404**: treated as `{type:"none"}`. Other errors are sanitized.
+- **409 `IDENTIFIER_CONFLICT`** (backend 2026-11-11): the phone and the email name different accounts, or the account
+  found has a different phone or email than the one typed. Shown as `errorIdentifierConflict` on the account step;
+  before, the first match won (another doctor's name, or a doctor link that could never succeed).
 - **Flow meaning**:
   - `patient`: the account already exists.
   - `doctor`: the "confirm doctor to patient" flow runs (A4 then A6).
