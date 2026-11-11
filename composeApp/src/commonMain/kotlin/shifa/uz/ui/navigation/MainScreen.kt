@@ -28,8 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -123,6 +125,12 @@ fun MainScreen(
         var booking by remember { mutableStateOf<Doctor?>(null) }
         var rescheduling by remember { mutableStateOf<Appointment?>(null) }
         var chat by remember { mutableStateOf<ChatTarget?>(null) }
+        // A field on the page left behind keeps the keyboard up (iOS has no key to hide it): opening a doctor from the
+        // search results, a booking, a chat or another tab lets go of it.
+        val focus = LocalFocusManager.current
+        LaunchedEffect(tab, page, list, tasksOpen, upcomingOpen, viewing, checkIn, appointment, live, doctor, booking, rescheduling, chat) {
+            focus.clearFocus()
+        }
         val tabs = rememberSaveableStateHolder()
         val density = LocalDensity.current
         var navPadding by remember { mutableStateOf(PaddingValues()) }
@@ -283,6 +291,13 @@ fun MainScreen(
                 ShifaTab.entries.filter { it != ShifaTab.ShifaAi || homeState.shifaAi },
             )
             // Overlays, later ones on top: a Shifa AI chat → a doctor's chat → a full list → Upcoming → My Tasks → a check-in → details → a live visit → its doctor → Create Booking → a page → a certificate / document → a call.
+            // An open page covers the tabs. Without this layer a tap or drag on its empty parts (a header, the canvas)
+            // reached the tab underneath: its buttons, its search field, its pull-to-refresh.
+            val pageOpen =
+                aiState.chat != null || chat != null || list != null || upcomingOpen || tasksOpen || checkIn != null ||
+                    appointment != null || rescheduling != null || live != null || doctor != null || booking != null ||
+                    page != null || viewing != null || (call != null && !callMinimized)
+            if (pageOpen) Box(Modifier.fillMaxSize().pointerInput(Unit) {})
             if (aiState.chat != null) {
                 BackHandler { shifaAi.close() }
                 ShifaAiChatScreen(shifaAi, onBack = shifaAi::close, onSignedOut = { onLogOut("session_expired") })

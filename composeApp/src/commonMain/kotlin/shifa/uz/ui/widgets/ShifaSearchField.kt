@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -59,6 +61,7 @@ fun ShifaSearchField(
             else -> ShifaColors.Text.Primary
         }
     val filled = enabled && value.isNotEmpty()
+    val focus = LocalFocusManager.current
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
@@ -66,6 +69,8 @@ fun ShifaSearchField(
         enabled = enabled,
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        // The results update as you type: Search only closes the keyboard (iOS has no other key for it).
+        keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
         textStyle = style.copy(color = text),
         cursorBrush = SolidColor(ShifaColors.Border.Focus),
         interactionSource = interactionSource,
