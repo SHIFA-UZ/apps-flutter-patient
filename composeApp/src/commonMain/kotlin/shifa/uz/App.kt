@@ -1,6 +1,9 @@
 package shifa.uz
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -11,6 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -45,10 +51,15 @@ fun App() {
         val backend by BackendChoice.current.collectAsState()
         LaunchedEffect(demo) { Analytics.setDemo(demo) }
         ShifaTheme {
-            key(demo, backend) {
-                // Fresh ViewModels too: Login's repositories hold the client of the backend they were created on.
-                ScopedViewModels {
-                    AppScreens()
+            // A tap outside a text field closes the keyboard: iOS has no key that hides it, and a multiline field's
+            // Return adds a line. Taps a button or field takes never get here.
+            val focus = LocalFocusManager.current
+            Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures(onTap = { focus.clearFocus() }) }) {
+                key(demo, backend) {
+                    // Fresh ViewModels too: Login's repositories hold the client of the backend they were created on.
+                    ScopedViewModels {
+                        AppScreens()
+                    }
                 }
             }
         }
